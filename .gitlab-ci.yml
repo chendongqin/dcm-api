@@ -1,0 +1,17 @@
+stages:
+  - build
+
+before_script:
+  - pwd
+
+cache:
+  paths:
+    - vendor
+
+build jar:
+  stage: build
+  only:
+    refs:
+      - dev
+  script:
+    - /usr/local/go/bin/go mod tidy &&/usr/local/go/bin/go build -o dcm-api
