@@ -2,7 +2,7 @@ stages:
   - build
 
 before_script:
-  - cd cmd/
+  - pwd
 
 cache:
   paths:
