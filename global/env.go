@@ -47,7 +47,7 @@ func InitEnv() {
 	_initCache()
 	//_initWechatService()
 	//_initEs()
-	//_initHbaseThriftPool()
+	_initHbaseThriftPool()
 	_initDataBase()
 	//_initMongodb() // deprecated
 	_initValidate()
@@ -124,7 +124,7 @@ func _initDataBase() {
 			MaxOpenConn: slaveMaxopenconn,
 		})
 	}
-	err := mysql.InitMysql("default", master, slaves, IsNotProd())
+	err := mysql.InitMysql("default", master, slaves, IsDev())
 	if err != nil {
 		fmt.Println("db1 init fail :(")
 		os.Exit(1)
@@ -229,37 +229,24 @@ var HbasePools *pools.HBasePoolFactory
 
 func _initHbaseThriftPool() {
 	HbasePools = pools.GetHBaseFactory()
-	needRegister := strings.Split(Cfg.String("hbase_names"), ",")
 	user := Cfg.String("hbase_user")
 	password := Cfg.String("hbase_passwd")
-	for _, name := range needRegister {
-		name := strings.Trim(name, " ")
-		suffix := "_" + name
-		if name == "default" || name == "" {
-			suffix = ""
-			name = "default"
-		}
-		host := Cfg.String("hbase_host" + suffix)
-		if strings.Trim(host, " ") == "" {
-			continue
-		}
-		logs.Info("register hbase: [%s] %s", name, host)
-		option := pools.ThriftHbaseConfig{
-			Host:        host,
-			User:        user,
-			Password:    password,
-			MinConn:     10,
-			MaxConn:     40,
-			MaxIdle:     40,
-			IdleTimeout: 30,
-		}
-		pool, err := pools.NewThriftHbasePools(&option)
-		if err != nil {
-			fmt.Println(err)
-			panic("hbase init fail :(" + err.Error())
-		}
-		HbasePools.Add(name, pool)
+	host := Cfg.String("hbase_host")
+	option := pools.ThriftHbaseConfig{
+		Host:        host,
+		User:        user,
+		Password:    password,
+		MinConn:     10,
+		MaxConn:     40,
+		MaxIdle:     40,
+		IdleTimeout: 30,
 	}
+	pool, err := pools.NewThriftHbasePools(&option)
+	if err != nil {
+		fmt.Println(err)
+		panic("hbase init fail :(" + err.Error())
+	}
+	HbasePools.Add("default", pool)
 }
 
 func _initValidate() {
@@ -290,15 +277,8 @@ func _initValidate() {
 	validation.SetDefaultMessage(MessageTmpls)
 }
 
-func IsNotProd() bool {
-	if beego.BConfig.RunMode != "product" {
-		return true
-	}
-	return false
-}
-
 func IsDev() bool {
-	if beego.BConfig.RunMode == "dev" {
+	if beego.BConfig.RunMode != "product" {
 		return true
 	}
 	return false

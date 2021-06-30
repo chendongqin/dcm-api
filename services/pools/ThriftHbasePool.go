@@ -11,14 +11,6 @@ import (
 	"time"
 )
 
-const (
-	HOST = "http://ld-uf6w1y03mb950v52e-proxy-hbaseue-pub.hbaseue.rds.aliyuncs.com:9190"
-	// 用户名
-	USER = "root"
-	// 密码
-	PASSWORD = "root"
-)
-
 type ThriftHbaseConfig struct {
 	Host        string
 	User        string
@@ -126,7 +118,7 @@ func NewThriftHbasePools(option *ThriftHbaseConfig) (*ThriftHbasePools, error) {
 	poolConfig := &pool.Config{
 		InitialCap: option.MinConn,
 		MaxCap:     option.MaxConn,
-		//MaxIdle: 	option.MaxIdle,
+		MaxIdle:    option.MaxIdle,
 		Factory:    factory,
 		Close:      close,
 		//连接最大空闲时间，超过该时间的连接 将会关闭，可避免空闲时连接EOF，自动失效的问题

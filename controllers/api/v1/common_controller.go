@@ -85,7 +85,3 @@ func (receiver *CommonController) CheckSmsCode() {
 	receiver.SuccReturn(nil)
 	return
 }
-
-func (receiver *CommonController) Test() {
-	receiver.SuccReturn(map[string]string{"hhhh": "hshhdsh"})
-}
