@@ -21,7 +21,7 @@ func (receiver *CommonController) Sms() {
 		receiver.FailReturn(global.NewError(4205))
 		return
 	}
-	if !utils.InArrayString(grantType,[]string{"login","findpwd"}) {
+	if !utils.InArrayString(grantType, []string{"login", "findpwd"}) {
 		receiver.FailReturn(global.NewError(4000))
 		return
 	}
@@ -37,9 +37,9 @@ func (receiver *CommonController) Sms() {
 		receiver.FailReturn(global.NewError(4211))
 		return
 	}
-	if utils.InArrayString(grantType,[]string{"findpwd"}) {
+	if utils.InArrayString(grantType, []string{"findpwd"}) {
 		user := dcm.DcUser{}
-		exist ,_ := dcm.GetBy("username",mobile,&user)
+		exist, _ := dcm.GetBy("username", mobile, &user)
 		if !exist {
 			receiver.FailReturn(global.NewError(4209))
 			return
@@ -47,36 +47,36 @@ func (receiver *CommonController) Sms() {
 	}
 	cacheKey := cache.GetCacheKey(cache.SmsCodeVerify, grantType, mobile)
 	code := utils.GetRandomInt(6)
-	err := global.Cache.Set(cacheKey,code,300)
+	err := global.Cache.Set(cacheKey, code, 300)
 	if err != nil {
 		receiver.FailReturn(global.NewError(5000))
 		return
 	}
-	res,err := AliSms.SmsCode(mobile,code)
+	res, err := AliSms.SmsCode(mobile, code)
 	if !res || err != nil {
 		receiver.FailReturn(global.NewError(5000))
 		return
 	}
-	global.Cache.Set(limitIpKey,"1",60)
-	global.Cache.Set(limitMobileKey,"1",60)
+	global.Cache.Set(limitIpKey, "1", 60)
+	global.Cache.Set(limitMobileKey, "1", 60)
 	receiver.SuccReturn(nil)
 	return
 }
 
 //验证码校验
 func (receiver *CommonController) CheckSmsCode() {
-	mobile := receiver.GetString("username","")
-	grantType := receiver.GetString("grant_type","")
+	mobile := receiver.GetString("username", "")
+	grantType := receiver.GetString("grant_type", "")
 	if !utils.VerifyMobileFormat(mobile) {
 		receiver.FailReturn(global.NewError(4205))
 		return
 	}
-	if !utils.InArrayString(grantType , []string{"findpwd"}) {
+	if !utils.InArrayString(grantType, []string{"findpwd"}) {
 		receiver.FailReturn(global.NewError(4000))
 		return
 	}
-	code := receiver.GetString("code","")
-	codeKey := cache.GetCacheKey(cache.SmsCodeVerify,grantType,mobile)
+	code := receiver.GetString("code", "")
+	codeKey := cache.GetCacheKey(cache.SmsCodeVerify, grantType, mobile)
 	verifyCode := global.Cache.Get(codeKey)
 	if verifyCode != code {
 		receiver.FailReturn(global.NewError(4209))
@@ -84,4 +84,8 @@ func (receiver *CommonController) CheckSmsCode() {
 	}
 	receiver.SuccReturn(nil)
 	return
+}
+
+func (receiver *CommonController) Test() {
+	receiver.SuccReturn(map[string]string{"hhhh": "hshhdsh"})
 }
