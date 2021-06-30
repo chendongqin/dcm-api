@@ -14,4 +14,5 @@ build jar:
     refs:
       - dev
   script:
+    - cp /data/conf/dcm-dev.conf conf/app.conf
     - /usr/local/go/bin/go mod tidy &&/usr/local/go/bin/go build -o dcm-api
