@@ -1,0 +1,65 @@
+appname = dingdingyiwan
+servername = "dingdingyiwan"
+httpaddr = "127.0.0.1"
+runmode ="dev"
+
+autorender = false
+recoverpanic = true
+EnableErrorsRender = false
+
+copyrequestbody = true
+source = chanshike
+serverhost = https://chanshike.cn
+
+#EnableAdmin = true
+#AdminAddr = "localhost"
+#AdminPort = 9088
+
+schemeHost = https://www.dingdingyiwan.com
+
+[dev]
+Graceful = false
+httpport = 9099
+
+#master_db = "root:123456@tcp(localhost:3306)/jfq_dev?charset=utf8"
+master_db = "jfq:Tdg99iqhkgNKXEq9@tcp(10.111.11.183:3306)/ding_play?charset=utf8"
+master_db_max_open_conn = 5
+master_db_max_idle_conn = 2
+
+#slave_db = "root:123456@tcp(localhost:3306)/jfq_dev?charset=utf8"
+slave_db = "jfq:Tdg99iqhkgNKXEq9@tcp(10.111.11.183:3306)/ding_play?charset=utf8"
+slave_db_max_open_conn = 5
+slave_db_max_idle_conn = 2
+
+default_redis_host = "127.0.0.1:6379"
+default_redis_passwd = ""
+default_redis_db = 1
+default_redis_maxidle = 50
+default_redis_maxactive = 50
+
+v2_mongodb_addr = "10.111.11.183:27017"
+v2_mongodb_database = "dingplay"
+v2_mongodb_user = testuser
+v2_mongodb_passwd = testpass
+v2_mongodb_maxidle = 10
+
+oss_callback_url = https://test-external.ajin.me/dingplay/v1/callback/upload_callback
+wechat_pay_callback = https://test-external.ajin.me/dingplay/v1/callback/wcpay
+
+schemeHost = https://www.dingdingyiwan.com
+oss_url = https://csk-tp-dev.oss-cn-hangzhou.aliyuncs.com
+bucketName = "csk-tp-dev"
+#支付宝支付
+ali_pay_appid = "2021001195604021"
+#支付宝公钥  不是应用公钥
+ali_pay_public_key = "MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAlks3wf0Zd6Y0lLxhZu/UjcFfY8rcttSC+kakKUULgbIabZbe7DUiUHpy/bwVoKUFjr42VGE8KYotgoNJqLGyGJ0KMXMvsXFFyAD/rB1y+cgEeI/E0do1za+2yc81Wt+BAnVBZXWXh5xWMExpMVZJ7XE5Tsa7jQ8uc1mcUAPml9BV8ycSfdYXe2DyZ7RbNqEeH+gqwb0pclLSBQvDnJIvMimO7MgtaR+CVRozXyM5glnpK3D7dIyRE//BPR4DZamaZ0mtJkyNcRWuoJhLkaKtB7SUMQu5OFj9vPSVjwIrlWXHFlvBqSBoVPeGoFLdtb6+urfAZmpnKeCsoReWWb0HkwIDAQAB"
+#应用私钥
+ali_pay_private_key = ""
+ali_pay_notify_url = "https://test-external.ajin.me/dingplay/"
+ali_pay_return_url = "https://tp-test.ajin.me"
+
+#支付宝证书路径
+ali_pay_cert_path_root = "cert/alipayRootCert.crt"
+ali_pay_cert_path_app = "cert/appCertPublicKey_2021001195604021.crt"
+ali_pay_cert_path_ali = "cert/alipayCertPublicKey_RSA2.crt"
+ali_pay_csr_app_private_key = "MIIEvgIBADANBgkqhkiG9w0BAQEFAASCBKgwggSkAgEAAoIBAQCopJkXA2dvLly9egSWv3KWz8Z+ns0bHTktW8pbbjMfNu2M21lhH2IlVhGgOjEh47aMqKIdhBEycZhGis47SKOYbz0vGjqcyYosMZwungPMcyiLIksM6zqKsDsDsJEUVv0+Xc/U+HFK3XncC5ADTC8DrIznBqbiqctvc5Ou76n6W/6a68n1Voip3Fon7rqKCxvBasisgZV88hO52S60/dWbpHU2RzPNXckjXpF//KZAzReIcNQehJvSCKM6hjx5YGR0K1TWKyyMlkCS+AKz0NHrZWA7GbA0HS8VyqW3e/UCSjhFpnvO93NaAuOQVYaIPybRQP/vy3yXJ0iUFLkqcPGXAgMBAAECggEAL+n0BPHWpWQKvVq5iwsBx49o2fjMVXPMFvMJX0jEBY5Zl7eKgWmlPO5jO57M7s//wZ730GMBb8+OcBxn07gjot+YBpXxKTKpqzy9HxGOCrx9PGqV4CnFDDpdygKUda7xbJLCxcOAjMC4KqiuVgGDKgwQTGM7bxLG1feEciNtq8+XMxp6xtlkm8CipjMah4i0dTapb1G5NpdhiO7bFJU5PSG40s4/qV07ZZFgJtNQvG5K/gyzmpqhFIkmFRylUjSTT8oBbXzSIgnK+X8B2grb2YSQDwQCm+O1lUU0TTbLe9o6OebTNKiZKvuPxdSWF4eBSpufhbO+Qmv/4362ikHmoQKBgQD6sfNoaFwu5NbvClDPZdtUaYjtpDSpMY01/A586CNPT4xEG4d62mbxfrqfaBA/AjDCziHcWcQWXhujTBg4lOPQZ8192hiX5IyW9G49nzum2bVqIr69S5nzC1aBB7ij6SVAj8xuhjpCcdUGHgJu9gywGIuui4QsuEd+3BFMRIWu8wKBgQCsNijcR8rXvx6gwGB6wEWclgnM3x7+xLQ4wM+k1EYRrR6LV+prW2MBntr4vrq/yhckU+mlHwXDjaHzeLQnp6LxltMufPL2yFITmo0iLAApagDIIBvK7bSLYnY2JEEGYQ3JSwmpedoX1c0JXj8hTbT0aQIrz+nEQ7QJFF5byA0DzQKBgQCPhPazjCNSGWJPARnYUhipj617Vulq/1o3ULC+o2sriX/ksdny5DvQ/1s5zSqX19owfC/4ZU+T+pZZ+0NWiS6O7g4/gW9Y7dfqx86g6psM31AzjeaimjhtYs1IGzKCbAQOnQRNNfz+cwqgcOe1vJjw62x0JZ0quOj9YGFqx0O9LwKBgHuR+UvnMAQTnbSXliM+qDSt7KZXS/RfzToUEGsj7otsf8hY81rJnodhJ5rpsTNBnc1xcOwNEKO7k4QTDqKNxXw5T5vCCM1P/KUYd0EX9Z3B9IGlmIvKeYyywEQlS4t6RNw1vd8gEoCb555bRE1vZvMiDm7Fp+Yu9pa1SOfu6nfZAoGBAPlfUzAJ2qI8IV4Q7JYH4jlKG8ef7FQwfS6+TM9ULJvBQdJqEH8OHMoJXr4VEgkW478QgEdMrdTMRrPuXXhDXvXPkm7KrJmEK3GpqpwhGIbSiOK2V24QlAw9biIBuhLULmsfG3fDFDNQ+88oIz65Aw6HgIAOe3bn+sMLTeUMCzOB"
