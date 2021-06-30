@@ -2,7 +2,7 @@ stages:
   - build
 
 before_script:
-  - pwd
+  - cd cmd/
 
 cache:
   paths:
@@ -15,4 +15,4 @@ build jar:
       - dev
   script:
     - cp /data/conf/dcm-dev.conf conf/app.conf
-    - /usr/local/go/bin/go mod tidy &&/usr/local/go/bin/go build cmd/main.go -o dcm-api
+    - /usr/local/go/bin/go mod tidy &&/usr/local/go/bin/go build -o dcm-api
