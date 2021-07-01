@@ -1,8 +1,7 @@
-./logs/
+/logs/
 caches/
 .idea
 bin
-./conf/app.conf
 /conf/app.conf
 callback.log
 task-platform-api.iml
