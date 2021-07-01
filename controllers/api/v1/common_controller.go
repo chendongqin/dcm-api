@@ -65,8 +65,8 @@ func (receiver *CommonController) Sms() {
 
 //验证码校验
 func (receiver *CommonController) CheckSmsCode() {
-	mobile := receiver.GetString("username", "")
-	grantType := receiver.GetString("grant_type", "")
+	mobile := receiver.GetString(":username", "")
+	grantType := receiver.GetString(":grant_type", "")
 	if !utils.VerifyMobileFormat(mobile) {
 		receiver.FailReturn(global.NewError(4205))
 		return
@@ -84,4 +84,19 @@ func (receiver *CommonController) CheckSmsCode() {
 	}
 	receiver.SuccReturn(nil)
 	return
+}
+
+func (receiver *CommonController) Test() {
+	//query := hbasehelper.NewQuery()
+	//result, err := query.SetTable(hbaseService.HbaseDyAuthor).GetByRowKey([]byte("4195355415549012"))
+	//if err != nil {
+	//	return
+	//}
+	//data := make([]*entity.DyAuthor,0)
+	//authorMap := hbaseService.HbaseFormat(result,entity.DyAuthorMap)
+	//author := &entity.DyAuthor{}
+	//utils.MapToStruct(authorMap,author)
+	//author.AuthorID = author.Data.ID
+	//data = append(data,author)
+
 }

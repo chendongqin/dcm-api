@@ -25,7 +25,7 @@ require (
 	github.com/silenceper/pool v1.0.0
 	github.com/stretchr/testify v1.5.1 // indirect
 	github.com/urfave/cli v1.22.5
-	golang.org/x/net v0.0.0-20191125084936-ffdde1057850 // indirect
+	github.com/vmihailenco/msgpack/v4 v4.3.12
 	gopkg.in/mgo.v2 v2.0.0-20190816093944-a6b53ec6cb22
 	xorm.io/core v0.7.3
 )

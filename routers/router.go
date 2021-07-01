@@ -1,7 +1,8 @@
 package routers
 
 import (
-	v1 "dongchamao/controllers/api/v1"
+	"dongchamao/controllers/api/v1"
+	"dongchamao/controllers/api/v1dy"
 	"github.com/astaxie/beego"
 	"github.com/json-iterator/go/extra"
 )
@@ -19,5 +20,10 @@ func init() {
 	beego.Router("/v1/user/login", &v1.AccountController{}, "put:Login")
 	beego.Router("/v1/user/findpwd", &v1.AccountController{}, "put:ResetPwd")
 	beego.Router("/v1/sms/code", &v1.CommonController{}, "post:Sms")
-	beego.Router("/v1/sms/verify", &v1.CommonController{}, "get:CheckSmsCode")
+	beego.Router("/v1/sms/verify/:grant_type/:username", &v1.CommonController{}, "get:CheckSmsCode")
+	beego.Router("/v1/test", &v1.CommonController{}, "get:Test")
+
+	//抖音达人
+	beego.Router("/v1/dy/author/:author_id", &v1dy.AuthorController{}, "get:AuthorBaseData")
+
 }

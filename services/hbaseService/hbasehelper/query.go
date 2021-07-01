@@ -2,10 +2,9 @@ package hbasehelper
 
 import (
 	"context"
-	"douyin-api/entity"
-	"douyin-api/global"
-	"douyin-api/services/hbaseService/hbase"
-	"douyin-api/services/pools"
+	"dongchamao/global"
+	"dongchamao/services/hbaseService/hbase"
+	"dongchamao/services/pools"
 	"github.com/astaxie/beego/logs"
 	"time"
 )
@@ -89,7 +88,7 @@ func (q *Query) Select(columns ...string) *Query {
 }
 
 func (q *Query) getClient() *pools.ThriftHbasePoolsClient {
-	client := global.HbasePools.Get(entity.Mapping(q.tableName))
+	client := global.HbasePools.Get()
 	return client
 }
 

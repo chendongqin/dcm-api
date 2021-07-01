@@ -1,10 +1,10 @@
 package hbasehelper
 
 import (
-	"douyin-api/entity"
-	"douyin-api/services/hbaseService/hbase"
+	"dongchamao/services/hbaseService"
+	"dongchamao/services/hbaseService/hbase"
 )
 
 func NewQuery() *Query {
-	return &Query{family: entity.TableFamily, filter: hbase.NewFilters()}
+	return &Query{family: hbaseService.TableFamily, filter: hbase.NewFilters()}
 }

@@ -18,9 +18,9 @@ const (
 )
 
 const (
-	VipPlatformDouYin = 1  //抖音
+	VipPlatformDouYin      = 1 //抖音
 	VipPlatformXiaoHongShu = 2 //小红书
-	VipPlatformTaoBao = 3 //淘宝
+	VipPlatformTaoBao      = 3 //淘宝
 )
 
 type UserBusiness struct {
@@ -96,16 +96,16 @@ func (receiver *UserBusiness) GetUniqueToken(userId int, appId int, enableCache 
 
 //获取用户vip等级
 func (receiver *UserBusiness) GetVipLevel(userId int) map[int]int {
-	vipLists := make([]dcm.DcUserVip,0)
-	err := dcm.GetDbSession().Where("user_id=? ",userId).Find(&vipLists)
+	vipLists := make([]dcm.DcUserVip, 0)
+	err := dcm.GetDbSession().Where("user_id=? ", userId).Find(&vipLists)
 	vipMap := map[int]int{}
 	if err == nil {
-		for _,v := range vipLists{
+		for _, v := range vipLists {
 			var level = 0
 			if v.Expiration.Unix() > time.Now().Unix() {
 				level = v.Level
 			} else if v.OrderValidDay > 0 {
-				levelTmp,res := receiver.UpdateValidDayOne(userId , v.Platform)
+				levelTmp, res := receiver.UpdateValidDayOne(userId, v.Platform)
 				if res {
 					level = levelTmp
 				}
@@ -117,24 +117,24 @@ func (receiver *UserBusiness) GetVipLevel(userId int) map[int]int {
 }
 
 //更新会员等级
-func (receiver *UserBusiness) UpdateValidDayOne (userId , platformId int) (int, bool) {
+func (receiver *UserBusiness) UpdateValidDayOne(userId, platformId int) (int, bool) {
 	vipModel := &dcm.DcUserVip{}
-	exist ,_ := dcm.GetDbSession().Where("user_id=? AND platform=?",userId , platformId).Get(vipModel)
+	exist, _ := dcm.GetDbSession().Where("user_id=? AND platform=?", userId, platformId).Get(vipModel)
 	if !exist || vipModel.OrderValidDay <= 0 {
-		return 0,false
+		return 0, false
 	}
 	whereStr := "id=? AND expiration<=?"
 	updateData := map[string]interface{}{
-		"order_valid_day" : 0,
-		"order_level" : 0,
-		"level" : vipModel.OrderLevel,
-		"expiration" : vipModel.Expiration.AddDate(0,0,vipModel.OrderValidDay).Format("2006-01-02 15:04:05"),
+		"order_valid_day": 0,
+		"order_level":     0,
+		"level":           vipModel.OrderLevel,
+		"expiration":      vipModel.Expiration.AddDate(0, 0, vipModel.OrderValidDay).Format("2006-01-02 15:04:05"),
 	}
-	affect,err := dcm.GetDbSession().Table(new(dcm.DcUserVip)).Where(whereStr,vipModel.Id,time.Now().Format("2006-01-02 15:04:05")).Update(updateData)
+	affect, err := dcm.GetDbSession().Table(new(dcm.DcUserVip)).Where(whereStr, vipModel.Id, time.Now().Format("2006-01-02 15:04:05")).Update(updateData)
 	if affect == 0 || err != nil {
-		return 0,false
+		return 0, false
 	}
-	return vipModel.OrderLevel,true
+	return vipModel.OrderLevel, true
 }
 
 //token创建
@@ -164,10 +164,9 @@ func (receiver *UserBusiness) CreateToken(appId int, userId int, expire int64) (
 	return authToken, expire_time, err
 }
 
-
 //密码登陆
-func (receiver *UserBusiness) LoginByPwd(username ,pwd string ,appId int) (user dcm.DcUser ,tokenString string,expire int64,comErr global.CommonError) {
-	exist,_ := dcm.GetBy("username",username,&user)
+func (receiver *UserBusiness) LoginByPwd(username, pwd string, appId int) (user dcm.DcUser, tokenString string, expire int64, comErr global.CommonError) {
+	exist, _ := dcm.GetBy("username", username, &user)
 	if !exist {
 		comErr = global.NewError(4208)
 		return
@@ -182,12 +181,12 @@ func (receiver *UserBusiness) LoginByPwd(username ,pwd string ,appId int) (user 
 		return
 	}
 	expire = 604800
-	tokenString ,expire,err := receiver.CreateToken(appId,user.Id,expire)
+	tokenString, expire, err := receiver.CreateToken(appId, user.Id, expire)
 	if err != nil {
 		comErr = global.NewError(5000)
 		return
 	}
-	err = receiver.AddOrUpdateUniqueToken(user.Id,appId,tokenString)
+	err = receiver.AddOrUpdateUniqueToken(user.Id, appId, tokenString)
 	if err != nil {
 		comErr = global.NewError(5000)
 		return
@@ -196,14 +195,14 @@ func (receiver *UserBusiness) LoginByPwd(username ,pwd string ,appId int) (user 
 }
 
 //验证码登陆
-func (receiver *UserBusiness) SmsLogin(mobile,code string,appId int) (user dcm.DcUser ,tokenString string,expire int64,comErr global.CommonError) {
-	codeKey := cache.GetCacheKey(cache.SmsCodeVerify,"login",mobile)
+func (receiver *UserBusiness) SmsLogin(mobile, code string, appId int) (user dcm.DcUser, tokenString string, expire int64, comErr global.CommonError) {
+	codeKey := cache.GetCacheKey(cache.SmsCodeVerify, "login", mobile)
 	verifyCode := global.Cache.Get(codeKey)
 	if verifyCode != code {
 		comErr = global.NewError(4209)
 		return
 	}
-	exist,err := dcm.GetBy("username",mobile,&user)
+	exist, err := dcm.GetBy("username", mobile, &user)
 	if exist && err == nil {
 		if user.Status != 1 {
 			comErr = global.NewError(4212)
@@ -211,24 +210,24 @@ func (receiver *UserBusiness) SmsLogin(mobile,code string,appId int) (user dcm.D
 		}
 	} else {
 		user.Username = mobile
-		user.Nickname =  mobile[:3] + "****" + mobile[7:]
+		user.Nickname = mobile[:3] + "****" + mobile[7:]
 		user.Salt = utils.GetRandomString(4)
 		user.Password = utils.Md5_encode(utils.GetRandomString(16) + user.Salt)
 		user.Status = 1
 		user.CreateTime = time.Now()
 		user.UpdateTime = time.Now()
-		affect,err := dcm.Insert(nil,&user)
+		affect, err := dcm.Insert(nil, &user)
 		if affect == 0 || err != nil {
 			comErr = global.NewError(5000)
 			return
 		}
 	}
-	tokenString , expire ,err = receiver.CreateToken(appId,user.Id,604800)
+	tokenString, expire, err = receiver.CreateToken(appId, user.Id, 604800)
 	if err != nil {
 		comErr = global.NewError(5000)
 		return
 	}
-	err = receiver.AddOrUpdateUniqueToken(user.Id,appId,tokenString)
+	err = receiver.AddOrUpdateUniqueToken(user.Id, appId, tokenString)
 	if err != nil {
 		comErr = global.NewError(5000)
 		return
