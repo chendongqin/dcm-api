@@ -1,4 +1,4 @@
-package v1dy
+package dy
 
 import (
 	controllers "dongchamao/controllers/api"
@@ -6,24 +6,24 @@ import (
 	"dongchamao/models/business"
 )
 
-type AuthorController struct {
+type AwemeController struct {
 	controllers.ApiBaseController
 }
 
-func (receiver *AuthorController) AuthorBaseData() {
-	authorId := receiver.Ctx.Input.Param(":author_id")
-	if authorId == "" {
+func (receiver *AwemeController) AwemeBaseData() {
+	awemeId := receiver.Ctx.Input.Param(":aweme_id")
+	if awemeId == "" {
 		receiver.FailReturn(global.NewError(4000))
 		return
 	}
-	authorBusiness := business.NewAuthorBusiness()
-	authorBase, comErr := authorBusiness.HbaseGetAuthor(authorId)
+	awemeBusiness := business.NewAwemeBusiness()
+	awemeBase, comErr := awemeBusiness.HbaseGetAweme(awemeId)
 	if comErr != nil {
 		receiver.FailReturn(comErr)
 		return
 	}
 	receiver.SuccReturn(map[string]interface{}{
-		"author_base": authorBase.Data,
+		"aweme_base": awemeBase.Data,
 	})
 	return
 }

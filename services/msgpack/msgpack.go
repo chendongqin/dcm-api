@@ -1,6 +1,5 @@
 package msgpack
 
-// author: linyulin
 // 封装msgpack常用方法
 
 import (

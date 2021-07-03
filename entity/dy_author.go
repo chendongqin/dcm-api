@@ -1,12 +1,10 @@
 package entity
 
-import "dongchamao/services/hbaseService"
-
-var DyAuthorMap = hbaseService.HbaseEntity{
-	"id":         {"string", "author_id"},
-	"collection": {"int", "collection"},
-	"crawl_time": {"long", "crawl_time"},
-	"data":       {"m_json", "data"},
+var DyAuthorMap = HbaseEntity{
+	"id":         {String, "author_id"},
+	"collection": {Int, "collection"},
+	"crawl_time": {Long, "crawl_time"},
+	"data":       {Json, "data"},
 }
 
 type DyAuthor struct {

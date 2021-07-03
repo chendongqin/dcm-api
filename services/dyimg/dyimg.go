@@ -51,7 +51,7 @@ func buildURL(prefix, source string) string {
 		return source
 	}
 	//已经转换过的直接返回
-	if strings.Contains(infoURL.Host, "chanmama") {
+	if strings.Contains(infoURL.Host, "dongchamao") {
 		return source
 	}
 	md5 := Md5_encode(source)
@@ -89,7 +89,7 @@ func Convert(prefix string, source string) string {
 }
 
 func ConvertAvatar(image string, px ...string) string {
-	if strings.Contains(image, "chanmama") {
+	if strings.Contains(image, "dongchamao") {
 		return image
 	}
 	return buildURL("avatar", avatar(image, px...))
@@ -121,7 +121,7 @@ func Avatar(image string, px ...string) string {
 
 func Custom(image string, px string) string {
 	//已经转换过的直接返回
-	if strings.Contains(image, "chanmama") {
+	if strings.Contains(image, "dongchamao") {
 		return image
 	}
 	image = Fix(image)
@@ -135,7 +135,7 @@ func Custom(image string, px string) string {
 }
 
 func Product(image string, imgType ...string) string {
-	if strings.Contains(image, "chanmama") {
+	if strings.Contains(image, "dongchamao") {
 		return image
 	}
 	image = Fix(image)

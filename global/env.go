@@ -50,7 +50,7 @@ func InitEnv() {
 	_initHbaseThriftPool()
 	_initDataBase()
 	//_initMongodb() // deprecated
-	_initValidate()
+	//_initValidate()
 	//_initRabbitMqPool()
 	//_initKafkaProducer()
 	//初始化全局httpclient超时时间

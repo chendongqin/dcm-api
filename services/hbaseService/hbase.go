@@ -1,6 +1,7 @@
 package hbaseService
 
 import (
+	"dongchamao/entity"
 	"dongchamao/global/utils"
 	"dongchamao/services/hbaseService/hbase"
 	"dongchamao/services/msgpack"
@@ -8,64 +9,62 @@ import (
 	"math"
 )
 
-type HbaseField struct {
-	FieldType string
-	FieldName string
-}
-
-type HbaseEntity map[string]HbaseField
-
-func HbaseFormat(result *hbase.TResult_, fieldMap HbaseEntity) map[string]interface{} {
+func HbaseFormat(result *hbase.TResult_, fieldMap entity.HbaseEntity) map[string]interface{} {
 	retMap := make(map[string]interface{})
 	for _, v := range result.ColumnValues {
 		fn := string(v.Qualifier)
 		if ai, ok := fieldMap[fn]; ok == true {
 			fieldType := ai.FieldType
 			fieldName := ai.FieldName
-			if fieldType == "m_double" {
+			if fieldType == entity.MDouble {
 				fv := v.Value
 				retMap[fieldName], _ = msgpack.UnpackFloat64(fv)
-			} else if fieldType == "m_json" {
+			} else if fieldType == entity.Json {
 				fv := v.Value
 				tmpMap := map[string]interface{}{}
 				jsoniter.Unmarshal(fv, &tmpMap)
 				retMap[fieldName] = tmpMap
-			} else if fieldType == "m_string" {
+			} else if fieldType == entity.AJson {
+				fv := v.Value
+				tmpMap := make([]map[string]interface{}, 0)
+				jsoniter.Unmarshal(fv, &tmpMap)
+				retMap[fieldName] = tmpMap
+			} else if fieldType == entity.MString {
 				fv := v.Value
 				retMap[fieldName], _ = msgpack.UnpackString(fv)
-			} else if fieldType == "m_int" {
+			} else if fieldType == entity.MInt {
 				fv := v.Value
 				val, _ := msgpack.UnpackInt32(fv)
 				retMap[fieldName] = int(val)
-			} else if fieldType == "m_long" {
+			} else if fieldType == entity.MLong {
 				fv := v.Value
 				retMap[fieldName], _ = msgpack.UnpackInt64(fv)
-			} else if fieldType == "long" {
+			} else if fieldType == entity.Long {
 				fv := utils.ParseByteInt64(v.Value)
 				retMap[fieldName] = fv
-			} else if fieldType == "int" {
+			} else if fieldType == entity.Int {
 				fv := utils.ParseByteInt32(v.Value)
 				retMap[fieldName] = int(fv)
-			} else if fieldType == "string" {
+			} else if fieldType == entity.String {
 				fv := string(v.Value)
 				retMap[fieldName] = fv
-			} else if fieldType == "float" {
+			} else if fieldType == entity.Float {
 				fv := utils.ParseByteFloat32(v.Value)
 				retMap[fieldName] = fv
-			} else if fieldType == "double" {
+			} else if fieldType == entity.Double {
 				fv := utils.ParseByteFloat64(v.Value)
 				if math.IsNaN(fv) {
 					fv = 0
 				}
 				retMap[fieldName] = fv
-			} else if fieldType == "byte" {
+			} else if fieldType == entity.Byte {
 				if len(v.Value) == 1 {
 					fv := v.Value[0]
 					retMap[fieldName] = fv
 				} else {
 					retMap[fieldName] = v.Value
 				}
-			} else if fieldType == "bool" {
+			} else if fieldType == entity.Bool {
 				if v.Value[0] == uint8(255) {
 					retMap[fieldName] = true
 				} else {
@@ -74,9 +73,8 @@ func HbaseFormat(result *hbase.TResult_, fieldMap HbaseEntity) map[string]interf
 			} else {
 				retMap[fieldName] = v.Value
 			}
-		} else {
-			retMap[fn] = v.Value
 		}
+
 	}
 	return retMap
 }
