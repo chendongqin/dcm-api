@@ -46,7 +46,7 @@ func InitEnv() {
 	_initLogs()
 	_initCache()
 	//_initWechatService()
-	//_initEs()
+	_initEs()
 	_initHbaseThriftPool()
 	_initDataBase()
 	//_initMongodb() // deprecated
