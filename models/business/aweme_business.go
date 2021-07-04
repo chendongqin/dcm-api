@@ -45,6 +45,10 @@ func (a *AwemeBusiness) HbaseGetAweme(awemeId string) (data *entity.DyAweme, com
 		comErr = global.NewMsgError(err.Error())
 		return
 	}
+	if result.Row == nil {
+		comErr = global.NewError(4040)
+		return
+	}
 	authorMap := hbaseService.HbaseFormat(result, entity.DyAwemeMap)
 	aweme := &entity.DyAweme{}
 	utils.MapToStruct(authorMap, aweme)

@@ -43,6 +43,10 @@ func (a *AuthorBusiness) HbaseGetAuthor(authorId string) (data *entity.DyAuthor,
 		comErr = global.NewMsgError(err.Error())
 		return
 	}
+	if result.Row == nil {
+		comErr = global.NewError(4040)
+		return
+	}
 	authorMap := hbaseService.HbaseFormat(result, entity.DyAuthorMap)
 	author := &entity.DyAuthor{}
 	utils.MapToStruct(authorMap, author)
@@ -57,6 +61,10 @@ func (a *AuthorBusiness) HbaseGetAuthorReputation(authorId string) (data *entity
 	result, err := query.SetTable(hbaseService.HbaseDyReputation).GetByRowKey([]byte(authorId))
 	if err != nil {
 		comErr = global.NewMsgError(err.Error())
+		return
+	}
+	if result.Row == nil {
+		comErr = global.NewError(4040)
 		return
 	}
 	reputationMap := hbaseService.HbaseFormat(result, entity.DyReputationMap)
@@ -76,6 +84,10 @@ func (a *AuthorBusiness) HbaseGetXtAuthorDetail(authorId string) (data *entity.X
 	result, err := query.SetTable(hbaseService.HbaseXtAuthorDetail).GetByRowKey([]byte(authorId))
 	if err != nil {
 		comErr = global.NewMsgError(err.Error())
+		return
+	}
+	if result.Row == nil {
+		comErr = global.NewError(4040)
 		return
 	}
 	detailMap := hbaseService.HbaseFormat(result, entity.XtAuthorDetailMap)
