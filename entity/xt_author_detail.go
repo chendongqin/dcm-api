@@ -140,7 +140,7 @@ type XtAuthorLiveFocusData struct {
 	ExpectedMaxWatch     int64   `json:"expected_max_watch"`
 	ExpectedPlayNum      int64   `json:"expected_play_num"`
 	MiddlePlay           int64   `json:"middle_play"`
-	OrderAvgTimeCost     int64   `json:"order_avg_time_cost"`
+	OrderAvgTimeCost     float64 `json:"order_avg_time_cost"`
 	OrderCompleteCnt     int64   `json:"order_complete_cnt"`
 	OrderCompleteRate    float64 `json:"order_complete_rate"`
 	PersonalInterateRate float64 `json:"personal_interate_rate"`
@@ -318,7 +318,7 @@ type XtAuthorVideoFocus struct {
 	ExpectedCpm          float64 `json:"expected_cpm"`
 	ExpectedPlayNum      int64   `json:"expected_play_num"`
 	MiddlePlay           int64   `json:"middle_play"`
-	OrderAvgTimeCost     int64   `json:"order_avg_time_cost"`
+	OrderAvgTimeCost     float64 `json:"order_avg_time_cost"`
 	OrderCompleteCnt     int64   `json:"order_complete_cnt"`
 	OrderCompleteRate    float64 `json:"order_complete_rate"`
 	PersonalInterateRate float64 `json:"personal_interate_rate"`

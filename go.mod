@@ -3,6 +3,7 @@ module dongchamao
 go 1.16
 
 require (
+	github.com/360EntSecGroup-Skylar/excelize v1.4.1
 	github.com/Shopify/sarama v1.19.0
 	github.com/aliyun/alibaba-cloud-sdk-go v1.61.1162
 	github.com/aliyun/aliyun-oss-go-sdk v2.1.8+incompatible
@@ -23,7 +24,7 @@ require (
 	github.com/pkg/errors v0.9.1
 	github.com/satori/go.uuid v1.2.0 // indirect
 	github.com/silenceper/pool v1.0.0
-	github.com/stretchr/testify v1.5.1 // indirect
+	github.com/stretchr/testify v1.5.1
 	github.com/urfave/cli v1.22.5
 	github.com/vmihailenco/msgpack/v4 v4.3.12
 	gopkg.in/mgo.v2 v2.0.0-20190816093944-a6b53ec6cb22
