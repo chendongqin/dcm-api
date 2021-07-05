@@ -47,7 +47,7 @@ type XtAuthorInteraction struct {
 }
 
 type XtAuthorDescription struct {
-	Interaction             XtAuthorInteraction `json:"interaction"`
+	Interaction             XtAuthorInteraction `json:"interaction"` //个人作品
 	InteractionEnrollment   XtAuthorInteraction `json:"interaction_enrollment"`
 	PlayMedium              XtAuthorInteraction `json:"play_medium"`
 	PlayMediumEnrollment    XtAuthorInteraction `json:"play_medium_enrollment"`
@@ -228,25 +228,25 @@ type XtAuthorLiveMarkInfo struct {
 }
 
 type XtAuthorAvgLevel struct {
-	CooperateIndex int `json:"cooperate_index"`
-	CpIndex        int `json:"cp_index"`
-	GrowthIndex    int `json:"growth_index"`
-	ShoppingIndex  int `json:"shopping_index"`
-	SpreadIndex    int `json:"spread_index"`
-	TopScore       int `json:"top_score"`
+	CooperateIndex int `json:"cooperate_index"` //超过合作指数比例
+	CpIndex        int `json:"cp_index"`        //超过性价比指数比例
+	GrowthIndex    int `json:"growth_index"`    //超过涨粉指数比例
+	ShoppingIndex  int `json:"shopping_index"`  //超过种草指数比例
+	SpreadIndex    int `json:"spread_index"`    //超过传播指数比例
+	TopScore       int `json:"top_score"`       //超过总分比例
 }
 
 type XtAuthorLiveScore struct {
 	AvgLevel       XtAuthorAvgLevel `json:"avg_level"`
 	BusinessIndex  int              `json:"business_index"`
-	CooperateIndex int              `json:"cooperate_index"`
-	CpIndex        int              `json:"cp_index"`
-	GrowthIndex    int              `json:"growth_index"`
+	CooperateIndex int              `json:"cooperate_index"` //合作指数
+	CpIndex        int              `json:"cp_index"`        //性价比指数
+	GrowthIndex    int              `json:"growth_index"`    //涨粉指数
 	ImpactIndex    int              `json:"impact_index"`
-	Median         XtAuthorAvgLevel `json:"median"`
-	ShoppingIndex  int              `json:"shopping_index"`
-	SpreadIndex    int              `json:"spread_index"`
-	TopScore       int              `json:"top_score"`
+	Median         XtAuthorAvgLevel `json:"median"`         //行业中位数
+	ShoppingIndex  int              `json:"shopping_index"` //种草指数
+	SpreadIndex    int              `json:"spread_index"`   //传播指数
+	TopScore       int              `json:"top_score"`      //总分
 }
 
 type XtAuthorLtmItemStatics struct {

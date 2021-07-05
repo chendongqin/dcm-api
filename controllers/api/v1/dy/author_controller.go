@@ -28,7 +28,7 @@ func (receiver *AuthorController) AuthorBaseData() {
 		receiver.FailReturn(comErr)
 		return
 	}
-	receiver.SuccReturn(map[string]interface{}{
+	returnMap := map[string]interface{}{
 		"author_base": authorBase.Data,
 		"reputation": dy.RepostSimpleReputation{
 			Score:         reputation.Score,
@@ -37,7 +37,16 @@ func (receiver *AuthorController) AuthorBaseData() {
 			ShopName:      reputation.ShopName,
 			ShopLogo:      reputation.ShopLogo,
 		},
-	})
+		"has_star_detail": false,
+		"star_detail":     nil,
+		"rank":            nil,
+	}
+	xtDetail, comErr := authorBusiness.HbaseGetXtAuthorDetail(authorId)
+	if comErr == nil {
+		returnMap["has_star_detail"] = true
+		returnMap["star_detail"] = authorBusiness.GetDyAuthorScore(xtDetail.LiveScore, xtDetail.Score)
+	}
+	receiver.SuccReturn(returnMap)
 	return
 }
 

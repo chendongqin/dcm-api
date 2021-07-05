@@ -8,6 +8,7 @@ import (
 	"dongchamao/services/hbaseService"
 	"dongchamao/services/hbaseService/hbase"
 	"dongchamao/services/hbaseService/hbasehelper"
+	"dongchamao/structinit/repost/dy"
 )
 
 type AuthorBusiness struct {
@@ -95,5 +96,41 @@ func (a *AuthorBusiness) HbaseGetXtAuthorDetail(authorId string) (data *entity.X
 	utils.MapToStruct(detailMap, detail)
 	detail.UID = authorId
 	data = detail
+	return
+}
+
+func (a *AuthorBusiness) GetDyAuthorScore(liveScore entity.XtAuthorLiveScore, videoScore entity.XtAuthorScore) (authorStarScores dy.DyAuthorStarScores) {
+	authorStarScores.LiveScore = dy.DyAuthorStarScore{
+		CooperateIndex: utils.FriendlyFloat64(float64(liveScore.CooperateIndex) / 10000),
+		CpIndex:        utils.FriendlyFloat64(float64(liveScore.CpIndex) / 10000),
+		GrowthIndex:    utils.FriendlyFloat64(float64(liveScore.GrowthIndex) / 10000),
+		ShoppingIndex:  utils.FriendlyFloat64(float64(liveScore.ShoppingIndex) / 10000),
+		SpreadIndex:    utils.FriendlyFloat64(float64(liveScore.SpreadIndex) / 10000),
+		TopScore:       utils.FriendlyFloat64(float64(liveScore.TopScore) / 10000),
+	}
+	authorStarScores.LiveScore.AvgLevel = dy.XtAuthorScoreAvgLevel{
+		CooperateIndex: utils.FriendlyFloat64(float64(liveScore.AvgLevel.CooperateIndex) / 100),
+		CpIndex:        utils.FriendlyFloat64(float64(liveScore.AvgLevel.CpIndex) / 100),
+		GrowthIndex:    utils.FriendlyFloat64(float64(liveScore.AvgLevel.GrowthIndex) / 100),
+		ShoppingIndex:  utils.FriendlyFloat64(float64(liveScore.AvgLevel.ShoppingIndex) / 100),
+		SpreadIndex:    utils.FriendlyFloat64(float64(liveScore.AvgLevel.SpreadIndex) / 100),
+		TopScore:       utils.FriendlyFloat64(float64(liveScore.AvgLevel.TopScore) / 100),
+	}
+	authorStarScores.VideoScore = dy.DyAuthorStarScore{
+		CooperateIndex: utils.FriendlyFloat64(float64(videoScore.CooperateIndex) / 10000),
+		CpIndex:        utils.FriendlyFloat64(float64(videoScore.CpIndex) / 10000),
+		GrowthIndex:    utils.FriendlyFloat64(float64(videoScore.GrowthIndex) / 10000),
+		ShoppingIndex:  utils.FriendlyFloat64(float64(videoScore.ShoppingIndex) / 10000),
+		SpreadIndex:    utils.FriendlyFloat64(float64(videoScore.SpreadIndex) / 10000),
+		TopScore:       utils.FriendlyFloat64(float64(videoScore.TopScore) / 10000),
+	}
+	authorStarScores.VideoScore.AvgLevel = dy.XtAuthorScoreAvgLevel{
+		CooperateIndex: utils.FriendlyFloat64(float64(videoScore.AvgLevel.CooperateIndex) / 100),
+		CpIndex:        utils.FriendlyFloat64(float64(videoScore.AvgLevel.CpIndex) / 100),
+		GrowthIndex:    utils.FriendlyFloat64(float64(videoScore.AvgLevel.GrowthIndex) / 100),
+		ShoppingIndex:  utils.FriendlyFloat64(float64(videoScore.AvgLevel.ShoppingIndex) / 100),
+		SpreadIndex:    utils.FriendlyFloat64(float64(videoScore.AvgLevel.SpreadIndex) / 100),
+		TopScore:       utils.FriendlyFloat64(float64(videoScore.AvgLevel.TopScore) / 100),
+	}
 	return
 }

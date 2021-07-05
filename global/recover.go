@@ -36,7 +36,7 @@ func RequestRecoverPanic(ctx *context.Context) {
 			ctx.ResponseWriter.WriteHeader(500)
 		}
 		response := map[string]interface{}{
-			"errCode": 50000,
+			"errCode": 5000,
 			"errMsg":  "[CRITICAL] 系统错误",
 		}
 		jb, _ := json.Marshal(response)
