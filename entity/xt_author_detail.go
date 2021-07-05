@@ -7,7 +7,7 @@ var XtAuthorDetailMap = HbaseEntity{
 	"distributions":         {AJson, "distributions"},
 	"live_focus_data":       {Json, "live_focus_data"},
 	"live_ltm_description":  {Json, "live_ltm_description"},
-	"live_ltm_item_statics": {Json, "live_ltm_item_statics"},
+	"live_ltm_item_statics": {AJson, "live_ltm_item_statics"},
 	"live_mark_info":        {Json, "live_mark_info"},
 	"live_score":            {Json, "live_score"},
 	"ltm_description":       {Json, "ltm_description"},
