@@ -38,9 +38,24 @@ func (receiver *AuthorController) AuthorBaseData() {
 			ShopLogo:      reputation.ShopLogo,
 		},
 		"has_star_detail": false,
-		"star_detail":     nil,
 		"rank":            nil,
 	}
+	receiver.SuccReturn(returnMap)
+	return
+}
+
+//星图指数数据
+func (receiver *AuthorController) AuthorStarSimpleData() {
+	authorId := receiver.Ctx.Input.Param(":author_id")
+	if authorId == "" {
+		receiver.FailReturn(global.NewError(4000))
+		return
+	}
+	returnMap := map[string]interface{}{
+		"has_star_detail": false,
+		"star_detail":     nil,
+	}
+	authorBusiness := business.NewAuthorBusiness()
 	xtDetail, comErr := authorBusiness.HbaseGetXtAuthorDetail(authorId)
 	if comErr == nil {
 		returnMap["has_star_detail"] = true
