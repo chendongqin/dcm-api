@@ -52,6 +52,7 @@ func (a *AuthorBusiness) HbaseGetAuthor(authorId string) (data *entity.DyAuthor,
 	author := &entity.DyAuthor{}
 	utils.MapToStruct(authorMap, author)
 	author.AuthorID = author.Data.ID
+	author.Data.Age = GetAge(author.Data.Birthday)
 	data = author
 	return
 }

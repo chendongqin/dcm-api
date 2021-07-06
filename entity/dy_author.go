@@ -15,14 +15,14 @@ type DyAuthor struct {
 }
 
 type DyAuthorData struct {
-	Avatar       string `json:"avatar"`
-	AwemeCount   int64  `json:"aweme_count"`
-	Birthday     string `json:"birthday"`
-	City         string `json:"city"`
-	Commerce     int64  `json:"commerce"`
-	Country      string `json:"country"`
-	DongtaiCount int64  `json:"dongtai_count"`
-	//Fans                  DyAuthorFans `json:"fans"`
+	Avatar                string `json:"avatar"`
+	AwemeCount            int64  `json:"aweme_count"`
+	Birthday              string `json:"birthday"`
+	Age                   int    `json:"age"`
+	City                  string `json:"city"`
+	Commerce              int64  `json:"commerce"`
+	Country               string `json:"country"`
+	DongtaiCount          int64  `json:"dongtai_count"`
 	FollowerCount         int64  `json:"follower_count"`
 	FollowingCount        int64  `json:"following_count"`
 	Gender                int64  `json:"gender"`
