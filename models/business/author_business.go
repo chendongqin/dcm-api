@@ -5,6 +5,7 @@ import (
 	"dongchamao/entity"
 	"dongchamao/global"
 	"dongchamao/global/utils"
+	"dongchamao/services/dyimg"
 	"dongchamao/services/hbaseService"
 	"dongchamao/services/hbaseService/hbase"
 	"dongchamao/services/hbaseService/hbasehelper"
@@ -53,6 +54,7 @@ func (a *AuthorBusiness) HbaseGetAuthor(authorId string) (data *entity.DyAuthor,
 	utils.MapToStruct(authorMap, author)
 	author.AuthorID = author.Data.ID
 	author.Data.Age = GetAge(author.Data.Birthday)
+	author.Data.Avatar = dyimg.Fix(author.Data.Avatar)
 	data = author
 	return
 }
