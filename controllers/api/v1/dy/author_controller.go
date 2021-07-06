@@ -29,7 +29,7 @@ func (receiver *AuthorController) AuthorBaseData() {
 		return
 	}
 	returnMap := map[string]interface{}{
-		"author_base": authorBase.Data,
+		"author_base": authorBase,
 		"reputation": dy.RepostSimpleReputation{
 			Score:         reputation.Score,
 			Level:         reputation.Level,

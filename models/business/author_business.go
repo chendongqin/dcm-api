@@ -12,6 +12,8 @@ import (
 	"dongchamao/structinit/repost/dy"
 )
 
+const ShareUrlPrefix = "https://www.iesdouyin.com/share/user/"
+
 type AuthorBusiness struct {
 }
 
@@ -19,7 +21,7 @@ func NewAuthorBusiness() *AuthorBusiness {
 	return new(AuthorBusiness)
 }
 
-func (a *AuthorBusiness) HbaseGetAuthors(rowKeys []*hbase.TGet) (data []*entity.DyAuthor) {
+func (a *AuthorBusiness) HbaseGetAuthors(rowKeys []*hbase.TGet) (data []entity.DyAuthorData) {
 	client := global.HbasePools.Get("default")
 	tableName := hbaseService.HbaseDyAuthor
 	tableBytes := []byte(tableName)
@@ -32,13 +34,19 @@ func (a *AuthorBusiness) HbaseGetAuthors(rowKeys []*hbase.TGet) (data []*entity.
 		author := &entity.DyAuthor{}
 		utils.MapToStruct(authorMap, author)
 		author.AuthorID = author.Data.ID
-		data = append(data, author)
+		author.Data.Age = GetAge(author.Data.Birthday)
+		author.Data.Avatar = dyimg.Fix(author.Data.Avatar)
+		author.Data.ShareUrl = ShareUrlPrefix + author.AuthorID
+		if author.Data.UniqueID == "" {
+			author.Data.UniqueID = author.Data.ShortID
+		}
+		data = append(data, author.Data)
 	}
 	return
 }
 
 //达人基础数据
-func (a *AuthorBusiness) HbaseGetAuthor(authorId string) (data *entity.DyAuthor, comErr global.CommonError) {
+func (a *AuthorBusiness) HbaseGetAuthor(authorId string) (data entity.DyAuthorData, comErr global.CommonError) {
 	query := hbasehelper.NewQuery()
 	result, err := query.SetTable(hbaseService.HbaseDyAuthor).GetByRowKey([]byte(authorId))
 	if err != nil {
@@ -55,7 +63,11 @@ func (a *AuthorBusiness) HbaseGetAuthor(authorId string) (data *entity.DyAuthor,
 	author.AuthorID = author.Data.ID
 	author.Data.Age = GetAge(author.Data.Birthday)
 	author.Data.Avatar = dyimg.Fix(author.Data.Avatar)
-	data = author
+	author.Data.ShareUrl = ShareUrlPrefix + author.AuthorID
+	if author.Data.UniqueID == "" {
+		author.Data.UniqueID = author.Data.ShortID
+	}
+	data = author.Data
 	return
 }
 

@@ -43,6 +43,7 @@ type DyAuthorData struct {
 	UniqueID              string `json:"unique_id"`
 	VerificationType      int64  `json:"verification_type"`
 	VerifyName            string `json:"verify_name"`
+	ShareUrl              string `json:"share_url"`
 }
 
 //type DyAuthorFans struct {
