@@ -75,7 +75,7 @@ func (receiver *CommonController) CheckSmsCode() {
 		receiver.FailReturn(global.NewError(4000))
 		return
 	}
-	code := receiver.GetString("code", "")
+	code := receiver.GetString(":code", "")
 	codeKey := cache.GetCacheKey(cache.SmsCodeVerify, grantType, mobile)
 	verifyCode := global.Cache.Get(codeKey)
 	if verifyCode != code {

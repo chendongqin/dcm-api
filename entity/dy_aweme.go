@@ -1,7 +1,7 @@
 package entity
 
 var DyAwemeMap = HbaseEntity{
-	"aweme_id":   {String, "author_id"},
+	"aweme_id":   {String, "aweme_id"},
 	"crawl_time": {Long, "crawl_time"},
 	"data":       {Json, "data"},
 }

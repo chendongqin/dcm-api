@@ -5,6 +5,7 @@ import (
 	"dongchamao/global"
 	"dongchamao/models/business"
 	"dongchamao/structinit/repost/dy"
+	"time"
 )
 
 type AuthorController struct {
@@ -97,6 +98,46 @@ func (receiver *AuthorController) XtAuthorDetail() {
 	}
 	receiver.SuccReturn(map[string]interface{}{
 		"detail": detail,
+	})
+	return
+}
+
+//达人视频概览
+func (receiver *AuthorController) AuthorAwemesByDay() {
+	authorId := receiver.Ctx.Input.Param(":author_id")
+	startDay := receiver.Ctx.Input.Param(":start")
+	endDay := receiver.Ctx.Input.Param(":end")
+	if authorId == "" || startDay == "" {
+		receiver.FailReturn(global.NewError(4000))
+		return
+	}
+	if endDay == "" {
+		endDay = time.Now().Format("2006-01-02")
+	}
+	aABusiness := business.NewAuthorAwemeBusiness()
+	pslTime := "2006-01-02"
+	t1, err := time.ParseInLocation(pslTime, startDay, time.Local)
+	if err != nil {
+		receiver.FailReturn(global.NewError(4000))
+		return
+	}
+	t2, err := time.ParseInLocation(pslTime, endDay, time.Local)
+	if err != nil {
+		receiver.FailReturn(global.NewError(4000))
+		return
+	}
+	if t1.After(t2) {
+		receiver.FailReturn(global.NewError(4000))
+		return
+	}
+	//限制时间
+	if t2.After(t1.AddDate(0, 0, 90)) {
+		receiver.FailReturn(global.NewError(4000))
+		return
+	}
+	videoOverview := aABusiness.HbaseGetVideoAgg(authorId, t1.Format("20060102"), t2.Format("20060102"))
+	receiver.SuccReturn(map[string]interface{}{
+		"video_overview": videoOverview,
 	})
 	return
 }
