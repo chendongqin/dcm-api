@@ -127,8 +127,9 @@ func (receiver *AccountController) ResetPwd() {
 	}
 	pwd := utils.Md5_encode(newPwd + user.Salt)
 	affect, _ := dcm.UpdateInfo(nil, user.Id, map[string]interface{}{
-		"password":    pwd,
-		"update_time": utils.GetNowTimeStamp(),
+		"password":     pwd,
+		"set_password": 1,
+		"update_time":  utils.GetNowTimeStamp(),
 	}, new(dcm.DcUser))
 	if affect == 0 {
 		receiver.FailReturn(global.NewError(4213))

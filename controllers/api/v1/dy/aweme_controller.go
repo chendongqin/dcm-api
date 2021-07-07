@@ -23,7 +23,7 @@ func (receiver *AwemeController) AwemeBaseData() {
 		return
 	}
 	receiver.SuccReturn(map[string]interface{}{
-		"aweme_base": awemeBase.Data,
+		"aweme_base": awemeBase,
 	})
 	return
 }

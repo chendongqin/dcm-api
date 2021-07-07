@@ -16,7 +16,7 @@ func NewAwemeBusiness() *AwemeBusiness {
 	return new(AwemeBusiness)
 }
 
-func (a *AwemeBusiness) HbaseGetAweme(awemeId string) (data *entity.DyAweme, comErr global.CommonError) {
+func (a *AwemeBusiness) HbaseGetAweme(awemeId string) (data entity.DyAwemeData, comErr global.CommonError) {
 	query := hbasehelper.NewQuery()
 	result, err := query.SetTable(hbaseService.HbaseDyAweme).GetByRowKey([]byte(awemeId))
 	if err != nil {
@@ -33,6 +33,7 @@ func (a *AwemeBusiness) HbaseGetAweme(awemeId string) (data *entity.DyAweme, com
 	aweme.AwemeID = aweme.Data.ID
 	duration := math.Ceil(float64(aweme.Data.Duration) / 1000)
 	aweme.Data.Duration = utils.ToInt(duration)
-	data = aweme
+	aweme.Data.AwemeTitle = aweme.AwemeTitle
+	data = aweme.Data
 	return
 }

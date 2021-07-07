@@ -6,6 +6,7 @@ import (
 	"dongchamao/services/hbaseService"
 	"dongchamao/services/hbaseService/hbasehelper"
 	"dongchamao/structinit/repost/dy"
+	"fmt"
 	"time"
 )
 
@@ -30,7 +31,13 @@ func (a *AuthorAwemeBusiness) HbaseGetVideoAgg(authorId, startDate, endDate stri
 	}
 	var videoNum, productVideo int64
 	var diggMax, diggMin, diggCount, commentMax, commentMin, commentCount, forwardMax, forwardMin, forwardCount int64
-	durationChartMap := map[string]int{}
+	durationChartMap := map[string]int{
+		"up_120": 0,
+		"up_60":  0,
+		"up_30":  0,
+		"up_15":  0,
+		"up_0":   0,
+	}
 	publishChartMap := map[string]int{}
 	for _, v := range results {
 		dataMap := hbaseService.HbaseFormat(v, entity.DyAuthorAwemeAggMap)
@@ -40,7 +47,7 @@ func (a *AuthorAwemeBusiness) HbaseGetVideoAgg(authorId, startDate, endDate stri
 			aggCreateTime := time.Unix(agg.AwemeCreateTime, 0)
 			hour := aggCreateTime.Format("15")
 			videoNum++
-			if len(agg.DyPromotionId) > 0 {
+			if agg.DyPromotionId != "0" {
 				productVideo++
 			}
 			diggCount += agg.DiggCount
@@ -60,11 +67,7 @@ func (a *AuthorAwemeBusiness) HbaseGetVideoAgg(authorId, startDate, endDate stri
 			} else {
 				durationLab = "up_0"
 			}
-			if _, ok := durationChartMap[durationLab]; ok {
-				durationChartMap[durationLab] += 1
-			} else {
-				durationChartMap[durationLab] = 1
-			}
+			durationChartMap[durationLab] += 1
 			//发布时间
 			if _, ok := publishChartMap[hour]; ok {
 				publishChartMap[hour] += 1
@@ -92,14 +95,44 @@ func (a *AuthorAwemeBusiness) HbaseGetVideoAgg(authorId, startDate, endDate stri
 			}
 		}
 	}
-	data.AvgDiggCount = diggCount / videoNum
-	data.AvgCommentCount = commentCount / videoNum
-	data.AvgForwardCount = forwardCount / videoNum
+	if videoNum > 0 {
+		data.AvgDiggCount = diggCount / videoNum
+		data.AvgCommentCount = commentCount / videoNum
+		data.AvgForwardCount = forwardCount / videoNum
+	}
 	data.DiggMax = diggMax
 	data.DiggMin = diggMin
 	data.CommentMax = commentMax
 	data.CommentMin = commentMin
 	data.ForwardMax = forwardMax
 	data.ForwardMin = forwardMin
+	data.VideoNum = videoNum
+	data.ProductVideo = productVideo
+	for k, v := range durationChartMap {
+		data.DurationChart = append(data.DurationChart, dy.VideoChart{
+			Name:  k,
+			Value: v,
+		})
+	}
+	for i := 0; i <= 23; i++ {
+		hour := fmt.Sprintf("%02d", i)
+		if _, ok := publishChartMap[hour]; !ok {
+			publishChartMap[hour] = 0
+		}
+		data.PublishChart = append(data.PublishChart, dy.VideoChart{
+			Name:  hour,
+			Value: publishChartMap[hour],
+		})
+	}
+	//总增量图表
+	//t1, _ := time.ParseInLocation("20060102", startDate, time.Local)
+	//t2, _ := time.ParseInLocation("20060102", endDate, time.Local)
+	//beginDatetime := t1
+	//for {
+	//	if beginDatetime.After(t2) {
+	//		break
+	//	}
+	//
+	//}
 	return
 }

@@ -6,7 +6,6 @@ type AuthorVideoOverview struct {
 	AvgDiggCount    int64            `json:"avg_digg_count"`
 	AvgCommentCount int64            `json:"avg_comment_count"`
 	AvgForwardCount int64            `json:"avg_forward_count"`
-	DiggRate        float64          `json:"digg_rate"`
 	DurationChart   []VideoChart     `json:"duration_chart"`
 	PublishChart    []VideoChart     `json:"publish_chart"`
 	DiggChart       []VideoDateChart `json:"digg_chart"`
@@ -22,7 +21,7 @@ type AuthorVideoOverview struct {
 
 type VideoChart struct {
 	Name  string `json:"name"`
-	Value int64  `json:"value"`
+	Value int    `json:"value"`
 }
 
 type VideoDateChart struct {

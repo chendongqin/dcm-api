@@ -1,22 +1,24 @@
 package entity
 
 var DyAwemeMap = HbaseEntity{
-	"aweme_id":   {String, "aweme_id"},
-	"crawl_time": {Long, "crawl_time"},
-	"data":       {Json, "data"},
+	"aweme_id":    {String, "aweme_id"},
+	"crawl_time":  {Long, "crawl_time"},
+	"aweme_title": {String, "aweme_title"},
+	"data":        {Json, "data"},
 }
 
 type DyAweme struct {
-	AwemeID   string      `json:"aweme_id"`
-	CrawlTime int         `json:"crawl_time"`
-	Data      DyAwemeData `json:"data"`
+	AwemeID    string      `json:"aweme_id"`
+	CrawlTime  int         `json:"crawl_time"`
+	AwemeTitle string      `json:"aweme_title"`
+	Data       DyAwemeData `json:"data"`
 }
 
 type DyAwemeData struct {
 	AuthorID        string         `json:"author_id"`
 	AwemeCover      string         `json:"aweme_cover"`
-	AwemeCreateTime int64          `json:"aweme_create_time"`
 	AwemeTitle      string         `json:"aweme_title"`
+	AwemeCreateTime int64          `json:"aweme_create_time"`
 	AwemeURL        string         `json:"aweme_url"`
 	CommentCount    int            `json:"comment_count"`
 	DiggCount       int64          `json:"digg_count"`
