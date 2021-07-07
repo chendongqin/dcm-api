@@ -234,7 +234,7 @@ func (this *ApiBaseController) InitUserToken(args ...bool) (commonErr global.Com
 		this.appId = tokenStruct.AppId
 		this.Token = tokenString
 		userInfo := dcm.DcUser{}
-		_,err := dcm.Get(this.UserId, &userInfo)
+		_, err := dcm.Get(this.UserId, &userInfo)
 		if err != nil || userInfo.Id == 0 {
 			return global.NewError(42004)
 		}
@@ -305,7 +305,7 @@ func (this *ApiBaseController) InitApi() {
 			}
 		}
 	}
-	if this.Ctx.Request.Method == "POST" || this.Ctx.Request.Method == "PUT"{
+	if this.Ctx.Request.Method == "POST" || this.Ctx.Request.Method == "PUT" {
 		var inputFormat interface{}
 		_ = json.Unmarshal(this.Ctx.Input.RequestBody, &inputFormat)
 		this.ApiDatas = inputFormat
@@ -355,11 +355,11 @@ func (this *ApiBaseController) InputFormatArr() (retInput []global.InputMap) {
 func (this *ApiBaseController) LogInputOutput(logtype string, args interface{}) {
 	//if global.Cfg.String("request_input_output_log") == "ON" {
 	//	userGroupId := this.GetUserGroupId()
-		//if logtype == "Output" {
-		//	cmmlog.LogInput(this.Ctx.Input.Header("X-Request-Id"), this.Ctx.Input.Header("X-Client-Id"), "Output", this.appId, this.UserId, this.Ctx.Request.URL.String(), this.Ctx.Request.Method, this.Ctx.Input.IP(), this.Ctx.Request.UserAgent(), "", args, userGroupId, this.Ctx.Input.Header("X-Remote-Addr"))
-		//} else {
-		//	cmmlog.LogInput(this.Ctx.Input.Header("X-Request-Id"), this.Ctx.Input.Header("X-Client-Id"), logtype, this.appId, this.UserId, this.Ctx.Request.URL.String(), this.Ctx.Request.Method, this.Ctx.Input.IP(), this.Ctx.Request.UserAgent(), this.Ctx.Request.Referer(), args, userGroupId, this.Ctx.Input.Header("X-Remote-Addr"))
-		//}
+	//if logtype == "Output" {
+	//	cmmlog.LogInput(this.Ctx.Input.Header("X-Request-Id"), this.Ctx.Input.Header("X-Client-Id"), "Output", this.appId, this.UserId, this.Ctx.Request.URL.String(), this.Ctx.Request.Method, this.Ctx.Input.IP(), this.Ctx.Request.UserAgent(), "", args, userGroupId, this.Ctx.Input.Header("X-Remote-Addr"))
+	//} else {
+	//	cmmlog.LogInput(this.Ctx.Input.Header("X-Request-Id"), this.Ctx.Input.Header("X-Client-Id"), logtype, this.appId, this.UserId, this.Ctx.Request.URL.String(), this.Ctx.Request.Method, this.Ctx.Input.IP(), this.Ctx.Request.UserAgent(), this.Ctx.Request.Referer(), args, userGroupId, this.Ctx.Input.Header("X-Remote-Addr"))
+	//}
 	//}
 }
 
@@ -497,13 +497,13 @@ func (this *ApiBaseController) Prepare() {
 	this.AsfCheck()
 }
 
-func (this *ApiBaseController) IsSEOSpider() bool {
-	// 因为seo spider请求会经前端SEO程序转发，直接判断入网IP即可
-	if this.Ctx.Request.RemoteAddr == "47.103.153.227" || this.Ctx.Input.IP() == "47.103.153.227" {
-		return true
-	}
-	return false
-}
+//func (this *ApiBaseController) IsSEOSpider() bool {
+//	// 因为seo spider请求会经前端SEO程序转发，直接判断入网IP即可
+//	if this.Ctx.Request.RemoteAddr == "47.103.153.227" || this.Ctx.Input.IP() == "47.103.153.227" {
+//		return true
+//	}
+//	return false
+//}
 
 // 验证拦截
 func (this *ApiBaseController) AsfCheck() {
@@ -528,14 +528,6 @@ func (this *ApiBaseController) AsfCheck() {
 			return
 		}
 	}
-}
-
-func (this *ApiBaseController) GetUserGroupId() int {
-	groupId := 0
-	//if this.UserInfo != nil && this.UserInfo.Status == logic.UserStatusNormal {
-	//	groupId = this.UserInfo.GroupId
-	//}
-	return groupId
 }
 
 func (this *ApiBaseController) GetUri() string {
@@ -613,5 +605,5 @@ func (c *ApiBaseController) CheckCaptcha() (ok bool, err error) {
 	//if resp.Response.CaptchaCode != nil && *resp.Response.CaptchaCode == tencent.CaptchaCodeSuccess {
 	//	ok = true
 	//}
-	return true,nil
+	return true, nil
 }
