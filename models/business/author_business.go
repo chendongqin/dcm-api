@@ -91,7 +91,7 @@ func (a *AuthorBusiness) HbaseGetFansRangDate(authorId, startDate, endDate strin
 		fansData := dateMap[date]
 		inc1 := fansData.FollowerCount - beforeData.FollowerCount
 		inc2 := fansData.TotalFansGroupCount - beforeData.TotalFansGroupCount
-		dateArr = append(dateArr, date)
+		dateArr = append(dateArr, beginDatetime.Format("01/02"))
 		incArr = append(incArr, inc1)
 		incGroupArr = append(incGroupArr, inc2)
 		countArr = append(countArr, fansData.FollowerCount)
