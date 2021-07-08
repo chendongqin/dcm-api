@@ -99,12 +99,12 @@ func (a *AuthorBusiness) HbaseGetFansRangDate(authorId, startDate, endDate strin
 		beforeData = fansData
 		beginDatetime = beginDatetime.AddDate(0, 0, 1)
 	}
-	data["count"] = dy.DateChart{
+	data["fans"] = dy.DateChart{
 		Date:       dateArr,
 		CountValue: countArr,
 		IncValue:   incArr,
 	}
-	data["inc"] = dy.DateChart{
+	data["fans_group"] = dy.DateChart{
 		Date:       dateArr,
 		CountValue: countGroupArr,
 		IncValue:   incGroupArr,
