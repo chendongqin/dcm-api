@@ -171,8 +171,6 @@ func (receiver *AuthorController) AuthorFansChart() {
 		receiver.FailReturn(comErr)
 		return
 	}
-	receiver.SuccReturn(map[string]interface{}{
-		"chart": data,
-	})
+	receiver.SuccReturn(data)
 	return
 }
