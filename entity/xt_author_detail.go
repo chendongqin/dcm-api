@@ -1,5 +1,14 @@
 package entity
 
+const (
+	XtBrandDistribution    = 8   //设备品牌分布
+	XtGenderDistribution   = 1   //性别分布
+	XtActiveDistribution   = 512 //观看频率分布
+	XtAgeDistribution      = 2   //年龄分布
+	XtCityDistribution     = 256 //城市分布
+	XtProvinceDistribution = 4   //省份分布
+)
+
 var XtAuthorDetailMap = HbaseEntity{
 	"author_show_items":     {Json, "author_show_items"},
 	"base_info":             {Json, "base_info"},
@@ -120,7 +129,7 @@ type XtAuthorBaseInfo struct {
 
 type XtDistributionsList struct {
 	DistributionKey   string `json:"distribution_key"`
-	DistributionValue int    `json:"distribution_value"`
+	DistributionValue int64  `json:"distribution_value"`
 }
 
 type XtAuthorDistributions struct {

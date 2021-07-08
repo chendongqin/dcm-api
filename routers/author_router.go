@@ -11,6 +11,7 @@ func init() {
 	beego.Router("/v1/dy/author/reputation/:author_id", &v1dy.AuthorController{}, "get:Reputation")
 	beego.Router("/v1/dy/author/awemes/:author_id/:start/:end", &v1dy.AuthorController{}, "get:AuthorAwemesByDay")
 	beego.Router("/v1/dy/author/fans/:author_id/:start/:end", &v1dy.AuthorController{}, "get:AuthorFansChart")
+	beego.Router("/v1/dy/author/fans/analysis/:author_id", &v1dy.AuthorController{}, "get:AuthorFansAnalyse")
 
 	beego.Router("/v1/dy/xt/author/index/:author_id", &v1dy.AuthorController{}, "get:AuthorStarSimpleData")
 	beego.Router("/v1/dy/xt/author/:author_id", &v1dy.AuthorController{}, "get:XtAuthorDetail")

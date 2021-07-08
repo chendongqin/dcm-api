@@ -2,6 +2,7 @@ package dy
 
 import (
 	controllers "dongchamao/controllers/api"
+	"dongchamao/entity"
 	"dongchamao/global"
 	"dongchamao/models/business"
 	"dongchamao/structinit/repost/dy"
@@ -66,6 +67,7 @@ func (receiver *AuthorController) AuthorStarSimpleData() {
 	return
 }
 
+//达人口碑
 func (receiver *AuthorController) Reputation() {
 	authorId := receiver.Ctx.Input.Param(":author_id")
 	if authorId == "" {
@@ -84,6 +86,7 @@ func (receiver *AuthorController) Reputation() {
 	return
 }
 
+//星图达人详情
 func (receiver *AuthorController) XtAuthorDetail() {
 	authorId := receiver.Ctx.Input.Param(":author_id")
 	if authorId == "" {
@@ -127,7 +130,7 @@ func (receiver *AuthorController) AuthorAwemesByDay() {
 		return
 	}
 	//时间限制
-	if t1.After(t2) || t2.After(t1.AddDate(0, 0, 90)) {
+	if t1.After(t2) || t2.After(t1.AddDate(0, 0, 90)) || t2.After(time.Now()) {
 		receiver.FailReturn(global.NewError(4000))
 		return
 	}
@@ -161,7 +164,7 @@ func (receiver *AuthorController) AuthorFansChart() {
 		receiver.FailReturn(global.NewError(4000))
 		return
 	}
-	if t1.After(t2) || t2.After(t1.AddDate(0, 0, 90)) {
+	if t1.After(t2) || t2.After(t1.AddDate(0, 0, 90)) || t2.After(time.Now()) {
 		receiver.FailReturn(global.NewError(4000))
 		return
 	}
@@ -171,6 +174,45 @@ func (receiver *AuthorController) AuthorFansChart() {
 		receiver.FailReturn(comErr)
 		return
 	}
+	receiver.SuccReturn(data)
+	return
+}
+
+//粉丝分布分析
+func (receiver *AuthorController) AuthorFansAnalyse() {
+	authorId := receiver.Ctx.Input.Param(":author_id")
+	if authorId == "" {
+		receiver.FailReturn(global.NewError(4000))
+		return
+	}
+	authorBusiness := business.NewAuthorBusiness()
+	detail, comErr := authorBusiness.HbaseGetXtAuthorDetail(authorId)
+	data := map[string][]entity.XtDistributionsList{}
+	if comErr == nil {
+		for _, v := range detail.Distributions {
+			name := ""
+			switch v.Type {
+			case entity.XtGenderDistribution:
+				name = "gender"
+			case entity.XtCityDistribution:
+				name = "city"
+			case entity.XtAgeDistribution:
+				name = "age"
+			case entity.XtProvinceDistribution:
+				name = "province"
+			default:
+				continue
+			}
+			data[name] = v.DistributionList
+		}
+	} else {
+		data["gender"] = []entity.XtDistributionsList{}
+		data["city"] = []entity.XtDistributionsList{}
+		data["age"] = []entity.XtDistributionsList{}
+		data["province"] = []entity.XtDistributionsList{}
+	}
+	data["active_day"] = []entity.XtDistributionsList{}
+	data["active_week"] = []entity.XtDistributionsList{}
 	receiver.SuccReturn(data)
 	return
 }
