@@ -132,7 +132,7 @@ func (a *AuthorAwemeBusiness) HbaseGetVideoAgg(authorId, startDate, endDate stri
 	//	if beginDatetime.After(t2) {
 	//		break
 	//	}
-	//
+	//	beginDatetime = beginDatetime.AddDate(0,0,1)
 	//}
 	return
 }

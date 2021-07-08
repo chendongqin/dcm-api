@@ -126,18 +126,53 @@ func (receiver *AuthorController) AuthorAwemesByDay() {
 		receiver.FailReturn(global.NewError(4000))
 		return
 	}
-	if t1.After(t2) {
-		receiver.FailReturn(global.NewError(4000))
-		return
-	}
-	//限制时间
-	if t2.After(t1.AddDate(0, 0, 90)) {
+	//时间限制
+	if t1.After(t2) || t2.After(t1.AddDate(0, 0, 90)) {
 		receiver.FailReturn(global.NewError(4000))
 		return
 	}
 	videoOverview := aABusiness.HbaseGetVideoAgg(authorId, t1.Format("20060102"), t2.Format("20060102"))
 	receiver.SuccReturn(map[string]interface{}{
 		"video_overview": videoOverview,
+	})
+	return
+}
+
+//粉丝趋势图
+func (receiver *AuthorController) AuthorFansChart() {
+	authorId := receiver.Ctx.Input.Param(":author_id")
+	startDay := receiver.Ctx.Input.Param(":start")
+	endDay := receiver.Ctx.Input.Param(":end")
+	if authorId == "" || startDay == "" {
+		receiver.FailReturn(global.NewError(4000))
+		return
+	}
+	if endDay == "" {
+		endDay = time.Now().Format("2006-01-02")
+	}
+	pslTime := "2006-01-02"
+	t1, err := time.ParseInLocation(pslTime, startDay, time.Local)
+	if err != nil {
+		receiver.FailReturn(global.NewError(4000))
+		return
+	}
+	t2, err := time.ParseInLocation(pslTime, endDay, time.Local)
+	if err != nil {
+		receiver.FailReturn(global.NewError(4000))
+		return
+	}
+	if t1.After(t2) || t2.After(t1.AddDate(0, 0, 90)) {
+		receiver.FailReturn(global.NewError(4000))
+		return
+	}
+	authorBusiness := business.NewAuthorBusiness()
+	data, comErr := authorBusiness.HbaseGetFansRangDate(authorId, t1.Format("20060102"), t2.Format("20060102"))
+	if comErr != nil {
+		receiver.FailReturn(comErr)
+		return
+	}
+	receiver.SuccReturn(map[string]interface{}{
+		"chart": data,
 	})
 	return
 }

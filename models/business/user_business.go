@@ -9,20 +9,6 @@ import (
 	"time"
 )
 
-//用户等级
-const (
-	UserLevelDefault = 0 //普通会员
-	UserLevelVip     = 1 //vip
-	UserLevelSvip    = 2 //svip
-	UserLevelJewel   = 3 //专业版
-)
-
-const (
-	VipPlatformDouYin      = 1 //抖音
-	VipPlatformXiaoHongShu = 2 //小红书
-	VipPlatformTaoBao      = 3 //淘宝
-)
-
 type UserBusiness struct {
 }
 
@@ -34,25 +20,6 @@ type TokenData struct {
 	AppId      int   `json:"appId"`
 	Id         int   `json:"id"`
 	ExpireTime int64 `json:"expire_time"`
-}
-
-//获取会员等级
-func (this *UserBusiness) GetUserLevels() map[int]string {
-	levels := map[int]string{}
-	levels[UserLevelDefault] = "普通会员"
-	levels[UserLevelVip] = "vip"
-	levels[UserLevelSvip] = "svip"
-	levels[UserLevelJewel] = "专业版"
-	return levels
-}
-
-//获取等级名称
-func (receiver *UserBusiness) GetUserLevel(level int) string {
-	userLevels := receiver.GetUserLevels()
-	if v, ok := userLevels[level]; ok {
-		return v
-	}
-	return ""
 }
 
 func (receiver *UserBusiness) AddOrUpdateUniqueToken(userId int, appId int, token string) error {
@@ -92,49 +59,6 @@ func (receiver *UserBusiness) GetUniqueToken(userId int, appId int, enableCache 
 	}
 
 	return userTokenM.Token, exist
-}
-
-//获取用户vip等级
-func (receiver *UserBusiness) GetVipLevel(userId int) map[int]int {
-	vipLists := make([]dcm.DcUserVip, 0)
-	err := dcm.GetDbSession().Where("user_id=? ", userId).Find(&vipLists)
-	vipMap := map[int]int{}
-	if err == nil {
-		for _, v := range vipLists {
-			var level = 0
-			if v.Expiration.Unix() > time.Now().Unix() {
-				level = v.Level
-			} else if v.OrderValidDay > 0 {
-				levelTmp, res := receiver.UpdateValidDayOne(userId, v.Platform)
-				if res {
-					level = levelTmp
-				}
-			}
-			vipMap[v.Platform] = level
-		}
-	}
-	return vipMap
-}
-
-//更新会员等级
-func (receiver *UserBusiness) UpdateValidDayOne(userId, platformId int) (int, bool) {
-	vipModel := &dcm.DcUserVip{}
-	exist, _ := dcm.GetDbSession().Where("user_id=? AND platform=?", userId, platformId).Get(vipModel)
-	if !exist || vipModel.OrderValidDay <= 0 {
-		return 0, false
-	}
-	whereStr := "id=? AND expiration<=?"
-	updateData := map[string]interface{}{
-		"order_valid_day": 0,
-		"order_level":     0,
-		"level":           vipModel.OrderLevel,
-		"expiration":      vipModel.Expiration.AddDate(0, 0, vipModel.OrderValidDay).Format("2006-01-02 15:04:05"),
-	}
-	affect, err := dcm.GetDbSession().Table(new(dcm.DcUserVip)).Where(whereStr, vipModel.Id, time.Now().Format("2006-01-02 15:04:05")).Update(updateData)
-	if affect == 0 || err != nil {
-		return 0, false
-	}
-	return vipModel.OrderLevel, true
 }
 
 //token创建

@@ -50,7 +50,8 @@ func (receiver *AccountController) Login() {
 		Nickname: user.Nickname,
 		Avatar:   user.Avatar,
 	}
-	vipLevelsMap := userBusiness.GetVipLevel(user.Id)
+	vipBusiness := business.NewVipBusiness()
+	vipLevelsMap := vipBusiness.GetVipLevels(user.Id)
 	for k, v := range vipLevelsMap {
 		if k == business.VipPlatformDouYin {
 			account.DyLevel.Level = v
@@ -60,9 +61,9 @@ func (receiver *AccountController) Login() {
 			account.TbLevel.Level = v
 		}
 	}
-	account.DyLevel.LevelName = userBusiness.GetUserLevel(account.DyLevel.Level)
-	account.XhsLevel.LevelName = userBusiness.GetUserLevel(account.XhsLevel.Level)
-	account.TbLevel.LevelName = userBusiness.GetUserLevel(account.TbLevel.Level)
+	account.DyLevel.LevelName = vipBusiness.GetUserLevel(account.DyLevel.Level)
+	account.XhsLevel.LevelName = vipBusiness.GetUserLevel(account.XhsLevel.Level)
+	account.TbLevel.LevelName = vipBusiness.GetUserLevel(account.TbLevel.Level)
 	updateData := map[string]interface{}{
 		"login_time": utils.GetNowTimeStamp(),
 		"login_ip":   receiver.Ip,

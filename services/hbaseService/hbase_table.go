@@ -11,6 +11,7 @@ const (
 	HbaseDyAuthorAwemeAgg = "dy_author_aweme_agg" //达人抖音视频
 
 	HbaseDyAuthor       = "dy_author"        //抖音用户信息
+	HbaseDyAuthorFans   = "dy_author_fans"   //抖音用户信息
 	HbaseXtAuthorDetail = "xt_author_detail" //星图达人详情
 
 )

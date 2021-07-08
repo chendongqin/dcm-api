@@ -172,10 +172,10 @@ func (this *ApiBaseController) checkMonitorToken() {
 
 //不需要手机号码账号就能访问的接口白名单
 var NoPhoneWhiteRoute = []string{
-	"/v1/discountActivity/coupon/couponAddScore",
-	"/v1/vip/order/createAppleMonitorOrder",
-	"/v1/vip/order/createAppleOrder",
-	"/v1/vip/order/getOrderPrice",
+	//"/v1/discountActivity/coupon/couponAddScore",
+	//"/v1/vip/order/createAppleMonitorOrder",
+	//"/v1/vip/order/createAppleOrder",
+	//"/v1/vip/order/getOrderPrice",
 }
 
 func (this *ApiBaseController) InitUserToken(args ...bool) (commonErr global.CommonError) {
@@ -487,7 +487,7 @@ func (this *ApiBaseController) CheckUserGroupRight() {
 }
 
 //获取当前请求  最低需要的权限
-func (this *ApiBaseController) GetMinGroupId() int {
+func (this *ApiBaseController) GetMinLevel() int {
 	return 0
 }
 
