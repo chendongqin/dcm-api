@@ -19,8 +19,8 @@ type AliRe struct {
 }
 
 func SmsSend(phoneNum, templateCode, signName string, templateParam map[string]string) (bool, error) {
-	aliAccessKey := global.Cfg.String("ali_sms_accessKey")
-	aliAccessSecret := global.Cfg.String("ali_sms_secret")
+	aliAccessKey := global.Cfg.String("ali_accessKey")
+	aliAccessSecret := global.Cfg.String("ali_secret")
 	if aliAccessKey == "" || aliAccessSecret == "" {
 		return false, errors.New("配置加载失败")
 	}
@@ -56,11 +56,9 @@ func SmsSend(phoneNum, templateCode, signName string, templateParam map[string]s
 	return false, errors.New(re.Message)
 }
 
-
 func SmsCode(phoneNum, code string) (bool, error) {
 	templateParam := map[string]string{
-		"code":      code,
+		"code": code,
 	}
 	return SmsSend(phoneNum, CodeTemplateCode, AliSign, templateParam)
 }
-

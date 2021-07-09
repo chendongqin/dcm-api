@@ -106,9 +106,11 @@ func (a *AuthorAwemeBusiness) HbaseGetVideoAggRangeDate(authorId, startDate, end
 				if comErr == nil {
 					t1, _ := time.ParseInLocation("20060102", startDate, time.Local)
 					t2, _ := time.ParseInLocation("20060102", endDate, time.Local)
+					//首发补点
 					if _, ok := awemeData[start]; !ok {
 						awemeData[start] = entity.DyAwemeDiggCommentForwardCount{}
 					}
+					//末尾补点
 					if _, ok := awemeData[end]; !ok {
 						awemeBusiness := NewAwemeBusiness()
 						awemeBase, _ := awemeBusiness.HbaseGetAweme(awemeId)
@@ -120,11 +122,13 @@ func (a *AuthorAwemeBusiness) HbaseGetVideoAggRangeDate(authorId, startDate, end
 					}
 					beginDatetime := t1
 					beforeDay := t1.Format("20060102")
+					//空数据补点
 					for {
 						if beginDatetime.After(t2) {
 							break
 						}
 						today := beginDatetime.Format("20060102")
+						//数据不存在向前补点
 						if _, ok := awemeData[today]; !ok {
 							awemeData[today] = awemeData[beforeDay]
 						}
@@ -157,6 +161,7 @@ func (a *AuthorAwemeBusiness) HbaseGetVideoAggRangeDate(authorId, startDate, end
 			Value: v,
 		})
 	}
+	//小时数据
 	for i := 0; i <= 23; i++ {
 		hour := fmt.Sprintf("%02d", i)
 		if _, ok := publishChartMap[hour]; !ok {
