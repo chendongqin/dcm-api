@@ -184,6 +184,7 @@ func (a *AuthorAwemeBusiness) HbaseGetVideoAggRangeDate(authorId, startDate, end
 	}
 	t1, _ := time.ParseInLocation("20060102", startDate, time.Local)
 	t2, _ := time.ParseInLocation("20060102", endDate, time.Local)
+	//前一天数据，做增量计算
 	beginDatetime := t1
 	beforeSumData := entity.DyAwemeDiggCommentForwardCount{}
 	beforeDay := beginDatetime.AddDate(0, 0, -1).Format("20060102")
