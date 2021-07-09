@@ -31,3 +31,11 @@ type XtAuthorScoreAvgLevel struct {
 	SpreadIndex    float64 `json:"spread_index"`    //超过传播指数比例
 	TopScore       float64 `json:"top_score"`       //超过总分比例
 }
+
+type DyAuthorBasicChart struct {
+	FollowerCount  int64 `json:"follower_count"`
+	TotalFansCount int64 `json:"total_fans_count"`
+	TotalFavorited int64 `json:"total_favorited"`
+	CommentCount   int64 `json:"comment_count"`
+	ForwardCount   int64 `json:"forward_count"`
+}

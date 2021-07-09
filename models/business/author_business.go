@@ -60,9 +60,10 @@ func (a *AuthorBusiness) HbaseGetFansRangDate(authorId, startDate, endDate strin
 	//末点补点
 	if endDate == time.Now().Format("20060102") {
 		if _, ok := dateMap[endDate]; !ok {
-			dateMap[startDate] = entity.DyAuthorFans{
-				FollowerCount:       0,
-				TotalFansGroupCount: 0,
+			endData, _ := a.HbaseGetAuthorBasic(authorId, "")
+			dateMap[endDate] = entity.DyAuthorFans{
+				FollowerCount:       endData.FollowerCount,
+				TotalFansGroupCount: endData.TotalFansCount,
 			}
 		}
 	}
@@ -130,7 +131,7 @@ func (a *AuthorBusiness) HbaseGetFansByDate(authorId, date string) (data entity.
 	return
 }
 
-//达人基础数据
+//达人数据
 func (a *AuthorBusiness) HbaseGetAuthor(authorId string) (data entity.DyAuthorData, comErr global.CommonError) {
 	query := hbasehelper.NewQuery()
 	result, err := query.SetTable(hbaseService.HbaseDyAuthor).GetByRowKey([]byte(authorId))
@@ -153,6 +154,146 @@ func (a *AuthorBusiness) HbaseGetAuthor(authorId string) (data entity.DyAuthorDa
 		author.Data.UniqueID = author.Data.ShortID
 	}
 	data = author.Data
+	return
+}
+
+//达人基础数据
+func (a *AuthorBusiness) HbaseGetAuthorBasic(authorId, date string) (data entity.DyAuthorBasic, comErr global.CommonError) {
+	query := hbasehelper.NewQuery()
+	rowKey := authorId
+	if date != "" {
+		rowKey += "_" + date
+	}
+	result, err := query.SetTable(hbaseService.HbaseDyAuthorBasic).GetByRowKey([]byte(rowKey))
+	if err != nil {
+		comErr = global.NewMsgError(err.Error())
+		return
+	}
+	if result.Row == nil {
+		comErr = global.NewError(4040)
+		return
+	}
+	basicMap := hbaseService.HbaseFormat(result, entity.DyAuthorBasicMap)
+	utils.MapToStruct(basicMap, &data)
+	return
+}
+
+//达人基础数据趋势
+func (a *AuthorBusiness) HbaseGetAuthorBasicRangeDate(authorId, startDate, endDate string) (data map[string]dy.DateChart, comErr global.CommonError) {
+	data = map[string]dy.DateChart{}
+	query := hbasehelper.NewQuery()
+	startRow := authorId + "_" + startDate
+	endRow := authorId + "_" + endDate
+	results, err := query.
+		SetTable(hbaseService.HbaseDyAuthorBasic).
+		SetStartRow([]byte(startRow)).
+		SetStopRow([]byte(endRow)).
+		Scan(1000)
+	if err != nil {
+		return
+	}
+	dateMap := map[string]dy.DyAuthorBasicChart{}
+	for _, v := range results {
+		rowKey := string(v.GetRow())
+		rowKeyArr := strings.Split(rowKey, "_")
+		if len(rowKeyArr) < 2 {
+			comErr = global.NewError(5000)
+			return
+		}
+		date := rowKeyArr[1]
+		dataMap := hbaseService.HbaseFormat(v, entity.DyAuthorBasicMap)
+		hData := dy.DyAuthorBasicChart{}
+		utils.MapToStruct(dataMap, &hData)
+		dateMap[date] = hData
+	}
+	//起点补点操作
+	t1, _ := time.ParseInLocation("20060102", startDate, time.Local)
+	t2, _ := time.ParseInLocation("20060102", endDate, time.Local)
+	beforeDate := t1.AddDate(0, 0, -1).Format("20060102")
+	beforeBasicData, _ := a.HbaseGetAuthorBasic(authorId, beforeDate)
+	beforeData := dy.DyAuthorBasicChart{
+		FollowerCount:  beforeBasicData.FollowerCount,
+		TotalFansCount: beforeBasicData.TotalFansCount,
+		TotalFavorited: beforeBasicData.TotalFavorited,
+		CommentCount:   beforeBasicData.CommentCount,
+		ForwardCount:   beforeBasicData.ForwardCount,
+	}
+	if _, ok := dateMap[startDate]; !ok {
+		dateMap[startDate] = beforeData
+	}
+	//末点补点
+	if endDate == time.Now().Format("20060102") {
+		if _, ok := dateMap[endDate]; !ok {
+			basicData, _ := a.HbaseGetAuthorBasic(authorId, "")
+			dateMap[endDate] = dy.DyAuthorBasicChart{
+				FollowerCount:  basicData.FollowerCount,
+				TotalFansCount: basicData.TotalFansCount,
+				TotalFavorited: basicData.TotalFavorited,
+				CommentCount:   basicData.CommentCount,
+				ForwardCount:   basicData.ForwardCount,
+			}
+		}
+	}
+	dateArr := make([]string, 0)
+	fansCountArr := make([]int64, 0)
+	fanIncArr := make([]int64, 0)
+	fansGroupCountArr := make([]int64, 0)
+	fansGroupIncArr := make([]int64, 0)
+	diggCountArr := make([]int64, 0)
+	diggIncArr := make([]int64, 0)
+	commentCountArr := make([]int64, 0)
+	commentIncArr := make([]int64, 0)
+	forwardCountArr := make([]int64, 0)
+	forwardIncArr := make([]int64, 0)
+	beginDatetime := t1
+	for {
+		if beginDatetime.After(t2) {
+			break
+		}
+		date := beginDatetime.Format("20060102")
+		if _, ok := dateMap[date]; !ok {
+			dateMap[date] = beforeData
+		}
+		currentData := dateMap[date]
+		dateArr = append(dateArr, beginDatetime.Format("01/02"))
+		fansCountArr = append(fansCountArr, currentData.FollowerCount)
+		fanIncArr = append(fanIncArr, currentData.FollowerCount-beforeData.FollowerCount)
+		fansGroupCountArr = append(fansGroupCountArr, currentData.TotalFansCount)
+		fansGroupIncArr = append(fansGroupIncArr, currentData.TotalFansCount-beforeData.TotalFansCount)
+		diggCountArr = append(diggCountArr, currentData.TotalFavorited)
+		diggIncArr = append(diggIncArr, currentData.TotalFavorited-beforeData.TotalFavorited)
+		commentCountArr = append(commentCountArr, currentData.CommentCount)
+		commentIncArr = append(commentIncArr, currentData.CommentCount-beforeData.CommentCount)
+		forwardCountArr = append(forwardCountArr, currentData.ForwardCount)
+		forwardIncArr = append(forwardIncArr, currentData.ForwardCount-beforeData.ForwardCount)
+		beforeData = currentData
+		beginDatetime = beginDatetime.AddDate(0, 0, 1)
+	}
+	data["fans"] = dy.DateChart{
+		Date:       dateArr,
+		CountValue: fansCountArr,
+		IncValue:   fanIncArr,
+	}
+	data["fans_club"] = dy.DateChart{
+		Date:       dateArr,
+		CountValue: fansGroupCountArr,
+		IncValue:   fansGroupIncArr,
+	}
+	data["digg"] = dy.DateChart{
+		Date:       dateArr,
+		CountValue: diggCountArr,
+		IncValue:   diggIncArr,
+	}
+	data["forward"] = dy.DateChart{
+		Date:       dateArr,
+		CountValue: forwardCountArr,
+		IncValue:   forwardIncArr,
+	}
+	data["comment"] = dy.DateChart{
+		Date:       dateArr,
+		CountValue: commentCountArr,
+		IncValue:   commentIncArr,
+	}
 	return
 }
 

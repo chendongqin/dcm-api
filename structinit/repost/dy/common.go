@@ -5,5 +5,3 @@ type DateChart struct {
 	CountValue []int64  `json:"count_value"`
 	IncValue   []int64  `json:"inc_value"`
 }
-
-//type

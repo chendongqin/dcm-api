@@ -13,6 +13,7 @@ type AuthorController struct {
 	controllers.ApiBaseController
 }
 
+//达人数据
 func (receiver *AuthorController) AuthorBaseData() {
 	authorId := receiver.Ctx.Input.Param(":author_id")
 	if authorId == "" {
@@ -30,11 +31,8 @@ func (receiver *AuthorController) AuthorBaseData() {
 		receiver.FailReturn(comErr)
 		return
 	}
-	var fansClubCount int64 = 0
-	fansClub, comErr := authorBusiness.HbaseGetAuthorFansClub(authorId)
-	if comErr == nil {
-		fansClubCount = fansClub.TotalFansCount
-	}
+	fansClub, _ := authorBusiness.HbaseGetAuthorFansClub(authorId)
+	basic, _ := authorBusiness.HbaseGetAuthorBasic(authorId, "")
 	returnMap := map[string]interface{}{
 		"author_base": authorBase,
 		"reputation": dy.RepostSimpleReputation{
@@ -44,8 +42,9 @@ func (receiver *AuthorController) AuthorBaseData() {
 			ShopName:      reputation.ShopName,
 			ShopLogo:      reputation.ShopLogo,
 		},
-		"fans_club": fansClubCount,
+		"fans_club": fansClub.TotalFansCount,
 		"rank":      nil,
+		"basic":     basic,
 	}
 	receiver.SuccReturn(returnMap)
 	return
@@ -91,25 +90,6 @@ func (receiver *AuthorController) Reputation() {
 	return
 }
 
-//星图达人详情
-func (receiver *AuthorController) XtAuthorDetail() {
-	authorId := receiver.Ctx.Input.Param(":author_id")
-	if authorId == "" {
-		receiver.FailReturn(global.NewError(4000))
-		return
-	}
-	authorBusiness := business.NewAuthorBusiness()
-	detail, comErr := authorBusiness.HbaseGetXtAuthorDetail(authorId)
-	if comErr != nil {
-		receiver.FailReturn(comErr)
-		return
-	}
-	receiver.SuccReturn(map[string]interface{}{
-		"detail": detail,
-	})
-	return
-}
-
 //达人视频概览
 func (receiver *AuthorController) AuthorAwemesByDay() {
 	authorId := receiver.Ctx.Input.Param(":author_id")
@@ -147,7 +127,7 @@ func (receiver *AuthorController) AuthorAwemesByDay() {
 }
 
 //粉丝趋势图
-func (receiver *AuthorController) AuthorFansChart() {
+func (receiver *AuthorController) AuthorBasicChart() {
 	authorId := receiver.Ctx.Input.Param(":author_id")
 	startDay := receiver.Ctx.Input.Param(":start")
 	endDay := receiver.Ctx.Input.Param(":end")
@@ -174,7 +154,7 @@ func (receiver *AuthorController) AuthorFansChart() {
 		return
 	}
 	authorBusiness := business.NewAuthorBusiness()
-	data, comErr := authorBusiness.HbaseGetFansRangDate(authorId, t1.Format("20060102"), t2.Format("20060102"))
+	data, comErr := authorBusiness.HbaseGetAuthorBasicRangeDate(authorId, t1.Format("20060102"), t2.Format("20060102"))
 	if comErr != nil {
 		receiver.FailReturn(comErr)
 		return
