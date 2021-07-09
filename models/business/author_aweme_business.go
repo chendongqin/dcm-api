@@ -209,7 +209,7 @@ func (a *AuthorAwemeBusiness) HbaseGetVideoAggRangeDate(authorId, startDate, end
 				sumData.ForwardCount += v.ForwardCount
 			}
 		}
-		dateArr = append(dateArr, beginDatetime.Format("0102"))
+		dateArr = append(dateArr, beginDatetime.Format("01/02"))
 		diggCountArr = append(diggCountArr, sumData.DiggCount)
 		commentCountArr = append(commentCountArr, sumData.CommentCount)
 		forwardCountArr = append(forwardCountArr, sumData.ForwardCount)
