@@ -17,6 +17,10 @@ func GetDbSession() *xorm.Session {
 	return getDb().NewSession()
 }
 
+func GetSlaveDbSession() *xorm.Session {
+	return getSlaveDb().NewSession()
+}
+
 func Insert(session *xorm.Session, beans interface{}) (int64, error) {
 	if session == nil {
 		return getDb().Insert(beans)

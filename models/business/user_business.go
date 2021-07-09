@@ -50,7 +50,7 @@ func (receiver *UserBusiness) GetUniqueToken(userId int, appId int, enableCache 
 		}
 	}
 	userTokenM := &dcm.DcUserToken{}
-	exist, _ := dcm.GetDbSession().Where("user_id = ?", userId).
+	exist, _ := dcm.GetSlaveDbSession().Where("user_id = ?", userId).
 		And("app_platform = ?", platFormId).
 		Get(userTokenM)
 
@@ -153,6 +153,45 @@ func (receiver *UserBusiness) SmsLogin(mobile, code string, appId int) (user dcm
 	}
 	err = receiver.AddOrUpdateUniqueToken(user.Id, appId, tokenString)
 	if err != nil {
+		comErr = global.NewError(5000)
+		return
+	}
+	return
+}
+
+//收藏达人
+func (receiver *UserBusiness) CollectAuthor(userId, authorId string, platform int) (comErr global.CommonError) {
+	dbSession := dcm.GetDbSession()
+	collect := dcm.DcUserCollect{}
+	exist, err := dbSession.Where("user_id=? AND platform=? AND author_id=?", userId, platform, authorId).Get(&collect)
+	if err != nil {
+		comErr = global.NewError(5000)
+		return
+	}
+	if exist || collect.Status == 1 {
+		comErr = global.NewMsgError("您已收藏该达人，请刷新重试")
+		return
+	}
+	//达人查询写入
+
+	return
+}
+
+//取消收藏
+func (receiver *UserBusiness) CancelCollectAuthor(userId, authorId string, platform int) (comErr global.CommonError) {
+	dbSession := dcm.GetDbSession()
+	collect := dcm.DcUserCollect{}
+	exist, err := dbSession.Where("user_id=? AND platform=? AND author_id=?", userId, platform, authorId).Get(&collect)
+	if err != nil {
+		comErr = global.NewError(5000)
+		return
+	}
+	if !exist || collect.Status == 0 {
+		comErr = global.NewMsgError("您未收藏了该达人，请刷新重试")
+		return
+	}
+	affect, err := dcm.UpdateInfo(dbSession, collect.Id, map[string]interface{}{"status": 0}, new(dcm.DcUserCollect))
+	if err != nil || affect == 0 {
 		comErr = global.NewError(5000)
 		return
 	}

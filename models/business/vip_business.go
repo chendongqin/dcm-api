@@ -49,7 +49,7 @@ func (receiver *VipBusiness) GetUserLevel(level int) string {
 //获取用户vip等级
 func (receiver *VipBusiness) GetVipLevels(userId int) map[int]int {
 	vipLists := make([]dcm.DcUserVip, 0)
-	err := dcm.GetDbSession().Where("user_id=? ", userId).Find(&vipLists)
+	err := dcm.GetSlaveDbSession().Where("user_id=? ", userId).Find(&vipLists)
 	vipMap := map[int]int{}
 	if err == nil {
 		for _, v := range vipLists {
@@ -71,7 +71,7 @@ func (receiver *VipBusiness) GetVipLevels(userId int) map[int]int {
 func (receiver *VipBusiness) GetVipLevel(userId, appId int) int {
 	vip := &dcm.DcUserVip{}
 	var level = 0
-	exist, err := dcm.GetDbSession().Where("user_id=? AND platform=?", userId, appId).Get(vip)
+	exist, err := dcm.GetSlaveDbSession().Where("user_id=? AND platform=?", userId, appId).Get(vip)
 	if err != nil {
 		return 0
 	}
@@ -96,7 +96,8 @@ func (receiver *VipBusiness) GetVipLevel(userId, appId int) int {
 //更新会员等级
 func (receiver *VipBusiness) UpdateValidDayOne(userId, platformId int) (int, bool) {
 	vipModel := &dcm.DcUserVip{}
-	exist, _ := dcm.GetDbSession().Where("user_id=? AND platform=?", userId, platformId).Get(vipModel)
+	dbSession := dcm.GetDbSession()
+	exist, _ := dbSession.Where("user_id=? AND platform=?", userId, platformId).Get(vipModel)
 	if !exist || vipModel.OrderValidDay <= 0 {
 		return 0, false
 	}
@@ -107,7 +108,7 @@ func (receiver *VipBusiness) UpdateValidDayOne(userId, platformId int) (int, boo
 		"level":           vipModel.OrderLevel,
 		"expiration":      vipModel.Expiration.AddDate(0, 0, vipModel.OrderValidDay).Format("2006-01-02 15:04:05"),
 	}
-	affect, err := dcm.GetDbSession().Table(new(dcm.DcUserVip)).Where(whereStr, vipModel.Id, time.Now().Format("2006-01-02 15:04:05")).Update(updateData)
+	affect, err := dbSession.Table(new(dcm.DcUserVip)).Where(whereStr, vipModel.Id, time.Now().Format("2006-01-02 15:04:05")).Update(updateData)
 	if affect == 0 || err != nil {
 		return 0, false
 	}

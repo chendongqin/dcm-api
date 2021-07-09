@@ -7,8 +7,9 @@ const (
 	HbaseDyLivePmt    = "dy_live_pmt"   //直播pmt(直播商品列表)
 	HbaseDyReputation = "dy_reputation" //带货口碑
 
-	HbaseDyAweme          = "dy_aweme"            //抖音视频
-	HbaseDyAuthorAwemeAgg = "dy_author_aweme_agg" //达人抖音视频
+	HbaseDyAweme                        = "dy_aweme"                            //抖音视频
+	HbaseDyAuthorAwemeAgg               = "dy_author_aweme_agg"                 //达人抖音视频
+	HbaseDyAwemeDiggCommentForwardCount = "dy_aweme_digg_comment_forward_count" //达人抖音视频
 
 	HbaseDyAuthor       = "dy_author"        //抖音用户信息
 	HbaseDyAuthorFans   = "dy_author_fans"   //抖音用户信息

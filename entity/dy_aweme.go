@@ -20,13 +20,13 @@ type DyAwemeData struct {
 	AwemeTitle      string         `json:"aweme_title"`
 	AwemeCreateTime int64          `json:"aweme_create_time"`
 	AwemeURL        string         `json:"aweme_url"`
-	CommentCount    int            `json:"comment_count"`
+	CommentCount    int64          `json:"comment_count"`
 	DiggCount       int64          `json:"digg_count"`
 	DownloadCount   int64          `json:"download_count"`
 	Duration        int            `json:"duration"`
 	DyPromotionID   []string       `json:"dy_promotion_id"`
-	ForwardCount    int            `json:"forward_count"`
-	Sales           []int          `json:"sales"`
+	ForwardCount    int64          `json:"forward_count"`
+	Sales           []int64        `json:"sales"`
 	ID              string         `json:"id"`
 	MusicID         string         `json:"music_id"`
 	PromotionID     []string       `json:"promotion_id"`

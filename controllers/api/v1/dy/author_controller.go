@@ -134,7 +134,7 @@ func (receiver *AuthorController) AuthorAwemesByDay() {
 		receiver.FailReturn(global.NewError(4000))
 		return
 	}
-	videoOverview := aABusiness.HbaseGetVideoAgg(authorId, t1.Format("20060102"), t2.Format("20060102"))
+	videoOverview := aABusiness.HbaseGetVideoAggRangeDate(authorId, t1.Format("20060102"), t2.Format("20060102"))
 	receiver.SuccReturn(map[string]interface{}{
 		"video_overview": videoOverview,
 	})
