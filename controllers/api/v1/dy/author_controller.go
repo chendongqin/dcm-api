@@ -30,6 +30,11 @@ func (receiver *AuthorController) AuthorBaseData() {
 		receiver.FailReturn(comErr)
 		return
 	}
+	var fansClubCount int64 = 0
+	fansClub, comErr := authorBusiness.HbaseGetAuthorFansClub(authorId)
+	if comErr == nil {
+		fansClubCount = fansClub.TotalFansCount
+	}
 	returnMap := map[string]interface{}{
 		"author_base": authorBase,
 		"reputation": dy.RepostSimpleReputation{
@@ -39,8 +44,8 @@ func (receiver *AuthorController) AuthorBaseData() {
 			ShopName:      reputation.ShopName,
 			ShopLogo:      reputation.ShopLogo,
 		},
-		"has_star_detail": false,
-		"rank":            nil,
+		"fans_club": fansClubCount,
+		"rank":      nil,
 	}
 	receiver.SuccReturn(returnMap)
 	return
@@ -213,6 +218,20 @@ func (receiver *AuthorController) AuthorFansAnalyse() {
 	}
 	data["active_day"] = []entity.XtDistributionsList{}
 	data["active_week"] = []entity.XtDistributionsList{}
+	var countCity int64 = 0
+	var countPro int64 = 0
+	for _, v := range data["city"] {
+		countCity += v.DistributionValue
+	}
+	for _, v := range data["province"] {
+		countPro += v.DistributionValue
+	}
+	for k, v := range data["city"] {
+		data["city"][k].DistributionPer = float64(v.DistributionValue) / float64(countCity)
+	}
+	for k, v := range data["province"] {
+		data["province"][k].DistributionPer = float64(v.DistributionValue) / float64(countPro)
+	}
 	receiver.SuccReturn(data)
 	return
 }

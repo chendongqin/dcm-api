@@ -43,7 +43,7 @@ func (a *AuthorAwemeBusiness) HbaseGetVideoAggRangeDate(authorId, startDate, end
 	publishChartMap := map[string]int{}
 	allAwemeChan := make(chan map[string]map[string]entity.DyAwemeDiggCommentForwardCount, 0)
 	allAwemeData := map[string]map[string]entity.DyAwemeDiggCommentForwardCount{}
-	awemeIds := []string{}
+	awemeIds := make([]string, 0)
 	for _, v := range results {
 		dataMap := hbaseService.HbaseFormat(v, entity.DyAuthorAwemeAggMap)
 		hData := &entity.DyAuthorAwemeAggData{}
@@ -100,18 +100,14 @@ func (a *AuthorAwemeBusiness) HbaseGetVideoAggRangeDate(authorId, startDate, end
 				forwardMin = agg.ForwardCount
 			}
 			//视频趋势数据处理
+			createTime := time.Unix(agg.AwemeCreateTime, 0)
 			go func(ch chan map[string]map[string]entity.DyAwemeDiggCommentForwardCount, awemeId, start, end string) {
 				awemeData, comErr := a.HbaseGetAwemeCountDataRangeDate(awemeId, start, end)
 				if comErr == nil {
-					t, _ := time.ParseInLocation("20060102", start, time.Local)
-					yesterday := t.AddDate(0, 0, -1).Format("20060102")
-					yesterdayData, comErr := a.HbaseGetAwemeCountData(awemeId, yesterday)
-					if comErr != nil {
-						yesterdayData = entity.DyAwemeDiggCommentForwardCount{}
-					}
-					awemeData[yesterday] = yesterdayData
+					t1, _ := time.ParseInLocation("20060102", startDate, time.Local)
+					t2, _ := time.ParseInLocation("20060102", endDate, time.Local)
 					if _, ok := awemeData[start]; !ok {
-						awemeData[start] = yesterdayData
+						awemeData[start] = entity.DyAwemeDiggCommentForwardCount{}
 					}
 					if _, ok := awemeData[end]; !ok {
 						awemeBusiness := NewAwemeBusiness()
@@ -122,11 +118,24 @@ func (a *AuthorAwemeBusiness) HbaseGetVideoAggRangeDate(authorId, startDate, end
 							ForwardCount: awemeBase.ForwardCount,
 						}
 					}
+					beginDatetime := t1
+					beforeDay := t1.Format("20060102")
+					for {
+						if beginDatetime.After(t2) {
+							break
+						}
+						today := beginDatetime.Format("20060102")
+						if _, ok := awemeData[today]; !ok {
+							awemeData[today] = awemeData[beforeDay]
+						}
+						beforeDay = today
+						beginDatetime = beginDatetime.AddDate(0, 0, 1)
+					}
 					allAwemeDataMap := map[string]map[string]entity.DyAwemeDiggCommentForwardCount{}
 					allAwemeDataMap[awemeId] = awemeData
 					ch <- allAwemeDataMap
 				}
-			}(allAwemeChan, agg.AwemeID, startDate, endDate)
+			}(allAwemeChan, agg.AwemeID, createTime.Format("20060102"), endDate)
 		}
 	}
 	if videoNum > 0 {
@@ -200,7 +209,7 @@ func (a *AuthorAwemeBusiness) HbaseGetVideoAggRangeDate(authorId, startDate, end
 				sumData.ForwardCount += v.ForwardCount
 			}
 		}
-		dateArr = append(dateArr, date)
+		dateArr = append(dateArr, beginDatetime.Format("0102"))
 		diggCountArr = append(diggCountArr, sumData.DiggCount)
 		commentCountArr = append(commentCountArr, sumData.CommentCount)
 		forwardCountArr = append(forwardCountArr, sumData.ForwardCount)
@@ -228,6 +237,7 @@ func (a *AuthorAwemeBusiness) HbaseGetVideoAggRangeDate(authorId, startDate, end
 	return
 }
 
+//粉丝某天数据
 func (a *AuthorAwemeBusiness) HbaseGetAwemeCountDataRangeDate(awemeId, startDate, endDate string) (data map[string]entity.DyAwemeDiggCommentForwardCount, comErr global.CommonError) {
 	query := hbasehelper.NewQuery()
 	startRow := awemeId + "_" + startDate

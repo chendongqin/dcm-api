@@ -128,8 +128,9 @@ type XtAuthorBaseInfo struct {
 }
 
 type XtDistributionsList struct {
-	DistributionKey   string `json:"distribution_key"`
-	DistributionValue int64  `json:"distribution_value"`
+	DistributionKey   string  `json:"distribution_key"`
+	DistributionValue int64   `json:"distribution_value"`
+	DistributionPer   float64 `json:"distribution_per"`
 }
 
 type XtAuthorDistributions struct {

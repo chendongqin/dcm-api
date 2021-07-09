@@ -112,7 +112,7 @@ func (a *AuthorBusiness) HbaseGetFansRangDate(authorId, startDate, endDate strin
 	return
 }
 
-//获取达人粉丝团数据
+//获取达人粉丝数据
 func (a *AuthorBusiness) HbaseGetFansByDate(authorId, date string) (data entity.DyAuthorFans, comErr global.CommonError) {
 	query := hbasehelper.NewQuery()
 	rowKey := authorId + "_" + date
@@ -153,6 +153,23 @@ func (a *AuthorBusiness) HbaseGetAuthor(authorId string) (data entity.DyAuthorDa
 		author.Data.UniqueID = author.Data.ShortID
 	}
 	data = author.Data
+	return
+}
+
+//获取达人粉丝团数据
+func (a *AuthorBusiness) HbaseGetAuthorFansClub(authorId string) (data entity.DyLiveFansClub, comErr global.CommonError) {
+	query := hbasehelper.NewQuery()
+	result, err := query.SetTable(hbaseService.HbaseDyLiveFansClub).GetByRowKey([]byte(authorId))
+	if err != nil {
+		comErr = global.NewMsgError(err.Error())
+		return
+	}
+	if result.Row == nil {
+		comErr = global.NewError(4040)
+		return
+	}
+	dataMap := hbaseService.HbaseFormat(result, entity.DyLiveFansClubMap)
+	utils.MapToStruct(dataMap, &data)
 	return
 }
 
