@@ -102,39 +102,9 @@ func (a *AuthorAwemeBusiness) HbaseGetVideoAggRangeDate(authorId, startDate, end
 			//视频趋势数据处理
 			createTime := time.Unix(agg.AwemeCreateTime, 0)
 			go func(ch chan map[string]map[string]entity.DyAwemeDiggCommentForwardCount, awemeId, start, end string) {
-				awemeData, comErr := a.HbaseGetAwemeCountDataRangeDate(awemeId, start, end)
+				awemeBusiness := NewAwemeBusiness()
+				awemeData, comErr := awemeBusiness.GetAwemeChart(awemeId, start, end, false)
 				if comErr == nil {
-					t1, _ := time.ParseInLocation("20060102", startDate, time.Local)
-					t2, _ := time.ParseInLocation("20060102", endDate, time.Local)
-					//首发补点
-					if _, ok := awemeData[start]; !ok {
-						awemeData[start] = entity.DyAwemeDiggCommentForwardCount{}
-					}
-					//末尾补点
-					if _, ok := awemeData[end]; !ok {
-						awemeBusiness := NewAwemeBusiness()
-						awemeBase, _ := awemeBusiness.HbaseGetAweme(awemeId)
-						awemeData[end] = entity.DyAwemeDiggCommentForwardCount{
-							DiggCount:    awemeBase.DiggCount,
-							CommentCount: awemeBase.CommentCount,
-							ForwardCount: awemeBase.ForwardCount,
-						}
-					}
-					beginDatetime := t1
-					beforeDay := t1.Format("20060102")
-					//空数据补点
-					for {
-						if beginDatetime.After(t2) {
-							break
-						}
-						today := beginDatetime.Format("20060102")
-						//数据不存在向前补点
-						if _, ok := awemeData[today]; !ok {
-							awemeData[today] = awemeData[beforeDay]
-						}
-						beforeDay = today
-						beginDatetime = beginDatetime.AddDate(0, 0, 1)
-					}
 					allAwemeDataMap := map[string]map[string]entity.DyAwemeDiggCommentForwardCount{}
 					allAwemeDataMap[awemeId] = awemeData
 					ch <- allAwemeDataMap

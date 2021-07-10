@@ -126,7 +126,7 @@ func (receiver *AuthorController) AuthorAwemesByDay() {
 	return
 }
 
-//粉丝趋势图
+//基础数据趋势图
 func (receiver *AuthorController) AuthorBasicChart() {
 	authorId := receiver.Ctx.Input.Param(":author_id")
 	startDay := receiver.Ctx.Input.Param(":start")

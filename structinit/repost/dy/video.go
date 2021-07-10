@@ -23,3 +23,20 @@ type VideoChart struct {
 	Name  string `json:"name"`
 	Value int    `json:"value"`
 }
+
+type DySimpleAweme struct {
+	AuthorID        string `json:"author_id"`
+	AwemeCover      string `json:"aweme_cover"`
+	AwemeTitle      string `json:"aweme_title"`
+	AwemeCreateTime int64  `json:"aweme_create_time"`
+	AwemeURL        string `json:"aweme_url"`
+	CommentCount    int64  `json:"comment_count"`
+	DiggCount       int64  `json:"digg_count"`
+	DownloadCount   int64  `json:"download_count"`
+	Duration        int    `json:"duration"`
+	ForwardCount    int64  `json:"forward_count"`
+	ID              string `json:"id"`
+	MusicID         string `json:"music_id"`
+	ShareCount      int64  `json:"share_count"`
+	PromotionNum    int    `json:"promotion_num"`
+}
