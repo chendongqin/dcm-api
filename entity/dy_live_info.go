@@ -29,39 +29,40 @@ var DyLiveInfoMap = HbaseEntity{
 	"user_count":             {Long, "user_count"},
 	"user_count_composition": {Json, "user_count_composition"},
 	"watch_cnt":              {Long, "watch_cnt"},
+	"trends_crawl_time":      {Long, "trends_crawl_time"},
+	"trends_online_trends":   {AJson, "online_trends"},
 }
 
 type DyLiveInfo struct {
-	AddTime      int64               `json:"add_time"`
-	Challenge    DyLiveInfoChallenge `json:"challenge"`
-	Cover        string              `json:"cover"`
-	CrawlTime    int64               `json:"crawl_time"`
-	CreateTime   int64               `json:"create_time"`
-	DiscoverTime int64               `json:"discover_time"`
-	//DiscoverTimeOriginal int64                      `json:"discover_time_original"`
-	//CreateTimeFixed      int64                      `json:"create_time_fixed"`
-	FansClubCount        int64                      `json:"fans_club_count"`
-	FinishTime           int64                      `json:"finish_time"`
-	FollowCount          int64                      `json:"follow_count"`
-	GiftUvCount          int64                      `json:"gift_uv_count"`
-	HourRank             DyLiveInfoRank             `json:"hour_rank"`
-	HourSalesRank        DyLiveInfoRank             `json:"hour_sales_rank"`
-	Level                int                        `json:"level"`
-	LikeCount            int64                      `json:"like_count"`
-	PlayFlvURL           string                     `json:"play_flv_url"`
-	PlayURL              string                     `json:"play_url"`
+	AddTime              int64                      `json:"add_time"`  //添加到直播库时间
+	Challenge            DyLiveInfoChallenge        `json:"challenge"` //话题
+	Cover                string                     `json:"cover"`     //封面
+	CrawlTime            int64                      `json:"crawl_time"`
+	CreateTime           int64                      `json:"create_time"`     //开播时间
+	DiscoverTime         int64                      `json:"discover_time"`   //发现时间
+	FansClubCount        int64                      `json:"fans_club_count"` //粉丝团数目
+	FinishTime           int64                      `json:"finish_time"`     //结束时间
+	FollowCount          int64                      `json:"follow_count"`    //粉丝数
+	GiftUvCount          int64                      `json:"gift_uv_count"`   //送礼人数
+	HourRank             DyLiveInfoRank             `json:"hour_rank"`       //小时榜排行
+	HourSalesRank        DyLiveInfoRank             `json:"hour_sales_rank"` //带货小时榜
+	Level                int                        `json:"level"`           //是否抓取弹幕 1:是 0:否
+	LikeCount            int64                      `json:"like_count"`      //点赞数
+	PlayFlvURL           string                     `json:"play_flv_url"`    //视频流地址
+	PlayURL              string                     `json:"play_url"`        //直播地址
 	PmtCnt               int64                      `json:"pmt_cnt"`
 	RoomID               string                     `json:"room_id"`
-	RoomStatus           string                     `json:"room_status"`
-	RoomTicketCount      int                        `json:"room_ticket_count"`
-	Tag                  string                     `json:"tag"`
+	RoomStatus           int                        `json:"room_status"`       //直播状态 2:在播 4:下播
+	RoomTicketCount      int                        `json:"room_ticket_count"` //该场直播音浪数
 	Title                string                     `json:"title"`
-	TopFans              []DyLiveInfoTopFan         `json:"top_fans"`
-	TotalUser            int64                      `json:"total_user"`
+	TopFans              []DyLiveInfoTopFan         `json:"top_fans"`   //送礼top3
+	TotalUser            int64                      `json:"total_user"` //总pv
 	User                 DyLiveInfoUser             `json:"user"`
-	UserCount            int64                      `json:"user_count"`
-	UserCountComposition DyLiveUserCountComposition `json:"user_count_composition"`
-	WatchCnt             int64                      `json:"watch_cnt"`
+	UserCount            int64                      `json:"user_count"`             //当前在线人数
+	UserCountComposition DyLiveUserCountComposition `json:"user_count_composition"` //用户来源
+	WatchCnt             int64                      `json:"watch_cnt"`              //总pv
+	TrendsCrawlTime      int64                      `json:"trends_crawl_time"`      //更新时间
+	OnlineTrends         []DyLiveOnlineTrends       `json:"online_trends"`
 }
 
 type DyLiveInfoChallenge struct {
@@ -101,4 +102,21 @@ type DyLiveUserCountComposition struct {
 	MyFollow    float64 `json:"my_follow"`
 	Other       float64 `json:"other"`
 	VideoDetail float64 `json:"video_detail"`
+}
+
+type DyLiveOnlineTrends struct {
+	CrawlTime     int64 `json:"crawl_time"`
+	WatchCnt      int64 `json:"watch_cnt"`
+	UserCount     int64 `json:"user_count"`
+	FollowerCount int64 `json:"follower_count"`
+}
+
+type DyLiveIncOnlineTrends struct {
+	UserCount int64 `json:"user_count"`
+	WatchInc  int64 `json:"watch_inc"`
+}
+
+type DyLiveIncOnlineTrendsChart struct {
+	Date            []string                `json:"date"`
+	IncOnlineTrends []DyLiveIncOnlineTrends `json:"inc_online_trends"`
 }
