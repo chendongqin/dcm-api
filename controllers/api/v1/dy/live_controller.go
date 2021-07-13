@@ -63,19 +63,15 @@ func (receiver *LiveController) LiveInfoData() {
 	return
 }
 
-//
-func (receiver *LiveController) LivePmt() {
+//直播商品明细
+func (receiver *LiveController) LivePromotions() {
 	roomId := receiver.Ctx.Input.Param(":room_id")
 	if roomId == "" {
 		receiver.FailReturn(global.NewError(4000))
 		return
 	}
 	liveBusiness := business.NewLiveBusiness()
-	livePmt, comErr := liveBusiness.HbaseGetLivePmt(roomId)
-	if comErr != nil {
-		receiver.FailReturn(comErr)
-		return
-	}
+	livePmt, _ := liveBusiness.HbaseGetLivePmt(roomId)
 	livePromotionsMap := map[int]entity.DyLivePromotion{}
 	for _, v := range livePmt.Promotions {
 		livePromotionsMap[v.Index] = v
@@ -123,5 +119,39 @@ func (receiver *LiveController) LivePmt() {
 	}
 	receiver.SuccReturn(map[string]interface{}{
 		"promotions_list": promotionsList,
+	})
+}
+
+//直播榜单排名趋势
+func (receiver *LiveController) LiveRankTrends() {
+	roomId := receiver.Ctx.Input.Param(":room_id")
+	if roomId == "" {
+		receiver.FailReturn(global.NewError(4000))
+		return
+	}
+	liveBusiness := business.NewLiveBusiness()
+	liveRankTrends, _ := liveBusiness.HbaseGetRankTrends(roomId)
+	saleDates := make([]int64, 0)
+	hourDates := make([]int64, 0)
+	saleRanks := make([]int, 0)
+	hourRanks := make([]int, 0)
+	for _, v := range liveRankTrends {
+		if v.Type == 8 {
+			saleDates = append(saleDates, v.CrawlTime)
+			saleRanks = append(saleRanks, v.Rank)
+		} else if v.Type == 1 {
+			hourDates = append(hourDates, v.CrawlTime)
+			hourRanks = append(hourRanks, v.Rank)
+		}
+	}
+	receiver.SuccReturn(map[string]interface{}{
+		"hour_rank": map[string]interface{}{
+			"time":  hourDates,
+			"ranks": hourRanks,
+		},
+		"sale_rank": map[string]interface{}{
+			"time":  saleDates,
+			"ranks": saleRanks,
+		},
 	})
 }

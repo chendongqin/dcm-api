@@ -7,6 +7,7 @@ import (
 	"dongchamao/services/dyimg"
 	"dongchamao/services/hbaseService"
 	"dongchamao/services/hbaseService/hbasehelper"
+	"sort"
 	"time"
 )
 
@@ -88,4 +89,43 @@ func (l *LiveBusiness) HbaseGetLivePmt(roomId string) (data entity.DyLivePmt, co
 	detailMap := hbaseService.HbaseFormat(result, entity.DyLivePmtMap)
 	utils.MapToStruct(detailMap, &data)
 	return
+}
+
+//获取直播榜单数据
+func (l *LiveBusiness) HbaseGetRankTrends(roomId string) (data []entity.DyLiveRankTrend, comErr global.CommonError) {
+	query := hbasehelper.NewQuery()
+	result, err := query.SetTable(hbaseService.HbaseDyLiveRankTrend).GetByRowKey([]byte(roomId))
+	if err != nil {
+		comErr = global.NewMsgError(err.Error())
+		return
+	}
+	if result.Row == nil {
+		comErr = global.NewError(4040)
+		return
+	}
+	detailMap := hbaseService.HbaseFormat(result, entity.DyLiveRankTrendsMap)
+	hData := &entity.DyLiveRankTrends{}
+	utils.MapToStruct(detailMap, hData)
+	data = RankTrendOrderByTime(hData.RankData)
+	return
+}
+
+//直播排名按时间排序
+type RankTrendSortList []entity.DyLiveRankTrend
+
+func RankTrendOrderByTime(rankTrends []entity.DyLiveRankTrend) []entity.DyLiveRankTrend {
+	sort.Sort(RankTrendSortList(rankTrends))
+	return rankTrends
+}
+
+func (I RankTrendSortList) Len() int {
+	return len(I)
+}
+
+func (I RankTrendSortList) Less(i, j int) bool {
+	return I[i].CrawlTime < I[j].CrawlTime
+}
+
+func (I RankTrendSortList) Swap(i, j int) {
+	I[i], I[j] = I[j], I[i]
 }

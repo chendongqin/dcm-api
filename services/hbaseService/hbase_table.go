@@ -3,9 +3,10 @@ package hbaseService
 const (
 	TableFamily = "r"
 
-	HbaseDyLiveInfo   = "dy_live_info"  //直播间信息
-	HbaseDyLivePmt    = "dy_live_pmt"   //直播pmt(直播商品列表)
-	HbaseDyReputation = "dy_reputation" //带货口碑
+	HbaseDyLiveInfo      = "dy_live_info"       //直播间信息
+	HbaseDyLivePmt       = "dy_live_pmt"        //直播pmt(直播商品列表)
+	HbaseDyLiveRankTrend = "dy_live_rank_trend" //直播间榜单排名数据
+	HbaseDyReputation    = "dy_reputation"      //带货口碑
 
 	HbaseDyAweme                        = "dy_aweme"                            //抖音视频
 	HbaseDyAuthorAwemeAgg               = "dy_author_aweme_agg"                 //达人抖音视频
