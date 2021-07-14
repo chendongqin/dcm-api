@@ -36,6 +36,7 @@ func (receiver *LiveController) LiveInfoData() {
 		Nickname:        liveInfo.User.Nickname,
 		WithCommerce:    liveInfo.User.WithCommerce,
 		ReputationScore: reputation.Score,
+		ReputationLevel: reputation.Level,
 	}
 	incOnlineTrends, maxOnlineTrends, incFans, avgUserCount := liveBusiness.DealOnlineTrends(liveInfo.OnlineTrends)
 	incFansRate := float64(incFans) / float64(liveInfo.TotalUser)
@@ -57,6 +58,7 @@ func (receiver *LiveController) LiveInfoData() {
 		AvgUserCount:        avgUserCount,
 		MaxWatchOnlineTrend: maxOnlineTrends,
 		OnlineTrends:        incOnlineTrends,
+		RenewalTime:         liveInfo.CrawlTime,
 	}
 	liveSale, _ := liveBusiness.LiveRoomAnalyse(roomId)
 	receiver.SuccReturn(map[string]interface{}{

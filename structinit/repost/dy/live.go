@@ -20,6 +20,7 @@ type DyLiveInfo struct {
 	InteractRate        float64                           `json:"interact_rate"`
 	OnlineTrends        entity.DyLiveIncOnlineTrendsChart `json:"online_trends"`
 	MaxWatchOnlineTrend entity.DyLiveOnlineTrends         `json:"max_watch_online_trend"`
+	RenewalTime         int64                             `json:"renewal_time"`
 }
 
 type DyLiveUserSimple struct {
@@ -29,6 +30,7 @@ type DyLiveUserSimple struct {
 	Nickname        string  `json:"nickname"`
 	WithCommerce    bool    `json:"with_commerce"`
 	ReputationScore float64 `json:"reputation_score"`
+	ReputationLevel int     `json:"reputation_level"`
 }
 
 type DyLivePromotion struct {
