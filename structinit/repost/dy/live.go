@@ -13,6 +13,7 @@ type DyLiveInfo struct {
 	TotalUser           int64                             `json:"total_user"` //总pv
 	User                DyLiveUserSimple                  `json:"user"`
 	UserCount           int64                             `json:"user_count"`        //当前在线人数
+	AvgUserCount        int64                             `json:"avg_user_count"`    //平均当前在线人数
 	TrendsCrawlTime     int64                             `json:"trends_crawl_time"` //更新时间
 	IncFans             int64                             `json:"inc_fans"`
 	IncFansRate         float64                           `json:"inc_fans_rate"`
@@ -47,4 +48,21 @@ type DyLivePromotion struct {
 type DyLivePromotionChart struct {
 	StartTime     []string            `json:"start_time"`
 	PromotionList [][]DyLivePromotion `json:"promotion_list"`
+}
+
+type DyLiveRoomAnalyse struct {
+	TotalUserCount int64   `json:"total_user_count"`
+	IncFans        int64   `json:"inc_fans"`
+	IncFansRate    float64 `json:"inc_fans_rate"`
+	InteractRate   float64 `json:"interact_rate"`
+	AvgUserCount   int64   `json:"avg_user_count"`
+	Volume         int64   `json:"volume"`
+	Amount         float64 `json:"amount"`
+	Uv             float64 `json:"uv"`
+	PromotionNum   int64   `json:"promotion_num"`
+	SaleRate       float64 `json:"sale_rate"`
+	PerPrice       float64 `json:"per_price"`
+	LiveLongTime   int64   `json:"live_long_time"`
+	LiveStartTime  int64   `json:"live_start_time"`
+	AvgOnlineTime  float64 `json:"avg_online_time"`
 }

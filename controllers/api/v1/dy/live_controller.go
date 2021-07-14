@@ -37,7 +37,7 @@ func (receiver *LiveController) LiveInfoData() {
 		WithCommerce:    liveInfo.User.WithCommerce,
 		ReputationScore: reputation.Score,
 	}
-	incOnlineTrends, maxOnlineTrends, incFans := liveBusiness.DealOnlineTrends(liveInfo.OnlineTrends)
+	incOnlineTrends, maxOnlineTrends, incFans, avgUserCount := liveBusiness.DealOnlineTrends(liveInfo.OnlineTrends)
 	incFansRate := float64(incFans) / float64(liveInfo.TotalUser)
 	returnLiveInfo := dy.DyLiveInfo{
 		Cover:               liveInfo.Cover,
@@ -54,11 +54,14 @@ func (receiver *LiveController) LiveInfoData() {
 		IncFans:             incFans,
 		IncFansRate:         incFansRate,
 		InteractRate:        0,
+		AvgUserCount:        avgUserCount,
 		MaxWatchOnlineTrend: maxOnlineTrends,
 		OnlineTrends:        incOnlineTrends,
 	}
+	liveSale, _ := liveBusiness.LiveRoomAnalyse(roomId)
 	receiver.SuccReturn(map[string]interface{}{
 		"live_info": returnLiveInfo,
+		"live_sale": liveSale,
 	})
 	return
 }

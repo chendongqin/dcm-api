@@ -357,6 +357,7 @@ func (a *AuthorBusiness) HbaseGetXtAuthorDetail(authorId string) (data *entity.X
 	return
 }
 
+//获取达人星图评分
 func (a *AuthorBusiness) GetDyAuthorScore(liveScore entity.XtAuthorLiveScore, videoScore entity.XtAuthorScore) (authorStarScores dy.DyAuthorStarScores) {
 	authorStarScores.LiveScore = dy.DyAuthorStarScore{
 		CooperateIndex: utils.FriendlyFloat64(float64(liveScore.CooperateIndex) / 10000),
@@ -390,5 +391,55 @@ func (a *AuthorBusiness) GetDyAuthorScore(liveScore entity.XtAuthorLiveScore, vi
 		SpreadIndex:    utils.FriendlyFloat64(float64(videoScore.AvgLevel.SpreadIndex) / 100),
 		TopScore:       utils.FriendlyFloat64(float64(videoScore.AvgLevel.TopScore) / 100),
 	}
+	return
+}
+
+//获取达人直播间
+func (a *AuthorBusiness) HbaseGetAuthorRoomsRangDate(authorId, startDate, endDate string) (data map[string][]entity.DyAuthorLiveRoom, comErr global.CommonError) {
+	data = map[string][]entity.DyAuthorLiveRoom{}
+	query := hbasehelper.NewQuery()
+	startRow := authorId + "_" + startDate
+	endRow := authorId + "_" + endDate
+	results, err := query.
+		SetTable(hbaseService.HbaseDyAuthorRoomMapping).
+		SetStartRow([]byte(startRow)).
+		SetStopRow([]byte(endRow)).
+		Scan(1000)
+	if err != nil {
+		return
+	}
+	for _, v := range results {
+		rowKey := string(v.GetRow())
+		rowKeyArr := strings.Split(rowKey, "_")
+		if len(rowKeyArr) < 2 {
+			comErr = global.NewError(5000)
+			return
+		}
+		date := rowKeyArr[1]
+		dataMap := hbaseService.HbaseFormat(v, entity.DyAuthorRoomMappingMap)
+		hData := entity.DyAuthorRoomMapping{}
+		utils.MapToStruct(dataMap, &hData)
+		data[date] = hData.Data
+	}
+	return
+}
+
+//获取达人当日直播间
+func (a *AuthorBusiness) HbaseGetAuthorRoomsByDate(authorId, date string) (data []entity.DyAuthorLiveRoom, comErr global.CommonError) {
+	query := hbasehelper.NewQuery()
+	rowKey := authorId + "_" + date
+	result, err := query.SetTable(hbaseService.HbaseDyAuthorRoomMapping).GetByRowKey([]byte(rowKey))
+	if err != nil {
+		comErr = global.NewMsgError(err.Error())
+		return
+	}
+	if result.Row == nil {
+		comErr = global.NewError(4040)
+		return
+	}
+	infoMap := hbaseService.HbaseFormat(result, entity.DyAuthorFansMap)
+	hData := &entity.DyAuthorRoomMapping{}
+	utils.MapToStruct(infoMap, hData)
+	data = hData.Data
 	return
 }
