@@ -126,6 +126,7 @@ func (l *LiveBusiness) LiveRoomAnalyse(roomId string) (data dy.DyLiveRoomAnalyse
 		data.Uv = (salesData.Gmv + float64(salesData.TicketCount)/10) / float64(liveInfo.TotalUser)
 		data.SaleRate = salesData.Gmv / float64(liveInfo.TotalUser)
 		data.IncFansRate = float64(data.IncFans) / float64(liveInfo.TotalUser)
+		data.InteractRate = float64(liveInfo.BarrageCount) / float64(liveInfo.TotalUser)
 	}
 	data.Volume = int64(math.Floor(salesData.Sales))
 	data.Amount = salesData.Gmv

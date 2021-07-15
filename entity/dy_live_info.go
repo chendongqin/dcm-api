@@ -31,6 +31,7 @@ var DyLiveInfoMap = HbaseEntity{
 	"watch_cnt":              {Long, "watch_cnt"},
 	"trends_crawl_time":      {Long, "trends_crawl_time"},
 	"trends_online_trends":   {AJson, "online_trends"},
+	"other_barrage_count":    {Long, "barrage_count"},
 }
 
 type DyLiveInfo struct {
@@ -62,6 +63,7 @@ type DyLiveInfo struct {
 	UserCountComposition DyLiveUserCountComposition `json:"user_count_composition"` //用户来源
 	WatchCnt             int64                      `json:"watch_cnt"`              //总pv
 	TrendsCrawlTime      int64                      `json:"trends_crawl_time"`      //更新时间
+	BarrageCount         int64                      `json:"barrage_count"`          //弹幕人数
 	OnlineTrends         []DyLiveOnlineTrends       `json:"online_trends"`
 }
 

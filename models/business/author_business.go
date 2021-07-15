@@ -443,3 +443,24 @@ func (a *AuthorBusiness) HbaseGetAuthorRoomsByDate(authorId, date string) (data 
 	data = hData.Data
 	return
 }
+
+func (a *AuthorBusiness) CountLiveRoomAnalyse(authorId, startDate, endDate string) {
+	roomsMap, _ := a.HbaseGetAuthorRoomsRangDate(authorId, startDate, endDate)
+	liveDataChan := make(chan map[string]dy.DyLiveRoomAnalyse, 0)
+	roomNum := 0
+	for date, rooms := range roomsMap {
+		for _, room := range rooms {
+			roomNum++
+			go func(liveDataChan chan map[string]dy.DyLiveRoomAnalyse, date, roomId string) {
+				liveBusiness := NewLiveBusiness()
+				roomAnalyse, comErr := liveBusiness.LiveRoomAnalyse(roomId)
+				if comErr == nil {
+					data := map[string]dy.DyLiveRoomAnalyse{}
+					data[date] = roomAnalyse
+					liveDataChan <- data
+				}
+			}(liveDataChan, date, room.RoomID)
+		}
+	}
+
+}

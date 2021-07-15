@@ -7,6 +7,7 @@ import (
 	"dongchamao/models/business"
 	"dongchamao/services/dyimg"
 	"dongchamao/structinit/repost/dy"
+	"math"
 	"sort"
 	"time"
 )
@@ -38,8 +39,19 @@ func (receiver *LiveController) LiveInfoData() {
 		ReputationScore: reputation.Score,
 		ReputationLevel: reputation.Level,
 	}
+	liveSaleData, _ := liveBusiness.HbaseGetLiveSalesData(roomId)
 	incOnlineTrends, maxOnlineTrends, incFans, avgUserCount := liveBusiness.DealOnlineTrends(liveInfo.OnlineTrends)
-	incFansRate := float64(incFans) / float64(liveInfo.TotalUser)
+	var incFansRate, interactRate float64
+	incFansRate = 0
+	interactRate = 0
+	liveSale := dy.DyLiveRoomSaleData{}
+	if liveInfo.TotalUser > 0 {
+		incFansRate = float64(incFans) / float64(liveInfo.TotalUser)
+		interactRate = float64(liveInfo.BarrageCount) / float64(liveInfo.TotalUser)
+		liveSale.Uv = (liveSaleData.Gmv + float64(liveSaleData.TicketCount)/10) / float64(liveInfo.TotalUser)
+		liveSale.SaleRate = liveSaleData.Gmv / float64(liveInfo.TotalUser)
+	}
+	avgOnlineTime := liveBusiness.CountAvgOnlineTime(liveInfo.OnlineTrends, liveInfo.CreateTime, liveInfo.TotalUser)
 	returnLiveInfo := dy.DyLiveInfo{
 		Cover:               liveInfo.Cover,
 		CreateTime:          liveInfo.CreateTime,
@@ -54,13 +66,19 @@ func (receiver *LiveController) LiveInfoData() {
 		TrendsCrawlTime:     liveInfo.TrendsCrawlTime,
 		IncFans:             incFans,
 		IncFansRate:         incFansRate,
-		InteractRate:        0,
+		InteractRate:        interactRate,
 		AvgUserCount:        avgUserCount,
 		MaxWatchOnlineTrend: maxOnlineTrends,
 		OnlineTrends:        incOnlineTrends,
 		RenewalTime:         liveInfo.CrawlTime,
+		AvgOnlineTime:       avgOnlineTime,
 	}
-	liveSale, _ := liveBusiness.LiveRoomAnalyse(roomId)
+	liveSale.Volume = int64(math.Floor(liveSaleData.Sales))
+	liveSale.Amount = liveSaleData.Gmv
+	liveSale.PromotionNum = liveSaleData.NumProduct
+	if liveSaleData.Sales > 0 {
+		liveSale.PerPrice = liveSaleData.Gmv / liveSaleData.Sales
+	}
 	receiver.SuccReturn(map[string]interface{}{
 		"live_info": returnLiveInfo,
 		"live_sale": liveSale,
@@ -98,9 +116,14 @@ func (receiver *LiveController) LivePromotions() {
 	}
 	dates := make([]string, 0)
 	dyLivePromotions := make([][]dy.DyLivePromotion, 0)
+	promotionSales := map[string]int{}
 	for k, v := range promotionsMap {
 		item := make([]dy.DyLivePromotion, 0)
 		for _, v1 := range v {
+			saleNum := 1
+			if s, ok := promotionSales[v1.ProductID]; ok {
+				saleNum = s + 1
+			}
 			item = append(item, dy.DyLivePromotion{
 				ProductID: v1.ProductID,
 				ForSale:   v1.ForSale,
@@ -113,6 +136,7 @@ func (receiver *LiveController) LivePromotions() {
 				Title:     v1.Title,
 				Cover:     dyimg.Product(v1.Cover),
 				Index:     v1.Index,
+				SaleNum:   saleNum,
 			})
 		}
 		dyLivePromotions = append(dyLivePromotions, item)

@@ -21,6 +21,7 @@ type DyLiveInfo struct {
 	OnlineTrends        entity.DyLiveIncOnlineTrendsChart `json:"online_trends"`
 	MaxWatchOnlineTrend entity.DyLiveOnlineTrends         `json:"max_watch_online_trend"`
 	RenewalTime         int64                             `json:"renewal_time"`
+	AvgOnlineTime       float64                           `json:"avg_online_time"`
 }
 
 type DyLiveUserSimple struct {
@@ -45,6 +46,7 @@ type DyLivePromotion struct {
 	Title     string  `json:"title"`      //标题
 	Cover     string  `json:"cover"`      //封面
 	Index     int     `json:"index"`      //第几个商品
+	SaleNum   int     `json:"sale_num"`   //上架次数
 }
 
 type DyLivePromotionChart struct {
@@ -67,4 +69,13 @@ type DyLiveRoomAnalyse struct {
 	LiveLongTime   int64   `json:"live_long_time"`
 	LiveStartTime  int64   `json:"live_start_time"`
 	AvgOnlineTime  float64 `json:"avg_online_time"`
+}
+
+type DyLiveRoomSaleData struct {
+	Volume       int64   `json:"volume"`
+	Amount       float64 `json:"amount"`
+	Uv           float64 `json:"uv"`
+	PromotionNum int64   `json:"promotion_num"`
+	SaleRate     float64 `json:"sale_rate"`
+	PerPrice     float64 `json:"per_price"`
 }

@@ -13,9 +13,9 @@ func HbaseFormat(result *hbase.TResult_, fieldMap entity.HbaseEntity) map[string
 	retMap := make(map[string]interface{})
 	for _, v := range result.ColumnValues {
 		family := string(v.Family)
-		if family == "other" {
-			continue
-		}
+		//if family == "other" {
+		//	continue
+		//}
 		fn := string(v.Qualifier)
 		if family != "info" {
 			fn = family + "_" + fn
