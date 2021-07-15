@@ -110,6 +110,7 @@ func (l *LiveBusiness) LiveRoomAnalyse(roomId string) (data dy.DyLiveRoomAnalyse
 	}
 	data.TotalUserCount = liveInfo.TotalUser
 	data.LiveStartTime = liveInfo.CreateTime
+	data.BarrageCount = liveInfo.BarrageCount
 	data.AvgOnlineTime = l.CountAvgOnlineTime(liveInfo.OnlineTrends, liveInfo.CreateTime, liveInfo.TotalUser)
 	liveInfo.OnlineTrends = OnlineTrendOrderByTime(liveInfo.OnlineTrends)
 	lenNum := len(liveInfo.OnlineTrends)

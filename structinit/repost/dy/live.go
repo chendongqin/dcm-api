@@ -58,6 +58,7 @@ type DyLiveRoomAnalyse struct {
 	TotalUserCount int64   `json:"total_user_count"`
 	IncFans        int64   `json:"inc_fans"`
 	IncFansRate    float64 `json:"inc_fans_rate"`
+	BarrageCount   int64   `json:"barrage_count"` //弹幕人数
 	InteractRate   float64 `json:"interact_rate"`
 	AvgUserCount   int64   `json:"avg_user_count"`
 	Volume         int64   `json:"volume"`
@@ -78,4 +79,34 @@ type DyLiveRoomSaleData struct {
 	PromotionNum int64   `json:"promotion_num"`
 	SaleRate     float64 `json:"sale_rate"`
 	PerPrice     float64 `json:"per_price"`
+}
+
+type SumDyLiveRoom struct {
+	UserData           SumDyLiveRoomUserData `json:"user_data"`
+	SaleData           SumDyLiveRoomSaleData `json:"sale_data"`
+	UserTotalChart     DateCountChart        `json:"user_total_chart"`
+	OnlineTimeChart    DateCountFChart       `json:"online_time_chart"`
+	UvChart            DateCountFChart       `json:"uv_chart"`
+	AmountChart        DateCountFChart       `json:"amount_chart"`
+	LiveLongTimeChart  []NameValueChart      `json:"live_long_time_chart"`
+	LiveStartHourChart []NameValueChart      `json:"live_start_hour_chart"`
+}
+
+type SumDyLiveRoomUserData struct {
+	LiveNum          int     `json:"live_num"`
+	PromotionLiveNum int     `json:"promotion_live_num"`
+	AvgUserTotal     int64   `json:"avg_user_total"`
+	AvgUserCount     int64   `json:"avg_user_count"`
+	IncFans          int64   `json:"inc_fans"`
+	AvgIncFansRate   float64 `json:"avg_inc_fans_rate"`
+	AvgInteractRate  float64 `json:"avg_interact_rate"`
+}
+
+type SumDyLiveRoomSaleData struct {
+	AvgVolume    int64   `json:"volume"`
+	AvgAmount    float64 `json:"amount"`
+	AvgUv        float64 `json:"uv"`
+	PromotionNum int64   `json:"promotion_num"`
+	SaleRate     float64 `json:"sale_rate"`
+	AvgPerPrice  float64 `json:"per_price"`
 }

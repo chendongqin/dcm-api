@@ -444,23 +444,154 @@ func (a *AuthorBusiness) HbaseGetAuthorRoomsByDate(authorId, date string) (data 
 	return
 }
 
-func (a *AuthorBusiness) CountLiveRoomAnalyse(authorId, startDate, endDate string) {
+func (a *AuthorBusiness) CountLiveRoomAnalyse(authorId, startDate, endDate string) (data dy.SumDyLiveRoom) {
+	data = dy.SumDyLiveRoom{}
 	roomsMap, _ := a.HbaseGetAuthorRoomsRangDate(authorId, startDate, endDate)
 	liveDataChan := make(chan map[string]dy.DyLiveRoomAnalyse, 0)
 	roomNum := 0
 	for date, rooms := range roomsMap {
 		for _, room := range rooms {
 			roomNum++
-			go func(liveDataChan chan map[string]dy.DyLiveRoomAnalyse, date, roomId string) {
+			go func(ch chan map[string]dy.DyLiveRoomAnalyse, date, roomId string) {
 				liveBusiness := NewLiveBusiness()
 				roomAnalyse, comErr := liveBusiness.LiveRoomAnalyse(roomId)
+				tem := map[string]dy.DyLiveRoomAnalyse{}
 				if comErr == nil {
-					data := map[string]dy.DyLiveRoomAnalyse{}
-					data[date] = roomAnalyse
-					liveDataChan <- data
+					t1, _ := time.ParseInLocation("20060102", date, time.Local)
+					tem[t1.Format("0102")] = roomAnalyse
 				}
+				ch <- tem
 			}(liveDataChan, date, room.RoomID)
 		}
 	}
-
+	sumData := map[string]dy.DyLiveRoomAnalyse{}
+	sumLongTime := map[string]int{}
+	sumHourTime := map[string]int{}
+	for i := 0; i < roomNum; i++ {
+		roomAnalyse, ok := <-liveDataChan
+		if !ok {
+			break
+		}
+		for date, v := range roomAnalyse {
+			longStr := ""
+			HourStr := time.Unix(v.LiveStartTime, 0).Format("15")
+			if v.LiveLongTime > 4*3600 {
+				longStr = "up_h4"
+			} else if v.LiveLongTime > 2*3600 {
+				longStr = "h2_h4"
+			} else if v.LiveLongTime > 3600 {
+				longStr = "h1_h2"
+			} else if v.LiveLongTime > 1800 {
+				longStr = "m30_h1"
+			} else {
+				longStr = "down_m30"
+			}
+			if _, ok := sumHourTime[HourStr]; ok {
+				sumHourTime[HourStr] += 1
+			} else {
+				sumHourTime[HourStr] = 1
+			}
+			if _, ok := sumLongTime[longStr]; ok {
+				sumLongTime[longStr] += 1
+			} else {
+				sumLongTime[longStr] = 1
+			}
+			//todo 商品取电商分析
+			if d, ex := sumData[date]; ex {
+				d.TotalUserCount += v.TotalUserCount
+				d.IncFans += v.IncFans
+				d.IncFansRate = float64(d.IncFans) / float64(d.TotalUserCount)
+				d.BarrageCount += v.BarrageCount
+				d.InteractRate = float64(d.BarrageCount) / float64(d.TotalUserCount)
+				avgUserCount := (d.AvgUserCount + v.AvgUserCount) / 2
+				d.AvgUserCount = avgUserCount
+				d.Volume += v.Volume
+				d.Amount += v.Amount
+				uv := (d.Uv + v.Uv) / 2
+				d.Uv = uv
+				saleRate := (d.SaleRate + v.SaleRate) / 2
+				d.SaleRate = saleRate
+				perPrice := (d.PerPrice + v.PerPrice) / 2
+				d.PerPrice = perPrice
+				d.LiveLongTime += v.LiveLongTime
+				d.LiveStartTime = v.LiveStartTime
+				avgOnlineTime := (d.AvgOnlineTime + v.AvgOnlineTime) / 2
+				d.AvgOnlineTime = avgOnlineTime
+				if d.PromotionNum == 0 {
+					d.PromotionNum = v.PromotionNum
+				}
+				sumData[date] = d
+			} else {
+				sumData[date] = v
+			}
+		}
+	}
+	data.LiveStartHourChart = make([]dy.NameValueChart, 0)
+	data.LiveLongTimeChart = make([]dy.NameValueChart, 0)
+	for k, v := range sumLongTime {
+		data.LiveLongTimeChart = append(data.LiveLongTimeChart, dy.NameValueChart{
+			Name:  k,
+			Value: v,
+		})
+	}
+	for k, v := range sumHourTime {
+		data.LiveStartHourChart = append(data.LiveStartHourChart, dy.NameValueChart{
+			Name:  k,
+			Value: v,
+		})
+	}
+	dateChart := make([]string, 0)
+	userTotalChart := make([]int64, 0)
+	onlineUserChart := make([]float64, 0)
+	uvChart := make([]float64, 0)
+	amountChart := make([]float64, 0)
+	for date, v := range sumData {
+		data.UserData.LiveNum += 1
+		data.UserData.AvgUserTotal += v.TotalUserCount
+		data.UserData.AvgUserCount += v.AvgUserCount
+		data.UserData.AvgInteractRate += v.InteractRate
+		data.UserData.IncFans += v.IncFans
+		data.UserData.AvgIncFansRate += v.IncFansRate
+		data.SaleData.AvgVolume += v.Volume
+		data.SaleData.AvgAmount += v.Amount
+		data.SaleData.AvgUv += v.Uv
+		data.SaleData.SaleRate += v.SaleRate
+		data.SaleData.AvgPerPrice += v.PerPrice
+		dateChart = append(dateChart, date)
+		userTotalChart = append(userTotalChart, v.TotalUserCount)
+		onlineUserChart = append(onlineUserChart, v.AvgOnlineTime)
+		uvChart = append(uvChart, v.Uv)
+		amountChart = append(amountChart, v.Amount)
+		if v.PromotionNum > 0 {
+			data.UserData.PromotionLiveNum += 1
+		}
+	}
+	if data.UserData.LiveNum > 0 {
+		data.UserData.AvgUserTotal /= int64(data.UserData.LiveNum)
+		data.UserData.AvgUserCount /= int64(data.UserData.LiveNum)
+		data.UserData.AvgInteractRate /= float64(data.UserData.LiveNum)
+		data.UserData.AvgIncFansRate = float64(data.UserData.LiveNum)
+		data.SaleData.AvgVolume /= int64(data.UserData.LiveNum)
+		data.SaleData.AvgAmount /= float64(data.UserData.LiveNum)
+		data.SaleData.AvgUv /= float64(data.UserData.LiveNum)
+		data.SaleData.SaleRate /= float64(data.UserData.LiveNum)
+		data.SaleData.AvgPerPrice /= float64(data.UserData.LiveNum)
+	}
+	data.UserTotalChart = dy.DateCountChart{
+		Date:       dateChart,
+		CountValue: userTotalChart,
+	}
+	data.OnlineTimeChart = dy.DateCountFChart{
+		Date:       dateChart,
+		CountValue: onlineUserChart,
+	}
+	data.UvChart = dy.DateCountFChart{
+		Date:       dateChart,
+		CountValue: uvChart,
+	}
+	data.AmountChart = dy.DateCountFChart{
+		Date:       dateChart,
+		CountValue: amountChart,
+	}
+	return
 }

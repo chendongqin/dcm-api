@@ -215,3 +215,35 @@ func (receiver *AuthorController) AuthorFansAnalyse() {
 	receiver.SuccReturn(data)
 	return
 }
+
+func (receiver *AuthorController) CountLiveRoomAnalyse() {
+	authorId := receiver.Ctx.Input.Param(":author_id")
+	startDay := receiver.Ctx.Input.Param(":start")
+	endDay := receiver.Ctx.Input.Param(":end")
+	if authorId == "" || startDay == "" {
+		receiver.FailReturn(global.NewError(4000))
+		return
+	}
+	if endDay == "" {
+		endDay = time.Now().Format("2006-01-02")
+	}
+	pslTime := "2006-01-02"
+	t1, err := time.ParseInLocation(pslTime, startDay, time.Local)
+	if err != nil {
+		receiver.FailReturn(global.NewError(4000))
+		return
+	}
+	t2, err := time.ParseInLocation(pslTime, endDay, time.Local)
+	if err != nil {
+		receiver.FailReturn(global.NewError(4000))
+		return
+	}
+	if t1.After(t2) || t2.After(t1.AddDate(0, 0, 90)) || t2.After(time.Now()) {
+		receiver.FailReturn(global.NewError(4000))
+		return
+	}
+	authorBusiness := business.NewAuthorBusiness()
+	data := authorBusiness.CountLiveRoomAnalyse(authorId, t1.Format("20060102"), t2.Format("20060102"))
+	receiver.SuccReturn(data)
+	return
+}
