@@ -23,6 +23,7 @@ type DyLiveInfo struct {
 	RenewalTime         int64                             `json:"renewal_time"`
 	AvgOnlineTime       float64                           `json:"avg_online_time"`
 	LiveUrl             string                            `json:"live_url"`
+	ShareUrl            string                            `json:"share_url"`
 }
 
 type DyLiveUserSimple struct {
