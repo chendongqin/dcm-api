@@ -3,7 +3,7 @@ package entity
 var DyAuthorLiveSalesDataMap = HbaseEntity{
 	"crawl_time":   {Long, "crawl_time"},
 	"gmv":          {Double, "gmv"},
-	"num_product":  {Long, "num_product"},
+	"num_products": {Long, "num_products"},
 	"sales":        {Double, "sales"},
 	"ticket_count": {Long, "ticket_count"},
 }
@@ -11,7 +11,7 @@ var DyAuthorLiveSalesDataMap = HbaseEntity{
 type DyAuthorLiveSalesData struct {
 	CrawlTime   int64   `json:"crawl_time"`
 	Gmv         float64 `json:"gmv"`
-	NumProduct  int64   `json:"num_product"`
+	NumProducts int64   `json:"num_products"`
 	Sales       float64 `json:"sales"`
 	TicketCount int64   `json:"ticket_count"`
 }

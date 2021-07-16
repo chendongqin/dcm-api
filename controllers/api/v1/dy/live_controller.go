@@ -75,7 +75,7 @@ func (receiver *LiveController) LiveInfoData() {
 	}
 	liveSale.Volume = int64(math.Floor(liveSaleData.Sales))
 	liveSale.Amount = liveSaleData.Gmv
-	liveSale.PromotionNum = liveSaleData.NumProduct
+	liveSale.PromotionNum = liveSaleData.NumProducts
 	if liveSaleData.Sales > 0 {
 		liveSale.PerPrice = liveSaleData.Gmv / liveSaleData.Sales
 	}
