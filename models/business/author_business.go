@@ -444,6 +444,7 @@ func (a *AuthorBusiness) HbaseGetAuthorRoomsByDate(authorId, date string) (data 
 	return
 }
 
+//直播分析
 func (a *AuthorBusiness) CountLiveRoomAnalyse(authorId, startDate, endDate string) (data dy.SumDyLiveRoom) {
 	data = dy.SumDyLiveRoom{}
 	roomsMap, _ := a.HbaseGetAuthorRoomsRangDate(authorId, startDate, endDate)
@@ -570,7 +571,7 @@ func (a *AuthorBusiness) CountLiveRoomAnalyse(authorId, startDate, endDate strin
 		data.UserData.AvgUserTotal /= int64(data.UserData.LiveNum)
 		data.UserData.AvgUserCount /= int64(data.UserData.LiveNum)
 		data.UserData.AvgInteractRate /= float64(data.UserData.LiveNum)
-		data.UserData.AvgIncFansRate = float64(data.UserData.LiveNum)
+		data.UserData.AvgIncFansRate /= float64(data.UserData.LiveNum)
 		data.SaleData.AvgVolume /= int64(data.UserData.LiveNum)
 		data.SaleData.AvgAmount /= float64(data.UserData.LiveNum)
 		data.SaleData.AvgUv /= float64(data.UserData.LiveNum)
