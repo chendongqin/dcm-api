@@ -125,7 +125,7 @@ func (l *LiveBusiness) LiveRoomAnalyse(roomId string) (data dy.DyLiveRoomAnalyse
 	salesData, _ := l.HbaseGetLiveSalesData(roomId)
 	if liveInfo.TotalUser > 0 {
 		data.Uv = (salesData.Gmv + float64(salesData.TicketCount)/10) / float64(liveInfo.TotalUser)
-		data.SaleRate = salesData.Gmv / float64(liveInfo.TotalUser)
+		data.SaleRate = salesData.Sales / float64(liveInfo.TotalUser)
 		data.IncFansRate = float64(data.IncFans) / float64(liveInfo.TotalUser)
 		data.InteractRate = float64(liveInfo.BarrageCount) / float64(liveInfo.TotalUser)
 	}
