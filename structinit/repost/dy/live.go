@@ -22,6 +22,7 @@ type DyLiveInfo struct {
 	MaxWatchOnlineTrend entity.DyLiveOnlineTrends         `json:"max_watch_online_trend"`
 	RenewalTime         int64                             `json:"renewal_time"`
 	AvgOnlineTime       float64                           `json:"avg_online_time"`
+	LiveUrl             string                            `json:"live_url"`
 }
 
 type DyLiveUserSimple struct {

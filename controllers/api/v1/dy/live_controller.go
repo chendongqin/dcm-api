@@ -72,6 +72,7 @@ func (receiver *LiveController) LiveInfoData() {
 		OnlineTrends:        incOnlineTrends,
 		RenewalTime:         liveInfo.CrawlTime,
 		AvgOnlineTime:       avgOnlineTime,
+		LiveUrl:             liveInfo.PlayURL,
 	}
 	liveSale.Volume = int64(math.Floor(liveSaleData.Sales))
 	liveSale.Amount = liveSaleData.Gmv
