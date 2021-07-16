@@ -459,7 +459,7 @@ func (a *AuthorBusiness) CountLiveRoomAnalyse(authorId, startDate, endDate strin
 				tem := map[string]dy.DyLiveRoomAnalyse{}
 				if comErr == nil {
 					t1, _ := time.ParseInLocation("20060102", date, time.Local)
-					tem[t1.Format("0102")] = roomAnalyse
+					tem[t1.Format("01/02")] = roomAnalyse
 				}
 				ch <- tem
 			}(liveDataChan, date, room.RoomID)
