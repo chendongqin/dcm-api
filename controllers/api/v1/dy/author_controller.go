@@ -5,6 +5,7 @@ import (
 	"dongchamao/entity"
 	"dongchamao/global"
 	"dongchamao/models/business"
+	"dongchamao/models/business/es"
 	"dongchamao/structinit/repost/dy"
 	"time"
 )
@@ -216,6 +217,7 @@ func (receiver *AuthorController) AuthorFansAnalyse() {
 	return
 }
 
+//达人直播分析
 func (receiver *AuthorController) CountLiveRoomAnalyse() {
 	authorId := receiver.Ctx.Input.Param(":author_id")
 	startDay := receiver.Ctx.Input.Param(":start")
@@ -245,5 +247,51 @@ func (receiver *AuthorController) CountLiveRoomAnalyse() {
 	authorBusiness := business.NewAuthorBusiness()
 	data := authorBusiness.CountLiveRoomAnalyse(authorId, t1.Format("20060102"), t2.Format("20060102"))
 	receiver.SuccReturn(data)
+	return
+}
+
+//达人直播间列表
+func (receiver *AuthorController) AuthorLiveRooms() {
+	authorId := receiver.Ctx.Input.Param(":author_id")
+	startDay := receiver.Ctx.Input.Param(":start")
+	endDay := receiver.Ctx.Input.Param(":end")
+	InputData := receiver.InputFormat()
+	keyword := InputData.GetString("keyword", "")
+	sort := InputData.GetString("sort", "create_timestamp")
+	orderBy := InputData.GetString("order_by", "desc")
+	page := InputData.GetInt("page", 1)
+	size := InputData.GetInt("page_size", 10)
+	if authorId == "" || startDay == "" {
+		receiver.FailReturn(global.NewError(4000))
+		return
+	}
+	if endDay == "" {
+		endDay = time.Now().Format("2006-01-02")
+	}
+	pslTime := "2006-01-02"
+	t1, err := time.ParseInLocation(pslTime, startDay, time.Local)
+	if err != nil {
+		receiver.FailReturn(global.NewError(4000))
+		return
+	}
+	t2, err := time.ParseInLocation(pslTime, endDay, time.Local)
+	if err != nil {
+		receiver.FailReturn(global.NewError(4000))
+		return
+	}
+	if t1.After(t2) || t2.After(t1.AddDate(0, 0, 90)) || t2.After(time.Now()) {
+		receiver.FailReturn(global.NewError(4000))
+		return
+	}
+	esLiveBusiness := es.NewEsLiveBusiness()
+	list, total, comErr := esLiveBusiness.SearchAuthorRooms(authorId, keyword, sort, orderBy, page, size, t1, t2)
+	if comErr != nil {
+		receiver.FailReturn(comErr)
+		return
+	}
+	receiver.SuccReturn(map[string]interface{}{
+		"list":  list,
+		"total": total,
+	})
 	return
 }

@@ -12,6 +12,7 @@ func init() {
 	beego.Router("/v1/dy/author/awemes/:author_id/:start/:end", &v1dy.AuthorController{}, "get:AuthorAwemesByDay")
 	beego.Router("/v1/dy/author/basic/chart/:author_id/:start/:end", &v1dy.AuthorController{}, "get:AuthorBasicChart")
 	beego.Router("/v1/dy/author/live/analysis/:author_id/:start/:end", &v1dy.AuthorController{}, "get:CountLiveRoomAnalyse")
+	beego.Router("/v1/dy/author/live/rooms/:author_id/:start/:end", &v1dy.AuthorController{}, "get:AuthorLiveRooms")
 	beego.Router("/v1/dy/author/fans/analysis/:author_id", &v1dy.AuthorController{}, "get:AuthorFansAnalyse")
 
 	beego.Router("/v1/dy/xt/author/index/:author_id", &v1dy.AuthorController{}, "get:AuthorStarSimpleData")
