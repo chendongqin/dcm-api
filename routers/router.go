@@ -2,7 +2,6 @@ package routers
 
 import (
 	"dongchamao/controllers/api/v1"
-	"dongchamao/controllers/api/v1/dy"
 	"github.com/astaxie/beego"
 	"github.com/json-iterator/go/extra"
 )
@@ -21,6 +20,6 @@ func init() {
 	beego.Router("/v1/user/findpwd", &v1.AccountController{}, "put:ResetPwd")
 	beego.Router("/v1/sms/code", &v1.CommonController{}, "post:Sms")
 	beego.Router("/v1/sms/verify/:grant_type/:username/:code", &v1.CommonController{}, "get:CheckSmsCode")
-	beego.Router("/v1/test", &dy.TestController{}, "get:Test")
+	//beego.Router("/v1/test", &dy.TestController{}, "get:Test")
 
 }
