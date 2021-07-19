@@ -166,13 +166,21 @@ func (receiver *LiveController) LiveRankTrends() {
 	hourDates := make([]int64, 0)
 	saleRanks := make([]int, 0)
 	hourRanks := make([]int, 0)
+	maxSaleRank := 1000000
+	maxHourRank := 1000000
 	for _, v := range liveRankTrends {
 		if v.Type == 8 {
 			saleDates = append(saleDates, v.CrawlTime)
 			saleRanks = append(saleRanks, v.Rank)
+			if v.Rank < maxSaleRank {
+				maxSaleRank = v.Rank
+			}
 		} else if v.Type == 1 {
 			hourDates = append(hourDates, v.CrawlTime)
 			hourRanks = append(hourRanks, v.Rank)
+			if v.Rank < maxHourRank {
+				maxHourRank = v.Rank
+			}
 		}
 	}
 	hourDates = business.DealChartInt64(hourDates, 60)
@@ -188,5 +196,7 @@ func (receiver *LiveController) LiveRankTrends() {
 			"time":  saleDates,
 			"ranks": saleRanks,
 		},
+		"max_hour_rank": maxHourRank,
+		"max_sale_rank": maxSaleRank,
 	})
 }
