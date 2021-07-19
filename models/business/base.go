@@ -49,3 +49,45 @@ func GetAge(startTime string) int {
 		return int(Age)
 	}
 }
+
+func DealChartInt(charts []int, chartNum int) []int {
+	nums := len(charts)
+	if nums <= chartNum {
+		return charts
+	}
+	newCharts := make([]int, 0)
+	randNum := nums / chartNum
+	if randNum < 1 {
+		randNum = 1
+	}
+	var begin int
+	for i := 0; i < chartNum; i++ {
+		begin = i * randNum
+		if begin >= nums {
+			break
+		}
+		newCharts = append(newCharts, charts[begin])
+	}
+	return newCharts
+}
+
+func DealChartInt64(charts []int64, chartNum int) []int64 {
+	nums := len(charts)
+	if nums <= chartNum {
+		return charts
+	}
+	newCharts := make([]int64, 0)
+	randNum := nums / chartNum
+	if randNum < 1 {
+		randNum = 1
+	}
+	var begin int
+	for i := 0; i < chartNum; i++ {
+		begin = i * randNum
+		if begin >= nums {
+			break
+		}
+		newCharts = append(newCharts, charts[begin])
+	}
+	return newCharts
+}

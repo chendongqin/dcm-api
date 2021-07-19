@@ -175,6 +175,10 @@ func (receiver *LiveController) LiveRankTrends() {
 			hourRanks = append(hourRanks, v.Rank)
 		}
 	}
+	hourDates = business.DealChartInt64(hourDates, 60)
+	hourRanks = business.DealChartInt(hourRanks, 60)
+	saleDates = business.DealChartInt64(saleDates, 60)
+	saleRanks = business.DealChartInt(saleRanks, 60)
 	receiver.SuccReturn(map[string]interface{}{
 		"hour_rank": map[string]interface{}{
 			"time":  hourDates,
