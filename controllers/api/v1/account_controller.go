@@ -32,6 +32,7 @@ func (receiver *AccountController) Login() {
 	if grantType == "password" {
 		username := InputData.GetString("username", "")
 		password := InputData.GetString("pwd", "")
+		password = utils.Base64Decode(password)
 		user, authToken, expTime, comErr = userBusiness.LoginByPwd(username, password, appId)
 	} else if grantType == "sms" {
 		username := InputData.GetString("username", "")
@@ -69,7 +70,13 @@ func (receiver *AccountController) FindPwd() {
 	}
 	code := InputData.GetString("code", "")
 	newPwd := InputData.GetString("new_pwd", "")
+	newPwd = utils.Base64Decode(newPwd)
 	surePwd := InputData.GetString("sure_pwd", "")
+	surePwd = utils.Base64Decode(surePwd)
+	if newPwd == "" || surePwd == "" {
+		receiver.FailReturn(global.NewError(4000))
+		return
+	}
 	if newPwd != surePwd {
 		receiver.FailReturn(global.NewError(4207))
 		return
@@ -114,13 +121,20 @@ func (receiver *AccountController) ResetPwd() {
 			receiver.FailReturn(global.NewError(4207))
 			return
 		}
+		oldPwd = utils.Base64Decode(oldPwd)
 		if utils.Md5_encode(oldPwd+receiver.UserInfo.Salt) != receiver.UserInfo.Password {
 			receiver.FailReturn(global.NewError(4207))
 			return
 		}
 	}
 	newPwd := InputData.GetString("new_pwd", "")
+	newPwd = utils.Base64Decode(newPwd)
 	surePwd := InputData.GetString("sure_pwd", "")
+	surePwd = utils.Base64Decode(surePwd)
+	if newPwd == "" || surePwd == "" {
+		receiver.FailReturn(global.NewError(4000))
+		return
+	}
 	if newPwd != surePwd {
 		receiver.FailReturn(global.NewError(4207))
 		return

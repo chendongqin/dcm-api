@@ -93,6 +93,10 @@ func (receiver *UserBusiness) CreateToken(appId int, userId int, expire int64) (
 
 //密码登陆
 func (receiver *UserBusiness) LoginByPwd(username, pwd string, appId int) (user dcm.DcUser, tokenString string, expire int64, comErr global.CommonError) {
+	if pwd == "" {
+		comErr = global.NewError(4208)
+		return
+	}
 	exist, _ := dcm.GetBy("username", username, &user)
 	if !exist {
 		comErr = global.NewError(4208)
