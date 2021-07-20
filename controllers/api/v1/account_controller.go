@@ -156,6 +156,7 @@ func (receiver *AccountController) ResetPwd() {
 		receiver.FailReturn(global.NewError(4213))
 		return
 	}
+	receiver.Logout()
 	receiver.SuccReturn(nil)
 	return
 }
@@ -187,4 +188,18 @@ func (receiver *AccountController) Info() {
 		"info": account,
 	})
 	return
+}
+
+//登出
+func (receiver *AccountController) Logout() {
+	cacheKey := cache.GetCacheKey(cache.UserPlatformUniqueToken, receiver.AppId, receiver.UserId)
+	_ = global.Cache.Delete(cacheKey)
+	//执行登出事件
+	receiver.RegisterLogout()
+	//uniquetoken更新置为空  旧的token不可用
+	userBusiness := business.NewUserBusiness()
+	_ = userBusiness.AddOrUpdateUniqueToken(receiver.UserId, receiver.AppId, "")
+	receiver.SuccReturn("success")
+	return
+
 }

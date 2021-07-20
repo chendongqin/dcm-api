@@ -27,8 +27,7 @@ type ApiBaseController struct {
 	UserId           int
 	UserInfo         dcm.DcUser
 	IsMonitor        bool
-	appId            int
-	appSecret        string
+	AppId            int
 	Ip               string
 	IsInitToken      bool               //是否初始化过token
 	LastInitTokenErr global.CommonError //记录首次初始化token的错误
@@ -188,7 +187,7 @@ func (this *ApiBaseController) InitUserToken() (commonErr global.CommonError) {
 		if this.UserId == 0 {
 			return global.NewError(4001)
 		}
-		this.appId = tokenStruct.AppId
+		this.AppId = tokenStruct.AppId
 		this.Token = tokenString
 		userInfo := dcm.DcUser{}
 		_, err := dcm.Get(this.UserId, &userInfo)
@@ -201,10 +200,8 @@ func (this *ApiBaseController) InitUserToken() (commonErr global.CommonError) {
 			return global.NewError(4212)
 		}
 		//除bindphone外的接口 没有phone不让访问
-		if utils.InArray(this.GetUri(), NeedUsernameRoute) == false {
-			if this.UserInfo.Username == "" {
-				return global.NewError(4005)
-			}
+		if utils.InArray(this.GetUri(), NeedUsernameRoute) && this.UserInfo.Username == "" {
+			return global.NewError(4005)
 		}
 
 		//处理连续登录次数统计处理
@@ -214,19 +211,19 @@ func (this *ApiBaseController) InitUserToken() (commonErr global.CommonError) {
 		}
 
 		//验证 user Platform token的唯一性
-		uniqueToken, exist := userBusiness.GetUniqueToken(this.UserId, this.appId, true)
+		uniqueToken, exist := userBusiness.GetUniqueToken(this.UserId, this.AppId, true)
 		if exist == false {
 			return global.NewError(4003)
 		} else {
 			if tokenString != uniqueToken {
 				//cmmlog.LoginLog(this.Ctx.Input.Header("X-Request-Id"), this.Ctx.Input.Header("X-Client-Id"), this.appId, this.UserId, "current:"+tokenString+"|unique:"+uniqueToken, this.Ctx.Input.IP(), this.Ctx.Request.UserAgent(), "unique", "unique_loginout")
-				this.RegisterSignOut()
+				this.RegisterLogout()
 				return global.NewError(40006)
 			}
 		}
 
-		if this.appId == 10000 || this.appId == 10001 {
-			this.RegisterSignin(tokenString, expireTime)
+		if this.AppId == 10000 || this.AppId == 10001 {
+			this.RegisterLogin(tokenString, expireTime)
 		}
 
 		//异步记录用户行为日志
@@ -518,7 +515,7 @@ func (this *ApiBaseController) ExportCsv(export, filename string) {
 }
 
 func (this *ApiBaseController) GetAppId() int {
-	return this.appId
+	return this.AppId
 }
 
 func (c *ApiBaseController) DownloadBuf(fileName string, buf *bytes.Buffer) error {
@@ -533,7 +530,7 @@ func (c *ApiBaseController) DownloadBuf(fileName string, buf *bytes.Buffer) erro
 }
 
 //注册登录事件
-func (c *ApiBaseController) RegisterSignin(token string, expire_time int64) {
+func (c *ApiBaseController) RegisterLogin(token string, expire_time int64) {
 	tokenCookie := c.Ctx.GetCookie(global.LOGINCOOKIENAME)
 	if tokenCookie == "" || tokenCookie != token {
 		domain := global.Cfg.String("oauth2_cookie_domain")
@@ -543,10 +540,9 @@ func (c *ApiBaseController) RegisterSignin(token string, expire_time int64) {
 }
 
 //注册登录事件
-func (c *ApiBaseController) RegisterSignOut() {
+func (c *ApiBaseController) RegisterLogout() {
 	domain := global.Cfg.String("oauth2_cookie_domain")
 	c.Ctx.SetCookie(global.LOGINCOOKIENAME, "", -1, "/", domain, true, true)
-	//c.Ctx.SetCookie(global.LOGINCOOKIENAME, "", -1,"/", domain,false,false)
 }
 
 func (c *ApiBaseController) Echo(body string, code ...int) {
