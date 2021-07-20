@@ -5,7 +5,10 @@ import (
 	"dongchamao/global/cache"
 	"dongchamao/global/utils"
 	"dongchamao/models/dcm"
+	"dongchamao/services/mutex"
 	"github.com/dgrijalva/jwt-go"
+	"github.com/go-xorm/xorm"
+	"github.com/gomodule/redigo/redis"
 	"time"
 )
 
@@ -196,4 +199,67 @@ func (receiver *UserBusiness) CancelCollectAuthor(userId, authorId string, platf
 		return
 	}
 	return
+}
+
+func (receiver *UserBusiness) DeleteUserInfoCache(userid int) bool {
+	memberKey := cache.GetCacheKey(cache.UserInfo, userid)
+	err := global.Cache.Delete(memberKey)
+	if err == nil {
+		return true
+	} else {
+		return false
+	}
+}
+
+//更新活跃时间等
+func (receiver *UserBusiness) UpdateVisitedTimes(userAccount dcm.DcUser) bool {
+	if userAccount.Id == 0 {
+		return false
+	}
+	today := time.Now().Format("20060102")
+	yesterdayTime := time.Now().AddDate(0, 0, -1)
+	prevTimeDate := userAccount.PrevTime.Format("20060102")
+	//如果上次登录时间是今天，则不处理
+	if today == prevTimeDate {
+		return false
+	}
+	//加锁防止多个请求进来都进行处理
+	lockKey := cache.GetCacheKey(cache.UserPrevTimeLock, userAccount.Id)
+	lockSecret := utils.GetRandomInt(4)
+	lock, ok, err := mutex.TryLockWithTimeout(global.Cache.GetInstance().(redis.Conn), lockKey, lockSecret, 30)
+	if err != nil {
+		return false
+	}
+	if !ok {
+		return false
+	}
+	defer lock.Unlock()
+	dbSession := dcm.GetDbSession()
+	defer dbSession.Close()
+	updateData := map[string]interface{}{
+		"prev_time": utils.GetNowTimeStamp(),
+	}
+	if yesterdayTime.Format("20060102") == prevTimeDate || userAccount.Successions == 0 {
+		successions := userAccount.Successions + 1
+		totalSuccessions := userAccount.TotalSuccessions + 1
+		updateData["successions"] = successions
+		updateData["total_successions"] = totalSuccessions
+		if successions > userAccount.MaxSuccessions {
+			updateData["max_successions"] = successions
+		}
+	}
+	affect, err := dcm.UpdateInfo(nil, userAccount.Id, updateData, new(dcm.DcUser))
+	if affect == 0 || err != nil {
+		return false
+	}
+	return true
+}
+
+//更新用户数据
+func (receiver *UserBusiness) UpdateUserAndClearCache(dbSession *xorm.Session, userId int, updateData map[string]interface{}) (int64, error) {
+	affect, err := dcm.UpdateInfo(dbSession, userId, updateData, new(dcm.DcUser))
+	if affect != 0 && err == nil {
+		receiver.DeleteUserInfoCache(userId)
+	}
+	return affect, err
 }

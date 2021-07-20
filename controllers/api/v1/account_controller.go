@@ -9,13 +9,13 @@ import (
 	"dongchamao/models/dcm"
 	"dongchamao/structinit/repost/dy"
 	"strings"
-	"time"
 )
 
 type AccountController struct {
 	controllers.ApiBaseController
 }
 
+//登陆
 func (receiver *AccountController) Login() {
 	InputData := receiver.InputFormat()
 	grantType := InputData.GetString("grant_type", "password")
@@ -44,48 +44,12 @@ func (receiver *AccountController) Login() {
 		receiver.FailReturn(comErr)
 		return
 	}
-	account := dy.RepostAccountData{
-		UserId:   user.Id,
-		Username: user.Username,
-		Nickname: user.Nickname,
-		Avatar:   user.Avatar,
-	}
-	vipBusiness := business.NewVipBusiness()
-	vipLevelsMap := vipBusiness.GetVipLevels(user.Id)
-	for k, v := range vipLevelsMap {
-		if k == business.VipPlatformDouYin {
-			account.DyLevel.Level = v
-		} else if k == business.VipPlatformXiaoHongShu {
-			account.XhsLevel.Level = v
-		} else if k == business.VipPlatformTaoBao {
-			account.TbLevel.Level = v
-		}
-	}
-	account.DyLevel.LevelName = vipBusiness.GetUserLevel(account.DyLevel.Level)
-	account.XhsLevel.LevelName = vipBusiness.GetUserLevel(account.XhsLevel.Level)
-	account.TbLevel.LevelName = vipBusiness.GetUserLevel(account.TbLevel.Level)
 	updateData := map[string]interface{}{
 		"login_time": utils.GetNowTimeStamp(),
 		"login_ip":   receiver.Ip,
 	}
-	today := time.Now().Format("20060102")
-	yesterdayTime := time.Now().AddDate(0, 0, -1)
-	prevTimeDate := user.PrevTime.Format("20060102")
-	if today != prevTimeDate {
-		updateData["prev_time"] = utils.GetNowTimeStamp()
-		if yesterdayTime.Format("20060102") == prevTimeDate || user.Successions == 0 {
-			successions := user.Successions + 1
-			totalSuccessions := user.TotalSuccessions + 1
-			updateData["successions"] = successions
-			updateData["total_successions"] = totalSuccessions
-			if successions > user.MaxSuccessions {
-				updateData["max_successions"] = successions
-			}
-		}
-	}
-	dcm.UpdateInfo(nil, user.Id, updateData, new(dcm.DcUser))
+	_, _ = userBusiness.UpdateUserAndClearCache(nil, user.Id, updateData)
 	receiver.SuccReturn(map[string]interface{}{
-		"account": account,
 		"token_info": dy.RepostAccountToken{
 			UserId:      user.Id,
 			TokenString: authToken,
@@ -95,7 +59,8 @@ func (receiver *AccountController) Login() {
 	return
 }
 
-func (receiver *AccountController) ResetPwd() {
+//找回密码
+func (receiver *AccountController) FindPwd() {
 	InputData := receiver.InputFormat()
 	mobile := InputData.GetString("username", "")
 	if !utils.VerifyMobileFormat(mobile) {
@@ -137,5 +102,75 @@ func (receiver *AccountController) ResetPwd() {
 		return
 	}
 	receiver.SuccReturn(nil)
+	return
+}
+
+//重置密码
+func (receiver *AccountController) ResetPwd() {
+	InputData := receiver.InputFormat()
+	if receiver.UserInfo.SetPassword == 1 {
+		oldPwd := InputData.GetString("old_pwd", "")
+		if oldPwd == "" {
+			receiver.FailReturn(global.NewError(4207))
+			return
+		}
+		if utils.Md5_encode(oldPwd+receiver.UserInfo.Salt) != receiver.UserInfo.Password {
+			receiver.FailReturn(global.NewError(4207))
+			return
+		}
+	}
+	newPwd := InputData.GetString("new_pwd", "")
+	surePwd := InputData.GetString("sure_pwd", "")
+	if newPwd != surePwd {
+		receiver.FailReturn(global.NewError(4207))
+		return
+	}
+	pwdLen := strings.Count(newPwd, "")
+	if pwdLen > 24 || pwdLen < 6 {
+		receiver.FailReturn(global.NewError(4210))
+		return
+	}
+	pwd := utils.Md5_encode(newPwd + receiver.UserInfo.Salt)
+	userBusiness := business.NewUserBusiness()
+	updateData := map[string]interface{}{
+		"password":     pwd,
+		"set_password": 1,
+		"update_time":  utils.GetNowTimeStamp(),
+	}
+	affect, _ := userBusiness.UpdateUserAndClearCache(nil, receiver.UserId, updateData)
+	if affect == 0 {
+		receiver.FailReturn(global.NewError(4213))
+		return
+	}
+	receiver.SuccReturn(nil)
+	return
+}
+
+func (receiver *AccountController) Info() {
+	username := receiver.UserInfo.Username
+	account := dy.RepostAccountData{
+		UserId:      receiver.UserInfo.Id,
+		Username:    username[:3] + "****" + username[7:],
+		Nickname:    receiver.UserInfo.Nickname,
+		Avatar:      receiver.UserInfo.Avatar,
+		PasswordSet: receiver.UserInfo.SetPassword,
+	}
+	vipBusiness := business.NewVipBusiness()
+	vipLevelsMap := vipBusiness.GetVipLevels(receiver.UserInfo.Id)
+	for k, v := range vipLevelsMap {
+		if k == business.VipPlatformDouYin {
+			account.DyLevel.Level = v
+		} else if k == business.VipPlatformXiaoHongShu {
+			account.XhsLevel.Level = v
+		} else if k == business.VipPlatformTaoBao {
+			account.TbLevel.Level = v
+		}
+	}
+	account.DyLevel.LevelName = vipBusiness.GetUserLevel(account.DyLevel.Level)
+	account.XhsLevel.LevelName = vipBusiness.GetUserLevel(account.XhsLevel.Level)
+	account.TbLevel.LevelName = vipBusiness.GetUserLevel(account.TbLevel.Level)
+	receiver.SuccReturn(map[string]interface{}{
+		"info": account,
+	})
 	return
 }

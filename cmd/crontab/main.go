@@ -19,8 +19,8 @@ func init() {
 
 func main() {
 	cliApp := cli.NewApp()
-	cliApp.Name = "dpcmd"
-	cliApp.Usage = "dpcmd service"
+	cliApp.Name = "dcmcmd"
+	cliApp.Usage = "dcmcmd service"
 	cliApp.Version, _ = utils.FormatAppVersion(AppVersion, GitCommit, BuildDate)
 	cliApp.Commands = getCommands()
 	cliApp.Flags = append(cliApp.Flags, []cli.Flag{}...)

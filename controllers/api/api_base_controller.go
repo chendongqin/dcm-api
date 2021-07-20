@@ -41,6 +41,13 @@ type AppData struct {
 	appSecret string
 }
 
+func (this *ApiBaseController) Prepare() {
+	this.InitApi()
+	this.AsfCheck()
+	this.CheckToken()
+	this.CheckUserGroupRight()
+}
+
 func (this *ApiBaseController) IsMobileRequest() (is bool, version string) {
 	userAgent := this.Ctx.Request.Header.Get("User-Agent")
 	if strings.Contains(userAgent, "dongchamao") {
@@ -100,54 +107,7 @@ func (this *ApiBaseController) CheckIp() {
 
 //校验签名
 func (this *ApiBaseController) CheckSign() {
-	InputDatas := this.InputFormat()
-	this.appId = InputDatas.GetInt("appId", 0)
-	if this.appId == 10000 || this.appId == 10001 || this.appId == 10003 || this.appId == 10004 {
-		return
-	}
 
-	//签名过期
-	currentTime := utils.Time()
-	timeStamp := int64(InputDatas.GetInt("timeStamp", 0))
-
-	logs.Info(InputDatas)
-	logs.Info(currentTime)
-	logs.Info(timeStamp)
-
-	if currentTime > timeStamp+1800 || currentTime < timeStamp-600 {
-		this.FailReturn(global.NewError(40002))
-		return
-	}
-	//签名校验
-	//appData := logic.NewCacheHandle().GetApp(this.appId)
-	////if appData,ok := appDatas[this.appId];ok{
-	//if appData != nil {
-	//	signMap := make(map[string]string)
-	//	for k, v := range InputDatas {
-	//		if k != "sign" {
-	//			signMap[k] = utils.InterfaceToString(v)
-	//		}
-	//	}
-	//	sign := InputDatas.GetString("sign", "")
-	//	realSign := utils.Wechat_makeSign(signMap, appData.Appsecret)
-	//	if realSign != sign {
-	//		this.FailReturn(global.NewError(40003))
-	//		return
-	//	}
-	//} else {
-	//	this.FailReturn(global.NewError(40001))
-	//	return
-	//}
-}
-
-func (this *ApiBaseController) CheckAppAccess() {
-	this.appId = utils.ParseInt(strings.Trim(this.Ctx.Input.Header("AccessId"), ""), 0)
-	this.appSecret = strings.Trim(this.Ctx.Input.Header("AccessKey"), "")
-	//appData := logic.NewCacheHandle().GetApp(this.appId)
-	//if appData == nil || this.appSecret != appData.Appsecret {
-	//	this.FailReturn(global.NewError(40001))
-	//	return
-	//}
 }
 
 //模拟真实访问构造的token
@@ -171,14 +131,14 @@ func (this *ApiBaseController) checkMonitorToken() {
 }
 
 //不需要手机号码账号就能访问的接口白名单
-var NoPhoneWhiteRoute = []string{
+var NeedUsernameRoute = []string{
 	//"/v1/discountActivity/coupon/couponAddScore",
 	//"/v1/vip/order/createAppleMonitorOrder",
 	//"/v1/vip/order/createAppleOrder",
 	//"/v1/vip/order/getOrderPrice",
 }
 
-func (this *ApiBaseController) InitUserToken(args ...bool) (commonErr global.CommonError) {
+func (this *ApiBaseController) InitUserToken() (commonErr global.CommonError) {
 	//如果已经完成初始化，将上一次初始化的错误直接返回
 	if this.IsInitToken {
 		return this.LastInitTokenErr
@@ -191,12 +151,9 @@ func (this *ApiBaseController) InitUserToken(args ...bool) (commonErr global.Com
 	}()
 
 	//如果是监控发过来的请求，则通过checkMonitorToken进行校验
-	if this.Ctx.Input.Header("X-Monitor-Sign") != "" {
-		this.checkMonitorToken()
-		return nil
-	}
-	//this.UserInfo = &apiv1models.VoUser{
-	//	GroupId: 0,
+	//if this.Ctx.Input.Header("X-Monitor-Sign") != "" {
+	//	this.checkMonitorToken()
+	//	return nil
 	//}
 
 	tokenString := this.Ctx.Input.Cookie(global.LOGINCOOKIENAME)
@@ -205,13 +162,13 @@ func (this *ApiBaseController) InitUserToken(args ...bool) (commonErr global.Com
 		tokenString = strings.Replace(this.Ctx.Input.Header("Authorization"), "Bearer ", "", 1)
 	}
 	if tokenString == "" {
-		return global.NewError(40004)
+		return global.NewError(4001)
 	}
 	token, _ := jwt.ParseWithClaims(tokenString, jwt.MapClaims{}, func(token *jwt.Token) (interface{}, error) {
 		return []byte(global.Cfg.String("auth_code")), nil
 	})
 	if token == nil {
-		return global.NewError(40015)
+		return global.NewError(4001)
 	}
 	userBusiness := business.NewUserBusiness()
 	if claims, ok := token.Claims.(jwt.MapClaims); ok && token.Valid {
@@ -220,77 +177,93 @@ func (this *ApiBaseController) InitUserToken(args ...bool) (commonErr global.Com
 		tokenStruct := &business.TokenData{}
 		err0 = json.Unmarshal(jsonstr, tokenStruct)
 		if err0 != nil {
-			return global.NewError(40004)
+			return global.NewError(4001)
 		}
-		expire_time := tokenStruct.ExpireTime
-		if utils.Time() > expire_time {
-			return global.NewError(40005)
+		expireTime := tokenStruct.ExpireTime
+		if utils.Time() > expireTime {
+			return global.NewError(4002)
 		} else {
 			this.UserId = tokenStruct.Id
 		}
 		if this.UserId == 0 {
-			return global.NewError(42004)
+			return global.NewError(4001)
 		}
 		this.appId = tokenStruct.AppId
 		this.Token = tokenString
 		userInfo := dcm.DcUser{}
 		_, err := dcm.Get(this.UserId, &userInfo)
 		if err != nil || userInfo.Id == 0 {
-			return global.NewError(42004)
+			return global.NewError(4001)
 		}
 		this.UserInfo = userInfo
 		//判断用户状态
 		if this.UserInfo.Status == 0 {
-			return global.NewError(45000)
+			return global.NewError(4212)
 		}
 		//除bindphone外的接口 没有phone不让访问
-		if len(args) <= 0 || (len(args) == 1 && args[0] == true) {
-			if utils.InArray(this.GetUri(), NoPhoneWhiteRoute) == false {
-				if this.UserInfo.Username == "" {
-					return global.NewError(42014)
-				}
+		if utils.InArray(this.GetUri(), NeedUsernameRoute) == false {
+			if this.UserInfo.Username == "" {
+				return global.NewError(4005)
 			}
 		}
 
 		//处理连续登录次数统计处理
-		//if this.UserInfo.UpdateVisitedTimes() {
-		//	//发生更新，才需要清除缓存
-		//	logic.NewCacheHandle().DeleteUserInfoCache(this.UserInfo.Id)
-		//}
+		if userBusiness.UpdateVisitedTimes(this.UserInfo) {
+			//发生更新，才需要清除缓存
+			userBusiness.DeleteUserInfoCache(this.UserInfo.Id)
+		}
 
 		//验证 user Platform token的唯一性
-		uniqueToken, exist := userBusiness.GetUniqueToken(int(this.UserId), this.appId, true)
+		uniqueToken, exist := userBusiness.GetUniqueToken(this.UserId, this.appId, true)
 		if exist == false {
-			return global.NewError(40005)
+			return global.NewError(4003)
 		} else {
 			if tokenString != uniqueToken {
 				//cmmlog.LoginLog(this.Ctx.Input.Header("X-Request-Id"), this.Ctx.Input.Header("X-Client-Id"), this.appId, this.UserId, "current:"+tokenString+"|unique:"+uniqueToken, this.Ctx.Input.IP(), this.Ctx.Request.UserAgent(), "unique", "unique_loginout")
-
 				this.RegisterSignOut()
 				return global.NewError(40006)
 			}
 		}
 
 		if this.appId == 10000 || this.appId == 10001 {
-			this.RegisterSignin(tokenString, expire_time)
+			this.RegisterSignin(tokenString, expireTime)
 		}
 
 		//异步记录用户行为日志
 		this.LogInputOutput("Format", this.ApiDatas)
 
 	} else {
-		return global.NewError(40004)
+		return global.NewError(4001)
 	}
 	return
 }
 
 //校验token
-func (this *ApiBaseController) CheckToken(args ...bool) {
-	err := this.InitUserToken(args...)
-	if err != nil {
-		this.FailReturn(err)
+func (this *ApiBaseController) CheckToken() {
+	authBusiness := business.NewAccountAuthBusiness()
+	if authBusiness.AuthLoginWhiteUri(this.Ctx) {
 		return
 	}
+	appId := this.Ctx.Input.Header("APPID")
+	if utils.InArrayString(appId, []string{"10000", "10001", "10002", "10003", "10004", "10005", ""}) {
+		err := authBusiness.CheckSign(this.Ctx)
+		if err != nil {
+			this.FailReturn(err)
+			return
+		}
+		err = this.InitUserToken()
+		if err != nil {
+			this.FailReturn(err)
+			return
+		}
+	} else {
+		err := authBusiness.CheckAppIdSign(appId, this.Ctx)
+		if err != nil {
+			this.FailReturn(err)
+			return
+		}
+	}
+	return
 }
 
 //初始化api
@@ -489,12 +462,6 @@ func (this *ApiBaseController) CheckUserGroupRight() {
 //获取当前请求  最低需要的权限
 func (this *ApiBaseController) GetMinLevel() int {
 	return 0
-}
-
-func (this *ApiBaseController) Prepare() {
-	this.InitApi()
-	this.CheckUserGroupRight()
-	this.AsfCheck()
 }
 
 //func (this *ApiBaseController) IsSEOSpider() bool {

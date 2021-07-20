@@ -17,7 +17,7 @@ func init() {
 	//	ctx.Output.Body([]byte(ip + sp + sh + header))
 	//})
 	beego.Router("/v1/user/login", &v1.AccountController{}, "put:Login")
-	beego.Router("/v1/user/findpwd", &v1.AccountController{}, "put:ResetPwd")
+	beego.Router("/v1/user/findpwd", &v1.AccountController{}, "put:FindPwd")
 	beego.Router("/v1/sms/code", &v1.CommonController{}, "post:Sms")
 	beego.Router("/v1/sms/verify/:grant_type/:username/:code", &v1.CommonController{}, "get:CheckSmsCode")
 	//beego.Router("/v1/test", &dy.TestController{}, "get:Test")

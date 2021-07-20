@@ -8,6 +8,7 @@ import (
 	"dongchamao/services/hbaseService"
 	"dongchamao/services/hbaseService/hbasehelper"
 	"dongchamao/structinit/repost/dy"
+	"sort"
 	"strings"
 	"time"
 )
@@ -527,6 +528,11 @@ func (a *AuthorBusiness) CountLiveRoomAnalyse(authorId, startDate, endDate strin
 			}
 		}
 	}
+	keys := make([]string, 0)
+	for k, _ := range sumData {
+		keys = append(keys, k)
+	}
+	sort.Strings(keys)
 	data.LiveStartHourChart = make([]dy.NameValueChart, 0)
 	data.LiveLongTimeChart = make([]dy.NameValueChart, 0)
 	for k, v := range sumLongTime {
@@ -546,7 +552,8 @@ func (a *AuthorBusiness) CountLiveRoomAnalyse(authorId, startDate, endDate strin
 	onlineUserChart := make([]float64, 0)
 	uvChart := make([]float64, 0)
 	amountChart := make([]float64, 0)
-	for date, v := range sumData {
+	for _, date := range keys {
+		v := sumData[date]
 		data.UserData.LiveNum += 1
 		data.UserData.AvgUserTotal += v.TotalUserCount
 		data.UserData.AvgUserCount += v.AvgUserCount
