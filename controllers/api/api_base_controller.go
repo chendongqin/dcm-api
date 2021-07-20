@@ -218,7 +218,7 @@ func (this *ApiBaseController) InitUserToken() (commonErr global.CommonError) {
 			if tokenString != uniqueToken {
 				//cmmlog.LoginLog(this.Ctx.Input.Header("X-Request-Id"), this.Ctx.Input.Header("X-Client-Id"), this.appId, this.UserId, "current:"+tokenString+"|unique:"+uniqueToken, this.Ctx.Input.IP(), this.Ctx.Request.UserAgent(), "unique", "unique_loginout")
 				this.RegisterLogout()
-				return global.NewError(40006)
+				return global.NewError(4001)
 			}
 		}
 
