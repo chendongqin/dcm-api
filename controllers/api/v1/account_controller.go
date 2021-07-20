@@ -50,6 +50,7 @@ func (receiver *AccountController) Login() {
 		"login_ip":   receiver.Ip,
 	}
 	_, _ = userBusiness.UpdateUserAndClearCache(nil, user.Id, updateData)
+	receiver.RegisterLogin(authToken, expTime)
 	receiver.SuccReturn(map[string]interface{}{
 		"token_info": dy.RepostAccountToken{
 			UserId:      user.Id,

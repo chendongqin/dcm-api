@@ -104,31 +104,6 @@ func (this *ApiBaseController) CheckIp() {
 	//}
 }
 
-//校验签名
-func (this *ApiBaseController) CheckSign() {
-
-}
-
-//模拟真实访问构造的token
-func (this *ApiBaseController) checkMonitorToken() {
-	//apiMonitor := monitor.NewApiMonitor()
-	//checkSign := apiMonitor.BuildSign(this.Ctx.Request.URL.Path)
-	//if checkSign != this.Ctx.Input.Header("X-Monitor-Sign") {
-	//	this.FailReturn(global.NewError(40004))
-	//	return
-	//}
-	//this.UserId = 88905
-	//this.IsMonitor = true
-	//uinfo := apiv1models.NewUserModel()
-	//err := uinfo.GetInfo(this.UserId, true)
-	//if err != nil || uinfo.Id == 0 {
-	//	this.FailReturn(global.NewError(42004))
-	//	return
-	//}
-	//this.UserInfo = uinfo
-	//this.UserInfo.GroupId = 4
-}
-
 //不需要手机号码账号就能访问的接口白名单
 var NeedUsernameRoute = []string{
 	//"/v1/discountActivity/coupon/couponAddScore",
@@ -148,12 +123,6 @@ func (this *ApiBaseController) InitUserToken() (commonErr global.CommonError) {
 		// 记录初始化错误
 		this.LastInitTokenErr = commonErr
 	}()
-
-	//如果是监控发过来的请求，则通过checkMonitorToken进行校验
-	//if this.Ctx.Input.Header("X-Monitor-Sign") != "" {
-	//	this.checkMonitorToken()
-	//	return nil
-	//}
 
 	tokenString := this.Ctx.Input.Cookie(global.LOGINCOOKIENAME)
 	//cookie没有身份信息  从头部获取
