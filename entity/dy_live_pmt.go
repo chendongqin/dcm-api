@@ -17,8 +17,8 @@ type DyLivePmt struct {
 	RoomStatus  int               `json:"room_status"`
 	AuthorID    string            `json:"author_id"`
 	RoomID      string            `json:"room_id"`
-	CreateTime  int               `json:"create_time"`
-	CrawlTime   int               `json:"crawl_time"`
+	CreateTime  int64             `json:"create_time"`
+	CrawlTime   int64             `json:"crawl_time"`
 	PurchaseCnt int               `json:"purchase_cnt"`
 	Cur         string            `json:"cur"`
 	Promotions  []DyLivePromotion `json:"promotions"`

@@ -6,8 +6,9 @@ require (
 	github.com/360EntSecGroup-Skylar/excelize v1.4.1
 	github.com/Shopify/sarama v1.19.0
 	github.com/aliyun/alibaba-cloud-sdk-go v1.61.1162
+	github.com/aliyun/aliyun-log-go-sdk v0.1.21
 	github.com/aliyun/aliyun-oss-go-sdk v2.1.8+incompatible
-	github.com/apache/thrift v0.12.0
+	github.com/apache/thrift v0.13.0
 	github.com/astaxie/beego v1.12.3
 	github.com/baiyubin/aliyun-sts-go-sdk v0.0.0-20180326062324-cfa1a18b161f // indirect
 	github.com/bitly/go-simplejson v0.5.0

@@ -5,6 +5,7 @@ import (
 	"dongchamao/entity"
 	"dongchamao/global"
 	"dongchamao/models/business"
+	"dongchamao/models/business/es"
 	"dongchamao/services/dyimg"
 	"dongchamao/structinit/repost/dy"
 	"math"
@@ -199,4 +200,71 @@ func (receiver *LiveController) LiveRankTrends() {
 		"max_hour_rank": maxHourRank,
 		"max_sale_rank": maxSaleRank,
 	})
+}
+
+//直播间商品
+func (receiver *LiveController) LiveProductList() {
+	roomId := receiver.Ctx.Input.Param(":room_id")
+	if roomId == "" {
+		receiver.FailReturn(global.NewError(4000))
+		return
+	}
+	InputData := receiver.InputFormat()
+	keyword := InputData.GetString("keyword", "")
+	sortStr := InputData.GetString("sort", "start_time")
+	orderBy := InputData.GetString("order_by", "desc")
+	page := InputData.GetInt("page", 1)
+	pageSize := InputData.GetInt("page_size", 10)
+	firstLabel := InputData.GetString("first_label", "")
+	secondLabel := InputData.GetString("second_label", "")
+	thirdLabel := InputData.GetString("third_label", "")
+	esLiveBusiness := es.NewEsLiveBusiness()
+	list, total, err := esLiveBusiness.RoomProductByRoomId(roomId, keyword, sortStr, orderBy, firstLabel, secondLabel, thirdLabel, page, pageSize)
+	if err != nil {
+		receiver.FailReturn(err)
+		return
+	}
+	countList := make([]dy.LiveRoomProductCount, 0)
+	if len(list) > 0 {
+		productIds := make([]string, 0)
+		for _, v := range list {
+			productIds = append(productIds, v.ProductID)
+		}
+		liveBusiness := business.NewLiveBusiness()
+		curMap := liveBusiness.RoomCurProductByIds(roomId, productIds)
+		for _, v := range list {
+			item := dy.LiveRoomProductCount{
+				ProductInfo: v,
+			}
+			if c, ok := curMap[v.ProductID]; ok {
+				c.CurList = business.ProductCurOrderByTime(c.CurList)
+				item.ProductCur = c
+			} else {
+				item.ProductCur = dy.LiveCurProductCount{
+					CurList: []dy.LiveCurProduct{},
+				}
+			}
+			countList = append(countList, item)
+		}
+	}
+	receiver.SuccReturn(map[string]interface{}{
+		"list":  countList,
+		"total": total,
+	})
+	return
+}
+
+//直播间商品
+func (receiver *LiveController) LiveProductCateList() {
+	roomId := receiver.Ctx.Input.Param(":room_id")
+	if roomId == "" {
+		receiver.FailReturn(global.NewError(4000))
+		return
+	}
+	esLiveBusiness := es.NewEsLiveBusiness()
+	countData := esLiveBusiness.AllRoomProductCateByRoomId(roomId)
+	receiver.SuccReturn(map[string]interface{}{
+		"count": countData,
+	})
+	return
 }

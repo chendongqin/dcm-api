@@ -54,7 +54,7 @@ func (receiver *CommonController) Sms() {
 	}
 	res, smsErr := AliSms.SmsCode(mobile, code)
 	if !res || smsErr != nil {
-		receiver.FailReturn(global.NewMsgError(smsErr.Error()))
+		receiver.FailReturn(global.NewError(6000))
 		return
 	}
 	global.Cache.Set(limitIpKey, "1", 60)

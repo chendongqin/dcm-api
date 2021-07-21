@@ -257,7 +257,7 @@ func (receiver *AuthorController) AuthorLiveRooms() {
 	endDay := receiver.Ctx.Input.Param(":end")
 	InputData := receiver.InputFormat()
 	keyword := InputData.GetString("keyword", "")
-	sort := InputData.GetString("sort", "create_timestamp")
+	sortStr := InputData.GetString("sort", "create_timestamp")
 	orderBy := InputData.GetString("order_by", "desc")
 	page := InputData.GetInt("page", 1)
 	size := InputData.GetInt("page_size", 10)
@@ -284,7 +284,7 @@ func (receiver *AuthorController) AuthorLiveRooms() {
 		return
 	}
 	esLiveBusiness := es.NewEsLiveBusiness()
-	list, total, comErr := esLiveBusiness.SearchAuthorRooms(authorId, keyword, sort, orderBy, page, size, t1, t2)
+	list, total, comErr := esLiveBusiness.SearchAuthorRooms(authorId, keyword, sortStr, orderBy, page, size, t1, t2)
 	if comErr != nil {
 		receiver.FailReturn(comErr)
 		return

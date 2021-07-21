@@ -1,6 +1,9 @@
 package dy
 
-import "dongchamao/entity"
+import (
+	"dongchamao/entity"
+	"dongchamao/models/es"
+)
 
 type DyLiveInfo struct {
 	Cover               string                            `json:"cover"`       //封面
@@ -111,4 +114,45 @@ type SumDyLiveRoomSaleData struct {
 	PromotionNum int64   `json:"promotion_num"`
 	SaleRate     float64 `json:"sale_rate"`
 	AvgPerPrice  float64 `json:"per_price"`
+}
+
+type LiveProductCateCount struct {
+	CateList   []LiveProductFirstCate `json:"cate_list"`
+	ProductNum int                    `json:"product_num"`
+	Sales      float64                `json:"sales"`
+	Gmv        float64                `json:"gmv"`
+}
+
+type LiveProductFirstCate struct {
+	Name       string                  `json:"name"`
+	ProductNum int                     `json:"product_num"`
+	SecondCate []LiveProductSecondCate `json:"second_cate"`
+}
+
+type LiveRoomProductCount struct {
+	ProductInfo es.EsAuthorLiveProduct `json:"product_info"`
+	ProductCur  LiveCurProductCount    `json:"product_cur"`
+}
+
+type LiveProductSecondCate struct {
+	Name      string `json:"name"`
+	ThirdCate []string
+}
+
+type LiveCurProductCount struct {
+	CurSecond int64            `json:"cur_second"`
+	MaxPrice  float64          `json:"max_price"`
+	MinPrice  float64          `json:"min_price"`
+	CurNum    int              `json:"cur_num"`
+	ShopId    string           `json:"shop_id"`
+	ShopName  string           `json:"shop_name"`
+	ShopIcon  string           `json:"shop_icon"`
+	CurList   []LiveCurProduct `json:"cur_list"`
+}
+
+type LiveCurProduct struct {
+	StartTime    int64 `json:"start_time"`
+	EndTime      int64 `json:"end_time"`
+	AvgUserCount int64 `json:"avg_user_count"`
+	IncSales     int64 `json:"inc_sales"`
 }

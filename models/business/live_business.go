@@ -22,6 +22,80 @@ func NewLiveBusiness() *LiveBusiness {
 	return new(LiveBusiness)
 }
 
+//获取直播间商品讲解数据
+func (l *LiveBusiness) HbaseGetLiveCurProduct(roomId string) (data entity.DyLiveCurProduct, comErr global.CommonError) {
+	query := hbasehelper.NewQuery()
+	result, err := query.SetTable(hbaseService.HbaseDyLiveCurProduct).GetByRowKey([]byte(roomId))
+	if err != nil {
+		comErr = global.NewMsgError(err.Error())
+		return
+	}
+	if result.Row == nil {
+		comErr = global.NewError(4040)
+		return
+	}
+	infoMap := hbaseService.HbaseFormat(result, entity.DyLiveCurProductMap)
+	utils.MapToStruct(infoMap, &data)
+	return
+}
+
+//获取讲解商品数据
+func (l *LiveBusiness) RoomCurProductByIds(roomId string, productIds []string) map[string]dy.LiveCurProductCount {
+	curInfo, _ := l.HbaseGetLiveCurProduct(roomId)
+	productMap := map[string]dy.LiveCurProductCount{}
+	for _, v := range curInfo.Promotion {
+		if !utils.InArrayString(v.ProductID, productIds) {
+			continue
+		}
+		var curSecond int64 = 0
+		if v.EndTime > 0 {
+			curSecond = v.EndTime - v.StartTime
+		} else {
+			curSecond = time.Now().Unix() - v.StartTime
+		}
+		var incSales int64 = 0
+		if v.EndSales > 0 {
+			incSales = v.EndSales - v.StartSales
+		} else {
+			incSales = v.Sales - v.StartSales
+		}
+		var avgUserCount int64 = 0
+		if v.TotalCrawlTimes > 0 {
+			avgUserCount = v.TotalUserCount / v.TotalCrawlTimes
+		}
+		cur := dy.LiveCurProduct{
+			StartTime:    v.StartTime,
+			EndTime:      v.EndTime,
+			AvgUserCount: avgUserCount,
+			IncSales:     incSales,
+		}
+		if c, ok := productMap[v.ProductID]; ok {
+			c.CurSecond += curSecond
+			if c.MaxPrice < v.PriceMax {
+				c.MaxPrice = v.PriceMax
+			}
+			if c.MinPrice > v.PriceMin {
+				c.MinPrice = v.PriceMin
+			}
+			c.CurNum += 1
+			c.CurList = append(c.CurList, cur)
+			productMap[v.ProductID] = c
+		} else {
+			productMap[v.ProductID] = dy.LiveCurProductCount{
+				CurSecond: curSecond,
+				MaxPrice:  v.PriceMax,
+				MinPrice:  v.PriceMin,
+				CurNum:    1,
+				ShopId:    v.ShopId,
+				ShopName:  v.ShopName,
+				ShopIcon:  v.ShopIcon,
+				CurList:   []dy.LiveCurProduct{cur},
+			}
+		}
+	}
+	return productMap
+}
+
 //直播间信息
 func (l *LiveBusiness) HbaseGetLiveInfo(roomId string) (data entity.DyLiveInfo, comErr global.CommonError) {
 	query := hbasehelper.NewQuery()
@@ -265,5 +339,25 @@ func (I RankTrendSortList) Less(i, j int) bool {
 }
 
 func (I RankTrendSortList) Swap(i, j int) {
+	I[i], I[j] = I[j], I[i]
+}
+
+//直播讲解按时间排序
+type ProductCurSortList []dy.LiveCurProduct
+
+func ProductCurOrderByTime(curList []dy.LiveCurProduct) []dy.LiveCurProduct {
+	sort.Sort(ProductCurSortList(curList))
+	return curList
+}
+
+func (I ProductCurSortList) Len() int {
+	return len(I)
+}
+
+func (I ProductCurSortList) Less(i, j int) bool {
+	return I[i].StartTime < I[j].StartTime
+}
+
+func (I ProductCurSortList) Swap(i, j int) {
 	I[i], I[j] = I[j], I[i]
 }
