@@ -52,9 +52,9 @@ func (receiver *CommonController) Sms() {
 		receiver.FailReturn(global.NewError(5000))
 		return
 	}
-	res, err := AliSms.SmsCode(mobile, code)
-	if !res || err != nil {
-		receiver.FailReturn(global.NewError(5000))
+	res, smsErr := AliSms.SmsCode(mobile, code)
+	if !res || smsErr != nil {
+		receiver.FailReturn(global.NewMsgError(smsErr.Error()))
 		return
 	}
 	global.Cache.Set(limitIpKey, "1", 60)
