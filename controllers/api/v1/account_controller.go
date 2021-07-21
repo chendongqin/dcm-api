@@ -115,6 +115,7 @@ func (receiver *AccountController) FindPwd() {
 		receiver.FailReturn(global.NewError(4213))
 		return
 	}
+	_ = global.Cache.Delete(codeKey)
 	receiver.SuccReturn(nil)
 	return
 }
@@ -206,6 +207,7 @@ func (receiver *AccountController) Logout() {
 	//uniquetoken更新置为空  旧的token不可用
 	userBusiness := business.NewUserBusiness()
 	_ = userBusiness.AddOrUpdateUniqueToken(receiver.UserId, receiver.AppId, "")
+	userBusiness.DeleteUserInfoCache(receiver.UserInfo.Id)
 	receiver.SuccReturn("success")
 	return
 

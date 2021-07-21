@@ -126,7 +126,7 @@ func (receiver *UserBusiness) LoginByPwd(username, pwd string, appId int) (user 
 }
 
 //验证码登陆
-func (receiver *UserBusiness) SmsLogin(mobile, code string, appId int) (user dcm.DcUser, tokenString string, expire int64, comErr global.CommonError) {
+func (receiver *UserBusiness) SmsLogin(mobile, code string, appId int) (user dcm.DcUser, tokenString string, expire int64, isNew int, comErr global.CommonError) {
 	codeKey := cache.GetCacheKey(cache.SmsCodeVerify, "login", mobile)
 	verifyCode := global.Cache.Get(codeKey)
 	if verifyCode != code {
@@ -152,6 +152,7 @@ func (receiver *UserBusiness) SmsLogin(mobile, code string, appId int) (user dcm
 			comErr = global.NewError(5000)
 			return
 		}
+		isNew = 1
 	}
 	tokenString, expire, err = receiver.CreateToken(appId, user.Id, 604800)
 	if err != nil {
@@ -163,6 +164,7 @@ func (receiver *UserBusiness) SmsLogin(mobile, code string, appId int) (user dcm
 		comErr = global.NewError(5000)
 		return
 	}
+	_ = global.Cache.Delete(codeKey)
 	return
 }
 
