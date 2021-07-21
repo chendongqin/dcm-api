@@ -28,6 +28,7 @@ func (receiver *AccountController) Login() {
 	var comErr global.CommonError
 	var authToken string
 	var expTime int64
+	var isNew int
 	userBusiness := business.NewUserBusiness()
 	if grantType == "password" {
 		username := InputData.GetString("username", "")
@@ -37,7 +38,7 @@ func (receiver *AccountController) Login() {
 	} else if grantType == "sms" {
 		username := InputData.GetString("username", "")
 		code := InputData.GetString("code", "")
-		user, authToken, expTime, comErr = userBusiness.SmsLogin(username, code, appId)
+		user, authToken, expTime, isNew, comErr = userBusiness.SmsLogin(username, code, appId)
 	} else {
 		comErr = global.NewError(4000)
 	}
@@ -51,7 +52,12 @@ func (receiver *AccountController) Login() {
 	}
 	_, _ = userBusiness.UpdateUserAndClearCache(nil, user.Id, updateData)
 	receiver.RegisterLogin(authToken, expTime)
+	setPassword := 0
+	if isNew == 0 && user.SetPassword == 0 {
+		setPassword = 1
+	}
 	receiver.SuccReturn(map[string]interface{}{
+		"set_password": setPassword,
 		"token_info": dy.RepostAccountToken{
 			UserId:      user.Id,
 			TokenString: authToken,
