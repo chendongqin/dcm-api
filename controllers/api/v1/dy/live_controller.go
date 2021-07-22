@@ -301,11 +301,7 @@ func (receiver *LiveController) LiveProductSaleChart() {
 		return
 	}
 	liveBusiness := business.NewLiveBusiness()
-	info, comErr := liveBusiness.RoomCurProductSaleTrend(roomId, productId)
-	if comErr != nil {
-		receiver.FailReturn(comErr)
-		return
-	}
+	info, _ := liveBusiness.RoomCurProductSaleTrend(roomId, productId)
 	trends := business.RoomProductTrendOrderByTime(info.TrendData)
 	timestamps := make([]int64, 0)
 	sales := make([]float64, 0)
