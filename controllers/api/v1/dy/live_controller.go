@@ -249,9 +249,11 @@ func (receiver *LiveController) LiveProductList() {
 			if s, ok := pmtMap[v.ProductID]; ok {
 				for _, s1 := range s {
 					item.ProductStartSale.Timestamp = append(item.ProductStartSale.Timestamp, s1.StartTime)
-					item.ProductEndSale.Timestamp = append(item.ProductEndSale.Timestamp, s1.StopTime)
 					item.ProductStartSale.Sales = append(item.ProductStartSale.Sales, s1.StartSales)
-					item.ProductEndSale.Sales = append(item.ProductEndSale.Sales, s1.FinalSales)
+					if s1.StopTime > 0 {
+						item.ProductEndSale.Timestamp = append(item.ProductEndSale.Timestamp, s1.StopTime)
+						item.ProductEndSale.Sales = append(item.ProductEndSale.Sales, s1.FinalSales)
+					}
 				}
 			}
 			if c, ok := curMap[v.ProductID]; ok {
