@@ -2,6 +2,7 @@ package utils
 
 import (
 	"dongchamao/global"
+	"dongchamao/global/cache"
 	"dongchamao/services/mutex"
 	//"encoding/json"
 	"errors"
@@ -211,4 +212,17 @@ func NewCacheHelperQuick(key string, expire ...int) *CacheHelper {
 		}
 	}
 	return cacheHelper
+}
+
+//用户请求限制
+func UserActionLock(userId int, exp time.Duration) bool {
+	lockName := cache.GetCacheKey(cache.UserActionLockKey, userId)
+	if global.Cache.Get(lockName) != "" {
+		return false
+	}
+	err := global.Cache.Set(lockName, "1", exp)
+	if err == nil {
+		return true
+	}
+	return false
 }

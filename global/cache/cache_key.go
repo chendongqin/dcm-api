@@ -17,6 +17,7 @@ const (
 	SecurityVerifyCodeIp  KeyName = "dcm:security:verify:code:ip:%s"
 	//用户Platform的唯一token
 	UserPlatformUniqueToken KeyName = "user:unique:token:%d:%d" //userId, platformId
+	UserActionLockKey       KeyName = "user:action:lock:%d"     //userId
 	//直播间商品分类数据缓存
 	LiveRoomProductCount KeyName = "live:room:product:count:%s"
 )
