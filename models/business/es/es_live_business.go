@@ -156,6 +156,10 @@ func (receiver *EsLiveBusiness) RoomProductByRoomId(roomId, keyword, sortStr, or
 	}
 	start := (page - 1) * pageSize
 	end := start + pageSize
+	listLen := len(list)
+	if listLen < end {
+		end = listLen
+	}
 	list = list[start:end]
 	for k, v := range list {
 		list[k].Cover = dyimg.Product(v.Cover)
