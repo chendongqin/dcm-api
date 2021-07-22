@@ -133,9 +133,15 @@ type LiveProductFirstCate struct {
 }
 
 type LiveRoomProductCount struct {
-	ProductInfo es.EsAuthorLiveProduct      `json:"product_info"`
-	ProductCur  LiveCurProductCount         `json:"product_cur"`
-	ProductSale []LiveRoomProductSaleStatus `json:"product_start_sale"`
+	ProductInfo      es.EsAuthorLiveProduct `json:"product_info"`
+	ProductCur       LiveCurProductCount    `json:"product_cur"`
+	ProductStartSale RoomProductSaleChart   `json:"product_start_sale"`
+	ProductEndSale   RoomProductSaleChart   `json:"product_end_sale"`
+}
+
+type RoomProductSaleChart struct {
+	Timestamp []int64
+	Sales     []int64
 }
 
 type LiveRoomProductSaleStatus struct {

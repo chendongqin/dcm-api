@@ -237,10 +237,22 @@ func (receiver *LiveController) LiveProductList() {
 		for _, v := range list {
 			item := dy.LiveRoomProductCount{
 				ProductInfo: v,
-				ProductSale: []dy.LiveRoomProductSaleStatus{},
+				ProductStartSale: dy.RoomProductSaleChart{
+					Timestamp: []int64{},
+					Sales:     []int64{},
+				},
+				ProductEndSale: dy.RoomProductSaleChart{
+					Timestamp: []int64{},
+					Sales:     []int64{},
+				},
 			}
 			if s, ok := pmtMap[v.ProductID]; ok {
-				item.ProductSale = s
+				for _, s1 := range s {
+					item.ProductStartSale.Timestamp = append(item.ProductStartSale.Timestamp, s1.StartTime)
+					item.ProductEndSale.Timestamp = append(item.ProductEndSale.Timestamp, s1.StopTime)
+					item.ProductStartSale.Sales = append(item.ProductStartSale.Sales, s1.StartSales)
+					item.ProductEndSale.Sales = append(item.ProductEndSale.Sales, s1.FinalSales)
+				}
 			}
 			if c, ok := curMap[v.ProductID]; ok {
 				c.CurList = business.ProductCurOrderByTime(c.CurList)
