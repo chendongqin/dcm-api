@@ -233,10 +233,10 @@ func (receiver *EsLiveBusiness) AllRoomProductCateByRoomId(roomId string) (produ
 					Name: ck,
 				}
 				for tk, _ := range cv {
-					secondCate.ThirdCate = append(secondCate.ThirdCate, tk)
+					secondCate.Cate = append(secondCate.Cate, tk)
 				}
-				if len(secondCate.ThirdCate) == 0 {
-					secondCate.ThirdCate = []string{}
+				if len(secondCate.Cate) == 0 {
+					secondCate.Cate = []string{}
 				}
 				secondCateList = append(secondCateList, secondCate)
 			}
@@ -248,10 +248,10 @@ func (receiver *EsLiveBusiness) AllRoomProductCateByRoomId(roomId string) (produ
 		item := dy.LiveProductFirstCate{
 			Name:       k,
 			ProductNum: productNum,
-			SecondCate: []dy.LiveProductSecondCate{},
+			Cate:       []dy.LiveProductSecondCate{},
 		}
 		if len(secondCateList) > 0 {
-			item.SecondCate = secondCateList
+			item.Cate = secondCateList
 		}
 		productCount.CateList = append(productCount.CateList, item)
 	}
