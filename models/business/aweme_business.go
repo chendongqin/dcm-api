@@ -84,7 +84,9 @@ func (a *AwemeBusiness) HbaseGetAwemeCountData(awemeId, date string) (data entit
 
 //获取视频趋势数据
 func (a *AwemeBusiness) GetAwemeChart(awemeId, start, end string, beforeGet bool) (data map[string]entity.DyAwemeDiggCommentForwardCount, comErr global.CommonError) {
-	data, comErr = a.HbaseGetAwemeCountDataRangeDate(awemeId, start, end)
+	endTime, _ := time.ParseInLocation("20060102", end, time.Local)
+	scanEndDate := endTime.AddDate(0, 0, 1).Format("20060102")
+	data, comErr = a.HbaseGetAwemeCountDataRangeDate(awemeId, start, scanEndDate)
 	if comErr == nil {
 		t1, _ := time.ParseInLocation("20060102", start, time.Local)
 		t2, _ := time.ParseInLocation("20060102", end, time.Local)

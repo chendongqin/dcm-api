@@ -120,7 +120,7 @@ func (receiver *AuthorController) AuthorAwemesByDay() {
 		receiver.FailReturn(global.NewError(4000))
 		return
 	}
-	videoOverview := aABusiness.HbaseGetVideoAggRangeDate(authorId, t1.Format("20060102"), t2.Format("20060102"))
+	videoOverview := aABusiness.HbaseGetVideoAggRangeDate(authorId, t1.Format("20060102"), t2.AddDate(0, 0, 1).Format("20060102"))
 	receiver.SuccReturn(map[string]interface{}{
 		"video_overview": videoOverview,
 	})
@@ -155,7 +155,7 @@ func (receiver *AuthorController) AuthorBasicChart() {
 		return
 	}
 	authorBusiness := business.NewAuthorBusiness()
-	data, comErr := authorBusiness.HbaseGetAuthorBasicRangeDate(authorId, t1.Format("20060102"), t2.Format("20060102"))
+	data, comErr := authorBusiness.HbaseGetAuthorBasicRangeDate(authorId, t1.Format("20060102"), t2.AddDate(0, 0, 1).Format("20060102"))
 	if comErr != nil {
 		receiver.FailReturn(comErr)
 		return
@@ -245,7 +245,7 @@ func (receiver *AuthorController) CountLiveRoomAnalyse() {
 		return
 	}
 	authorBusiness := business.NewAuthorBusiness()
-	data := authorBusiness.CountLiveRoomAnalyse(authorId, t1.Format("20060102"), t2.Format("20060102"))
+	data := authorBusiness.CountLiveRoomAnalyse(authorId, t1.Format("20060102"), t2.AddDate(0, 0, 1).Format("20060102"))
 	receiver.SuccReturn(data)
 	return
 }
