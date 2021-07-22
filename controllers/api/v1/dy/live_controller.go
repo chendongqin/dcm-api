@@ -233,9 +233,14 @@ func (receiver *LiveController) LiveProductList() {
 		}
 		liveBusiness := business.NewLiveBusiness()
 		curMap := liveBusiness.RoomCurProductByIds(roomId, productIds)
+		pmtMap := liveBusiness.RoomPmtProductByIds(roomId, productIds)
 		for _, v := range list {
 			item := dy.LiveRoomProductCount{
 				ProductInfo: v,
+				ProductSale: []dy.LiveRoomProductSaleStatus{},
+			}
+			if s, ok := pmtMap[v.ProductID]; ok {
+				item.ProductSale = s
 			}
 			if c, ok := curMap[v.ProductID]; ok {
 				c.CurList = business.ProductCurOrderByTime(c.CurList)
@@ -270,6 +275,34 @@ func (receiver *LiveController) LiveProductCateList() {
 	return
 }
 
+//全网销量趋势图
 func (receiver *LiveController) LiveProductSaleChart() {
-
+	roomId := receiver.Ctx.Input.Param(":room_id")
+	if roomId == "" {
+		receiver.FailReturn(global.NewError(4000))
+		return
+	}
+	productId := receiver.Ctx.Input.Param(":product_id")
+	if productId == "" {
+		receiver.FailReturn(global.NewError(4000))
+		return
+	}
+	liveBusiness := business.NewLiveBusiness()
+	info, comErr := liveBusiness.RoomCurProductSaleTrend(roomId, productId)
+	if comErr != nil {
+		receiver.FailReturn(comErr)
+		return
+	}
+	trends := business.RoomProductTrendOrderByTime(info.TrendData)
+	timestamps := make([]int64, 0)
+	sales := make([]float64, 0)
+	for _, v := range trends {
+		timestamps = append(timestamps, v.CrawlTime)
+		sales = append(sales, v.Sales)
+	}
+	receiver.SuccReturn(dy.TimestampCountChart{
+		Timestamp:  timestamps,
+		CountValue: sales,
+	})
+	return
 }

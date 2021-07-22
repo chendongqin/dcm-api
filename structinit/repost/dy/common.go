@@ -11,6 +11,11 @@ type DateCountChart struct {
 	CountValue []int64  `json:"count_value"`
 }
 
+type TimestampCountChart struct {
+	Timestamp  []int64   `json:"timestamp"`
+	CountValue []float64 `json:"count_value"`
+}
+
 type DateCountFChart struct {
 	Date       []string  `json:"date"`
 	CountValue []float64 `json:"count_value"`

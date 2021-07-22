@@ -130,8 +130,15 @@ type LiveProductFirstCate struct {
 }
 
 type LiveRoomProductCount struct {
-	ProductInfo es.EsAuthorLiveProduct `json:"product_info"`
-	ProductCur  LiveCurProductCount    `json:"product_cur"`
+	ProductInfo es.EsAuthorLiveProduct      `json:"product_info"`
+	ProductCur  LiveCurProductCount         `json:"product_cur"`
+	ProductSale []LiveRoomProductSaleStatus `json:"product_start_sale"`
+}
+
+type LiveRoomProductSaleStatus struct {
+	StartTime  int64 `json:"start_time"`
+	StopTime   int64 `json:"stop_time"`
+	FinalSales int64 `json:"final_sales"`
 }
 
 type LiveProductSecondCate struct {
@@ -155,4 +162,6 @@ type LiveCurProduct struct {
 	EndTime      int64 `json:"end_time"`
 	AvgUserCount int64 `json:"avg_user_count"`
 	IncSales     int64 `json:"inc_sales"`
+	StartSales   int64 `json:"start_sales"`
+	EndSales     int64 `json:"end_sales"`
 }

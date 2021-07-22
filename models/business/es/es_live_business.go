@@ -108,6 +108,10 @@ func (receiver *EsLiveBusiness) RoomProductByRoomId(roomId, keyword, sortStr, or
 		comErr = global.NewError(4000)
 		return
 	}
+	if pageSize > 30 {
+		comErr = global.NewError(4000)
+		return
+	}
 	liveBusiness := business.NewLiveBusiness()
 	roomInfo, comErr := liveBusiness.HbaseGetLiveInfo(roomId)
 	if comErr != nil {

@@ -39,6 +39,24 @@ func (l *LiveBusiness) HbaseGetLiveCurProduct(roomId string) (data entity.DyLive
 	return
 }
 
+//直播间全网销量
+func (l *LiveBusiness) RoomCurProductSaleTrend(roomId, productId string) (data entity.DyRoomProduct, comErr global.CommonError) {
+	query := hbasehelper.NewQuery()
+	rowKey := roomId + "_" + productId
+	result, err := query.SetTable(hbaseService.HbaseDyRoomProduct).GetByRowKey([]byte(rowKey))
+	if err != nil {
+		comErr = global.NewMsgError(err.Error())
+		return
+	}
+	if result.Row == nil {
+		comErr = global.NewError(4040)
+		return
+	}
+	infoMap := hbaseService.HbaseFormat(result, entity.DyLiveCurProductMap)
+	utils.MapToStruct(infoMap, &data)
+	return
+}
+
 //获取讲解商品数据
 func (l *LiveBusiness) RoomCurProductByIds(roomId string, productIds []string) map[string]dy.LiveCurProductCount {
 	curInfo, _ := l.HbaseGetLiveCurProduct(roomId)
@@ -54,10 +72,13 @@ func (l *LiveBusiness) RoomCurProductByIds(roomId string, productIds []string) m
 			curSecond = time.Now().Unix() - v.StartTime
 		}
 		var incSales int64 = 0
+		var endSales int64 = 0
 		if v.EndSales > 0 {
 			incSales = v.EndSales - v.StartSales
+			endSales = v.EndSales
 		} else {
 			incSales = v.Sales - v.StartSales
+			endSales = v.Sales
 		}
 		var avgUserCount int64 = 0
 		if v.TotalCrawlTimes > 0 {
@@ -68,6 +89,8 @@ func (l *LiveBusiness) RoomCurProductByIds(roomId string, productIds []string) m
 			EndTime:      v.EndTime,
 			AvgUserCount: avgUserCount,
 			IncSales:     incSales,
+			StartSales:   v.StartSales,
+			EndSales:     endSales,
 		}
 		if c, ok := productMap[v.ProductID]; ok {
 			c.CurSecond += curSecond
@@ -91,6 +114,34 @@ func (l *LiveBusiness) RoomCurProductByIds(roomId string, productIds []string) m
 				ShopIcon:  v.ShopIcon,
 				CurList:   []dy.LiveCurProduct{cur},
 			}
+		}
+	}
+	return productMap
+}
+
+//获取商品数据
+func (l *LiveBusiness) RoomPmtProductByIds(roomId string, productIds []string) map[string][]dy.LiveRoomProductSaleStatus {
+	pmtInfo, _ := l.HbaseGetLivePmt(roomId)
+	productMap := map[string][]dy.LiveRoomProductSaleStatus{}
+	for _, v := range pmtInfo.Promotions {
+		if !utils.InArrayString(v.ProductID, productIds) {
+			continue
+		}
+		if v.StartTime > 0 {
+			if _, ok := productMap[v.ProductID]; !ok {
+				productMap[v.ProductID] = make([]dy.LiveRoomProductSaleStatus, 0)
+			}
+			var sales int64 = 0
+			if v.FinalSales > 0 {
+				sales = v.FinalSales
+			} else {
+				sales = v.Sales
+			}
+			productMap[v.ProductID] = append(productMap[v.ProductID], dy.LiveRoomProductSaleStatus{
+				StartTime:  v.StartTime,
+				StopTime:   v.StopTime,
+				FinalSales: sales,
+			})
 		}
 	}
 	return productMap
@@ -359,5 +410,25 @@ func (I ProductCurSortList) Less(i, j int) bool {
 }
 
 func (I ProductCurSortList) Swap(i, j int) {
+	I[i], I[j] = I[j], I[i]
+}
+
+//直播商品销量按时间排序
+type RoomProductTrendSortList []entity.DyRoomProductTrend
+
+func RoomProductTrendOrderByTime(trendList []entity.DyRoomProductTrend) []entity.DyRoomProductTrend {
+	sort.Sort(RoomProductTrendSortList(trendList))
+	return trendList
+}
+
+func (I RoomProductTrendSortList) Len() int {
+	return len(I)
+}
+
+func (I RoomProductTrendSortList) Less(i, j int) bool {
+	return I[i].CrawlTime < I[j].CrawlTime
+}
+
+func (I RoomProductTrendSortList) Swap(i, j int) {
 	I[i], I[j] = I[j], I[i]
 }
