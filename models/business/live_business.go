@@ -52,7 +52,7 @@ func (l *LiveBusiness) RoomCurProductSaleTrend(roomId, productId string) (data e
 		comErr = global.NewError(4040)
 		return
 	}
-	infoMap := hbaseService.HbaseFormat(result, entity.DyLiveCurProductMap)
+	infoMap := hbaseService.HbaseFormat(result, entity.DyRoomProductMap)
 	utils.MapToStruct(infoMap, &data)
 	return
 }
@@ -65,21 +65,12 @@ func (l *LiveBusiness) RoomCurProductByIds(roomId string, productIds []string) m
 		if !utils.InArrayString(v.ProductID, productIds) {
 			continue
 		}
-		var curSecond int64 = 0
-		if v.EndTime > 0 {
-			curSecond = v.EndTime - v.StartTime
-		} else {
-			curSecond = time.Now().Unix() - v.StartTime
+		if v.EndTime == 0 {
+			continue
 		}
-		var incSales int64 = 0
-		var endSales int64 = 0
-		if v.EndSales > 0 {
-			incSales = v.EndSales - v.StartSales
-			endSales = v.EndSales
-		} else {
-			incSales = v.Sales - v.StartSales
-			endSales = v.Sales
-		}
+		curSecond := v.EndTime - v.StartTime
+		incSales := v.EndSales - v.StartSales
+		endSales := v.EndSales
 		var avgUserCount int64 = 0
 		if v.TotalCrawlTimes > 0 {
 			avgUserCount = v.TotalUserCount / v.TotalCrawlTimes

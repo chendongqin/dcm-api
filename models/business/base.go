@@ -91,3 +91,24 @@ func DealChartInt64(charts []int64, chartNum int) []int64 {
 	}
 	return newCharts
 }
+
+func DealChartFloat64(charts []float64, chartNum int) []float64 {
+	nums := len(charts)
+	if nums <= chartNum {
+		return charts
+	}
+	newCharts := make([]float64, 0)
+	randNum := nums / chartNum
+	if randNum < 1 {
+		randNum = 1
+	}
+	var begin int
+	for i := 0; i < chartNum; i++ {
+		begin = i * randNum
+		if begin >= nums {
+			break
+		}
+		newCharts = append(newCharts, charts[begin])
+	}
+	return newCharts
+}

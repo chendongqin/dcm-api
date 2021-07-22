@@ -298,11 +298,11 @@ func (receiver *LiveController) LiveProductSaleChart() {
 	sales := make([]float64, 0)
 	for _, v := range trends {
 		timestamps = append(timestamps, v.CrawlTime)
-		sales = append(sales, v.Sales)
+		sales = append(sales, math.Floor(v.Sales))
 	}
 	receiver.SuccReturn(dy.TimestampCountChart{
-		Timestamp:  timestamps,
-		CountValue: sales,
+		Timestamp:  business.DealChartInt64(timestamps, 60),
+		CountValue: business.DealChartFloat64(sales, 60),
 	})
 	return
 }
