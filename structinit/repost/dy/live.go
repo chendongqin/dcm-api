@@ -140,8 +140,8 @@ type LiveRoomProductCount struct {
 }
 
 type RoomProductSaleChart struct {
-	Timestamp []int64
-	Sales     []int64
+	Timestamp []int64 `json:"timestamp"`
+	Sales     []int64 `json:"sales"`
 }
 
 type LiveRoomProductSaleStatus struct {
