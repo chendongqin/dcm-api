@@ -220,7 +220,7 @@ func (receiver *LiveController) LiveProductList() {
 	secondLabel := InputData.GetString("second_label", "")
 	thirdLabel := InputData.GetString("third_label", "")
 	esLiveBusiness := es.NewEsLiveBusiness()
-	list, total, err := esLiveBusiness.RoomProductByRoomId(roomId, keyword, sortStr, orderBy, firstLabel, secondLabel, thirdLabel, page, pageSize)
+	list, productCount, total, err := esLiveBusiness.RoomProductByRoomId(roomId, keyword, sortStr, orderBy, firstLabel, secondLabel, thirdLabel, page, pageSize)
 	if err != nil {
 		receiver.FailReturn(err)
 		return
@@ -254,8 +254,9 @@ func (receiver *LiveController) LiveProductList() {
 		}
 	}
 	receiver.SuccReturn(map[string]interface{}{
-		"list":  countList,
-		"total": total,
+		"list":          countList,
+		"product_count": productCount,
+		"total":         total,
 	})
 	return
 }

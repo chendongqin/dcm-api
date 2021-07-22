@@ -122,16 +122,11 @@ func (l *LiveBusiness) RoomPmtProductByIds(roomId string, productIds []string) m
 			if _, ok := productMap[v.ProductID]; !ok {
 				productMap[v.ProductID] = make([]dy.LiveRoomProductSaleStatus, 0)
 			}
-			var sales int64 = 0
-			if v.FinalSales > 0 {
-				sales = v.FinalSales
-			} else {
-				sales = v.Sales
-			}
 			productMap[v.ProductID] = append(productMap[v.ProductID], dy.LiveRoomProductSaleStatus{
 				StartTime:  v.StartTime,
 				StopTime:   v.StopTime,
-				FinalSales: sales,
+				StartSales: v.InitialSales,
+				FinalSales: v.FinalSales,
 			})
 		}
 	}

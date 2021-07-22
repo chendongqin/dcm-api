@@ -97,7 +97,7 @@ func (receiver *EsLiveBusiness) SearchAuthorRooms(authorId, keyword, sortStr, or
 }
 
 //直播间筛选
-func (receiver *EsLiveBusiness) RoomProductByRoomId(roomId, keyword, sortStr, orderBy, firstLabel, secondLabel, thirdLabel string, page, pageSize int) (list []es.EsAuthorLiveProduct, total int, comErr global.CommonError) {
+func (receiver *EsLiveBusiness) RoomProductByRoomId(roomId, keyword, sortStr, orderBy, firstLabel, secondLabel, thirdLabel string, page, pageSize int) (list []es.EsAuthorLiveProduct, productCount dy.LiveProductCount, total int, comErr global.CommonError) {
 	if sortStr == "" {
 		sortStr = "start_time"
 	}
@@ -133,15 +133,30 @@ func (receiver *EsLiveBusiness) RoomProductByRoomId(roomId, keyword, sortStr, or
 	if thirdLabel != "" {
 		esQuery.SetTerm("third_cname", thirdLabel)
 	}
-	start := (page - 1) * pageSize
 	results := esMultiQuery.
 		SetTable(esTable).
 		AddMust(esQuery.Condition).
-		SetLimit(start, pageSize).
+		SetLimit(0, 1000).
 		SetOrderBy(elasticsearch.NewElasticOrder().Add(sortStr, orderBy).Order).
 		SetMultiQuery().
 		Query()
 	utils.MapToStruct(results, &list)
+	productCount = dy.LiveProductCount{}
+	for _, v := range list {
+		productCount.ProductNum++
+		if v.RealGmv > 0 {
+			if v.Price > 0 {
+				productCount.Sales += math.Floor(v.RealGmv / v.Price)
+			}
+			productCount.Gmv += v.RealGmv
+		} else {
+			productCount.Sales += math.Floor(v.PredictSales)
+			productCount.Gmv += v.PredictGmv
+		}
+	}
+	start := (page - 1) * pageSize
+	end := start + pageSize
+	list = list[start:end]
 	for k, v := range list {
 		list[k].Cover = dyimg.Product(v.Cover)
 		//真实gmv存在，按gmv处理
@@ -193,18 +208,12 @@ func (receiver *EsLiveBusiness) AllRoomProductCateByRoomId(roomId string) (produ
 	secondCateMap := map[string]map[string]bool{}
 	//gmv写入数据数
 	gmvNum := 0
+	productNum := 0
 	for _, v := range list {
 		if v.RealGmv > 0 {
 			gmvNum++
-			productCount.Gmv += v.RealGmv
-			if v.Price > 0 {
-				productCount.Sales += math.Floor(v.RealGmv / v.Price)
-			}
-		} else {
-			productCount.Gmv += v.PredictGmv
-			productCount.Sales += v.PredictSales
 		}
-		productCount.ProductNum++
+		productNum++
 		if v.FirstCname == "" {
 			v.FirstCname = "其他"
 		}
@@ -261,7 +270,7 @@ func (receiver *EsLiveBusiness) AllRoomProductCateByRoomId(roomId string) (produ
 	}
 	cateListByte, _ := jsoniter.Marshal(productCount)
 	var timeout time.Duration = 60
-	if gmvNum == productCount.ProductNum {
+	if gmvNum == productNum {
 		timeout = 1800
 	}
 	_ = global.Cache.Set(cKey, string(cateListByte), timeout)
