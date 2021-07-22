@@ -41,7 +41,7 @@ func (receiver *CommonController) Sms() {
 		user := dcm.DcUser{}
 		exist, _ := dcm.GetBy("username", mobile, &user)
 		if !exist {
-			receiver.FailReturn(global.NewError(4209))
+			receiver.FailReturn(global.NewError(4204))
 			return
 		}
 	}

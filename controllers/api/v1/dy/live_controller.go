@@ -31,9 +31,10 @@ func (receiver *LiveController) LiveInfoData() {
 	}
 	authorBusiness := business.NewAuthorBusiness()
 	reputation, _ := authorBusiness.HbaseGetAuthorReputation(liveInfo.User.ID)
+	authorInfo, _ := authorBusiness.HbaseGetAuthor(liveInfo.User.ID)
 	liveUser := dy.DyLiveUserSimple{
 		Avatar:          liveInfo.User.Avatar,
-		FollowerCount:   liveInfo.User.FollowerCount,
+		FollowerCount:   authorInfo.FollowerCount,
 		ID:              liveInfo.User.ID,
 		Nickname:        liveInfo.User.Nickname,
 		WithCommerce:    liveInfo.User.WithCommerce,
@@ -267,4 +268,8 @@ func (receiver *LiveController) LiveProductCateList() {
 		"count": countData,
 	})
 	return
+}
+
+func (receiver *LiveController) LiveProductSaleChart() {
+
 }

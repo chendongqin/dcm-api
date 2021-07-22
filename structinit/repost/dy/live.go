@@ -126,7 +126,7 @@ type LiveProductCateCount struct {
 type LiveProductFirstCate struct {
 	Name       string                  `json:"name"`
 	ProductNum int                     `json:"product_num"`
-	SecondCate []LiveProductSecondCate `json:"second_cate"`
+	Cate       []LiveProductSecondCate `json:"cate"`
 }
 
 type LiveRoomProductCount struct {
@@ -135,8 +135,8 @@ type LiveRoomProductCount struct {
 }
 
 type LiveProductSecondCate struct {
-	Name      string `json:"name"`
-	ThirdCate []string
+	Name string   `json:"name"`
+	Cate []string `json:"cate"`
 }
 
 type LiveCurProductCount struct {
