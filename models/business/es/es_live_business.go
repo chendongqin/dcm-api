@@ -125,13 +125,13 @@ func (receiver *EsLiveBusiness) RoomProductByRoomId(roomId, keyword, sortStr, or
 		esQuery.SetMatchPhrase("title", keyword)
 	}
 	if firstLabel != "" {
-		esQuery.SetTerm("first_cname", firstLabel)
+		esQuery.SetTerm("dcm_level_first", firstLabel)
 	}
 	if secondLabel != "" {
-		esQuery.SetTerm("second_cname", secondLabel)
+		esQuery.SetTerm("first_cname", secondLabel)
 	}
 	if thirdLabel != "" {
-		esQuery.SetTerm("third_cname", thirdLabel)
+		esQuery.SetTerm("second_cname", thirdLabel)
 	}
 	results := esMultiQuery.
 		SetTable(esTable).
@@ -199,7 +199,7 @@ func (receiver *EsLiveBusiness) AllRoomProductCateByRoomId(roomId string) (produ
 	esQuery.SetTerm("room_id", roomId)
 	list := make([]es.EsAuthorLiveProduct, 0)
 	results := esMultiQuery.
-		SetFields("first_cname", "second_cname", "third_cname").
+		SetFields("dcm_level_first", "first_cname", "second_cname").
 		SetTable(esTable).
 		AddMust(esQuery.Condition).
 		SetLimit(0, 1000).
@@ -218,28 +218,28 @@ func (receiver *EsLiveBusiness) AllRoomProductCateByRoomId(roomId string) (produ
 			gmvNum++
 		}
 		productNum++
-		if v.FirstCname == "" {
-			v.FirstCname = "其他"
+		if v.DcmLevelFirst == "" {
+			v.DcmLevelFirst = "其他"
 		}
-		if _, ok := firstCateMap[v.FirstCname]; !ok {
-			firstCateMap[v.FirstCname] = map[string]bool{}
+		if _, ok := firstCateMap[v.DcmLevelFirst]; !ok {
+			firstCateMap[v.DcmLevelFirst] = map[string]bool{}
 		}
-		if _, ok := firstCateCountMap[v.FirstCname]; !ok {
-			firstCateCountMap[v.FirstCname] = 1
+		if _, ok := firstCateCountMap[v.DcmLevelFirst]; !ok {
+			firstCateCountMap[v.DcmLevelFirst] = 1
 		} else {
-			firstCateCountMap[v.FirstCname] += 1
+			firstCateCountMap[v.DcmLevelFirst] += 1
+		}
+		if v.FirstCname == "" {
+			continue
+		}
+		firstCateMap[v.DcmLevelFirst][v.FirstCname] = true
+		if _, ok := secondCateMap[v.FirstCname]; !ok {
+			secondCateMap[v.FirstCname] = map[string]bool{}
 		}
 		if v.SecondCname == "" {
 			continue
 		}
-		firstCateMap[v.FirstCname][v.SecondCname] = true
-		if _, ok := secondCateMap[v.SecondCname]; !ok {
-			secondCateMap[v.SecondCname] = map[string]bool{}
-		}
-		if v.ThirdCname == "" {
-			continue
-		}
-		secondCateMap[v.SecondCname][v.ThirdCname] = true
+		secondCateMap[v.FirstCname][v.SecondCname] = true
 	}
 	productCount.CateList = []dy.LiveProductFirstCate{}
 	for k, v := range firstCateMap {
