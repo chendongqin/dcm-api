@@ -330,10 +330,19 @@ func (a *AuthorBusiness) HbaseGetAuthorReputation(authorId string) (data *entity
 	reputationMap := hbaseService.HbaseFormat(result, entity.DyReputationMap)
 	reputation := &entity.DyReputation{}
 	utils.MapToStruct(reputationMap, reputation)
-	if reputation.ScoreList == nil {
-		reputation.ScoreList = make([]entity.DyReputationDateScoreList, 0)
+	if len(reputation.ScoreList) == 0 {
+		reputation.ScoreList = make([]entity.DyReputationMonthScoreList, 0)
+	}
+	if len(reputation.DtScoreList) == 0 {
+		reputation.DtScoreList = make([]entity.DyReputationDateScoreList, 0)
+	} else {
+		reputation.DtScoreList = ReputationDtScoreListOrderByTime(reputation.DtScoreList)
+		for k, v := range reputation.DtScoreList {
+			reputation.DtScoreList[k].DateStr = utils.ToString(v.Date)
+		}
 	}
 	//reputation.ShopLogo = dyimg.Fix(reputation.ShopLogo)
+	reputation.UID = authorId
 	data = reputation
 	return
 }
@@ -602,4 +611,24 @@ func (a *AuthorBusiness) CountLiveRoomAnalyse(authorId, startDate, endDate strin
 		CountValue: amountChart,
 	}
 	return
+}
+
+//口碑日榜按时间排序
+type ReputationDtScoreList []entity.DyReputationDateScoreList
+
+func ReputationDtScoreListOrderByTime(list []entity.DyReputationDateScoreList) []entity.DyReputationDateScoreList {
+	sort.Sort(ReputationDtScoreList(list))
+	return list
+}
+
+func (I ReputationDtScoreList) Len() int {
+	return len(I)
+}
+
+func (I ReputationDtScoreList) Less(i, j int) bool {
+	return I[i].Date < I[j].Date
+}
+
+func (I ReputationDtScoreList) Swap(i, j int) {
+	I[i], I[j] = I[j], I[i]
 }
