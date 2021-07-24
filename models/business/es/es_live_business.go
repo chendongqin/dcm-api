@@ -195,8 +195,8 @@ func (receiver *EsLiveBusiness) RoomProductByRoomId(roomId, keyword, sortStr, or
 		} else {
 			list[k].PredictSales = math.Floor(v.PredictSales)
 		}
-		if v.PredictSales > 0 {
-			list[k].BuyRate = float64(v.Pv) / v.PredictSales
+		if v.Pv > 0 {
+			list[k].BuyRate = v.PredictSales / float64(v.Pv)
 		}
 	}
 	total = esMultiQuery.Count
