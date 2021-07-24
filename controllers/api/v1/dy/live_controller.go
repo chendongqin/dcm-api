@@ -337,23 +337,34 @@ func (receiver *LiveController) LiveFansTrends() {
 	fansIncTrends := make([]int64, 0)
 	clubTrends := make([]int64, 0)
 	clubIncTrends := make([]int64, 0)
-	followerCountTrends := business.LiveFansTrendsListOrderByTime(info.FollowerCountTrends)
-	fansClubCountTrends := business.LiveClubFansTrendsListOrderByTime(info.FansClubCountTrends)
-	beforeFansTrend := entity.LiveFollowerCountTrends{}
-	beforeClubTrend := entity.LiveAnsClubCountTrends{}
-	for _, v := range followerCountTrends {
-		fansDate = append(fansDate, v.CrawlTime)
-		fansTrends = append(fansTrends, v.FollowerCount)
-		inc := v.FollowerCount - beforeFansTrend.FollowerCount
-		fansIncTrends = append(fansIncTrends, inc)
-		beforeFansTrend = v
+	if len(info.FollowerCountTrends) > 0 {
+		followerCountTrends := business.LiveFansTrendsListOrderByTime(info.FollowerCountTrends)
+		lenNum := len(followerCountTrends)
+		beforeFansTrend := entity.LiveFollowerCountTrends{
+			CrawlTime:     info.CreateTime,
+			FollowerCount: followerCountTrends[lenNum-1].FollowerCount - info.FollowCount,
+		}
+		for _, v := range followerCountTrends {
+			fansDate = append(fansDate, v.CrawlTime)
+			fansTrends = append(fansTrends, v.FollowerCount)
+			inc := v.FollowerCount - beforeFansTrend.FollowerCount
+			fansIncTrends = append(fansIncTrends, inc)
+			beforeFansTrend = v
+		}
 	}
-	for _, v := range fansClubCountTrends {
-		clubDate = append(clubDate, v.CrawlTime)
-		clubTrends = append(clubTrends, v.AnsClubCount)
-		inc := v.AnsClubCount - beforeClubTrend.AnsClubCount
-		clubIncTrends = append(clubIncTrends, inc)
-		beforeClubTrend = v
+	if len(info.FansClubCountTrends) > 0 {
+		fansClubCountTrends := business.LiveClubFansTrendsListOrderByTime(info.FansClubCountTrends)
+		beforeClubTrend := entity.LiveAnsClubCountTrends{
+			AnsClubCount: fansClubCountTrends[0].AnsClubCount,
+			CrawlTime:    info.CreateTime,
+		}
+		for _, v := range fansClubCountTrends {
+			clubDate = append(clubDate, v.CrawlTime)
+			clubTrends = append(clubTrends, v.AnsClubCount)
+			inc := v.AnsClubCount - beforeClubTrend.AnsClubCount
+			clubIncTrends = append(clubIncTrends, inc)
+			beforeClubTrend = v
+		}
 	}
 	receiver.SuccReturn(map[string]interface{}{
 		"fans_chart": map[string]interface{}{
