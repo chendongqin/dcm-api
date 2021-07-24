@@ -125,7 +125,30 @@ func (receiver *EsLiveBusiness) RoomProductByRoomId(roomId, keyword, sortStr, or
 		esQuery.SetMatchPhrase("title", keyword)
 	}
 	if firstLabel != "" {
-		esQuery.SetMatchPhrase("dcm_level_first", firstLabel)
+		if firstLabel == "其他" {
+			esQuery.AddCondition(map[string]interface{}{
+				"bool": map[string]interface{}{
+					"should": []map[string]interface{}{
+						{
+							"match_phrase": map[string]interface{}{"dcm_level_first": firstLabel},
+						},
+						{
+							"bool": map[string]interface{}{
+								"must_not": map[string]interface{}{
+									"exists": map[string]interface{}{
+										"field": "dcm_level_first",
+									},
+								},
+							},
+						},
+					},
+				},
+			})
+			secondLabel = ""
+			thirdLabel = ""
+		} else {
+			esQuery.SetMatchPhrase("dcm_level_first", firstLabel)
+		}
 	}
 	if secondLabel != "" {
 		esQuery.SetMatchPhrase("first_cname", secondLabel)
@@ -229,7 +252,7 @@ func (receiver *EsLiveBusiness) AllRoomProductCateByRoomId(roomId string) (produ
 		} else {
 			firstCateCountMap[v.DcmLevelFirst] += 1
 		}
-		if v.FirstCname == "" {
+		if v.FirstCname == "" || v.DcmLevelFirst == "其他" {
 			continue
 		}
 		firstCateMap[v.DcmLevelFirst][v.FirstCname] = true
