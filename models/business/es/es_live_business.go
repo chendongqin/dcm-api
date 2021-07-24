@@ -125,13 +125,13 @@ func (receiver *EsLiveBusiness) RoomProductByRoomId(roomId, keyword, sortStr, or
 		esQuery.SetMatchPhrase("title", keyword)
 	}
 	if firstLabel != "" {
-		esQuery.SetTerm("dcm_level_first", firstLabel)
+		esQuery.SetMatchPhrase("dcm_level_first", firstLabel)
 	}
 	if secondLabel != "" {
-		esQuery.SetTerm("first_cname", secondLabel)
+		esQuery.SetMatchPhrase("first_cname", secondLabel)
 	}
 	if thirdLabel != "" {
-		esQuery.SetTerm("second_cname", thirdLabel)
+		esQuery.SetMatchPhrase("second_cname", thirdLabel)
 	}
 	results := esMultiQuery.
 		SetTable(esTable).
