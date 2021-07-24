@@ -612,23 +612,3 @@ func (a *AuthorBusiness) CountLiveRoomAnalyse(authorId, startDate, endDate strin
 	}
 	return
 }
-
-//口碑日榜按时间排序
-type ReputationDtScoreList []entity.DyReputationDateScoreList
-
-func ReputationDtScoreListOrderByTime(list []entity.DyReputationDateScoreList) []entity.DyReputationDateScoreList {
-	sort.Sort(ReputationDtScoreList(list))
-	return list
-}
-
-func (I ReputationDtScoreList) Len() int {
-	return len(I)
-}
-
-func (I ReputationDtScoreList) Less(i, j int) bool {
-	return I[i].Date < I[j].Date
-}
-
-func (I ReputationDtScoreList) Swap(i, j int) {
-	I[i], I[j] = I[j], I[i]
-}

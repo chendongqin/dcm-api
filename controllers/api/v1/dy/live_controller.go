@@ -42,7 +42,7 @@ func (receiver *LiveController) LiveInfoData() {
 		ReputationLevel: reputation.Level,
 	}
 	liveSaleData, _ := liveBusiness.HbaseGetLiveSalesData(roomId)
-	incOnlineTrends, maxOnlineTrends, avgUserCount := liveBusiness.DealOnlineTrends(liveInfo.OnlineTrends)
+	incOnlineTrends, maxOnlineTrends, avgUserCount := liveBusiness.DealOnlineTrends(liveInfo)
 	var incFansRate, interactRate float64
 	incFansRate = 0
 	interactRate = 0
@@ -334,23 +334,37 @@ func (receiver *LiveController) LiveFansTrends() {
 	fansDate := make([]int64, 0)
 	clubDate := make([]int64, 0)
 	fansTrends := make([]int64, 0)
+	fansIncTrends := make([]int64, 0)
 	clubTrends := make([]int64, 0)
-	for _, v := range info.FollowerCountTrends {
+	clubIncTrends := make([]int64, 0)
+	followerCountTrends := business.LiveFansTrendsListOrderByTime(info.FollowerCountTrends)
+	fansClubCountTrends := business.LiveClubFansTrendsListOrderByTime(info.FansClubCountTrends)
+	beforeFansTrend := entity.LiveFollowerCountTrends{}
+	beforeClubTrend := entity.LiveAnsClubCountTrends{}
+	for _, v := range followerCountTrends {
 		fansDate = append(fansDate, v.CrawlTime)
 		fansTrends = append(fansTrends, v.FollowerCount)
+		inc := v.FollowerCount - beforeFansTrend.FollowerCount
+		fansIncTrends = append(fansIncTrends, inc)
+		beforeFansTrend = v
 	}
-	for _, v := range info.FansClubCountTrends {
+	for _, v := range fansClubCountTrends {
 		clubDate = append(clubDate, v.CrawlTime)
 		clubTrends = append(clubTrends, v.AnsClubCount)
+		inc := v.AnsClubCount - beforeClubTrend.AnsClubCount
+		clubIncTrends = append(clubIncTrends, inc)
+		beforeClubTrend = v
 	}
 	receiver.SuccReturn(map[string]interface{}{
 		"fans_chart": map[string]interface{}{
 			"date":  fansDate,
 			"count": fansTrends,
+			"inc":   fansIncTrends,
 		},
 		"club_chart": map[string]interface{}{
 			"date":  clubDate,
 			"count": clubTrends,
+			"inc":   clubIncTrends,
 		},
 	})
 	return

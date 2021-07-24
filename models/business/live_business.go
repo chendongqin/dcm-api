@@ -9,7 +9,6 @@ import (
 	"dongchamao/services/hbaseService/hbasehelper"
 	"dongchamao/structinit/repost/dy"
 	"math"
-	"sort"
 	"time"
 )
 
@@ -171,11 +170,16 @@ func (l *LiveBusiness) HbaseGetLiveSalesData(roomId string) (data entity.DyAutho
 }
 
 //OnlineTrends转化
-func (l *LiveBusiness) DealOnlineTrends(onlineTrends []entity.DyLiveOnlineTrends) (entity.DyLiveIncOnlineTrendsChart, entity.DyLiveOnlineTrends, int64) {
-	onlineTrends = OnlineTrendOrderByTime(onlineTrends)
+func (l *LiveBusiness) DealOnlineTrends(liveInfo entity.DyLiveInfo) (entity.DyLiveIncOnlineTrendsChart, entity.DyLiveOnlineTrends, int64) {
+	onlineTrends := OnlineTrendOrderByTime(liveInfo.OnlineTrends)
 	beforeTrend := entity.DyLiveOnlineTrends{}
 	incTrends := make([]entity.DyLiveIncOnlineTrends, 0)
 	dates := make([]string, 0)
+	dates = append(dates, time.Unix(liveInfo.CreateTime, 0).Format("2006-01-02 15:04:05"))
+	incTrends = append(incTrends, entity.DyLiveIncOnlineTrends{
+		UserCount: 0,
+		WatchInc:  0,
+	})
 	maxLiveOnlineTrends := entity.DyLiveOnlineTrends{}
 	lenNum := len(onlineTrends)
 	//平均在线人数
@@ -279,46 +283,6 @@ func (l *LiveBusiness) CountAvgOnlineTime(onlineTrends []entity.DyLiveOnlineTren
 	return avgOnlineTime
 }
 
-//直播流按时间倒序
-type OnlineTrendSortDescList []entity.DyLiveOnlineTrends
-
-func OnlineTrendOrderByTimeDesc(onlineTrends []entity.DyLiveOnlineTrends) []entity.DyLiveOnlineTrends {
-	sort.Sort(OnlineTrendSortDescList(onlineTrends))
-	return onlineTrends
-}
-
-func (I OnlineTrendSortDescList) Len() int {
-	return len(I)
-}
-
-func (I OnlineTrendSortDescList) Less(i, j int) bool {
-	return I[i].CrawlTime > I[j].CrawlTime
-}
-
-func (I OnlineTrendSortDescList) Swap(i, j int) {
-	I[i], I[j] = I[j], I[i]
-}
-
-//直播流按时间排序
-type OnlineTrendSortList []entity.DyLiveOnlineTrends
-
-func OnlineTrendOrderByTime(onlineTrends []entity.DyLiveOnlineTrends) []entity.DyLiveOnlineTrends {
-	sort.Sort(OnlineTrendSortList(onlineTrends))
-	return onlineTrends
-}
-
-func (I OnlineTrendSortList) Len() int {
-	return len(I)
-}
-
-func (I OnlineTrendSortList) Less(i, j int) bool {
-	return I[i].CrawlTime < I[j].CrawlTime
-}
-
-func (I OnlineTrendSortList) Swap(i, j int) {
-	I[i], I[j] = I[j], I[i]
-}
-
 //直播间信息
 func (l *LiveBusiness) HbaseGetLivePmt(roomId string) (data entity.DyLivePmt, comErr global.CommonError) {
 	query := hbasehelper.NewQuery()
@@ -353,64 +317,4 @@ func (l *LiveBusiness) HbaseGetRankTrends(roomId string) (data []entity.DyLiveRa
 	utils.MapToStruct(detailMap, hData)
 	data = RankTrendOrderByTime(hData.RankData)
 	return
-}
-
-//直播排名按时间排序
-type RankTrendSortList []entity.DyLiveRankTrend
-
-func RankTrendOrderByTime(rankTrends []entity.DyLiveRankTrend) []entity.DyLiveRankTrend {
-	sort.Sort(RankTrendSortList(rankTrends))
-	return rankTrends
-}
-
-func (I RankTrendSortList) Len() int {
-	return len(I)
-}
-
-func (I RankTrendSortList) Less(i, j int) bool {
-	return I[i].CrawlTime < I[j].CrawlTime
-}
-
-func (I RankTrendSortList) Swap(i, j int) {
-	I[i], I[j] = I[j], I[i]
-}
-
-//直播讲解按时间排序
-type ProductCurSortList []dy.LiveCurProduct
-
-func ProductCurOrderByTime(curList []dy.LiveCurProduct) []dy.LiveCurProduct {
-	sort.Sort(ProductCurSortList(curList))
-	return curList
-}
-
-func (I ProductCurSortList) Len() int {
-	return len(I)
-}
-
-func (I ProductCurSortList) Less(i, j int) bool {
-	return I[i].StartTime < I[j].StartTime
-}
-
-func (I ProductCurSortList) Swap(i, j int) {
-	I[i], I[j] = I[j], I[i]
-}
-
-//直播商品销量按时间排序
-type RoomProductTrendSortList []entity.DyRoomProductTrend
-
-func RoomProductTrendOrderByTime(trendList []entity.DyRoomProductTrend) []entity.DyRoomProductTrend {
-	sort.Sort(RoomProductTrendSortList(trendList))
-	return trendList
-}
-
-func (I RoomProductTrendSortList) Len() int {
-	return len(I)
-}
-
-func (I RoomProductTrendSortList) Less(i, j int) bool {
-	return I[i].CrawlTime < I[j].CrawlTime
-}
-
-func (I RoomProductTrendSortList) Swap(i, j int) {
-	I[i], I[j] = I[j], I[i]
 }
