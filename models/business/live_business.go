@@ -171,16 +171,11 @@ func (l *LiveBusiness) HbaseGetLiveSalesData(roomId string) (data entity.DyAutho
 }
 
 //OnlineTrends转化
-func (l *LiveBusiness) DealOnlineTrends(liveInfo entity.DyLiveInfo) (entity.DyLiveIncOnlineTrendsChart, entity.DyLiveOnlineTrends, int64) {
-	onlineTrends := OnlineTrendOrderByTime(liveInfo.OnlineTrends)
+func (l *LiveBusiness) DealOnlineTrends(onlineTrends []entity.DyLiveOnlineTrends) (entity.DyLiveIncOnlineTrendsChart, entity.DyLiveOnlineTrends, int64) {
+	onlineTrends = OnlineTrendOrderByTime(onlineTrends)
 	beforeTrend := entity.DyLiveOnlineTrends{}
 	incTrends := make([]entity.DyLiveIncOnlineTrends, 0)
 	dates := make([]string, 0)
-	dates = append(dates, time.Unix(liveInfo.CreateTime, 0).Format("2006-01-02 15:04:05"))
-	incTrends = append(incTrends, entity.DyLiveIncOnlineTrends{
-		UserCount: 0,
-		WatchInc:  0,
-	})
 	maxLiveOnlineTrends := entity.DyLiveOnlineTrends{}
 	lenNum := len(onlineTrends)
 	//平均在线人数
