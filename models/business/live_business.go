@@ -171,11 +171,16 @@ func (l *LiveBusiness) HbaseGetLiveSalesData(roomId string) (data entity.DyAutho
 }
 
 //OnlineTrends转化
-func (l *LiveBusiness) DealOnlineTrends(onlineTrends []entity.DyLiveOnlineTrends) (entity.DyLiveIncOnlineTrendsChart, entity.DyLiveOnlineTrends, int64, int64) {
-	onlineTrends = OnlineTrendOrderByTime(onlineTrends)
+func (l *LiveBusiness) DealOnlineTrends(liveInfo entity.DyLiveInfo) (entity.DyLiveIncOnlineTrendsChart, entity.DyLiveOnlineTrends, int64) {
+	onlineTrends := OnlineTrendOrderByTime(liveInfo.OnlineTrends)
 	beforeTrend := entity.DyLiveOnlineTrends{}
 	incTrends := make([]entity.DyLiveIncOnlineTrends, 0)
 	dates := make([]string, 0)
+	dates = append(dates, time.Unix(liveInfo.CreateTime, 0).Format("2006-01-02 15:04:05"))
+	incTrends = append(incTrends, entity.DyLiveIncOnlineTrends{
+		UserCount: 0,
+		WatchInc:  0,
+	})
 	maxLiveOnlineTrends := entity.DyLiveOnlineTrends{}
 	lenNum := len(onlineTrends)
 	//平均在线人数
@@ -203,15 +208,11 @@ func (l *LiveBusiness) DealOnlineTrends(onlineTrends []entity.DyLiveOnlineTrends
 		Date:            dates,
 		IncOnlineTrends: incTrends,
 	}
-	var incFans int64 = 0
 	var avgUserCount int64 = 0
-	if lenNum > 1 {
-		incFans = onlineTrends[lenNum-1].FollowerCount - onlineTrends[0].FollowerCount
-	}
 	if lenNum > 0 {
 		avgUserCount = sumUserCount / int64(lenNum)
 	}
-	return incTrendsChart, maxLiveOnlineTrends, incFans, avgUserCount
+	return incTrendsChart, maxLiveOnlineTrends, avgUserCount
 }
 
 //直播间分析

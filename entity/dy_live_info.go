@@ -131,6 +131,7 @@ type LiveFollowerCountTrends struct {
 	CrawlTime     int64 `json:"crawl_time"`
 	FollowerCount int64 `json:"follower_count"`
 }
+
 type LiveAnsClubCountTrends struct {
 	AnsClubCount int64 `json:"ans_club_count"`
 	CrawlTime    int64 `json:"crawl_time"`

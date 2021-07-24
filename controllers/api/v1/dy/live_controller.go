@@ -42,13 +42,13 @@ func (receiver *LiveController) LiveInfoData() {
 		ReputationLevel: reputation.Level,
 	}
 	liveSaleData, _ := liveBusiness.HbaseGetLiveSalesData(roomId)
-	incOnlineTrends, maxOnlineTrends, incFans, avgUserCount := liveBusiness.DealOnlineTrends(liveInfo.OnlineTrends)
+	incOnlineTrends, maxOnlineTrends, avgUserCount := liveBusiness.DealOnlineTrends(liveInfo)
 	var incFansRate, interactRate float64
 	incFansRate = 0
 	interactRate = 0
 	liveSale := dy.DyLiveRoomSaleData{}
 	if liveInfo.TotalUser > 0 {
-		incFansRate = float64(incFans) / float64(liveInfo.TotalUser)
+		incFansRate = float64(liveInfo.FollowCount) / float64(liveInfo.TotalUser)
 		interactRate = float64(liveInfo.BarrageCount) / float64(liveInfo.TotalUser)
 		liveSale.Uv = (liveSaleData.Gmv + float64(liveSaleData.TicketCount)/10) / float64(liveInfo.TotalUser)
 		liveSale.SaleRate = liveSaleData.Gmv / float64(liveInfo.TotalUser)
@@ -66,7 +66,7 @@ func (receiver *LiveController) LiveInfoData() {
 		User:                liveUser,
 		UserCount:           liveInfo.UserCount,
 		TrendsCrawlTime:     liveInfo.TrendsCrawlTime,
-		IncFans:             incFans,
+		IncFans:             liveInfo.FollowCount,
 		IncFansRate:         incFansRate,
 		InteractRate:        interactRate,
 		AvgUserCount:        avgUserCount,
@@ -331,6 +331,7 @@ func (receiver *LiveController) LiveFansTrends() {
 		receiver.FailReturn(comErr)
 		return
 	}
+	//info.FollowerCountTrends =
 	fansDate := make([]int64, 0)
 	clubDate := make([]int64, 0)
 	fansTrends := make([]int64, 0)
