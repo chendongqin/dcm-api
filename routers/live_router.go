@@ -13,5 +13,6 @@ func init() {
 	beego.Router("/v1/dy/live/promotion/cate/:room_id", &v1dy.LiveController{}, "get:LiveProductCateList")
 	beego.Router("/v1/dy/live/promotion/chart/:room_id", &v1dy.LiveController{}, "get:LivePromotions")
 	beego.Router("/v1/dy/live/rank/chart/:room_id", &v1dy.LiveController{}, "get:LiveRankTrends")
+	beego.Router("/v1/dy/live/fans/chart/:room_id", &v1dy.LiveController{}, "get:LiveFansTrends")
 
 }

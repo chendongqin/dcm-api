@@ -1,37 +1,39 @@
 package entity
 
 var DyLiveInfoMap = HbaseEntity{
-	"add_time":               {Long, "add_time"},
-	"challenge":              {Json, "challenge"},
-	"cover":                  {String, "cover"},
-	"crawl_time":             {Long, "crawl_time"},
-	"create_time":            {Long, "create_time"},
-	"discover_time":          {Long, "discover_time"},
-	"fans_club_count":        {Long, "fans_club_count"},
-	"finish_time":            {Long, "finish_time"},
-	"follow_count":           {Long, "follow_count"},
-	"gift_uv_count":          {Long, "gift_uv_count"},
-	"hour_rank":              {Json, "hour_rank"},
-	"hour_sales_rank":        {Json, "hour_sales_rank"},
-	"level":                  {Int, "level"},
-	"like_count":             {Long, "like_count"},
-	"play_flv_url":           {String, "play_flv_url"},
-	"play_url":               {String, "play_url"},
-	"pmt_cnt":                {Long, "pmt_cnt"},
-	"room_id":                {String, "room_id"},
-	"room_status":            {Int, "room_status"},
-	"room_ticket_count":      {Long, "room_ticket_count"},
-	"tag":                    {String, "tag"},
-	"title":                  {String, "title"},
-	"top_fans":               {AJson, "top_fans"},
-	"total_user":             {Long, "total_user"},
-	"user":                   {Json, "user"},
-	"user_count":             {Long, "user_count"},
-	"user_count_composition": {Json, "user_count_composition"},
-	"watch_cnt":              {Long, "watch_cnt"},
-	"trends_crawl_time":      {Long, "trends_crawl_time"},
-	"trends_online_trends":   {AJson, "online_trends"},
-	"other_barrage_count":    {Long, "barrage_count"},
+	"add_time":                      {Long, "add_time"},
+	"challenge":                     {Json, "challenge"},
+	"cover":                         {String, "cover"},
+	"crawl_time":                    {Long, "crawl_time"},
+	"create_time":                   {Long, "create_time"},
+	"discover_time":                 {Long, "discover_time"},
+	"fans_club_count":               {Long, "fans_club_count"},
+	"finish_time":                   {Long, "finish_time"},
+	"follow_count":                  {Long, "follow_count"},
+	"gift_uv_count":                 {Long, "gift_uv_count"},
+	"hour_rank":                     {Json, "hour_rank"},
+	"hour_sales_rank":               {Json, "hour_sales_rank"},
+	"level":                         {Int, "level"},
+	"like_count":                    {Long, "like_count"},
+	"play_flv_url":                  {String, "play_flv_url"},
+	"play_url":                      {String, "play_url"},
+	"pmt_cnt":                       {Long, "pmt_cnt"},
+	"room_id":                       {String, "room_id"},
+	"room_status":                   {Int, "room_status"},
+	"room_ticket_count":             {Long, "room_ticket_count"},
+	"tag":                           {String, "tag"},
+	"title":                         {String, "title"},
+	"top_fans":                      {AJson, "top_fans"},
+	"total_user":                    {Long, "total_user"},
+	"user":                          {Json, "user"},
+	"user_count":                    {Long, "user_count"},
+	"user_count_composition":        {Json, "user_count_composition"},
+	"watch_cnt":                     {Long, "watch_cnt"},
+	"trends_crawl_time":             {Long, "trends_crawl_time"},
+	"trends_online_trends":          {AJson, "online_trends"},
+	"other_barrage_count":           {Long, "barrage_count"},
+	"trends_follower_count_trends":  {AJson, "follower_count_trends"},
+	"trends_fans_club_count_trends": {AJson, "fans_club_count_trends"},
 }
 
 type DyLiveInfo struct {
@@ -65,6 +67,8 @@ type DyLiveInfo struct {
 	TrendsCrawlTime      int64                      `json:"trends_crawl_time"`      //更新时间
 	BarrageCount         int64                      `json:"barrage_count"`          //弹幕人数
 	OnlineTrends         []DyLiveOnlineTrends       `json:"online_trends"`
+	FollowerCountTrends  []LiveFollowerCountTrends  `json:"follower_count_trends"`
+	FansClubCountTrends  []LiveAnsClubCountTrends   `json:"fans_club_count_trends"`
 }
 
 type DyLiveInfoChallenge struct {
@@ -121,4 +125,13 @@ type DyLiveIncOnlineTrends struct {
 type DyLiveIncOnlineTrendsChart struct {
 	Date            []string                `json:"date"`
 	IncOnlineTrends []DyLiveIncOnlineTrends `json:"inc_online_trends"`
+}
+
+type LiveFollowerCountTrends struct {
+	CrawlTime     int64 `json:"crawl_time"`
+	FollowerCount int64 `json:"follower_count"`
+}
+type LiveAnsClubCountTrends struct {
+	AnsClubCount int64 `json:"ans_club_count"`
+	CrawlTime    int64 `json:"crawl_time"`
 }

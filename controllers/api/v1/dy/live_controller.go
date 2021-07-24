@@ -317,3 +317,41 @@ func (receiver *LiveController) LiveProductSaleChart() {
 	})
 	return
 }
+
+//直播间粉丝趋势
+func (receiver *LiveController) LiveFansTrends() {
+	roomId := receiver.Ctx.Input.Param(":room_id")
+	if roomId == "" {
+		receiver.FailReturn(global.NewError(4000))
+		return
+	}
+	liveBusiness := business.NewLiveBusiness()
+	info, comErr := liveBusiness.HbaseGetLiveInfo(roomId)
+	if comErr != nil {
+		receiver.FailReturn(comErr)
+		return
+	}
+	fansDate := make([]int64, 0)
+	clubDate := make([]int64, 0)
+	fansTrends := make([]int64, 0)
+	clubTrends := make([]int64, 0)
+	for _, v := range info.FollowerCountTrends {
+		fansDate = append(fansDate, v.CrawlTime)
+		fansTrends = append(fansTrends, v.FollowerCount)
+	}
+	for _, v := range info.FansClubCountTrends {
+		clubDate = append(clubDate, v.CrawlTime)
+		clubTrends = append(clubTrends, v.AnsClubCount)
+	}
+	receiver.SuccReturn(map[string]interface{}{
+		"fans_chart": map[string]interface{}{
+			"date":  fansDate,
+			"count": fansTrends,
+		},
+		"club_chart": map[string]interface{}{
+			"date":  clubDate,
+			"count": clubTrends,
+		},
+	})
+	return
+}
