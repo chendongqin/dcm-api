@@ -312,8 +312,8 @@ func (receiver *LiveController) LiveProductSaleChart() {
 		sales = append(sales, math.Floor(v.Sales))
 	}
 	receiver.SuccReturn(dy.TimestampCountChart{
-		Timestamp:  business.DealChartInt64(timestamps, 60),
-		CountValue: business.DealChartFloat64(sales, 60),
+		Timestamp:  timestamps,
+		CountValue: sales,
 	})
 	return
 }
