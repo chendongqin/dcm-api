@@ -363,9 +363,6 @@ func (receiver *LiveController) LiveFansTrends() {
 			FansClubCount: fansClubCountTrends[0].FansClubCount - fansClubCountTrends[0].TodayNewFansCount,
 			CrawlTime:     info.CreateTime,
 		}
-		clubDate = append(clubDate, beforeClubTrend.CrawlTime)
-		clubTrends = append(clubTrends, beforeClubTrend.FansClubCount)
-		clubIncTrends = append(clubIncTrends, beforeClubTrend.TodayNewFansCount)
 		for _, v := range fansClubCountTrends {
 			clubDate = append(clubDate, v.CrawlTime)
 			clubTrends = append(clubTrends, v.FansClubCount)
