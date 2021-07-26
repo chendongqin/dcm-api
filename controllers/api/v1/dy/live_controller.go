@@ -339,32 +339,40 @@ func (receiver *LiveController) LiveFansTrends() {
 	clubIncTrends := make([]int64, 0)
 	if len(info.FollowerCountTrends) > 0 {
 		followerCountTrends := business.LiveFansTrendsListOrderByTime(info.FollowerCountTrends)
-		lenNum := len(followerCountTrends)
-		beforeFansTrend := entity.LiveFollowerCountTrends{
-			CrawlTime:     info.CreateTime,
-			FollowerCount: followerCountTrends[lenNum-1].FollowerCount - info.FollowCount,
-		}
+		//lenNum := len(followerCountTrends)
+		//beforeFansTrend := entity.LiveFollowerCountTrends{
+		//	CrawlTime:     info.CreateTime,
+		//	FollowerCount: followerCountTrends[lenNum-1].FollowerCount - info.FollowCount,
+		//	NewFollowerCount: 0,
+		//}
 		for _, v := range followerCountTrends {
 			fansDate = append(fansDate, v.CrawlTime)
 			fansTrends = append(fansTrends, v.FollowerCount)
-			inc := v.FollowerCount - beforeFansTrend.FollowerCount
-			fansIncTrends = append(fansIncTrends, inc)
-			beforeFansTrend = v
+			//inc := v.FollowerCount - beforeFansTrend.FollowerCount
+			fansIncTrends = append(fansIncTrends, v.NewFollowerCount)
+			//beforeFansTrend = v
 		}
 	}
+	var clubInc int64 = 0
 	if len(info.FansClubCountTrends) > 0 {
 		fansClubCountTrends := business.LiveClubFansTrendsListOrderByTime(info.FansClubCountTrends)
 		beforeClubTrend := entity.LiveAnsClubCountTrends{
-			AnsClubCount: fansClubCountTrends[0].AnsClubCount,
-			CrawlTime:    info.CreateTime,
+			FansClubCount: fansClubCountTrends[0].FansClubCount,
+			CrawlTime:     info.CreateTime,
 		}
 		for _, v := range fansClubCountTrends {
 			clubDate = append(clubDate, v.CrawlTime)
-			clubTrends = append(clubTrends, v.AnsClubCount)
-			inc := v.AnsClubCount - beforeClubTrend.AnsClubCount
+			clubTrends = append(clubTrends, v.FansClubCount)
+			inc := v.FansClubCount - beforeClubTrend.FansClubCount
 			clubIncTrends = append(clubIncTrends, inc)
 			beforeClubTrend = v
 		}
+		lenNum := len(clubTrends)
+		clubInc = clubTrends[lenNum-1] - clubTrends[0]
+	}
+	var incFansRate float64 = 0
+	if info.TotalUser > 0 {
+		incFansRate = float64(info.FollowCount) / float64(info.TotalUser)
 	}
 	receiver.SuccReturn(map[string]interface{}{
 		"fans_chart": map[string]interface{}{
@@ -377,6 +385,9 @@ func (receiver *LiveController) LiveFansTrends() {
 			"count": clubTrends,
 			"inc":   clubIncTrends,
 		},
+		"inc_fans":      info.FollowCount,
+		"inc_club":      clubInc,
+		"inc_fans_rate": incFansRate,
 	})
 	return
 }
