@@ -128,9 +128,9 @@ type DyLiveIncOnlineTrendsChart struct {
 }
 
 type LiveFollowerCountTrends struct {
-	CrawlTime        int64 `json:"crawl_time"`
-	FollowerCount    int64 `json:"follower_count"`
-	NewFollowerCount int64 `json:"new_follower_count"`
+	CrawlTime      int64 `json:"crawl_time"`
+	FollowerCount  int64 `json:"follower_count"`
+	NewFollowCount int64 `json:"new_follow_count"`
 }
 
 type LiveAnsClubCountTrends struct {

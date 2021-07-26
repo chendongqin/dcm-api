@@ -349,7 +349,7 @@ func (receiver *LiveController) LiveFansTrends() {
 			fansDate = append(fansDate, v.CrawlTime)
 			fansTrends = append(fansTrends, v.FollowerCount)
 			//inc := v.FollowerCount - beforeFansTrend.FollowerCount
-			fansIncTrends = append(fansIncTrends, v.NewFollowerCount)
+			fansIncTrends = append(fansIncTrends, v.NewFollowCount)
 			//beforeFansTrend = v
 		}
 	}
