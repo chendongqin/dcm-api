@@ -339,12 +339,15 @@ func (receiver *LiveController) LiveFansTrends() {
 	clubIncTrends := make([]int64, 0)
 	if len(info.FollowerCountTrends) > 0 {
 		followerCountTrends := business.LiveFansTrendsListOrderByTime(info.FollowerCountTrends)
-		//lenNum := len(followerCountTrends)
+		fansDate = append(fansDate, info.CreateTime)
+		lenNum := len(followerCountTrends)
 		//beforeFansTrend := entity.LiveFollowerCountTrends{
 		//	CrawlTime:     info.CreateTime,
 		//	FollowerCount: followerCountTrends[lenNum-1].FollowerCount - info.FollowCount,
 		//	NewFollowerCount: 0,
 		//}
+		fansTrends = append(fansTrends, followerCountTrends[lenNum-1].FollowerCount-info.FollowCount)
+		fansIncTrends = append(fansIncTrends, 0)
 		for _, v := range followerCountTrends {
 			fansDate = append(fansDate, v.CrawlTime)
 			fansTrends = append(fansTrends, v.FollowerCount)
@@ -357,15 +360,20 @@ func (receiver *LiveController) LiveFansTrends() {
 	if len(info.FansClubCountTrends) > 0 {
 		fansClubCountTrends := business.LiveClubFansTrendsListOrderByTime(info.FansClubCountTrends)
 		beforeClubTrend := entity.LiveAnsClubCountTrends{
-			FansClubCount: fansClubCountTrends[0].FansClubCount,
-			CrawlTime:     info.CreateTime,
+			FansClubCount:     fansClubCountTrends[0].FansClubCount,
+			TodayNewFansCount: fansClubCountTrends[0].TodayNewFansCount,
+			CrawlTime:         info.CreateTime,
 		}
+		clubDate = append(clubDate, beforeClubTrend.CrawlTime)
+		clubTrends = append(clubTrends, beforeClubTrend.FansClubCount)
+		//inc := v.FansClubCount - beforeClubTrend.FansClubCount
+		clubIncTrends = append(clubIncTrends, beforeClubTrend.TodayNewFansCount)
 		for _, v := range fansClubCountTrends {
 			clubDate = append(clubDate, v.CrawlTime)
 			clubTrends = append(clubTrends, v.FansClubCount)
-			inc := v.FansClubCount - beforeClubTrend.FansClubCount
-			clubIncTrends = append(clubIncTrends, inc)
-			beforeClubTrend = v
+			//inc := v.FansClubCount - beforeClubTrend.FansClubCount
+			clubIncTrends = append(clubIncTrends, v.TodayNewFansCount)
+			//beforeClubTrend = v
 		}
 		lenNum := len(clubTrends)
 		clubInc = clubTrends[lenNum-1] - clubTrends[0]
