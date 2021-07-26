@@ -360,9 +360,13 @@ func (receiver *LiveController) LiveFansTrends() {
 	if len(info.FansClubCountTrends) > 0 {
 		fansClubCountTrends := business.LiveClubFansTrendsListOrderByTime(info.FansClubCountTrends)
 		beforeClubTrend := entity.LiveAnsClubCountTrends{
-			FansClubCount: fansClubCountTrends[0].FansClubCount - fansClubCountTrends[0].TodayNewFansCount,
-			CrawlTime:     info.CreateTime,
+			FansClubCount:     fansClubCountTrends[0].FansClubCount - fansClubCountTrends[0].TodayNewFansCount,
+			TodayNewFansCount: fansClubCountTrends[0].TodayNewFansCount,
+			CrawlTime:         info.CreateTime,
 		}
+		clubDate = append(clubDate, beforeClubTrend.CrawlTime)
+		clubTrends = append(clubTrends, beforeClubTrend.FansClubCount)
+		clubIncTrends = append(clubIncTrends, beforeClubTrend.TodayNewFansCount)
 		for _, v := range fansClubCountTrends {
 			clubDate = append(clubDate, v.CrawlTime)
 			clubTrends = append(clubTrends, v.FansClubCount)
