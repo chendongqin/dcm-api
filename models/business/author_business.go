@@ -510,7 +510,6 @@ func (a *AuthorBusiness) CountLiveRoomAnalyse(authorId string, startTime, endTim
 			} else {
 				sumLongTime[longStr] = 1
 			}
-			//todo 商品取电商分析
 			if d, ex := sumData[date]; ex {
 				d.TotalUserCount += v.TotalUserCount
 				d.IncFans += v.IncFans

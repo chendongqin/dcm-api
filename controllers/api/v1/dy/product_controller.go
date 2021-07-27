@@ -191,6 +191,14 @@ func (receiver *ProductController) ProductBase() {
 		CosRatio:      productInfo.CosRatio,
 		CosRatioMoney: productInfo.CosRatio / 100 * productInfo.Price,
 	}
+	dateChart := make([]int64, 0)
+	priceChart := make([]float64, 0)
+	cosPriceChart := make([]float64, 0)
+	for _, v := range productInfo.PriceTrends {
+		dateChart = append(dateChart, v.StartTime)
+		priceChart = append(priceChart, v.Price)
+		cosPriceChart = append(cosPriceChart, v.Price*productInfo.CosRatio/100)
+	}
 	receiver.SuccReturn(map[string]interface{}{
 		"pv_count_30":    monthData.PvCount,
 		"order_count_30": monthData.OrderCount,
@@ -199,6 +207,11 @@ func (receiver *ProductController) ProductBase() {
 		"room_num_30":    roomNum,
 		"author_num_30":  len(authorMap),
 		"simple_info":    simpleInfo,
+		"chart": map[string]interface{}{
+			"date":      dateChart,
+			"price":     priceChart,
+			"cos_price": cosPriceChart,
+		},
 	})
 	return
 }

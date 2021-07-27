@@ -279,7 +279,7 @@ func (receiver *LiveController) LiveProductList() {
 	return
 }
 
-//直播间商品
+//直播间商品分类
 func (receiver *LiveController) LiveProductCateList() {
 	roomId := receiver.Ctx.Input.Param(":room_id")
 	if roomId == "" {
