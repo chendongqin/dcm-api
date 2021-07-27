@@ -13,7 +13,7 @@ type ProductController struct {
 	controllers.ApiBaseController
 }
 
-//
+//商品分析
 func (receiver *ProductController) ProductBaseAnalysis() {
 	productId := receiver.GetString(":product_id", "")
 	if productId == "" {
@@ -31,6 +31,7 @@ func (receiver *ProductController) ProductBaseAnalysis() {
 	return
 }
 
+//商品基础数据
 func (receiver *ProductController) ProductBase() {
 	productId := receiver.GetString(":product_id", "")
 	if productId == "" {
@@ -43,6 +44,7 @@ func (receiver *ProductController) ProductBase() {
 		receiver.FailReturn(comErr)
 		return
 	}
+	brandInfo, _ := productBusiness.HbaseGetDyProductBrand(productId)
 	yesterdayDate := time.Now().AddDate(0, 0, -1).Format("20060102")
 	yesterdayTime, _ := time.ParseInLocation("20060102", yesterdayDate, time.Local)
 	startTime := yesterdayTime.AddDate(0, 0, -30)
@@ -65,16 +67,28 @@ func (receiver *ProductController) ProductBase() {
 	if monthData.PvCount > 0 {
 		rate30 = float64(monthData.OrderCount) / float64(monthData.PvCount)
 	}
+	if productInfo.MinPrice == 0 {
+		productInfo.MinPrice = productInfo.Price
+	}
+	shopName := brandInfo.ShopName
+	if shopName == "" {
+		shopName = productInfo.TbNick
+	}
+	label := brandInfo.DcmLevelFirst
+	if label == "" {
+		label = "其他"
+	}
 	simpleInfo := dy.SimpleDyProduct{
 		ProductID:     productInfo.ProductID,
 		Title:         productInfo.Title,
 		MarketPrice:   productInfo.MarketPrice,
 		Price:         productInfo.Price,
-		URL:           productInfo.URL,
+		URL:           productBusiness.GetProductUrl(productInfo.PlatformLabel, productInfo.ProductID),
 		Image:         dyimg.Product(productInfo.Image),
 		Status:        productInfo.Status,
-		ShopName:      productInfo.ShopName,
-		Label:         productInfo.Label,
+		ShopId:        productInfo.ShopID,
+		ShopName:      shopName,
+		Label:         label,
 		Undercarriage: productInfo.Undercarriage,
 		CrawlTime:     productInfo.CrawlTime,
 		PlatformLabel: productInfo.PlatformLabel,

@@ -23,6 +23,7 @@ const (
 	HbaseXtAuthorDetail      = "xt_author_detail"       //星图达人详情
 
 	HbaseDyProduct            = "dy_product"
+	HbaseDyProductBrand       = "dy_product_brand"
 	HbaseDyProductDaily       = "dy_product_daily"
 	HbaseDyLivePromotionMonth = "dy_live_promotion_month"
 )

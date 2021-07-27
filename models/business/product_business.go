@@ -33,13 +33,30 @@ func (receiver ProductBusiness) HbaseGetProductInfo(productId string) (data enti
 	utils.MapToStruct(detailMap, &data)
 	data.ProductID = productId
 	//todo 小店名称处理
-	if data.PlatformLabel != "小店" {
-		data.Price = data.TbH5Price
-		data.MarketPrice = data.TbH5Mprice
-		data.ShopName = data.TbNick
-		data.Label = data.TbCatName
+	//if data.PlatformLabel != "小店" {
+	//	data.Price = data.TbH5Price
+	//	data.MarketPrice = data.TbH5Mprice
+	//	data.ShopName = data.TbNick
+	//	data.Title = data.TbTitle
+	//}
+	//data.URL = receiver.GetProductUrl(data.PlatformLabel, productId)
+	return
+}
+
+//获取商品品牌数据
+func (receiver *ProductBusiness) HbaseGetDyProductBrand(productId string) (data entity.DyProductBrand, comErr global.CommonError) {
+	query := hbasehelper.NewQuery()
+	result, err := query.SetTable(hbaseService.HbaseDyProductBrand).GetByRowKey([]byte(productId))
+	if err != nil {
+		comErr = global.NewMsgError(err.Error())
+		return
 	}
-	data.URL = receiver.GetProductUrl(data.PlatformLabel, productId)
+	if result.Row == nil {
+		comErr = global.NewError(4040)
+		return
+	}
+	detailMap := hbaseService.HbaseFormat(result, entity.DyProductBrandMap)
+	utils.MapToStruct(detailMap, &data)
 	return
 }
 

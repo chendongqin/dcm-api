@@ -8,6 +8,7 @@ type SimpleDyProduct struct {
 	URL           string  `json:"url"`
 	Image         string  `json:"image"`
 	Status        int     `json:"status"`
+	ShopId        string  `json:"shop_id"`
 	ShopName      string  `json:"shop_name"`
 	Undercarriage int     `json:"undercarriage"`
 	CrawlTime     int64   `json:"crawl_time"`
