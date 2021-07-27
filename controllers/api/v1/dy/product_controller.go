@@ -4,6 +4,7 @@ import (
 	controllers "dongchamao/controllers/api"
 	"dongchamao/entity"
 	"dongchamao/global"
+	"dongchamao/global/utils"
 	"dongchamao/models/business"
 	"dongchamao/services/dyimg"
 	"dongchamao/structinit/repost/dy"
@@ -201,13 +202,39 @@ func (receiver *ProductController) ProductBase() {
 		CosRatio:      productInfo.CosRatio,
 		CosRatioMoney: productInfo.CosRatio / 100 * productInfo.Price,
 	}
-	dateChart := make([]int64, 0)
-	priceChart := make([]float64, 0)
-	cosPriceChart := make([]float64, 0)
-	for _, v := range productInfo.PriceTrends {
-		dateChart = append(dateChart, v.StartTime)
-		priceChart = append(priceChart, v.Price)
-		cosPriceChart = append(cosPriceChart, v.Price*productInfo.CosRatio/100)
+	dateChart7 := make([]int64, 0)
+	priceChart7 := make([]float64, 0)
+	cosPriceChart7 := make([]float64, 0)
+	dateChart15 := make([]int64, 0)
+	priceChart15 := make([]float64, 0)
+	cosPriceChart15 := make([]float64, 0)
+	dateChart30 := make([]int64, 0)
+	priceChart30 := make([]float64, 0)
+	cosPriceChart30 := make([]float64, 0)
+	last30Day := utils.ToInt64(time.Now().AddDate(0, 0, -30).Format("20060102"))
+	last15Day := utils.ToInt64(time.Now().AddDate(0, 0, -15).Format("20060102"))
+	last7Day := utils.ToInt64(time.Now().AddDate(0, 0, -7).Format("20060102"))
+	priceTrends := business.ProductPriceTrendsListOrderByTime(productInfo.PriceTrends)
+	for _, v := range priceTrends {
+		if last30Day > v.StartTime {
+			continue
+		} else {
+			cosPrice := v.Price * productInfo.CosRatio / 100
+			dateChart30 = append(dateChart30, v.StartTime)
+			priceChart30 = append(priceChart30, v.Price)
+			cosPriceChart30 = append(cosPriceChart30, cosPrice)
+			if v.StartTime > last15Day {
+				dateChart15 = append(dateChart15, v.StartTime)
+				priceChart15 = append(priceChart15, v.Price)
+				cosPriceChart15 = append(cosPriceChart15, cosPrice)
+				if v.StartTime > last7Day {
+					dateChart7 = append(dateChart7, v.StartTime)
+					priceChart7 = append(priceChart7, v.Price)
+					cosPriceChart7 = append(cosPriceChart7, cosPrice)
+				}
+			}
+		}
+
 	}
 	receiver.SuccReturn(map[string]interface{}{
 		"pv_count_30":    monthData.PvCount,
@@ -217,10 +244,20 @@ func (receiver *ProductController) ProductBase() {
 		"room_num_30":    roomNum,
 		"author_num_30":  len(authorMap),
 		"simple_info":    simpleInfo,
-		"chart": map[string]interface{}{
-			"date":      dateChart,
-			"price":     priceChart,
-			"cos_price": cosPriceChart,
+		"chart_7": map[string]interface{}{
+			"date":      dateChart7,
+			"price":     priceChart7,
+			"cos_price": cosPriceChart7,
+		},
+		"chart_15": map[string]interface{}{
+			"date":      dateChart15,
+			"price":     priceChart15,
+			"cos_price": cosPriceChart15,
+		},
+		"chart_30": map[string]interface{}{
+			"date":      dateChart30,
+			"price":     priceChart30,
+			"cos_price": cosPriceChart30,
 		},
 	})
 	return

@@ -165,3 +165,23 @@ func (I LiveClubFansTrendsList) Less(i, j int) bool {
 func (I LiveClubFansTrendsList) Swap(i, j int) {
 	I[i], I[j] = I[j], I[i]
 }
+
+//直播粉丝数推流按时间排序
+type ProductPriceTrendsList []entity.DyProductPriceTrend
+
+func ProductPriceTrendsListOrderByTime(list []entity.DyProductPriceTrend) []entity.DyProductPriceTrend {
+	sort.Sort(ProductPriceTrendsList(list))
+	return list
+}
+
+func (I ProductPriceTrendsList) Len() int {
+	return len(I)
+}
+
+func (I ProductPriceTrendsList) Less(i, j int) bool {
+	return I[i].StartTime < I[j].StartTime
+}
+
+func (I ProductPriceTrendsList) Swap(i, j int) {
+	I[i], I[j] = I[j], I[i]
+}
