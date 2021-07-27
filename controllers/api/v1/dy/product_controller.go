@@ -47,6 +47,7 @@ func (receiver *ProductController) ProductBaseAnalysis() {
 	pvChart := make([]int64, 0)
 	rateChart := make([]float64, 0)
 	orderList := make([]dy.ProductOrderDaily, 0)
+	countData := dy.ProductOrderDaily{}
 	beginTime := startTime
 	for {
 		if beginTime.After(endTime) {
@@ -92,6 +93,11 @@ func (receiver *ProductController) ProductBaseAnalysis() {
 		orderChart = append(orderChart, order)
 		pvChart = append(pvChart, pv)
 		rateChart = append(rateChart, rate)
+		countData.OrderCount += order
+		countData.PvCount += pv
+		countData.AwemeNum += awemeNum
+		countData.RoomNum += roomNum
+		countData.AuthorNum += authorNum
 		orderList = append(orderList, dy.ProductOrderDaily{
 			Date:       dateStr,
 			OrderCount: order,
@@ -102,6 +108,9 @@ func (receiver *ProductController) ProductBaseAnalysis() {
 			AuthorNum:  authorNum,
 		})
 		beginTime = beginTime.AddDate(0, 0, 1)
+	}
+	if countData.PvCount > 0 {
+		countData.Rate = float64(countData.OrderCount) / float64(countData.PvCount)
 	}
 	receiver.SuccReturn(map[string]interface{}{
 		"author_chart": dy.ProductAuthorChart{
@@ -121,7 +130,8 @@ func (receiver *ProductController) ProductBaseAnalysis() {
 			PvCount:    pvChart,
 			Rate:       rateChart,
 		},
-		"daily_list": orderList,
+		"daily_list":  orderList,
+		"order_count": countData,
 	})
 	return
 }
