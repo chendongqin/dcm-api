@@ -27,7 +27,53 @@ func (receiver *ProductController) ProductBaseAnalysis() {
 	}
 	productBusiness := business.NewProductBusiness()
 	info, _ := productBusiness.HbaseGetProductDailyRangDate(productId, startTime, endTime)
-	receiver.SuccReturn(info)
+	dateChart := make([]string, 0)
+	hotAuthorChart := make([]int, 0)
+	liveAuthorChart := make([]int, 0)
+	awemeAuthorChart := make([]int, 0)
+	awemeChart := make([]int, 0)
+	roomChart := make([]int, 0)
+	beginTime := startTime
+	for {
+		if beginTime.After(endTime) {
+			break
+		}
+		dateChart = append(dateChart, beginTime.Format("01/02"))
+		dateKey := beginTime.Format("20060102")
+		if v, ok := info[dateKey]; ok {
+			authors := map[string]string{}
+			awemeAuthorNum := 0
+			liveAuthorNum := 0
+			for _, a := range v.AwemeAuthorList {
+				awemeAuthorNum++
+				authors[a.AuthorId] = a.AuthorId
+			}
+			for _, a := range v.LiveAuthorList {
+				liveAuthorNum++
+				authors[a.AuthorId] = a.AuthorId
+			}
+			hotAuthorChart = append(hotAuthorChart, len(authors))
+			liveAuthorChart = append(liveAuthorChart, liveAuthorNum)
+			awemeAuthorChart = append(awemeAuthorChart, awemeAuthorNum)
+			awemeChart = append(awemeChart, len(v.AwemeList))
+			roomChart = append(roomChart, len(v.LiveList))
+		} else {
+			hotAuthorChart = append(hotAuthorChart, 0)
+			liveAuthorChart = append(liveAuthorChart, 0)
+			awemeAuthorChart = append(awemeAuthorChart, 0)
+			awemeChart = append(awemeChart, 0)
+			roomChart = append(roomChart, 0)
+		}
+		beginTime = beginTime.AddDate(0, 0, 1)
+	}
+	receiver.SuccReturn(map[string]interface{}{
+		"date":         dateChart,
+		"hot_author":   hotAuthorChart,
+		"live_author":  liveAuthorChart,
+		"aweme_author": awemeAuthorChart,
+		"aweme":        awemeChart,
+		"room":         roomChart,
+	})
 	return
 }
 

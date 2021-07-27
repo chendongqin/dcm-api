@@ -32,14 +32,6 @@ func (receiver ProductBusiness) HbaseGetProductInfo(productId string) (data enti
 	detailMap := hbaseService.HbaseFormat(result, entity.DyProductMap)
 	utils.MapToStruct(detailMap, &data)
 	data.ProductID = productId
-	//todo 小店名称处理
-	//if data.PlatformLabel != "小店" {
-	//	data.Price = data.TbH5Price
-	//	data.MarketPrice = data.TbH5Mprice
-	//	data.ShopName = data.TbNick
-	//	data.Title = data.TbTitle
-	//}
-	//data.URL = receiver.GetProductUrl(data.PlatformLabel, productId)
 	return
 }
 

@@ -7,5 +7,5 @@ import (
 
 func init() {
 	beego.Router("/v1/dy/product/base/:product_id", &v1dy.ProductController{}, "get:ProductBase")
-	beego.Router("/v1/dy/product/:product_id/:start/:end", &v1dy.ProductController{}, "get:ProductBaseAnalysis")
+	beego.Router("/v1/dy/product/analysis/:product_id/:start/:end", &v1dy.ProductController{}, "get:ProductBaseAnalysis")
 }
