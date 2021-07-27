@@ -39,7 +39,7 @@ func (l *LiveBusiness) HbaseGetLiveCurProduct(roomId string) (data entity.DyLive
 }
 
 //直播间全网销量
-func (l *LiveBusiness) RoomCurProductSaleTrend(roomId, productId string) (data entity.DyRoomProduct, comErr global.CommonError) {
+func (l *LiveBusiness) GetHbaseRoomProductInfo(roomId, productId string) (data entity.DyRoomProduct, comErr global.CommonError) {
 	query := hbasehelper.NewQuery()
 	rowKey := roomId + "_" + productId
 	result, err := query.SetTable(hbaseService.HbaseDyRoomProduct).GetByRowKey([]byte(rowKey))
@@ -151,6 +151,20 @@ func (l *LiveBusiness) HbaseGetLiveInfo(roomId string) (data entity.DyLiveInfo, 
 	data.RoomID = roomId
 	return
 }
+
+//直播间商品趋势
+//func (l *LiveBusiness) CountRoomProductSaleChart(roomId string) {
+//	pmtInfo,comErr := l.HbaseGetLivePmt(roomId)
+//	if comErr != nil {
+//		return
+//	}
+//	productIdMap := map[string]string{}
+//	for _,v := range pmtInfo.Promotions {
+//		productIdMap[v.ProductID] = v.ProductID
+//	}
+//	productRoomChan := make(chan map[string]entity.DyRoomProduct,0)
+//
+//}
 
 //直播间带货数据
 func (l *LiveBusiness) HbaseGetLiveSalesData(roomId string) (data entity.DyAuthorLiveSalesData, comErr global.CommonError) {

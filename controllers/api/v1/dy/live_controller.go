@@ -17,6 +17,7 @@ type LiveController struct {
 	controllers.ApiBaseController
 }
 
+//直播详细
 func (receiver *LiveController) LiveInfoData() {
 	roomId := receiver.Ctx.Input.Param(":room_id")
 	if roomId == "" {
@@ -303,7 +304,7 @@ func (receiver *LiveController) LiveProductSaleChart() {
 		return
 	}
 	liveBusiness := business.NewLiveBusiness()
-	info, _ := liveBusiness.RoomCurProductSaleTrend(roomId, productId)
+	info, _ := liveBusiness.GetHbaseRoomProductInfo(roomId, productId)
 	trends := business.RoomProductTrendOrderByTime(info.TrendData)
 	timestamps := make([]int64, 0)
 	sales := make([]float64, 0)
