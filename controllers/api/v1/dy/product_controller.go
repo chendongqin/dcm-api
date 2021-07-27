@@ -79,7 +79,7 @@ func (receiver *ProductController) ProductBase() {
 		CrawlTime:     productInfo.CrawlTime,
 		PlatformLabel: productInfo.PlatformLabel,
 		MinPrice:      productInfo.MinPrice,
-		CosRatio:      productInfo.CosRatio / 100,
+		CosRatio:      productInfo.CosRatio,
 		CosRatioMoney: productInfo.CosRatio / 100 * productInfo.Price,
 	}
 	receiver.SuccReturn(map[string]interface{}{
