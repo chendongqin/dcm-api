@@ -245,7 +245,7 @@ func (receiver *AuthorController) CountLiveRoomAnalyse() {
 		return
 	}
 	authorBusiness := business.NewAuthorBusiness()
-	data := authorBusiness.CountLiveRoomAnalyse(authorId, t1.Format("20060102"), t2.AddDate(0, 0, 1).Format("20060102"))
+	data := authorBusiness.CountLiveRoomAnalyse(authorId, t1, t2)
 	receiver.SuccReturn(data)
 	return
 }

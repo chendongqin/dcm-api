@@ -80,7 +80,8 @@ func (receiver *LiveController) LiveInfoData() {
 	}
 	liveSale.Volume = int64(math.Floor(liveSaleData.Sales))
 	liveSale.Amount = liveSaleData.Gmv
-	liveSale.PromotionNum = liveSaleData.NumProducts
+	esLiveBusiness := es.NewEsLiveBusiness()
+	liveSale.PromotionNum = esLiveBusiness.CountRoomProductByRoomId(liveInfo)
 	if liveSaleData.Sales > 0 {
 		liveSale.PerPrice = liveSaleData.Gmv / liveSaleData.Sales
 	}
@@ -220,8 +221,10 @@ func (receiver *LiveController) LiveProductList() {
 	firstLabel := InputData.GetString("first_label", "")
 	secondLabel := InputData.GetString("second_label", "")
 	thirdLabel := InputData.GetString("third_label", "")
+	liveBusiness := business.NewLiveBusiness()
+	roomInfo, _ := liveBusiness.HbaseGetLiveInfo(roomId)
 	esLiveBusiness := es.NewEsLiveBusiness()
-	list, productCount, total, err := esLiveBusiness.RoomProductByRoomId(roomId, keyword, sortStr, orderBy, firstLabel, secondLabel, thirdLabel, page, pageSize)
+	list, productCount, total, err := esLiveBusiness.RoomProductByRoomId(roomInfo, keyword, sortStr, orderBy, firstLabel, secondLabel, thirdLabel, page, pageSize)
 	if err != nil {
 		receiver.FailReturn(err)
 		return
@@ -283,8 +286,10 @@ func (receiver *LiveController) LiveProductCateList() {
 		receiver.FailReturn(global.NewError(4000))
 		return
 	}
+	liveBusiness := business.NewLiveBusiness()
+	roomInfo, _ := liveBusiness.HbaseGetLiveInfo(roomId)
 	esLiveBusiness := es.NewEsLiveBusiness()
-	countData := esLiveBusiness.AllRoomProductCateByRoomId(roomId)
+	countData := esLiveBusiness.AllRoomProductCateByRoomId(roomInfo)
 	receiver.SuccReturn(map[string]interface{}{
 		"count": countData,
 	})

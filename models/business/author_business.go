@@ -4,6 +4,7 @@ import (
 	"dongchamao/entity"
 	"dongchamao/global"
 	"dongchamao/global/utils"
+	"dongchamao/models/business/es"
 	"dongchamao/services/dyimg"
 	"dongchamao/services/hbaseService"
 	"dongchamao/services/hbaseService/hbasehelper"
@@ -405,8 +406,10 @@ func (a *AuthorBusiness) GetDyAuthorScore(liveScore entity.XtAuthorLiveScore, vi
 }
 
 //获取达人直播间
-func (a *AuthorBusiness) HbaseGetAuthorRoomsRangDate(authorId, startDate, endDate string) (data map[string][]entity.DyAuthorLiveRoom, comErr global.CommonError) {
+func (a *AuthorBusiness) HbaseGetAuthorRoomsRangDate(authorId string, startTime, endTime time.Time) (data map[string][]entity.DyAuthorLiveRoom, comErr global.CommonError) {
 	data = map[string][]entity.DyAuthorLiveRoom{}
+	startDate := startTime.Format("20060102")
+	endDate := startTime.AddDate(0, 0, 1).Format("20060102")
 	query := hbasehelper.NewQuery()
 	startRow := authorId + "_" + startDate
 	endRow := authorId + "_" + endDate
@@ -455,9 +458,9 @@ func (a *AuthorBusiness) HbaseGetAuthorRoomsByDate(authorId, date string) (data 
 }
 
 //直播分析
-func (a *AuthorBusiness) CountLiveRoomAnalyse(authorId, startDate, endDate string) (data dy.SumDyLiveRoom) {
+func (a *AuthorBusiness) CountLiveRoomAnalyse(authorId string, startTime, endTime time.Time) (data dy.SumDyLiveRoom) {
 	data = dy.SumDyLiveRoom{}
-	roomsMap, _ := a.HbaseGetAuthorRoomsRangDate(authorId, startDate, endDate)
+	roomsMap, _ := a.HbaseGetAuthorRoomsRangDate(authorId, startTime, endTime)
 	liveDataChan := make(chan map[string]dy.DyLiveRoomAnalyse, 0)
 	roomNum := 0
 	for date, rooms := range roomsMap {
@@ -594,6 +597,8 @@ func (a *AuthorBusiness) CountLiveRoomAnalyse(authorId, startDate, endDate strin
 		data.SaleData.SaleRate /= float64(data.UserData.LiveNum)
 		data.SaleData.AvgPerPrice /= float64(data.UserData.LiveNum)
 	}
+	esLiveBusiness := es.NewEsLiveBusiness()
+	data.SaleData.PromotionNum = esLiveBusiness.CountRoomProductByAuthorId(authorId, startTime.Unix(), endTime.Unix())
 	data.UserTotalChart = dy.DateCountChart{
 		Date:       dateChart,
 		CountValue: userTotalChart,
