@@ -2,6 +2,7 @@ package dy
 
 import (
 	controllers "dongchamao/controllers/api"
+	"dongchamao/entity"
 	"dongchamao/global"
 	"dongchamao/models/business"
 	"dongchamao/services/dyimg"
@@ -27,23 +28,43 @@ func (receiver *ProductController) ProductBaseAnalysis() {
 	}
 	productBusiness := business.NewProductBusiness()
 	info, _ := productBusiness.HbaseGetProductDailyRangDate(productId, startTime, endTime)
+	monthData, _ := productBusiness.HbaseGetPromotionMonth(productId)
+	dailyMapData := map[string]entity.DyLiveProductDaily{}
+	for _, v := range monthData.DailyList {
+		t, _ := time.ParseInLocation("2006/01/02", v.StatisticsTime, time.Local)
+		if t.Before(startTime) || t.After(endTime) {
+			continue
+		}
+		dailyMapData[t.Format("20060102")] = v
+	}
 	dateChart := make([]string, 0)
 	hotAuthorChart := make([]int, 0)
 	liveAuthorChart := make([]int, 0)
 	awemeAuthorChart := make([]int, 0)
 	awemeChart := make([]int, 0)
 	roomChart := make([]int, 0)
+	orderChart := make([]int64, 0)
+	pvChart := make([]int64, 0)
+	rateChart := make([]float64, 0)
+	orderList := make([]dy.ProductOrderDaily, 0)
 	beginTime := startTime
 	for {
 		if beginTime.After(endTime) {
 			break
 		}
-		dateChart = append(dateChart, beginTime.Format("01/02"))
+		dateStr := beginTime.Format("01/02")
+		dateChart = append(dateChart, dateStr)
 		dateKey := beginTime.Format("20060102")
+		awemeAuthorNum := 0
+		liveAuthorNum := 0
+		authorNum := 0
+		awemeNum := 0
+		roomNum := 0
+		var order int64 = 0
+		var pv int64 = 0
+		var rate float64 = 0
 		if v, ok := info[dateKey]; ok {
 			authors := map[string]string{}
-			awemeAuthorNum := 0
-			liveAuthorNum := 0
 			for _, a := range v.AwemeAuthorList {
 				awemeAuthorNum++
 				authors[a.AuthorId] = a.AuthorId
@@ -52,27 +73,55 @@ func (receiver *ProductController) ProductBaseAnalysis() {
 				liveAuthorNum++
 				authors[a.AuthorId] = a.AuthorId
 			}
-			hotAuthorChart = append(hotAuthorChart, len(authors))
-			liveAuthorChart = append(liveAuthorChart, liveAuthorNum)
-			awemeAuthorChart = append(awemeAuthorChart, awemeAuthorNum)
-			awemeChart = append(awemeChart, len(v.AwemeList))
-			roomChart = append(roomChart, len(v.LiveList))
-		} else {
-			hotAuthorChart = append(hotAuthorChart, 0)
-			liveAuthorChart = append(liveAuthorChart, 0)
-			awemeAuthorChart = append(awemeAuthorChart, 0)
-			awemeChart = append(awemeChart, 0)
-			roomChart = append(roomChart, 0)
+			authorNum = len(authors)
+			awemeNum = len(v.AwemeList)
+			roomNum = len(v.LiveList)
 		}
+		if d, ok := dailyMapData[dateKey]; ok {
+			order = d.ProductOrderAccount
+			pv = d.Pv
+			if d.Pv > 0 {
+				rate = float64(d.ProductOrderAccount) / float64(d.Pv)
+			}
+		}
+		hotAuthorChart = append(hotAuthorChart, authorNum)
+		liveAuthorChart = append(liveAuthorChart, liveAuthorNum)
+		awemeAuthorChart = append(awemeAuthorChart, awemeAuthorNum)
+		awemeChart = append(awemeChart, awemeNum)
+		roomChart = append(roomChart, roomNum)
+		orderChart = append(orderChart, order)
+		pvChart = append(pvChart, pv)
+		rateChart = append(rateChart, rate)
+		orderList = append(orderList, dy.ProductOrderDaily{
+			Date:       dateStr,
+			OrderCount: order,
+			PvCount:    pv,
+			Rate:       rate,
+			AwemeNum:   awemeNum,
+			RoomNum:    roomNum,
+			AuthorNum:  authorNum,
+		})
 		beginTime = beginTime.AddDate(0, 0, 1)
 	}
 	receiver.SuccReturn(map[string]interface{}{
-		"date":         dateChart,
-		"hot_author":   hotAuthorChart,
-		"live_author":  liveAuthorChart,
-		"aweme_author": awemeAuthorChart,
-		"aweme":        awemeChart,
-		"room":         roomChart,
+		"author_chart": dy.ProductAuthorChart{
+			Date:             dateChart,
+			AuthorCount:      hotAuthorChart,
+			AwemeAuthorCount: awemeAuthorChart,
+			LiveAuthorCount:  liveAuthorChart,
+		},
+		"count_chart": dy.ProductLiveAwemeChart{
+			Date:       dateChart,
+			LiveCount:  roomChart,
+			AwemeCount: awemeChart,
+		},
+		"order_chart": dy.ProductOrderChart{
+			Date:       dateChart,
+			OrderCount: orderChart,
+			PvCount:    pvChart,
+			Rate:       rateChart,
+		},
+		"daily_list": orderList,
 	})
 	return
 }

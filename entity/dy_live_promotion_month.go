@@ -10,16 +10,16 @@ var DyLivePromotionMonthMap = HbaseEntity{
 }
 
 type DyLivePromotionMonth struct {
-	DyPromotionID string         `json:"dy_promotion_id"`
-	ProductID     string         `json:"product_id"`
-	CrawlTime     int64          `json:"crawl_time"`
-	DailyList     []ProductDaily `json:"daily_list"`
-	OrderCount    int64          `json:"order_count"`
-	PvCount       int64          `json:"pv_count"`
-	UserCount     int64          `json:"user_count"`
+	DyPromotionID string               `json:"dy_promotion_id"`
+	ProductID     string               `json:"product_id"`
+	CrawlTime     int64                `json:"crawl_time"`
+	DailyList     []DyLiveProductDaily `json:"daily_list"`
+	OrderCount    int64                `json:"order_count"`
+	PvCount       int64                `json:"pv_count"`
+	UserCount     int64                `json:"user_count"`
 }
 
-type ProductDaily struct {
+type DyLiveProductDaily struct {
 	ProductOrderAccount  int64  `json:"product_order_account"`
 	PromotionUserAccount int64  `json:"promotion_user_account"`
 	Pv                   int64  `json:"pv"`

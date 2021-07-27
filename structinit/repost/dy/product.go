@@ -18,3 +18,33 @@ type SimpleDyProduct struct {
 	CosRatio      float64 `json:"cos_ratio"`
 	CosRatioMoney float64 `json:"cos_ratio_money"`
 }
+
+type ProductOrderDaily struct {
+	Date       string  `json:"date"`
+	OrderCount int64   `json:"order_count"`
+	PvCount    int64   `json:"pv_count"`
+	Rate       float64 `json:"rate"`
+	AwemeNum   int     `json:"aweme_num"`
+	RoomNum    int     `json:"room_num"`
+	AuthorNum  int     `json:"author_num"`
+}
+
+type ProductOrderChart struct {
+	Date       []string  `json:"date"`
+	OrderCount []int64   `json:"order_count"`
+	PvCount    []int64   `json:"pv_count"`
+	Rate       []float64 `json:"rate"`
+}
+
+type ProductAuthorChart struct {
+	Date             []string `json:"date"`
+	AuthorCount      []int    `json:"author_count"`
+	AwemeAuthorCount []int    `json:"aweme_author_count"`
+	LiveAuthorCount  []int    `json:"live_author_count"`
+}
+
+type ProductLiveAwemeChart struct {
+	Date       []string `json:"date"`
+	LiveCount  []int    `json:"live_count"`
+	AwemeCount []int    `json:"aweme_count"`
+}
