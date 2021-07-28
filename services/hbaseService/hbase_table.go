@@ -4,6 +4,7 @@ const (
 	TableFamily = "r"
 
 	HbaseDyLiveInfo            = "dy_live_info"              //直播间信息
+	HbaseDyLiveReputation      = "dy_live_reputation"        //直播间带货口碑信息
 	HbaseDyAuthorLiveSalesData = "dy_author_live_sales_data" //直播间带货数据
 	HbaseDyLivePmt             = "dy_live_pmt"               //直播pmt(直播商品列表)
 	HbaseDyLiveCurProduct      = "dy_live_cur_product"

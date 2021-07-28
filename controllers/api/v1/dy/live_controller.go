@@ -31,7 +31,7 @@ func (receiver *LiveController) LiveInfoData() {
 		return
 	}
 	authorBusiness := business.NewAuthorBusiness()
-	reputation, _ := authorBusiness.HbaseGetAuthorReputation(liveInfo.User.ID)
+	reputation, _ := liveBusiness.HbaseGetLiveReputation(roomId)
 	authorInfo, _ := authorBusiness.HbaseGetAuthor(liveInfo.User.ID)
 	liveUser := dy.DyLiveUserSimple{
 		Avatar:          liveInfo.User.Avatar,
@@ -39,8 +39,8 @@ func (receiver *LiveController) LiveInfoData() {
 		ID:              liveInfo.User.ID,
 		Nickname:        liveInfo.User.Nickname,
 		WithCommerce:    liveInfo.User.WithCommerce,
-		ReputationScore: reputation.Score,
-		ReputationLevel: reputation.Level,
+		ReputationScore: reputation.AuthorReputation.Score,
+		ReputationLevel: reputation.AuthorReputation.Level,
 	}
 	liveSaleData, _ := liveBusiness.HbaseGetLiveSalesData(roomId)
 	incOnlineTrends, maxOnlineTrends, avgUserCount := liveBusiness.DealOnlineTrends(liveInfo)

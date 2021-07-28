@@ -1,0 +1,19 @@
+package entity
+
+var DyLiveReputationMap = HbaseEntity{
+	"id": {String, "author_id"},
+}
+
+type DyLiveReputation struct {
+	Type             string                 `json:"type"`
+	AuthorReputation DyLiveAuthorReputation `json:"author_reputation"`
+	RoomId           string                 `json:"room_id"`
+	CreateTime       int64                  `json:"create_time"`
+	CrawlTime        int64                  `json:"crawl_time"`
+}
+
+type DyLiveAuthorReputation struct {
+	Uid   string  `json:"uid"`
+	Level int     `json:"level"`
+	Score float64 `json:"score"`
+}

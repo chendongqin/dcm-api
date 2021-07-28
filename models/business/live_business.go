@@ -152,6 +152,24 @@ func (l *LiveBusiness) HbaseGetLiveInfo(roomId string) (data entity.DyLiveInfo, 
 	return
 }
 
+//直播间带货口碑数据
+func (l *LiveBusiness) HbaseGetLiveReputation(roomId string) (data entity.DyLiveReputation, comErr global.CommonError) {
+	query := hbasehelper.NewQuery()
+	result, err := query.SetTable(hbaseService.HbaseDyLiveReputation).GetByRowKey([]byte(roomId))
+	if err != nil {
+		comErr = global.NewMsgError(err.Error())
+		return
+	}
+	if result.Row == nil {
+		comErr = global.NewError(4040)
+		return
+	}
+	infoMap := hbaseService.HbaseFormat(result, entity.DyLiveReputationMap)
+	utils.MapToStruct(infoMap, &data)
+	data.RoomId = roomId
+	return
+}
+
 //直播间商品趋势
 //func (l *LiveBusiness) CountRoomProductSaleChart(roomId string) {
 //	pmtInfo,comErr := l.HbaseGetLivePmt(roomId)
