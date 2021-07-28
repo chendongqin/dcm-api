@@ -33,8 +33,8 @@ phone_number 手机号
 ```
 Redis Key 规范 
 ```
-dp 统一前缀  
-dp:code:login:%s  code 业务类型  login 业务细分  %s 具体参数
-dp:limit:action:task_push
+dcm 统一前缀  
+dcm::code:login:%s  code 业务类型  login 业务细分  %s 具体参数
+dcm::limit:action:task_push
 ```
 
