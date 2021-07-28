@@ -51,6 +51,7 @@ func buildURL(prefix, source string) string {
 		return source
 	}
 	//已经转换过的直接返回
+	return source
 	if strings.Contains(infoURL.Host, "dongchamao") {
 		return source
 	}
