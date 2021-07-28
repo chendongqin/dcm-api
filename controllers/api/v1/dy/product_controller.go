@@ -215,26 +215,40 @@ func (receiver *ProductController) ProductBase() {
 	last15Day := utils.ToInt64(time.Now().AddDate(0, 0, -15).Format("20060102"))
 	last7Day := utils.ToInt64(time.Now().AddDate(0, 0, -7).Format("20060102"))
 	priceTrends := business.ProductPriceTrendsListOrderByTime(productInfo.PriceTrends)
+	priceMap := map[int64]entity.DyProductPriceTrend{}
 	for _, v := range priceTrends {
 		if last30Day > v.StartTime {
 			continue
-		} else {
-			cosPrice := v.Price * productInfo.CosRatio / 100
-			dateChart30 = append(dateChart30, v.StartTime)
-			priceChart30 = append(priceChart30, v.Price)
-			cosPriceChart30 = append(cosPriceChart30, cosPrice)
-			if v.StartTime > last15Day {
-				dateChart15 = append(dateChart15, v.StartTime)
-				priceChart15 = append(priceChart15, v.Price)
-				cosPriceChart15 = append(cosPriceChart15, cosPrice)
-				if v.StartTime > last7Day {
-					dateChart7 = append(dateChart7, v.StartTime)
-					priceChart7 = append(priceChart7, v.Price)
-					cosPriceChart7 = append(cosPriceChart7, cosPrice)
-				}
-			}
 		}
-
+		priceMap[v.StartTime] = v
+	}
+	begin := time.Now().AddDate(0, 0, -30)
+	beforeData := entity.DyProductPriceTrend{}
+	for {
+		if begin.After(time.Now()) {
+			break
+		}
+		nowDate := utils.ToInt64(begin.Format("20060102"))
+		if v, ok := priceMap[nowDate]; ok {
+			beforeData = v
+		} else {
+			beforeData.StartTime = nowDate
+		}
+		cosPrice := beforeData.Price * productInfo.CosRatio / 100
+		if beforeData.StartTime > last7Day {
+			dateChart7 = append(dateChart7, beforeData.StartTime)
+			priceChart7 = append(priceChart7, beforeData.Price)
+			cosPriceChart7 = append(cosPriceChart7, cosPrice)
+		}
+		if beforeData.StartTime > last15Day {
+			dateChart15 = append(dateChart15, beforeData.StartTime)
+			priceChart15 = append(priceChart15, beforeData.Price)
+			cosPriceChart15 = append(cosPriceChart15, cosPrice)
+		}
+		dateChart30 = append(dateChart30, beforeData.StartTime)
+		priceChart30 = append(priceChart30, beforeData.Price)
+		cosPriceChart30 = append(cosPriceChart30, cosPrice)
+		begin = begin.AddDate(0, 0, 1)
 	}
 	receiver.SuccReturn(map[string]interface{}{
 		"pv_count_30":    monthData.PvCount,
