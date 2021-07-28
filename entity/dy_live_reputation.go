@@ -2,7 +2,7 @@ package entity
 
 var DyLiveReputationMap = HbaseEntity{
 	"type":              {String, "type"},
-	"author_reputation": {AJson, "author_reputation"},
+	"author_reputation": {Json, "author_reputation"},
 	"create_time":       {Long, "create_time"},
 	"crawl_time":        {Long, "crawl_time"},
 }
