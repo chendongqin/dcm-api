@@ -6,7 +6,7 @@ import (
 	"dongchamao/global/cache"
 	"dongchamao/global/utils"
 	"dongchamao/models/dcm"
-	AliSms "dongchamao/services/ali_sms"
+	"dongchamao/services/ali_sms"
 )
 
 type CommonController struct {
@@ -52,7 +52,7 @@ func (receiver *CommonController) Sms() {
 		receiver.FailReturn(global.NewError(5000))
 		return
 	}
-	res, smsErr := AliSms.SmsCode(mobile, code)
+	res, smsErr := aliSms.SmsCode(mobile, code)
 	if !res || smsErr != nil {
 		receiver.FailReturn(global.NewError(6000))
 		return

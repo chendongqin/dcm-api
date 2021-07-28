@@ -8,6 +8,7 @@ import (
 	"dongchamao/global/utils"
 	"dongchamao/models/business"
 	"dongchamao/models/dcm"
+	"dongchamao/services/ali_log"
 	"dongchamao/services/elasticsearch"
 	"encoding/json"
 	"fmt"
@@ -293,14 +294,13 @@ func (this *ApiBaseController) InputFormatArr() (retInput []global.InputMap) {
 
 //记录请求的输入输出
 func (this *ApiBaseController) LogInputOutput(logtype string, args interface{}) {
-	//if global.Cfg.String("request_input_output_log") == "ON" {
-	//	userGroupId := this.GetUserGroupId()
-	//if logtype == "Output" {
-	//	cmmlog.LogInput(this.Ctx.Input.Header("X-Request-Id"), this.Ctx.Input.Header("X-Client-Id"), "Output", this.appId, this.UserId, this.Ctx.Request.URL.String(), this.Ctx.Request.Method, this.Ctx.Input.IP(), this.Ctx.Request.UserAgent(), "", args, userGroupId, this.Ctx.Input.Header("X-Remote-Addr"))
-	//} else {
-	//	cmmlog.LogInput(this.Ctx.Input.Header("X-Request-Id"), this.Ctx.Input.Header("X-Client-Id"), logtype, this.appId, this.UserId, this.Ctx.Request.URL.String(), this.Ctx.Request.Method, this.Ctx.Input.IP(), this.Ctx.Request.UserAgent(), this.Ctx.Request.Referer(), args, userGroupId, this.Ctx.Input.Header("X-Remote-Addr"))
-	//}
-	//}
+	if global.Cfg.String("request_input_output_log") == "ON" {
+		if logtype == "Output" {
+			aliLog.LogInput(this.Ctx.Input.Header("X-Request-Id"), this.Ctx.Input.Header("X-Client-Id"), "Output", this.AppId, this.UserId, this.Ctx.Request.URL.String(), this.Ctx.Request.Method, this.Ctx.Input.IP(), this.Ctx.Request.UserAgent(), "", args, 0, this.Ctx.Input.Header("X-Remote-Addr"))
+		} else {
+			aliLog.LogInput(this.Ctx.Input.Header("X-Request-Id"), this.Ctx.Input.Header("X-Client-Id"), logtype, this.AppId, this.UserId, this.Ctx.Request.URL.String(), this.Ctx.Request.Method, this.Ctx.Input.IP(), this.Ctx.Request.UserAgent(), this.Ctx.Request.Referer(), args, 0, this.Ctx.Input.Header("X-Remote-Addr"))
+		}
+	}
 }
 
 // 处理区间数据

@@ -22,6 +22,7 @@ type EsAuthorLiveProduct struct {
 	ExtInfo       string  `json:"ext_info"`
 	ForSale       int     `json:"for_sale"`
 	StartTime     int64   `json:"start_time"`
+	ShelfTime     int64   `json:"shelf_time"`
 	Pv            int64   `json:"pv"`
 	Price         float64 `json:"price"`
 	IsReturn      int     `json:"is_return"` //是否返场

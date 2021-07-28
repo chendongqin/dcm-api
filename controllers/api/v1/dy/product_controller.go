@@ -277,6 +277,7 @@ func (receiver *ProductController) ProductBase() {
 	return
 }
 
+//商品销量趋势
 func (receiver *ProductController) ProductLiveChart() {
 	productId := receiver.GetString(":product_id", "")
 	if productId == "" {
@@ -321,3 +322,9 @@ func (receiver *ProductController) ProductLiveChart() {
 	})
 	return
 }
+
+func (receiver *ProductController) ProductLiveRoomList() {
+
+	return
+}
+
