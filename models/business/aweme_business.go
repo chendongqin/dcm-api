@@ -41,10 +41,10 @@ func (a *AwemeBusiness) HbaseGetAweme(awemeId string) (data entity.DyAwemeData, 
 }
 
 //视频某天数据
-func (a *AwemeBusiness) HbaseGetAwemeCountDataRangeDate(awemeId, startDate, endDate string) (data map[string]entity.DyAwemeDiggCommentForwardCount, comErr global.CommonError) {
+func (a *AwemeBusiness) HbaseGetAwemeCountDataRangeDate(awemeId string, startTime, endTime time.Time) (data map[string]entity.DyAwemeDiggCommentForwardCount, comErr global.CommonError) {
 	query := hbasehelper.NewQuery()
-	startRow := awemeId + "_" + startDate
-	endRow := awemeId + "_" + endDate
+	startRow := awemeId + "_" + startTime.Format("20060102")
+	endRow := awemeId + "_" + endTime.AddDate(0, 0, 1).Format("20060102")
 	results, err := query.
 		SetTable(hbaseService.HbaseDyAwemeDiggCommentForwardCount).
 		SetStartRow([]byte(startRow)).
@@ -83,14 +83,12 @@ func (a *AwemeBusiness) HbaseGetAwemeCountData(awemeId, date string) (data entit
 }
 
 //获取视频趋势数据
-func (a *AwemeBusiness) GetAwemeChart(awemeId, start, end string, beforeGet bool) (data map[string]entity.DyAwemeDiggCommentForwardCount, comErr global.CommonError) {
-	endTime, _ := time.ParseInLocation("20060102", end, time.Local)
-	scanEndDate := endTime.AddDate(0, 0, 1).Format("20060102")
-	data, comErr = a.HbaseGetAwemeCountDataRangeDate(awemeId, start, scanEndDate)
+func (a *AwemeBusiness) GetAwemeChart(awemeId string, startTime, endTime time.Time, beforeGet bool) (data map[string]entity.DyAwemeDiggCommentForwardCount, comErr global.CommonError) {
+	data, comErr = a.HbaseGetAwemeCountDataRangeDate(awemeId, startTime, endTime)
+	start := startTime.Format("20060102")
+	end := endTime.Format("20060102")
 	if comErr == nil {
-		t1, _ := time.ParseInLocation("20060102", start, time.Local)
-		t2, _ := time.ParseInLocation("20060102", end, time.Local)
-		yesterday := t1.AddDate(0, 0, -1).Format("20060102")
+		yesterday := startTime.AddDate(0, 0, -1).Format("20060102")
 		if beforeGet {
 			beforeData, _ := a.HbaseGetAwemeCountData(awemeId, yesterday)
 			data[yesterday] = beforeData
@@ -113,11 +111,11 @@ func (a *AwemeBusiness) GetAwemeChart(awemeId, start, end string, beforeGet bool
 				ForwardCount: awemeBase.ForwardCount,
 			}
 		}
-		beginDatetime := t1
-		beforeDay := t1.Format("20060102")
+		beginDatetime := startTime
+		beforeDay := startTime.Format("20060102")
 		//空数据补点
 		for {
-			if beginDatetime.After(t2) {
+			if beginDatetime.After(endTime) {
 				break
 			}
 			today := beginDatetime.Format("20060102")

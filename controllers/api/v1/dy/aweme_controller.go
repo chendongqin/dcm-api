@@ -74,7 +74,7 @@ func (receiver *AwemeController) AwemeChart() {
 		return
 	}
 	awemeBusiness := business.NewAwemeBusiness()
-	awemeCount, comErr := awemeBusiness.GetAwemeChart(awemeId, t1.Format("20060102"), t2.Format("20060102"), true)
+	awemeCount, comErr := awemeBusiness.GetAwemeChart(awemeId, t1, t2, true)
 	if comErr != nil {
 		receiver.FailReturn(comErr)
 		return

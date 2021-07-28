@@ -181,11 +181,11 @@ func (a *AuthorBusiness) HbaseGetAuthorBasic(authorId, date string) (data entity
 }
 
 //达人基础数据趋势
-func (a *AuthorBusiness) HbaseGetAuthorBasicRangeDate(authorId, startDate, endDate string) (data map[string]dy.DateChart, comErr global.CommonError) {
+func (a *AuthorBusiness) HbaseGetAuthorBasicRangeDate(authorId string, startTime, endTime time.Time) (data map[string]dy.DateChart, comErr global.CommonError) {
 	data = map[string]dy.DateChart{}
 	query := hbasehelper.NewQuery()
-	startRow := authorId + "_" + startDate
-	endRow := authorId + "_" + endDate
+	startRow := authorId + "_" + startTime.Format("20060102")
+	endRow := authorId + "_" + endTime.AddDate(0, 0, 1).Format("20060102")
 	results, err := query.
 		SetTable(hbaseService.HbaseDyAuthorBasic).
 		SetStartRow([]byte(startRow)).
@@ -209,9 +209,9 @@ func (a *AuthorBusiness) HbaseGetAuthorBasicRangeDate(authorId, startDate, endDa
 		dateMap[date] = hData
 	}
 	//起点补点操作
-	t1, _ := time.ParseInLocation("20060102", startDate, time.Local)
-	t2, _ := time.ParseInLocation("20060102", endDate, time.Local)
-	beforeDate := t1.AddDate(0, 0, -1).Format("20060102")
+	startDate := startTime.Format("20060102")
+	endDate := endTime.Format("20060102")
+	beforeDate := startTime.AddDate(0, 0, -1).Format("20060102")
 	beforeBasicData, _ := a.HbaseGetAuthorBasic(authorId, beforeDate)
 	beforeData := dy.DyAuthorBasicChart{
 		FollowerCount:  beforeBasicData.FollowerCount,
@@ -247,9 +247,9 @@ func (a *AuthorBusiness) HbaseGetAuthorBasicRangeDate(authorId, startDate, endDa
 	commentIncArr := make([]int64, 0)
 	forwardCountArr := make([]int64, 0)
 	forwardIncArr := make([]int64, 0)
-	beginDatetime := t1
+	beginDatetime := startTime
 	for {
-		if beginDatetime.After(t2) {
+		if beginDatetime.After(endTime) {
 			break
 		}
 		date := beginDatetime.Format("20060102")

@@ -19,10 +19,10 @@ func NewAuthorAwemeBusiness() *AuthorAwemeBusiness {
 }
 
 //获取视频概览数据
-func (a *AuthorAwemeBusiness) HbaseGetVideoAggRangeDate(authorId, startDate, endDate string) (data dy.AuthorVideoOverview) {
+func (a *AuthorAwemeBusiness) HbaseGetVideoAggRangeDate(authorId string, startTime, endTime time.Time) (data dy.AuthorVideoOverview) {
 	query := hbasehelper.NewQuery()
-	startRow := authorId + "_" + startDate
-	endRow := authorId + "_" + endDate
+	startRow := authorId + "_" + startTime.Format("20060102")
+	endRow := authorId + "_" + endTime.AddDate(0, 0, 1).Format("20060102")
 	results, err := query.
 		SetTable(hbaseService.HbaseDyAuthorAwemeAgg).
 		SetStartRow([]byte(startRow)).
@@ -101,15 +101,15 @@ func (a *AuthorAwemeBusiness) HbaseGetVideoAggRangeDate(authorId, startDate, end
 			}
 			//视频趋势数据处理
 			createTime := time.Unix(agg.AwemeCreateTime, 0)
-			go func(ch chan map[string]map[string]entity.DyAwemeDiggCommentForwardCount, awemeId, start, end string) {
+			go func(ch chan map[string]map[string]entity.DyAwemeDiggCommentForwardCount, awemeId string, startT, endT time.Time) {
 				awemeBusiness := NewAwemeBusiness()
-				awemeData, comErr := awemeBusiness.GetAwemeChart(awemeId, start, end, false)
+				awemeData, comErr := awemeBusiness.GetAwemeChart(awemeId, startT, endT, false)
 				if comErr == nil {
 					allAwemeDataMap := map[string]map[string]entity.DyAwemeDiggCommentForwardCount{}
 					allAwemeDataMap[awemeId] = awemeData
 					ch <- allAwemeDataMap
 				}
-			}(allAwemeChan, agg.AwemeID, createTime.Format("20060102"), endDate)
+			}(allAwemeChan, agg.AwemeID, createTime, endTime)
 		}
 	}
 	if videoNum > 0 {
@@ -152,10 +152,8 @@ func (a *AuthorAwemeBusiness) HbaseGetVideoAggRangeDate(authorId, startDate, end
 			allAwemeData[k] = v
 		}
 	}
-	t1, _ := time.ParseInLocation("20060102", startDate, time.Local)
-	t2, _ := time.ParseInLocation("20060102", endDate, time.Local)
 	//前一天数据，做增量计算
-	beginDatetime := t1
+	beginDatetime := startTime
 	beforeSumData := entity.DyAwemeDiggCommentForwardCount{}
 	beforeDay := beginDatetime.AddDate(0, 0, -1).Format("20060102")
 	for _, awemeId := range awemeIds {
@@ -173,7 +171,7 @@ func (a *AuthorAwemeBusiness) HbaseGetVideoAggRangeDate(authorId, startDate, end
 	commentIncArr := make([]int64, 0)
 	forwardIncArr := make([]int64, 0)
 	for {
-		if beginDatetime.After(t2) {
+		if beginDatetime.After(endTime) {
 			break
 		}
 		sumData := entity.DyAwemeDiggCommentForwardCount{}
