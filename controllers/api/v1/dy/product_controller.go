@@ -222,7 +222,7 @@ func (receiver *ProductController) ProductBase() {
 		}
 		priceMap[v.StartTime] = v
 	}
-	begin := time.Now().AddDate(0, 0, -30)
+	begin, _ := time.ParseInLocation("20060102", time.Now().AddDate(0, 0, -30).Format("20060102"), time.Local)
 	beforeData := entity.DyProductPriceTrend{}
 	for {
 		if begin.After(time.Now()) {
@@ -236,16 +236,16 @@ func (receiver *ProductController) ProductBase() {
 		}
 		cosPrice := beforeData.Price * productInfo.CosRatio / 100
 		if beforeData.StartTime > last7Day {
-			dateChart7 = append(dateChart7, beforeData.StartTime)
+			dateChart7 = append(dateChart7, begin.Unix())
 			priceChart7 = append(priceChart7, beforeData.Price)
 			cosPriceChart7 = append(cosPriceChart7, cosPrice)
 		}
 		if beforeData.StartTime > last15Day {
-			dateChart15 = append(dateChart15, beforeData.StartTime)
+			dateChart15 = append(dateChart15, begin.Unix())
 			priceChart15 = append(priceChart15, beforeData.Price)
 			cosPriceChart15 = append(cosPriceChart15, cosPrice)
 		}
-		dateChart30 = append(dateChart30, beforeData.StartTime)
+		dateChart30 = append(dateChart30, begin.Unix())
 		priceChart30 = append(priceChart30, beforeData.Price)
 		cosPriceChart30 = append(cosPriceChart30, cosPrice)
 		begin = begin.AddDate(0, 0, 1)
