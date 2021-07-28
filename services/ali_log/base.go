@@ -19,8 +19,8 @@ const (
 
 // accesskey配置
 var (
-	AccessKeyID     = global.Cfg.String("oss_accessKeyId")
-	AccessKeySecret = global.Cfg.String("oss_accessKeySecret")
+	AccessKeyID     = global.Cfg.String("ali_accessKey")
+	AccessKeySecret = global.Cfg.String("ali_secret")
 )
 
 //通用日志结构

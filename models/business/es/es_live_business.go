@@ -192,16 +192,24 @@ func (receiver *EsLiveBusiness) RoomProductByRoomId(roomInfo entity.DyLiveInfo, 
 		Query()
 	utils.MapToStruct(results, &list)
 	productCount = dy.LiveProductCount{}
-	for _, v := range list {
+	for k, v := range list {
 		productCount.ProductNum++
+		//todo gmv处理
 		if v.RealGmv > 0 {
+			var sale float64 = 0
 			if v.Price > 0 {
-				productCount.Sales += math.Floor(v.RealGmv / v.Price)
+				sale = math.Floor(v.RealGmv / v.Price)
 			}
+			productCount.Sales += sale
 			productCount.Gmv += v.RealGmv
+			list[k].PredictGmv = v.RealGmv
+			list[k].PredictSales = sale
 		} else {
 			productCount.Sales += math.Floor(v.PredictSales)
 			productCount.Gmv += v.PredictGmv
+		}
+		if v.IsReturn == 1 && v.StartTime == v.ShelfTime {
+			list[k].IsReturn = 0
 		}
 	}
 	start := (page - 1) * pageSize
