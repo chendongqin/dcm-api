@@ -1,7 +1,10 @@
 package entity
 
 var DyLiveReputationMap = HbaseEntity{
-	"id": {String, "author_id"},
+	"type":              {String, "type"},
+	"author_reputation": {AJson, "author_reputation"},
+	"create_time":       {Long, "create_time"},
+	"crawl_time":        {Long, "crawl_time"},
 }
 
 type DyLiveReputation struct {
