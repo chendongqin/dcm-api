@@ -18,6 +18,7 @@ require (
 	github.com/fortytw2/leaktest v1.3.0 // indirect
 	github.com/go-sql-driver/mysql v1.6.0
 	github.com/go-xorm/xorm v0.7.9
+	github.com/gogo/protobuf v1.3.1
 	github.com/gomodule/redigo v2.0.0+incompatible
 	github.com/json-iterator/go v1.1.11
 	github.com/mailru/easyjson v0.7.7 // indirect
