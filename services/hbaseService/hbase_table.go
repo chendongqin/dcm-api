@@ -23,8 +23,9 @@ const (
 	HbaseDyAuthorRoomMapping = "dy_author_room_mapping" //达人直播间
 	HbaseXtAuthorDetail      = "xt_author_detail"       //星图达人详情
 
-	HbaseDyProduct            = "dy_product"
-	HbaseDyProductBrand       = "dy_product_brand"
-	HbaseDyProductDaily       = "dy_product_daily"
-	HbaseDyLivePromotionMonth = "dy_live_promotion_month"
+	HbaseDyProduct               = "dy_product"
+	HbaseDyProductBrand          = "dy_product_brand"
+	HbaseDyProductDaily          = "dy_product_daily"
+	HbaseDyProductLiveSalesTrend = "dy_product_live_sales_trend"
+	HbaseDyLivePromotionMonth    = "dy_live_promotion_month"
 )

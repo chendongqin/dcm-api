@@ -276,3 +276,48 @@ func (receiver *ProductController) ProductBase() {
 	})
 	return
 }
+
+func (receiver *ProductController) ProductLiveChart() {
+	productId := receiver.GetString(":product_id", "")
+	if productId == "" {
+		receiver.FailReturn(global.NewError(4000))
+		return
+	}
+	startTime, endTime, comErr := receiver.GetRangeDate()
+	if comErr != nil {
+		receiver.FailReturn(comErr)
+		return
+	}
+	productBusiness := business.NewProductBusiness()
+	infoMap, _ := productBusiness.HbaseGetProductLiveSalesRangDate(productId, startTime, endTime)
+	dateChart := make([]string, 0)
+	saleChart := make([]int64, 0)
+	roomNumChart := make([]int, 0)
+	priceChart := make([]float64, 0)
+	beginTime := startTime
+	for {
+		if beginTime.After(endTime) {
+			break
+		}
+		var sale int64 = 0
+		roomNum := 0
+		var price float64 = 0
+		if v, ok := infoMap[beginTime.Format("20060102")]; ok {
+			sale = v.Sales
+			roomNum = v.RoomNum
+			price = v.Price
+		}
+		dateChart = append(dateChart, beginTime.Format("01/02"))
+		saleChart = append(saleChart, sale)
+		roomNumChart = append(roomNumChart, roomNum)
+		priceChart = append(priceChart, price)
+		beginTime = beginTime.AddDate(0, 0, 1)
+	}
+	receiver.SuccReturn(map[string]interface{}{
+		"date":     dateChart,
+		"price":    priceChart,
+		"sale":     saleChart,
+		"room_num": roomNumChart,
+	})
+	return
+}
