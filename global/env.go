@@ -5,6 +5,7 @@ import (
 	"dongchamao/global/cache"
 	_ "dongchamao/global/cache/redis"
 	"dongchamao/global/mysql"
+	aliLog "dongchamao/services/ali_log"
 	"dongchamao/services/elastichelper"
 	"dongchamao/services/kafka"
 	"dongchamao/services/pools"
@@ -27,7 +28,6 @@ var Cache cache.CacheInterface
 var MemoryCache beegoCache.Cache
 
 //var FileCache cache.CacheInterface
-var RunMode string
 var Cfg = beego.AppConfig
 
 //var CurrentDir string
@@ -49,6 +49,7 @@ func InitEnv() {
 	_initEs()
 	_initHbaseThriftPool()
 	_initDataBase()
+	_initSlsConfig()
 	//_initMongodb() // deprecated
 	//_initValidate()
 	//_initRabbitMqPool()
@@ -247,6 +248,19 @@ func _initHbaseThriftPool() {
 		panic("hbase init fail :(" + err.Error())
 	}
 	HbasePools.Add("default", pool)
+}
+
+func _initSlsConfig() {
+	cf := &aliLog.SlsConfig{
+		Endpoint:        "cn-hangzhou.log.aliyuncs.com",
+		AccessKeyID:     Cfg.String("ali_accessKey"),
+		AccessKeySecret: Cfg.String("ali_secret"),
+		DefaultProject:  "dongchamao-api-log",
+	}
+	if beego.BConfig.RunMode == "dev" {
+		cf.Endpoint = "cn-hangzhou.log.aliyuncs.com"
+	}
+	aliLog.InitAliyunSls(cf)
 }
 
 func _initValidate() {

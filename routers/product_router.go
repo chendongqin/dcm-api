@@ -6,7 +6,13 @@ import (
 )
 
 func init() {
-	beego.Router("/v1/dy/product/base/:product_id", &v1dy.ProductController{}, "get:ProductBase")
-	beego.Router("/v1/dy/product/analysis/:product_id/:start/:end", &v1dy.ProductController{}, "get:ProductBaseAnalysis")
-	beego.Router("/v1/dy/product/live/chart/:product_id/:start/:end", &v1dy.ProductController{}, "get:ProductLiveChart")
+	ns := beego.NewNamespace("/v1/dy",
+		beego.NSNamespace("/product",
+			beego.NSRouter("/base/:product_id", &v1dy.ProductController{}, "get:ProductBase"),
+			beego.NSRouter("/analysis/:product_id/:start/:end", &v1dy.ProductController{}, "get:ProductBaseAnalysis"),
+			beego.NSRouter("/live/chart/:product_id/:start/:end", &v1dy.ProductController{}, "get:ProductLiveChart"),
+		),
+	)
+	// 注册路由组
+	beego.AddNamespace(ns)
 }

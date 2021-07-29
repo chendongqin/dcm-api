@@ -87,16 +87,6 @@ func (receiver *CommonController) CheckSmsCode() {
 }
 
 func (receiver *CommonController) Test() {
-	//query := hbasehelper.NewQuery()
-	//result, err := query.SetTable(hbaseService.HbaseDyAuthor).GetByRowKey([]byte("4195355415549012"))
-	//if err != nil {
-	//	return
-	//}
-	//data := make([]*entity.DyAuthor,0)
-	//authorMap := hbaseService.HbaseFormat(result,entity.DyAuthorMap)
-	//author := &entity.DyAuthor{}
-	//utils.MapToStruct(authorMap,author)
-	//author.AuthorID = author.Data.ID
-	//data = append(data,author)
-
+	receiver.SuccReturn(nil)
+	return
 }

@@ -8,7 +8,7 @@ import (
 	"dongchamao/global/utils"
 	"dongchamao/models/business"
 	"dongchamao/models/dcm"
-	"dongchamao/services/ali_log"
+	aliLog "dongchamao/services/ali_log"
 	"dongchamao/services/elasticsearch"
 	"encoding/json"
 	"fmt"

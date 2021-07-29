@@ -1,8 +1,6 @@
 package aliLog
 
 import (
-	"dongchamao/global"
-	"dongchamao/global/utils"
 	"encoding/json"
 	"fmt"
 	_ "github.com/aliyun/aliyun-log-go-sdk"
@@ -14,13 +12,7 @@ import (
 
 const (
 	MQ_CMM_LOG_COMMON string = "DCM:QUENE:LOG:COMMON"
-	Endpoint          string = "cn-shanghai.log.aliyuncs.com"
-)
-
-// accesskey配置
-var (
-	AccessKeyID     = global.Cfg.String("ali_accessKey")
-	AccessKeySecret = global.Cfg.String("ali_secret")
+	Endpoint          string = "cn-hangzhou.log.aliyuncs.com"
 )
 
 //通用日志结构
@@ -115,9 +107,9 @@ func LogInput(requestId string, clientId string, logType string, appId int, uid 
 	insertData["request_id"] = requestId
 	insertData["client_id"] = clientId
 	insertData["log_type"] = logType
-	insertData["appid"] = utils.ToString(appId)
-	insertData["uid"] = utils.ToString(uid)
-	insertData["group_id"] = utils.ToString(userGroupId)
+	insertData["appid"] = fmt.Sprint(appId)
+	insertData["uid"] = fmt.Sprint(uid)
+	insertData["group_id"] = fmt.Sprint(userGroupId)
 	insertData["method"] = method
 	insertData["ip"] = ip
 	insertData["remote_addr"] = remote_addr
@@ -125,7 +117,7 @@ func LogInput(requestId string, clientId string, logType string, appId int, uid 
 	insertData["refer"] = refer
 	insertData["url"] = realUrl
 	insertData["args"] = ""
-	insertData["timestamp"] = utils.ToString(time.Now().Unix())
+	insertData["timestamp"] = fmt.Sprint(time.Now().Unix())
 	args, err := json.Marshal(apidatas)
 	if err == nil {
 		insertData["args"] = string(args)
@@ -141,8 +133,8 @@ func LoginLog(requestId string, clientId string, appId int, uid int64, token str
 	insertData := make(map[string]string)
 	insertData["request_id"] = requestId
 	insertData["client_id"] = clientId
-	insertData["appid"] = utils.ToString(appId)
-	insertData["uid"] = utils.ToString(uid)
+	insertData["appid"] = fmt.Sprint(appId)
+	insertData["uid"] = fmt.Sprint(uid)
 	insertData["token"] = token
 	insertData["grant_type"] = grant_type
 	insertData["login_ip"] = ip

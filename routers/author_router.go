@@ -7,13 +7,21 @@ import (
 
 func init() {
 	//抖音达人
-	beego.Router("/v1/dy/author/:author_id", &v1dy.AuthorController{}, "get:AuthorBaseData")
-	beego.Router("/v1/dy/author/reputation/:author_id", &v1dy.AuthorController{}, "get:Reputation")
-	beego.Router("/v1/dy/author/awemes/:author_id/:start/:end", &v1dy.AuthorController{}, "get:AuthorAwemesByDay")
-	beego.Router("/v1/dy/author/basic/chart/:author_id/:start/:end", &v1dy.AuthorController{}, "get:AuthorBasicChart")
-	beego.Router("/v1/dy/author/live/analysis/:author_id/:start/:end", &v1dy.AuthorController{}, "get:CountLiveRoomAnalyse")
-	beego.Router("/v1/dy/author/live/rooms/:author_id/:start/:end", &v1dy.AuthorController{}, "get:AuthorLiveRooms")
-	beego.Router("/v1/dy/author/fans/analysis/:author_id", &v1dy.AuthorController{}, "get:AuthorFansAnalyse")
-
-	beego.Router("/v1/dy/xt/author/index/:author_id", &v1dy.AuthorController{}, "get:AuthorStarSimpleData")
+	ns := beego.NewNamespace("/v1/dy",
+		beego.NSNamespace("/author",
+			beego.NSRouter("/info/:author_id", &v1dy.AuthorController{}, "get:AuthorBaseData"),
+			beego.NSRouter("/reputation/:author_id", &v1dy.AuthorController{}, "get:Reputation"),
+			beego.NSRouter("/awemes/:author_id/:start/:end", &v1dy.AuthorController{}, "get:AuthorAwemesByDay"),
+			beego.NSRouter("/basic/chart/:author_id/:start/:end", &v1dy.AuthorController{}, "get:AuthorBasicChart"),
+			beego.NSRouter("/live/analysis/:author_id/:start/:end", &v1dy.AuthorController{}, "get:CountLiveRoomAnalyse"),
+			beego.NSRouter("/live/rooms/:author_id/:start/:end", &v1dy.AuthorController{}, "get:AuthorLiveRooms"),
+			beego.NSRouter("/fans/analysis/:author_id", &v1dy.AuthorController{}, "get:AuthorFansAnalyse"),
+			beego.NSRouter("/reputation/:author_id", &v1dy.AuthorController{}, "get:AuthorStarSimpleData"),
+		),
+		beego.NSNamespace("/xt/author",
+			beego.NSRouter("/index/:author_id", &v1dy.AuthorController{}, "get:AuthorStarSimpleData"),
+		),
+	)
+	// 注册路由组
+	beego.AddNamespace(ns)
 }
