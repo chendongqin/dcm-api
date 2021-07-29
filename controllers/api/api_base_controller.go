@@ -30,6 +30,9 @@ type ApiBaseController struct {
 	UserInfo         dcm.DcUser
 	IsMonitor        bool
 	AppId            int
+	DyLevel          int
+	XhsLevel         int
+	TbLevel          int
 	Ip               string
 	TrueUri          string
 	IsInitToken      bool               //是否初始化过token
@@ -211,6 +214,7 @@ func (this *ApiBaseController) InitUserToken() (commonErr global.CommonError) {
 func (this *ApiBaseController) CheckSign() {
 	authBusiness := business.NewAccountAuthBusiness()
 	this.TrueUri = authBusiness.GetTrueRequestUri(this.Ctx.Request.URL.String(), this.Ctx.Input.Params())
+
 	if authBusiness.AuthLoginWhiteUri(this.TrueUri) {
 		return
 	}
@@ -309,9 +313,9 @@ func (this *ApiBaseController) InputFormatArr() (retInput []global.InputMap) {
 func (this *ApiBaseController) LogInputOutput(logtype string, args interface{}) {
 	if global.Cfg.String("request_input_output_log") == "ON" {
 		if logtype == "Output" {
-			aliLog.LogInput(this.Ctx.Input.Header("X-Request-Id"), this.Ctx.Input.Header("X-Client-Id"), "Output", this.AppId, this.UserId, this.TrueUri, this.Ctx.Request.Method, this.Ctx.Input.IP(), this.Ctx.Request.UserAgent(), "", args, 0, this.Ctx.Input.Header("X-Remote-Addr"))
+			aliLog.LogInput(this.Ctx.Input.Header("X-Request-Id"), this.Ctx.Input.Header("X-Client-Id"), "Output", this.AppId, this.UserId, this.TrueUri, this.Ctx.Request.Method, this.Ctx.Input.IP(), this.Ctx.Request.UserAgent(), "", args, this.DyLevel, this.XhsLevel, this.TbLevel, this.Ctx.Input.Header("X-Remote-Addr"))
 		} else {
-			aliLog.LogInput(this.Ctx.Input.Header("X-Request-Id"), this.Ctx.Input.Header("X-Client-Id"), logtype, this.AppId, this.UserId, this.TrueUri, this.Ctx.Request.Method, this.Ctx.Input.IP(), this.Ctx.Request.UserAgent(), this.Ctx.Request.Referer(), args, 0, this.Ctx.Input.Header("X-Remote-Addr"))
+			aliLog.LogInput(this.Ctx.Input.Header("X-Request-Id"), this.Ctx.Input.Header("X-Client-Id"), logtype, this.AppId, this.UserId, this.TrueUri, this.Ctx.Request.Method, this.Ctx.Input.IP(), this.Ctx.Request.UserAgent(), this.Ctx.Request.Referer(), args, this.DyLevel, this.XhsLevel, this.TbLevel, this.Ctx.Input.Header("X-Remote-Addr"))
 		}
 	}
 }
@@ -354,21 +358,6 @@ func (c *ApiBaseController) GetPageSize(key string, defSize int, maxSize int) (s
 	return
 }
 
-//func (c *ApiBaseController) UserRightLimit(query *logic.PageQuery, maxLength int) bool {
-//	if maxLength == 0 {
-//		return false
-//	}
-//	//最大可查看条数限制
-//	maxPage := int(math.Ceil(float64(maxLength) / float64(query.Size)))
-//	if query.Page > maxPage {
-//		return false
-//	}
-//	if query.Page == maxPage && (query.Size*maxPage) >= maxLength {
-//		query.SetSize(maxLength - query.Size*(maxPage-1))
-//	}
-//	return true
-//}
-
 func (c *ApiBaseController) GetStringWithQualified(key string, def string, qualified ...string) string {
 	str := c.GetString(key, def)
 	if str != def {
@@ -391,35 +380,6 @@ func (c *ApiBaseController) HandleError(err error, code ...int) {
 	}
 	c.FailReturn(global.NewError(errCode))
 }
-
-////beego validate 设置成中文
-//func (c *ApiBaseController) setVerifyMessage() {
-//	// 设置表单验证messages
-//	var MessageTmpls = map[string]string{
-//		"Required":     "不能为空",
-//		"Min":          "最小值 为 %d",
-//		"Max":          "最大值 为 %d",
-//		"Range":        "范围 为 %d 到 %d",
-//		"MinSize":      "最短长度 为 %d",
-//		"MaxSize":      "最大长度 为 %d",
-//		"Length":       "长度必须 为 %d",
-//		"Alpha":        "必须是有效的字母",
-//		"Numeric":      "必须是有效的数字",
-//		"AlphaNumeric": "必须是有效的字母或数字",
-//		"Match":        "必须匹配 %s",
-//		"NoMatch":      "必须不匹配 %s",
-//		"AlphaDash":    "必须是有效的字母、数字或连接符号(-_)",
-//		"Email":        "必须是有效的电子邮件地址",
-//		"IP":           "必须是有效的IP地址",
-//		"Base64":       "必须是有效的base64字符",
-//		"Mobile":       "必须是有效的手机号码",
-//		"Tel":          "必须是有效的电话号码",
-//		"Phone":        "必须是有效的电话或移动电话号码",
-//		"ZipCode":      "必须是有效的邮政编码",
-//	}
-//
-//	validation.SetDefaultMessage(MessageTmpls)
-//}
 
 // 表单校验
 func (this *ApiBaseController) FormVerify(input interface{}) {
