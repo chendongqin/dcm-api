@@ -356,6 +356,7 @@ func (receiver *ProductController) ProductLiveRoomList() {
 		pmtMap := map[string][]dy.LiveRoomProductSaleStatus{}
 		curChan := make(chan map[string]dy.LiveCurProductCount, 0)
 		pmtChan := make(chan map[string][]dy.LiveRoomProductSaleStatus, 0)
+		authorChan := make(chan map[string]entity.DyAuthorData, 0)
 		authorMap := map[string]entity.DyAuthorData{}
 		for _, v := range list {
 			go func(curChan chan map[string]dy.LiveCurProductCount, pmtChan chan map[string][]dy.LiveRoomProductSaleStatus, roomId, productId, authorId string) {
@@ -366,6 +367,7 @@ func (receiver *ProductController) ProductLiveRoomList() {
 				authorMap[authorId] = authorData
 				curChan <- curMap
 				pmtChan <- pmtMap
+				authorChan <- authorMap
 			}(curChan, pmtChan, v.RoomID, v.ProductID, v.AuthorID)
 		}
 		for i := 0; i < len(list); i++ {
@@ -384,6 +386,15 @@ func (receiver *ProductController) ProductLiveRoomList() {
 			}
 			for k, v := range pmt {
 				pmtMap[k] = v
+			}
+		}
+		for i := 0; i < len(list); i++ {
+			aMap, ok := <-authorChan
+			if !ok {
+				break
+			}
+			for k, v := range aMap {
+				authorMap[k] = v
 			}
 		}
 		for _, v := range list {

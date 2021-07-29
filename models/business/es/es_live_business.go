@@ -127,7 +127,7 @@ func (receiver *EsLiveBusiness) RoomProductByRoomId(roomInfo entity.DyLiveInfo, 
 		comErr = global.NewError(4000)
 		return
 	}
-	if pageSize > 30 {
+	if pageSize > 50 {
 		comErr = global.NewError(4000)
 		return
 	}
@@ -337,7 +337,7 @@ func (receiver *EsLiveBusiness) SearchProductRooms(productId, keyword, sortStr, 
 		comErr = global.NewError(4000)
 		return
 	}
-	if size > 30 {
+	if size > 50 {
 		comErr = global.NewError(4000)
 		return
 	}
