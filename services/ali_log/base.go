@@ -97,7 +97,7 @@ func ReportAli(queueName, logstore string, msg map[string]string) error {
 
 //定制log
 //输入输出日志
-func LogInput(requestId string, clientId string, logType string, appId int, uid int, url string, method string, ip string, useragent string, refer string, apidatas interface{}, dyLevel int, xhsLevel int, tbLevel int, remote_addr string) {
+func LogInput(requestId string, clientId string, logType string, appId int, uid int, uri string, url string, method string, ip string, useragent string, refer string, apidatas interface{}, dyLevel int, xhsLevel int, tbLevel int, remote_addr string) {
 	var realUrl string
 	urldata := strings.Split(url, "?")
 	if len(urldata) > 0 {
@@ -117,6 +117,7 @@ func LogInput(requestId string, clientId string, logType string, appId int, uid 
 	insertData["remote_addr"] = remote_addr
 	insertData["useragent"] = useragent
 	insertData["refer"] = refer
+	insertData["uri"] = uri
 	insertData["url"] = realUrl
 	insertData["args"] = ""
 	insertData["timestamp"] = fmt.Sprint(time.Now().Unix())

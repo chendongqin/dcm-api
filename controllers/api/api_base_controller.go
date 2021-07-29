@@ -165,9 +165,8 @@ func (this *ApiBaseController) InitUserToken() (commonErr global.CommonError) {
 		}
 		this.AppId = tokenStruct.AppId
 		this.Token = tokenString
-		userInfo := dcm.DcUser{}
-		_, err := dcm.Get(this.UserId, &userInfo)
-		if err != nil || userInfo.Id == 0 {
+		userInfo, exist := userBusiness.GetCacheUser(this.UserId, true)
+		if !exist {
 			return global.NewError(4001)
 		}
 		this.UserInfo = userInfo
@@ -202,6 +201,10 @@ func (this *ApiBaseController) InitUserToken() (commonErr global.CommonError) {
 			this.RegisterLogin(tokenString, expireTime)
 		}
 
+		this.DyLevel = userBusiness.GetCacheUserLevel(this.UserId, 1, true)
+		this.XhsLevel = userBusiness.GetCacheUserLevel(this.UserId, 2, true)
+		this.TbLevel = userBusiness.GetCacheUserLevel(this.UserId, 3, true)
+
 		//异步记录用户行为日志
 		this.LogInputOutput("Format", this.ApiDatas)
 
@@ -214,10 +217,6 @@ func (this *ApiBaseController) InitUserToken() (commonErr global.CommonError) {
 func (this *ApiBaseController) CheckSign() {
 	authBusiness := business.NewAccountAuthBusiness()
 	this.TrueUri = authBusiness.GetTrueRequestUri(this.Ctx.Request.URL.String(), this.Ctx.Input.Params())
-
-	if authBusiness.AuthLoginWhiteUri(this.TrueUri) {
-		return
-	}
 	appId := this.Ctx.Input.Header("APPID")
 	this.AppId = utils.ToInt(appId)
 	if utils.InArrayString(appId, []string{"10000", "10001", "10002", "10003", "10004", "10005", ""}) {
@@ -243,6 +242,10 @@ func (this *ApiBaseController) CheckSign() {
 
 //校验token
 func (this *ApiBaseController) CheckToken() {
+	authBusiness := business.NewAccountAuthBusiness()
+	if authBusiness.AuthLoginWhiteUri(this.TrueUri) {
+		return
+	}
 	err := this.InitUserToken()
 	if err != nil {
 		this.FailReturn(err)
@@ -313,9 +316,9 @@ func (this *ApiBaseController) InputFormatArr() (retInput []global.InputMap) {
 func (this *ApiBaseController) LogInputOutput(logtype string, args interface{}) {
 	if global.Cfg.String("request_input_output_log") == "ON" {
 		if logtype == "Output" {
-			aliLog.LogInput(this.Ctx.Input.Header("X-Request-Id"), this.Ctx.Input.Header("X-Client-Id"), "Output", this.AppId, this.UserId, this.TrueUri, this.Ctx.Request.Method, this.Ctx.Input.IP(), this.Ctx.Request.UserAgent(), "", args, this.DyLevel, this.XhsLevel, this.TbLevel, this.Ctx.Input.Header("X-Remote-Addr"))
+			aliLog.LogInput(this.Ctx.Input.Header("X-Request-Id"), this.Ctx.Input.Header("X-Client-Id"), "Output", this.AppId, this.UserId, this.TrueUri, this.Ctx.Request.URL.String(), this.Ctx.Request.Method, this.Ctx.Input.IP(), this.Ctx.Request.UserAgent(), "", args, this.DyLevel, this.XhsLevel, this.TbLevel, this.Ctx.Input.Header("X-Remote-Addr"))
 		} else {
-			aliLog.LogInput(this.Ctx.Input.Header("X-Request-Id"), this.Ctx.Input.Header("X-Client-Id"), logtype, this.AppId, this.UserId, this.TrueUri, this.Ctx.Request.Method, this.Ctx.Input.IP(), this.Ctx.Request.UserAgent(), this.Ctx.Request.Referer(), args, this.DyLevel, this.XhsLevel, this.TbLevel, this.Ctx.Input.Header("X-Remote-Addr"))
+			aliLog.LogInput(this.Ctx.Input.Header("X-Request-Id"), this.Ctx.Input.Header("X-Client-Id"), logtype, this.AppId, this.UserId, this.TrueUri, this.Ctx.Request.URL.String(), this.Ctx.Request.Method, this.Ctx.Input.IP(), this.Ctx.Request.UserAgent(), this.Ctx.Request.Referer(), args, this.DyLevel, this.XhsLevel, this.TbLevel, this.Ctx.Input.Header("X-Remote-Addr"))
 		}
 	}
 }

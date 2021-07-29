@@ -9,6 +9,7 @@ import (
 	"github.com/dgrijalva/jwt-go"
 	"github.com/go-xorm/xorm"
 	"github.com/gomodule/redigo/redis"
+	jsoniter "github.com/json-iterator/go"
 	"time"
 )
 
@@ -217,6 +218,17 @@ func (receiver *UserBusiness) DeleteUserInfoCache(userid int) bool {
 	}
 }
 
+//清除等级缓存
+func (receiver *UserBusiness) DeleteUserLevelCache(userid, levelType int) bool {
+	memberKey := cache.GetCacheKey(cache.UserLevel, userid, levelType)
+	err := global.Cache.Delete(memberKey)
+	if err == nil {
+		return true
+	} else {
+		return false
+	}
+}
+
 //更新活跃时间等
 func (receiver *UserBusiness) UpdateVisitedTimes(userAccount dcm.DcUser) bool {
 	if userAccount.Id == 0 {
@@ -268,4 +280,37 @@ func (receiver *UserBusiness) UpdateUserAndClearCache(dbSession *xorm.Session, u
 		receiver.DeleteUserInfoCache(userId)
 	}
 	return affect, err
+}
+
+func (receiver *UserBusiness) GetCacheUser(userId int, enableCache bool) (dcm.DcUser, bool) {
+	memberKey := cache.GetCacheKey(cache.UserInfo, userId)
+	user := dcm.DcUser{}
+	if enableCache == true {
+		userJson := global.Cache.Get(memberKey)
+		if userJson != "" {
+			_ = jsoniter.Unmarshal([]byte(userJson), &user)
+			return user, true
+		}
+	}
+	exist, _ := dcm.GetSlaveDbSession().Where("user_id = ?", userId).
+		Get(&user)
+	if exist {
+		userByte, _ := jsoniter.Marshal(user)
+		_ = global.Cache.Set(memberKey, string(userByte), 1800)
+	}
+	return user, exist
+}
+
+func (receiver *UserBusiness) GetCacheUserLevel(userId, levelType int, enableCache bool) int {
+	memberKey := cache.GetCacheKey(cache.UserLevel, userId, levelType)
+	if enableCache == true {
+		level := global.Cache.Get(memberKey)
+		if level != "" {
+			return utils.ToInt(level)
+		}
+	}
+	vipBusiness := NewVipBusiness()
+	level := vipBusiness.GetVipLevel(userId, levelType)
+	_ = global.Cache.Set(memberKey, utils.ToString(level), 1800)
+	return level
 }

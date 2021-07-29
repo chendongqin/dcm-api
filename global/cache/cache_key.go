@@ -5,7 +5,8 @@ type KeyName string
 const (
 	//appid密钥
 	AppIdSecret      KeyName = "dcm:appid:secret:%s"
-	UserInfo         KeyName = "dcm:userinfo:data:%d"
+	UserInfo         KeyName = "dcm:user:info:data:%d"
+	UserLevel        KeyName = "dcm:user:level:%d:%d"
 	UserPrevTimeLock KeyName = "dcm:user:prev:lock:%d"
 	//短信验证码
 	SmsCodeLimitBySome KeyName = "dcm:sms:limit:%s:%s" //短信发送限制
