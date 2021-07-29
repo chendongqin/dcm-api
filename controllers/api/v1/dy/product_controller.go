@@ -348,8 +348,74 @@ func (receiver *ProductController) ProductLiveRoomList() {
 		receiver.FailReturn(comErr)
 		return
 	}
+	countList := make([]dy.LiveRoomProductCount, 0)
+	if len(list) > 0 {
+		liveBusiness := business.NewLiveBusiness()
+		curMap := map[string]dy.LiveCurProductCount{}
+		pmtMap := map[string][]dy.LiveRoomProductSaleStatus{}
+		curChan := make(chan map[string]dy.LiveCurProductCount, 0)
+		pmtChan := make(chan map[string][]dy.LiveRoomProductSaleStatus, 0)
+		for _, v := range list {
+			go func(curChan chan map[string]dy.LiveCurProductCount, pmtChan chan map[string][]dy.LiveRoomProductSaleStatus, roomId, productId string) {
+				curMap := liveBusiness.RoomCurProductByIds(v.RoomID, []string{productId})
+				pmtMap := liveBusiness.RoomPmtProductByIds(v.RoomID, []string{productId})
+				curChan <- curMap
+				pmtChan <- pmtMap
+			}(curChan, pmtChan, v.RoomID, v.ProductID)
+		}
+		for i := 0; i < len(list); i++ {
+			cur, ok := <-curChan
+			if !ok {
+				break
+			}
+			for k, v := range cur {
+				curMap[k] = v
+			}
+		}
+		for i := 0; i < len(list); i++ {
+			pmt, ok := <-pmtChan
+			if !ok {
+				break
+			}
+			for k, v := range pmt {
+				pmtMap[k] = v
+			}
+		}
+		for _, v := range list {
+			item := dy.LiveRoomProductCount{
+				ProductInfo: v,
+				ProductStartSale: dy.RoomProductSaleChart{
+					Timestamp: []int64{},
+					Sales:     []int64{},
+				},
+				ProductEndSale: dy.RoomProductSaleChart{
+					Timestamp: []int64{},
+					Sales:     []int64{},
+				},
+			}
+			if s, ok := pmtMap[v.ProductID]; ok {
+				for _, s1 := range s {
+					item.ProductStartSale.Timestamp = append(item.ProductStartSale.Timestamp, s1.StartTime)
+					item.ProductStartSale.Sales = append(item.ProductStartSale.Sales, s1.StartSales)
+					if s1.StopTime > 0 {
+						item.ProductEndSale.Timestamp = append(item.ProductEndSale.Timestamp, s1.StopTime)
+						item.ProductEndSale.Sales = append(item.ProductEndSale.Sales, s1.FinalSales)
+					}
+				}
+			}
+			if c, ok := curMap[v.ProductID]; ok {
+				c.CurList = business.ProductCurOrderByTime(c.CurList)
+				item.ProductCur = c
+			} else {
+				item.ProductCur = dy.LiveCurProductCount{
+					CurList: []dy.LiveCurProduct{},
+				}
+			}
+			countList = append(countList, item)
+		}
+	}
 	receiver.SuccReturn(map[string]interface{}{
-		"list":  list,
+		"list":  countList,
 		"total": total,
 	})
 	return

@@ -48,7 +48,7 @@ func (receiver *EsLiveBusiness) SearchAuthorRooms(authorId, keyword, sortStr, or
 	esQuery.SetTerm("author_id", authorId)
 	esQuery.SetRange("create_timestamp", map[string]interface{}{
 		"gte": startDate.Unix(),
-		"lte": endDate.Unix(),
+		"lt":  endDate.AddDate(0, 0, 1).Unix(),
 	})
 	if keyword != "" {
 		esQuery.AddCondition(map[string]interface{}{
@@ -337,7 +337,7 @@ func (receiver *EsLiveBusiness) SearchProductRooms(productId, keyword, sortStr, 
 		comErr = global.NewError(4000)
 		return
 	}
-	if size > 50 {
+	if size > 30 {
 		comErr = global.NewError(4000)
 		return
 	}
@@ -346,7 +346,7 @@ func (receiver *EsLiveBusiness) SearchProductRooms(productId, keyword, sortStr, 
 	esQuery.SetTerm("product_id", productId)
 	esQuery.SetRange("live_create_time", map[string]interface{}{
 		"gte": startTime.Unix(),
-		"lte": endTime.Unix(),
+		"lt":  endTime.AddDate(0, 0, 1).Unix(),
 	})
 	if keyword != "" {
 		esQuery.AddCondition(map[string]interface{}{
@@ -376,6 +376,7 @@ func (receiver *EsLiveBusiness) SearchProductRooms(productId, keyword, sortStr, 
 	utils.MapToStruct(results, &list)
 	for k, v := range list {
 		list[k].PredictSales = math.Floor(v.PredictSales)
+		list[k].Cover = dyimg.Fix(v.Cover)
 	}
 	total = esMultiQuery.Count
 	return
