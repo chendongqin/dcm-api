@@ -216,7 +216,6 @@ func (this *ApiBaseController) InitUserToken() (commonErr global.CommonError) {
 
 func (this *ApiBaseController) CheckSign() {
 	authBusiness := business.NewAccountAuthBusiness()
-	this.TrueUri = authBusiness.GetTrueRequestUri(this.Ctx.Input.URI(), this.Ctx.Input.Params())
 	appId := this.Ctx.Input.Header("APPID")
 	this.AppId = utils.ToInt(appId)
 	if utils.InArrayString(appId, []string{"10000", "10001", "10002", "10003", "10004", "10005", ""}) {
@@ -287,7 +286,8 @@ func (this *ApiBaseController) InitApi() {
 	} else {
 		this.ApiDatas = this.GetDatas
 	}
-
+	authBusiness := business.NewAccountAuthBusiness()
+	this.TrueUri = authBusiness.GetTrueRequestUri(this.Ctx.Input.URI(), this.Ctx.Input.Params())
 	this.LogInputOutput("Input", this.ApiDatas)
 }
 
