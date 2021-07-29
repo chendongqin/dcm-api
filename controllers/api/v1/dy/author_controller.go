@@ -14,6 +14,15 @@ type AuthorController struct {
 	controllers.ApiBaseController
 }
 
+//达人分类
+func (receiver *AuthorController) AuthorCate() {
+	configBusiness := business.NewConfigBusiness()
+	cateJson := configBusiness.GetConfigJson("author_cate", true)
+	cate := business.DealAuthorCateJson(cateJson)
+	receiver.SuccReturn(cate)
+	return
+}
+
 //达人数据
 func (receiver *AuthorController) AuthorBaseData() {
 	authorId := receiver.Ctx.Input.Param(":author_id")

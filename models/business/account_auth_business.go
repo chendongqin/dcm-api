@@ -24,10 +24,8 @@ var LoginWitheUri = []string{
 	"/v1/user/login",
 	"/v1/user/findpwd",
 	"/v1/sms/code",
-}
-
-var LoginWitheUriWithParams = []string{
 	"/v1/sms/verify",
+	"/v1/author/cate",
 }
 
 //登陆白名单校验

@@ -5,6 +5,7 @@ import (
 	"dongchamao/global"
 	"dongchamao/global/cache"
 	"dongchamao/global/utils"
+	"dongchamao/models/business"
 	"dongchamao/models/dcm"
 	"dongchamao/services/ali_sms"
 )
@@ -87,6 +88,7 @@ func (receiver *CommonController) CheckSmsCode() {
 }
 
 func (receiver *CommonController) Test() {
-	receiver.SuccReturn(nil)
+	cates := business.DealAuthorCateJson("")
+	receiver.SuccReturn(cates)
 	return
 }

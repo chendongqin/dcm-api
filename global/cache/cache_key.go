@@ -4,7 +4,10 @@ type KeyName string
 
 const (
 	//appid密钥
-	AppIdSecret      KeyName = "dcm:appid:secret:%s"
+	AppIdSecret KeyName = "dcm:appid:secret:%s"
+	//配置缓存
+	ConfigKeyCache KeyName = "dcm:config:cache:%s"
+	//用户相关
 	UserInfo         KeyName = "dcm:user:info:data:%d"
 	UserLevel        KeyName = "dcm:user:level:%d:%d"
 	UserPrevTimeLock KeyName = "dcm:user:prev:lock:%d"

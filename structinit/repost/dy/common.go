@@ -25,3 +25,8 @@ type NameValueChart struct {
 	Name  string `json:"name"`
 	Value int    `json:"value"`
 }
+
+type DyCate struct {
+	Name    string   `json:"name"`
+	SonCate []DyCate `json:"son_cate"`
+}

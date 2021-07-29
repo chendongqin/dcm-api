@@ -1,6 +1,8 @@
 package business
 
 import (
+	"dongchamao/structinit/repost/dy"
+	jsoniter "github.com/json-iterator/go"
 	"strings"
 	"time"
 )
@@ -12,6 +14,11 @@ const (
 	VoUserUniqueTokenPlatformApp           = 4
 	VoUserUniqueTokenPlatformWap           = 5
 )
+
+type AuthorCate struct {
+	First  map[string]string   `json:"first"`
+	Second []map[string]string `json:"second"`
+}
 
 func GetAppPlatFormIdWithAppId(appId int) int {
 	switch appId {
@@ -111,4 +118,34 @@ func DealChartFloat64(charts []float64, chartNum int) []float64 {
 		newCharts = append(newCharts, charts[begin])
 	}
 	return newCharts
+}
+
+func DealAuthorCateJson(authorCateJson string) []dy.DyCate {
+	authorCateMap := map[string][]AuthorCate{}
+	_ = jsoniter.Unmarshal([]byte(authorCateJson), &authorCateMap)
+	cates := make([]AuthorCate, 0)
+	if v, ok := authorCateMap["tag"]; ok {
+		cates = v
+	}
+	dyAuthorCate := make([]dy.DyCate, 0)
+	for _, v := range cates {
+		firName := ""
+		for _, name := range v.First {
+			firName = name
+		}
+		item := dy.DyCate{
+			Name:    firName,
+			SonCate: []dy.DyCate{},
+		}
+		for _, s := range v.Second {
+			for _, name := range s {
+				item.SonCate = append(item.SonCate, dy.DyCate{
+					Name:    name,
+					SonCate: []dy.DyCate{},
+				})
+			}
+		}
+		dyAuthorCate = append(dyAuthorCate, item)
+	}
+	return dyAuthorCate
 }
