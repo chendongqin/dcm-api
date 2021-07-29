@@ -14,25 +14,26 @@ type EsAuthorLiveRoom struct {
 }
 
 type EsAuthorLiveProduct struct {
-	RoomID        string  `json:"room_id"`
-	AuthorID      string  `json:"author_id"`
-	RoomTitle     string  `json:"room_title"`
-	Title         string  `json:"title"`
-	Nickname      string  `json:"nickname"`
-	Avatar        string  `json:"avatar"`
-	Cover         string  `json:"cover"`
-	ProductID     string  `json:"product_id"`
-	ExtInfo       string  `json:"ext_info"`
-	ForSale       int     `json:"for_sale"`
-	StartTime     int64   `json:"start_time"`
-	ShelfTime     int64   `json:"shelf_time"`
-	Pv            int64   `json:"pv"`
-	Price         float64 `json:"price"`
-	IsReturn      int     `json:"is_return"` //是否返场
-	DcmLevelFirst string  `json:"dcm_level_first"`
-	FirstCname    string  `json:"first_cname"`
-	SecondCname   string  `json:"second_cname"`
-	RoomStatus    string  `json:"room_status"`
+	RoomID         string  `json:"room_id"`
+	AuthorID       string  `json:"author_id"`
+	RoomTitle      string  `json:"room_title"`
+	Title          string  `json:"title"`
+	Nickname       string  `json:"nickname"`
+	Avatar         string  `json:"avatar"`
+	Cover          string  `json:"cover"`
+	ProductID      string  `json:"product_id"`
+	ExtInfo        string  `json:"ext_info"`
+	ForSale        int     `json:"for_sale"`
+	StartTime      int64   `json:"start_time"`
+	ShelfTime      int64   `json:"shelf_time"`
+	LiveCreateTime int64   `json:"live_create_time"`
+	Pv             int64   `json:"pv"`
+	Price          float64 `json:"price"`
+	IsReturn       int     `json:"is_return"` //是否返场
+	DcmLevelFirst  string  `json:"dcm_level_first"`
+	FirstCname     string  `json:"first_cname"`
+	SecondCname    string  `json:"second_cname"`
+	RoomStatus     string  `json:"room_status"`
 	//ThirdCname    string  `json:"third_cname"`
 	CreateTime   string  `json:"create_time"` //直播间时间
 	PredictSales float64 `json:"predict_sales"`
