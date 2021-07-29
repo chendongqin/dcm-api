@@ -31,6 +31,7 @@ type ApiBaseController struct {
 	IsMonitor        bool
 	AppId            int
 	Ip               string
+	TrueUri          string
 	IsInitToken      bool               //是否初始化过token
 	LastInitTokenErr global.CommonError //记录首次初始化token的错误
 	Token            string
@@ -45,6 +46,7 @@ type AppData struct {
 func (this *ApiBaseController) Prepare() {
 	this.InitApi()
 	this.AsfCheck()
+	this.CheckSign()
 	this.CheckToken()
 	this.CheckUserGroupRight()
 }
@@ -206,20 +208,22 @@ func (this *ApiBaseController) InitUserToken() (commonErr global.CommonError) {
 	return
 }
 
-//校验token
-func (this *ApiBaseController) CheckToken() {
+func (this *ApiBaseController) CheckSign() {
 	authBusiness := business.NewAccountAuthBusiness()
-	if authBusiness.AuthLoginWhiteUri(this.Ctx) {
+	this.TrueUri = authBusiness.GetTrueRequestUri(this.Ctx.Request.URL.String(), this.Ctx.Input.Params())
+	if authBusiness.AuthLoginWhiteUri(this.TrueUri) {
 		return
 	}
 	appId := this.Ctx.Input.Header("APPID")
+	this.AppId = utils.ToInt(appId)
 	if utils.InArrayString(appId, []string{"10000", "10001", "10002", "10003", "10004", "10005", ""}) {
-		err := authBusiness.CheckSign(this.Ctx)
-		if err != nil {
-			this.FailReturn(err)
+		if this.Ctx.Input.IP() == "127.0.0.1" {
 			return
 		}
-		err = this.InitUserToken()
+		timestamp := this.Ctx.Input.Header("TIMESTAMP")
+		random := this.Ctx.Input.Header("RANDOM")
+		sign := this.Ctx.Input.Header("SIGN")
+		err := authBusiness.CheckSign(timestamp, random, sign)
 		if err != nil {
 			this.FailReturn(err)
 			return
@@ -230,6 +234,15 @@ func (this *ApiBaseController) CheckToken() {
 			this.FailReturn(err)
 			return
 		}
+	}
+}
+
+//校验token
+func (this *ApiBaseController) CheckToken() {
+	err := this.InitUserToken()
+	if err != nil {
+		this.FailReturn(err)
+		return
 	}
 	return
 }
@@ -296,9 +309,9 @@ func (this *ApiBaseController) InputFormatArr() (retInput []global.InputMap) {
 func (this *ApiBaseController) LogInputOutput(logtype string, args interface{}) {
 	if global.Cfg.String("request_input_output_log") == "ON" {
 		if logtype == "Output" {
-			aliLog.LogInput(this.Ctx.Input.Header("X-Request-Id"), this.Ctx.Input.Header("X-Client-Id"), "Output", this.AppId, this.UserId, this.Ctx.Request.URL.String(), this.Ctx.Request.Method, this.Ctx.Input.IP(), this.Ctx.Request.UserAgent(), "", args, 0, this.Ctx.Input.Header("X-Remote-Addr"))
+			aliLog.LogInput(this.Ctx.Input.Header("X-Request-Id"), this.Ctx.Input.Header("X-Client-Id"), "Output", this.AppId, this.UserId, this.TrueUri, this.Ctx.Request.Method, this.Ctx.Input.IP(), this.Ctx.Request.UserAgent(), "", args, 0, this.Ctx.Input.Header("X-Remote-Addr"))
 		} else {
-			aliLog.LogInput(this.Ctx.Input.Header("X-Request-Id"), this.Ctx.Input.Header("X-Client-Id"), logtype, this.AppId, this.UserId, this.Ctx.Request.URL.String(), this.Ctx.Request.Method, this.Ctx.Input.IP(), this.Ctx.Request.UserAgent(), this.Ctx.Request.Referer(), args, 0, this.Ctx.Input.Header("X-Remote-Addr"))
+			aliLog.LogInput(this.Ctx.Input.Header("X-Request-Id"), this.Ctx.Input.Header("X-Client-Id"), logtype, this.AppId, this.UserId, this.TrueUri, this.Ctx.Request.Method, this.Ctx.Input.IP(), this.Ctx.Request.UserAgent(), this.Ctx.Request.Referer(), args, 0, this.Ctx.Input.Header("X-Remote-Addr"))
 		}
 	}
 }

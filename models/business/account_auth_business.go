@@ -31,34 +31,23 @@ var LoginWitheUriWithParams = []string{
 }
 
 //登陆白名单校验
-func (receiver *AccountAuthBusiness) AuthLoginWhiteUri(ctx *context.Context) bool {
-	if utils.InArrayString(ctx.Input.URI(), LoginWitheUri) {
-		return true
-	}
-	if utils.InArrayString(receiver.GetTrueRequestUri(ctx), LoginWitheUriWithParams) {
+func (receiver *AccountAuthBusiness) AuthLoginWhiteUri(uri string) bool {
+	if utils.InArrayString(uri, LoginWitheUri) {
 		return true
 	}
 	return false
 }
 
 //获取真实uri
-func (receiver *AccountAuthBusiness) GetTrueRequestUri(ctx *context.Context) string {
-	uri := ctx.Input.URI()
-	for _, v := range ctx.Input.Params() {
+func (receiver *AccountAuthBusiness) GetTrueRequestUri(uri string, params map[string]string) string {
+	for _, v := range params {
 		uri = strings.Replace(uri, "/"+v, "", 1)
 	}
 	return uri
 }
 
 //校验签名
-func (receiver *AccountAuthBusiness) CheckSign(ctx *context.Context) global.CommonError {
-	//本地请求过滤
-	if ctx.Input.IP() == "127.0.0.1" {
-		return nil
-	}
-	timestamp := ctx.Input.Header("TIMESTAMP")
-	random := ctx.Input.Header("RANDOM")
-	sign := ctx.Input.Header("SIGN")
+func (receiver *AccountAuthBusiness) CheckSign(timestamp, random, sign string) global.CommonError {
 	tmpStr := timestamp + random + SignKey
 	if sign != utils.Md5_encode(tmpStr) {
 		return global.NewError(4041)
