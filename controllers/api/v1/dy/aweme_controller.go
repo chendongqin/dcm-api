@@ -6,7 +6,6 @@ import (
 	"dongchamao/global"
 	"dongchamao/models/business"
 	"dongchamao/structinit/repost/dy"
-	"time"
 )
 
 type AwemeController struct {
@@ -49,28 +48,13 @@ func (receiver *AwemeController) AwemeBaseData() {
 
 func (receiver *AwemeController) AwemeChart() {
 	awemeId := receiver.Ctx.Input.Param(":aweme_id")
-	startDay := receiver.Ctx.Input.Param(":start")
-	endDay := receiver.Ctx.Input.Param(":end")
-	if awemeId == "" || startDay == "" {
+	if awemeId == "" {
 		receiver.FailReturn(global.NewError(4000))
 		return
 	}
-	if endDay == "" {
-		endDay = time.Now().Format("2006-01-02")
-	}
-	pslTime := "2006-01-02"
-	t1, err := time.ParseInLocation(pslTime, startDay, time.Local)
-	if err != nil {
-		receiver.FailReturn(global.NewError(4000))
-		return
-	}
-	t2, err := time.ParseInLocation(pslTime, endDay, time.Local)
-	if err != nil {
-		receiver.FailReturn(global.NewError(4000))
-		return
-	}
-	if t1.After(t2) || t2.After(t1.AddDate(0, 0, 90)) || t2.After(time.Now()) {
-		receiver.FailReturn(global.NewError(4000))
+	t1, t2, comErr := receiver.GetRangeDate()
+	if comErr != nil {
+		receiver.FailReturn(comErr)
 		return
 	}
 	awemeBusiness := business.NewAwemeBusiness()

@@ -4,6 +4,7 @@ import (
 	"dongchamao/entity"
 	"dongchamao/global"
 	"dongchamao/global/utils"
+	"dongchamao/services/dyimg"
 	"dongchamao/services/hbaseService"
 	"dongchamao/services/hbaseService/hbasehelper"
 	"math"
@@ -32,11 +33,11 @@ func (a *AwemeBusiness) HbaseGetAweme(awemeId string) (data entity.DyAwemeData, 
 	authorMap := hbaseService.HbaseFormat(result, entity.DyAwemeMap)
 	aweme := &entity.DyAweme{}
 	utils.MapToStruct(authorMap, aweme)
-	aweme.AwemeID = aweme.Data.ID
 	duration := math.Ceil(float64(aweme.Data.Duration) / 1000)
-	aweme.Data.Duration = utils.ToInt(duration)
-	aweme.Data.AwemeTitle = aweme.AwemeTitle
 	data = aweme.Data
+	data.Duration = utils.ToInt(duration)
+	data.AwemeTitle = aweme.AwemeTitle
+	data.AwemeCover = dyimg.Fix(data.AwemeCover)
 	return
 }
 
