@@ -292,7 +292,7 @@ func (receiver *UserBusiness) GetCacheUser(userId int, enableCache bool) (dcm.Dc
 			return user, true
 		}
 	}
-	exist, _ := dcm.GetSlaveDbSession().Where("user_id = ?", userId).
+	exist, _ := dcm.GetSlaveDbSession().Where("id = ?", userId).
 		Get(&user)
 	if exist {
 		userByte, _ := jsoniter.Marshal(user)

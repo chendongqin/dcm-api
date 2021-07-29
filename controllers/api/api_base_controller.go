@@ -170,7 +170,7 @@ func (this *ApiBaseController) InitUserToken() (commonErr global.CommonError) {
 			return global.NewError(4001)
 		}
 		this.UserInfo = userInfo
-		//判断用户状态
+		//判断用户状态x
 		if this.UserInfo.Status == 0 {
 			return global.NewError(4212)
 		}
