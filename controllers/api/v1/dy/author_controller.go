@@ -220,28 +220,9 @@ func (receiver *AuthorController) AuthorFansAnalyse() {
 //达人直播分析
 func (receiver *AuthorController) CountLiveRoomAnalyse() {
 	authorId := receiver.Ctx.Input.Param(":author_id")
-	startDay := receiver.Ctx.Input.Param(":start")
-	endDay := receiver.Ctx.Input.Param(":end")
-	if authorId == "" || startDay == "" {
-		receiver.FailReturn(global.NewError(4000))
-		return
-	}
-	if endDay == "" {
-		endDay = time.Now().Format("2006-01-02")
-	}
-	pslTime := "2006-01-02"
-	t1, err := time.ParseInLocation(pslTime, startDay, time.Local)
-	if err != nil {
-		receiver.FailReturn(global.NewError(4000))
-		return
-	}
-	t2, err := time.ParseInLocation(pslTime, endDay, time.Local)
-	if err != nil {
-		receiver.FailReturn(global.NewError(4000))
-		return
-	}
-	if t1.After(t2) || t2.After(t1.AddDate(0, 0, 90)) || t2.After(time.Now()) {
-		receiver.FailReturn(global.NewError(4000))
+	t1, t2, comErr := receiver.GetRangeDate()
+	if comErr != nil {
+		receiver.FailReturn(comErr)
 		return
 	}
 	authorBusiness := business.NewAuthorBusiness()
@@ -253,34 +234,19 @@ func (receiver *AuthorController) CountLiveRoomAnalyse() {
 //达人直播间列表
 func (receiver *AuthorController) AuthorLiveRooms() {
 	authorId := receiver.Ctx.Input.Param(":author_id")
-	startDay := receiver.Ctx.Input.Param(":start")
-	endDay := receiver.Ctx.Input.Param(":end")
 	InputData := receiver.InputFormat()
 	keyword := InputData.GetString("keyword", "")
 	sortStr := InputData.GetString("sort", "create_timestamp")
 	orderBy := InputData.GetString("order_by", "desc")
 	page := InputData.GetInt("page", 1)
 	size := InputData.GetInt("page_size", 10)
-	if authorId == "" || startDay == "" {
+	if authorId == "" {
 		receiver.FailReturn(global.NewError(4000))
 		return
 	}
-	if endDay == "" {
-		endDay = time.Now().Format("2006-01-02")
-	}
-	pslTime := "2006-01-02"
-	t1, err := time.ParseInLocation(pslTime, startDay, time.Local)
-	if err != nil {
-		receiver.FailReturn(global.NewError(4000))
-		return
-	}
-	t2, err := time.ParseInLocation(pslTime, endDay, time.Local)
-	if err != nil {
-		receiver.FailReturn(global.NewError(4000))
-		return
-	}
-	if t1.After(t2) || t2.After(t1.AddDate(0, 0, 90)) || t2.After(time.Now()) {
-		receiver.FailReturn(global.NewError(4000))
+	t1, t2, comErr := receiver.GetRangeDate()
+	if comErr != nil {
+		receiver.FailReturn(comErr)
 		return
 	}
 	esLiveBusiness := es.NewEsLiveBusiness()

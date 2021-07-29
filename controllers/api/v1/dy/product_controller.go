@@ -6,6 +6,7 @@ import (
 	"dongchamao/global"
 	"dongchamao/global/utils"
 	"dongchamao/models/business"
+	"dongchamao/models/business/es"
 	"dongchamao/services/dyimg"
 	"dongchamao/structinit/repost/dy"
 	"time"
@@ -323,8 +324,33 @@ func (receiver *ProductController) ProductLiveChart() {
 	return
 }
 
+//商品直播间列表
 func (receiver *ProductController) ProductLiveRoomList() {
-
+	productId := receiver.Ctx.Input.Param(":product_id")
+	InputData := receiver.InputFormat()
+	keyword := InputData.GetString("keyword", "")
+	sortStr := InputData.GetString("sort", "predict_gmv")
+	orderBy := InputData.GetString("order_by", "desc")
+	page := InputData.GetInt("page", 1)
+	size := InputData.GetInt("page_size", 10)
+	if productId == "" {
+		receiver.FailReturn(global.NewError(4000))
+		return
+	}
+	t1, t2, comErr := receiver.GetRangeDate()
+	if comErr != nil {
+		receiver.FailReturn(comErr)
+		return
+	}
+	esLiveBusiness := es.NewEsLiveBusiness()
+	list, total, comErr := esLiveBusiness.SearchProductRooms(productId, keyword, sortStr, orderBy, page, size, t1, t2)
+	if comErr != nil {
+		receiver.FailReturn(comErr)
+		return
+	}
+	receiver.SuccReturn(map[string]interface{}{
+		"list":  list,
+		"total": total,
+	})
 	return
 }
-

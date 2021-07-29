@@ -16,7 +16,9 @@ type EsAuthorLiveRoom struct {
 type EsAuthorLiveProduct struct {
 	RoomID        string  `json:"room_id"`
 	AuthorID      string  `json:"author_id"`
+	RoomTitle     string  `json:"room_title"`
 	Title         string  `json:"title"`
+	Nickname      string  `json:"nickname"`
 	Cover         string  `json:"cover"`
 	ProductID     string  `json:"product_id"`
 	ExtInfo       string  `json:"ext_info"`

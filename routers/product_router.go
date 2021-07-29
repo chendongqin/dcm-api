@@ -11,6 +11,7 @@ func init() {
 			beego.NSRouter("/base/:product_id", &v1dy.ProductController{}, "get:ProductBase"),
 			beego.NSRouter("/analysis/:product_id/:start/:end", &v1dy.ProductController{}, "get:ProductBaseAnalysis"),
 			beego.NSRouter("/live/chart/:product_id/:start/:end", &v1dy.ProductController{}, "get:ProductLiveChart"),
+			beego.NSRouter("/live/room/:product_id/:start/:end", &v1dy.ProductController{}, "get:ProductLiveRoomList"),
 		),
 	)
 	// 注册路由组
