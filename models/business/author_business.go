@@ -156,6 +156,7 @@ func (a *AuthorBusiness) HbaseGetAuthor(authorId string) (data entity.DyAuthorDa
 		author.Data.UniqueID = author.Data.ShortID
 	}
 	data = author.Data
+	data.CrawlTime = author.CrawlTime
 	return
 }
 
