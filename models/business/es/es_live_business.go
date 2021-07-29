@@ -208,7 +208,7 @@ func (receiver *EsLiveBusiness) RoomProductByRoomId(roomInfo entity.DyLiveInfo, 
 	list = list[start:end]
 	for k, v := range list {
 		list[k].Cover = dyimg.Product(v.Cover)
-		//真实gmv存在，按gmv处理
+		//todo 真实gmv存在，按gmv处理
 		if v.RealGmv > 0 {
 			list[k].PredictGmv = v.RealGmv
 			if v.Price > 0 {
@@ -377,6 +377,21 @@ func (receiver *EsLiveBusiness) SearchProductRooms(productId, keyword, sortStr, 
 	for k, v := range list {
 		list[k].PredictSales = math.Floor(v.PredictSales)
 		list[k].Cover = dyimg.Fix(v.Cover)
+		//todo gmv处理
+		if v.RealGmv > 0 {
+			var sale float64 = 0
+			if v.Price > 0 {
+				sale = math.Floor(v.RealGmv / v.Price)
+			}
+			list[k].PredictGmv = v.RealGmv
+			list[k].PredictSales = sale
+		}
+		if v.IsReturn == 1 && v.StartTime == v.ShelfTime {
+			list[k].IsReturn = 0
+		}
+		if v.Pv > 0 {
+			list[k].BuyRate = v.PredictSales / float64(v.Pv)
+		}
 	}
 	total = esMultiQuery.Count
 	return

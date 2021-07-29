@@ -351,17 +351,22 @@ func (receiver *ProductController) ProductLiveRoomList() {
 	countList := make([]dy.LiveRoomProductCount, 0)
 	if len(list) > 0 {
 		liveBusiness := business.NewLiveBusiness()
+		authorBusiness := business.NewAuthorBusiness()
 		curMap := map[string]dy.LiveCurProductCount{}
 		pmtMap := map[string][]dy.LiveRoomProductSaleStatus{}
 		curChan := make(chan map[string]dy.LiveCurProductCount, 0)
 		pmtChan := make(chan map[string][]dy.LiveRoomProductSaleStatus, 0)
+		authorMap := map[string]entity.DyAuthorData{}
 		for _, v := range list {
-			go func(curChan chan map[string]dy.LiveCurProductCount, pmtChan chan map[string][]dy.LiveRoomProductSaleStatus, roomId, productId string) {
+			go func(curChan chan map[string]dy.LiveCurProductCount, pmtChan chan map[string][]dy.LiveRoomProductSaleStatus, roomId, productId, authorId string) {
 				curMap := liveBusiness.RoomCurProductByIds(v.RoomID, []string{productId})
 				pmtMap := liveBusiness.RoomPmtProductByIds(v.RoomID, []string{productId})
+				authorData, _ := authorBusiness.HbaseGetAuthor(authorId)
+				authorMap := map[string]entity.DyAuthorData{}
+				authorMap[authorId] = authorData
 				curChan <- curMap
 				pmtChan <- pmtMap
-			}(curChan, pmtChan, v.RoomID, v.ProductID)
+			}(curChan, pmtChan, v.RoomID, v.ProductID, v.AuthorID)
 		}
 		for i := 0; i < len(list); i++ {
 			cur, ok := <-curChan
@@ -382,6 +387,9 @@ func (receiver *ProductController) ProductLiveRoomList() {
 			}
 		}
 		for _, v := range list {
+			if author, ok := authorMap[v.AuthorID]; ok {
+				v.AuthorRoomID = author.RoomID
+			}
 			item := dy.LiveRoomProductCount{
 				ProductInfo: v,
 				ProductStartSale: dy.RoomProductSaleChart{

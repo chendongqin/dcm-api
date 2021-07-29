@@ -40,4 +40,5 @@ type EsAuthorLiveProduct struct {
 	PredictGmv   float64 `json:"predict_gmv"`
 	RealGmv      float64 `json:"real_gmv"`
 	BuyRate      float64 `json:"buy_rate"`
+	AuthorRoomID string  `json:"author_room_id"`
 }
