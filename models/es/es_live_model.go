@@ -19,6 +19,7 @@ type EsAuthorLiveProduct struct {
 	RoomTitle     string  `json:"room_title"`
 	Title         string  `json:"title"`
 	Nickname      string  `json:"nickname"`
+	Avatar        string  `json:"avatar"`
 	Cover         string  `json:"cover"`
 	ProductID     string  `json:"product_id"`
 	ExtInfo       string  `json:"ext_info"`
@@ -31,6 +32,7 @@ type EsAuthorLiveProduct struct {
 	DcmLevelFirst string  `json:"dcm_level_first"`
 	FirstCname    string  `json:"first_cname"`
 	SecondCname   string  `json:"second_cname"`
+	RoomStatus    string  `json:"room_status"`
 	//ThirdCname    string  `json:"third_cname"`
 	CreateTime   string  `json:"create_time"` //直播间时间
 	PredictSales float64 `json:"predict_sales"`

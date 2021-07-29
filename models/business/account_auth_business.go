@@ -40,6 +40,10 @@ func (receiver *AccountAuthBusiness) AuthLoginWhiteUri(uri string) bool {
 
 //获取真实uri
 func (receiver *AccountAuthBusiness) GetTrueRequestUri(uri string, params map[string]string) string {
+	urlData := strings.Split(uri, "?")
+	if len(urlData) > 0 {
+		uri = urlData[0]
+	}
 	for _, v := range params {
 		uri = strings.Replace(uri, "/"+v, "", 1)
 	}
