@@ -595,8 +595,8 @@ func (a *AuthorBusiness) CountLiveRoomAnalyse(authorId string, startTime, endTim
 		data.SaleData.AvgUv /= float64(data.UserData.LiveNum)
 		data.SaleData.AvgPerPrice /= float64(data.UserData.LiveNum)
 	}
-	if data.UserData.AvgUserCount > 0 {
-		data.SaleData.SaleRate = float64(data.SaleData.AvgVolume) / float64(data.UserData.AvgUserCount)
+	if data.UserData.AvgUserTotal > 0 {
+		data.SaleData.SaleRate = float64(data.SaleData.AvgVolume) / float64(data.UserData.AvgUserTotal)
 	}
 	esLiveBusiness := es.NewEsLiveBusiness()
 	data.SaleData.PromotionNum = esLiveBusiness.CountRoomProductByAuthorId(authorId, startTime.Unix(), endTime.Unix())
