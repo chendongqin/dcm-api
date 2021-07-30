@@ -360,14 +360,22 @@ func (receiver *ProductController) ProductLiveRoomList() {
 		authorMap := map[string]entity.DyAuthorData{}
 		for _, v := range list {
 			go func(curChan chan map[string]dy.LiveCurProductCount, pmtChan chan map[string][]dy.LiveRoomProductSaleStatus, roomId, productId, authorId string) {
-				curMap := liveBusiness.RoomCurProductByIds(v.RoomID, []string{productId})
-				pmtMap := liveBusiness.RoomPmtProductByIds(v.RoomID, []string{productId})
+				curMapTmp := liveBusiness.RoomCurProductByIds(v.RoomID, []string{productId})
+				pmtMapTmp := liveBusiness.RoomPmtProductByIds(v.RoomID, []string{productId})
 				authorData, _ := authorBusiness.HbaseGetAuthor(authorId)
-				authorMap := map[string]entity.DyAuthorData{}
-				authorMap[authorId] = authorData
-				curChan <- curMap
-				pmtChan <- pmtMap
-				authorChan <- authorMap
+				authorMapTmp := map[string]entity.DyAuthorData{}
+				roomProductCurMap := map[string]dy.LiveCurProductCount{}
+				roomProductPmtMap := map[string][]dy.LiveRoomProductSaleStatus{}
+				if v, ok := curMapTmp[productId]; ok {
+					roomProductCurMap[roomId] = v
+				}
+				if v, ok := pmtMapTmp[productId]; ok {
+					roomProductPmtMap[roomId] = v
+				}
+				authorMapTmp[authorId] = authorData
+				curChan <- roomProductCurMap
+				pmtChan <- roomProductPmtMap
+				authorChan <- authorMapTmp
 			}(curChan, pmtChan, v.RoomID, v.ProductID, v.AuthorID)
 		}
 		for i := 0; i < len(list); i++ {
@@ -413,7 +421,7 @@ func (receiver *ProductController) ProductLiveRoomList() {
 					Sales:     []int64{},
 				},
 			}
-			if s, ok := pmtMap[v.ProductID]; ok {
+			if s, ok := pmtMap[v.RoomID]; ok {
 				for _, s1 := range s {
 					item.ProductStartSale.Timestamp = append(item.ProductStartSale.Timestamp, s1.StartTime)
 					item.ProductStartSale.Sales = append(item.ProductStartSale.Sales, s1.StartSales)
@@ -423,7 +431,7 @@ func (receiver *ProductController) ProductLiveRoomList() {
 					}
 				}
 			}
-			if c, ok := curMap[v.ProductID]; ok {
+			if c, ok := curMap[v.RoomID]; ok {
 				c.CurList = business.ProductCurOrderByTime(c.CurList)
 				item.ProductCur = c
 			} else {
