@@ -43,7 +43,7 @@ func (receiver *EsLiveBusiness) SearchAuthorRooms(authorId, keyword, sortStr, or
 		return
 	}
 	//兼容数据 2021-06-29
-	esTable := fmt.Sprintf(es.DyAuthorLiveRecords, "*")
+	esTable := GetESTableByTime(es.DyAuthorLiveRecords, startDate, endDate)
 	esQuery, esMultiQuery := elasticsearch.NewElasticQueryGroup()
 	esQuery.SetTerm("author_id", authorId)
 	esQuery.SetRange("create_timestamp", map[string]interface{}{
@@ -97,13 +97,14 @@ func (receiver *EsLiveBusiness) CountRoomProductByRoomId(roomInfo entity.DyLiveI
 }
 
 //直播间商品统计
-func (receiver *EsLiveBusiness) CountRoomProductByAuthorId(authorId string, startTime, endTime int64) int64 {
-	esTable := fmt.Sprintf(es.DyRoomProductRecords, "*")
+func (receiver *EsLiveBusiness) CountRoomProductByAuthorId(authorId string, startTime, endTime time.Time) int64 {
+
+	esTable := GetESTableByTime(es.DyRoomProductRecords, startTime, endTime)
 	esQuery, esMultiQuery := elasticsearch.NewElasticQueryGroup()
 	esQuery.SetTerm("author_id", authorId)
 	esQuery.SetRange("start_time", map[string]interface{}{
-		"gte": startTime,
-		"lte": endTime,
+		"gte": startTime.Unix(),
+		"lte": endTime.Unix(),
 	})
 	_ = esMultiQuery.
 		SetTable(esTable).
@@ -341,7 +342,7 @@ func (receiver *EsLiveBusiness) SearchProductRooms(productId, keyword, sortStr, 
 		comErr = global.NewError(4000)
 		return
 	}
-	esTable := fmt.Sprintf(es.DyRoomProductRecords, "*")
+	esTable := GetESTableByTime(es.DyRoomProductRecords, startTime, endTime)
 	esQuery, esMultiQuery := elasticsearch.NewElasticQueryGroup()
 	esQuery.SetTerm("product_id", productId)
 	esQuery.SetRange("live_create_time", map[string]interface{}{

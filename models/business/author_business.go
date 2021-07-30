@@ -601,7 +601,7 @@ func (a *AuthorBusiness) CountLiveRoomAnalyse(authorId string, startTime, endTim
 		data.SaleData.SaleRate = float64(data.SaleData.AvgVolume) / float64(data.UserData.AvgUserTotal)
 	}
 	esLiveBusiness := es.NewEsLiveBusiness()
-	data.SaleData.PromotionNum = esLiveBusiness.CountRoomProductByAuthorId(authorId, startTime.Unix(), endTime.Unix())
+	data.SaleData.PromotionNum = esLiveBusiness.CountRoomProductByAuthorId(authorId, startTime, endTime)
 	data.UserTotalChart = dy.DateCountChart{
 		Date:       dateChart,
 		CountValue: userTotalChart,
