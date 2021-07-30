@@ -34,3 +34,23 @@ func (receiver *RankBusiness) HbaseStartAuthorVideoRank(rankType, category strin
 	data = info.Data
 	return
 }
+
+//抖音直播达人热榜
+func (receiver *RankBusiness) HbaseStartAuthorLiveRank(rankType string) (data []entity.XtHotLiveAuthorData, comErr global.CommonError) {
+	rowKey := utils.Md5_encode(rankType)
+	query := hbasehelper.NewQuery()
+	result, err := query.SetTable(hbaseService.HbaseXtHotLiveAuthorRank).GetByRowKey([]byte(rowKey))
+	if err != nil {
+		comErr = global.NewMsgError(err.Error())
+		return
+	}
+	if result.Row == nil {
+		comErr = global.NewError(4040)
+		return
+	}
+	detailMap := hbaseService.HbaseFormat(result, entity.XtHotLiveAuthorMap)
+	info := entity.XtHotLiveAuthor{}
+	utils.MapToStruct(detailMap, &info)
+	data = info.Data
+	return
+}

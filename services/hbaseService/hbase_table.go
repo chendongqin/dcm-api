@@ -30,4 +30,5 @@ const (
 	HbaseDyLivePromotionMonth    = "dy_live_promotion_month"
 
 	HbaseXtHotAwemeAuthorRank = "xt_hot_aweme_author"
+	HbaseXtHotLiveAuthorRank  = "xt_hot_live_author"
 )

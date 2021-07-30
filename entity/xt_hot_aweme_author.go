@@ -17,17 +17,17 @@ type XtHotAwemeAuthor struct {
 }
 
 type XtHotAwemeAuthorData struct {
-	AvatarUri  string                   `json:"avatar_uri"`
-	City       string                   `json:"city"`
-	CoreUserId string                   `json:"core_user_id"`
-	Fields     []XtHotAwemeAuthorFields `json:"fields"`
-	IncRank    int                      `json:"inc_rank"`
-	InitRank   int                      `json:"init_rank"`
-	NickName   string                   `json:"nick_name"`
-	Province   string                   `json:"province"`
+	AvatarUri  string              `json:"avatar_uri"`
+	City       string              `json:"city"`
+	CoreUserId string              `json:"core_user_id"`
+	Fields     []XtHotAuthorFields `json:"fields"`
+	IncRank    int                 `json:"inc_rank"`
+	InitRank   int                 `json:"init_rank"`
+	NickName   string              `json:"nick_name"`
+	Province   string              `json:"province"`
 }
 
-type XtHotAwemeAuthorFields struct {
+type XtHotAuthorFields struct {
 	Label string `json:"label"`
 	Value string `json:"value"`
 }
