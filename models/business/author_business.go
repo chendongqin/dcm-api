@@ -410,7 +410,7 @@ func (a *AuthorBusiness) GetDyAuthorScore(liveScore entity.XtAuthorLiveScore, vi
 func (a *AuthorBusiness) HbaseGetAuthorRoomsRangDate(authorId string, startTime, endTime time.Time) (data map[string][]entity.DyAuthorLiveRoom, comErr global.CommonError) {
 	data = map[string][]entity.DyAuthorLiveRoom{}
 	startDate := startTime.Format("20060102")
-	endDate := startTime.AddDate(0, 0, 1).Format("20060102")
+	endDate := endTime.AddDate(0, 0, 1).Format("20060102")
 	query := hbasehelper.NewQuery()
 	startRow := authorId + "_" + startDate
 	endRow := authorId + "_" + endDate
