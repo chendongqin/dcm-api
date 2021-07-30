@@ -400,6 +400,7 @@ func (receiver *ProductController) ProductLiveRoomList() {
 		for _, v := range list {
 			if author, ok := authorMap[v.AuthorID]; ok {
 				v.AuthorRoomID = author.RoomID
+				v.Avatar = dyimg.Fix(author.Avatar)
 			}
 			item := dy.LiveRoomProductCount{
 				ProductInfo: v,
