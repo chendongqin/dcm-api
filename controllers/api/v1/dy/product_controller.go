@@ -16,6 +16,13 @@ type ProductController struct {
 	controllers.ApiBaseController
 }
 
+func (receiver *ProductController) GetCacheProductCate() {
+	productBusiness := business.NewProductBusiness()
+	cateList := productBusiness.GetCacheProductCate(true)
+	receiver.SuccReturn(cateList)
+	return
+}
+
 //商品分析
 func (receiver *ProductController) ProductBaseAnalysis() {
 	productId := receiver.GetString(":product_id", "")

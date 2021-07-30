@@ -3,10 +3,14 @@ package business
 import (
 	"dongchamao/entity"
 	"dongchamao/global"
+	"dongchamao/global/cache"
 	"dongchamao/global/utils"
+	"dongchamao/models/dcm"
 	"dongchamao/services/hbaseService"
 	"dongchamao/services/hbaseService/hbasehelper"
+	"dongchamao/structinit/repost/dy"
 	"fmt"
+	jsoniter "github.com/json-iterator/go"
 	"strings"
 	"time"
 )
@@ -18,7 +22,41 @@ func NewProductBusiness() *ProductBusiness {
 	return new(ProductBusiness)
 }
 
-func (receiver ProductBusiness) HbaseGetProductInfo(productId string) (data entity.DyProduct, comErr global.CommonError) {
+func (receiver *ProductBusiness) GetCacheProductCate(enableCache bool) []dy.DyCate {
+	memberKey := cache.GetCacheKey(cache.ConfigKeyCache, "product_cate")
+	pCate := make([]dy.DyCate, 0)
+	if enableCache == true {
+		jsonStr := global.Cache.Get(memberKey)
+		if jsonStr != "" {
+			_ = jsoniter.Unmarshal([]byte(jsonStr), &pCate)
+			return pCate
+		}
+	}
+	firstList := make([]dcm.DcProductCate, 0)
+	_ = dcm.GetSlaveDbSession().Where("level=1").Desc("weight").Find(&firstList)
+	for _, v := range firstList {
+		secondList := make([]dcm.DcProductCate, 0)
+		item := dy.DyCate{
+			Name:    v.Name,
+			SonCate: []dy.DyCate{},
+		}
+		_ = dcm.GetSlaveDbSession().Where("level=2 AND parent_id = ?", v.Id).Desc("weight").Find(&secondList)
+		for _, vs := range secondList {
+			item.SonCate = append(item.SonCate, dy.DyCate{
+				Name:    vs.Name,
+				SonCate: []dy.DyCate{},
+			})
+		}
+		pCate = append(pCate, item)
+	}
+	if len(pCate) > 0 {
+		userByte, _ := jsoniter.Marshal(pCate)
+		_ = global.Cache.Set(memberKey, string(userByte), 86400)
+	}
+	return pCate
+}
+
+func (receiver *ProductBusiness) HbaseGetProductInfo(productId string) (data entity.DyProduct, comErr global.CommonError) {
 	query := hbasehelper.NewQuery()
 	result, err := query.SetTable(hbaseService.HbaseDyProduct).GetByRowKey([]byte(productId))
 	if err != nil {
