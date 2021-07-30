@@ -17,6 +17,7 @@ type EsAuthorLiveProduct struct {
 	RoomID         string  `json:"room_id"`
 	AuthorID       string  `json:"author_id"`
 	RoomTitle      string  `json:"room_title"`
+	RoomCover      string  `json:"room_cover"`
 	Title          string  `json:"title"`
 	Nickname       string  `json:"nickname"`
 	Avatar         string  `json:"avatar"`

@@ -377,6 +377,7 @@ func (receiver *EsLiveBusiness) SearchProductRooms(productId, keyword, sortStr, 
 	for k, v := range list {
 		list[k].PredictSales = math.Floor(v.PredictSales)
 		list[k].Cover = dyimg.Fix(v.Cover)
+		list[k].RoomCover = dyimg.Fix(v.RoomCover)
 		//todo gmv处理
 		if v.RealGmv > 0 {
 			var sale float64 = 0

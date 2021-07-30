@@ -410,6 +410,10 @@ func (receiver *ProductController) ProductLiveRoomList() {
 				v.AuthorRoomID = author.RoomID
 				v.Avatar = dyimg.Fix(author.Avatar)
 			}
+			if v.RoomCover == "" {
+				liveInfo, _ := liveBusiness.HbaseGetLiveInfo(v.RoomID)
+				v.RoomCover = dyimg.Fix(liveInfo.Cover)
+			}
 			item := dy.LiveRoomProductCount{
 				ProductInfo: v,
 				ProductStartSale: dy.RoomProductSaleChart{
