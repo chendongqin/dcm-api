@@ -15,6 +15,7 @@ func NewRankBusiness() *RankBusiness {
 	return new(RankBusiness)
 }
 
+//抖音视频达人热榜
 func (receiver *RankBusiness) HbaseStartAuthorVideoRank(rankType, category string) (data []entity.XtHotAwemeAuthorData, comErr global.CommonError) {
 	rowKey := utils.Md5_encode(rankType + "_" + category)
 	query := hbasehelper.NewQuery()
