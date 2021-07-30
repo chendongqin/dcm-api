@@ -104,7 +104,7 @@ func (receiver *EsLiveBusiness) CountRoomProductByAuthorId(authorId string, star
 	esQuery.SetTerm("author_id", authorId)
 	esQuery.SetRange("start_time", map[string]interface{}{
 		"gte": startTime.Unix(),
-		"lte": endTime.Unix(),
+		"lt":  endTime.AddDate(0, 0, 1).Unix(),
 	})
 	_ = esMultiQuery.
 		SetTable(esTable).

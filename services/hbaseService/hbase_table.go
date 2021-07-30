@@ -28,4 +28,6 @@ const (
 	HbaseDyProductDaily          = "dy_product_daily"
 	HbaseDyProductLiveSalesTrend = "dy_product_live_sales_trend"
 	HbaseDyLivePromotionMonth    = "dy_live_promotion_month"
+
+	HbaseXtHotAwemeAuthorRank = "xt_hot_aweme_author"
 )
