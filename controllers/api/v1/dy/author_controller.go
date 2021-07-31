@@ -270,3 +270,43 @@ func (receiver *AuthorController) AuthorLiveRooms() {
 	})
 	return
 }
+
+//达人电商分析
+func (receiver *AuthorController) AuthorProductAnalyse() {
+	authorId := receiver.GetString(":author_id")
+	startTime, endTime, comErr := receiver.GetRangeDate()
+	if comErr != nil {
+		receiver.FailReturn(comErr)
+		return
+	}
+	keyword := receiver.GetString("keyword", "")
+	firstCate := receiver.GetString("first_cate", "")
+	secondCate := receiver.GetString("second_cate", "")
+	thirdCate := receiver.GetString("third_cate", "")
+	brandName := receiver.GetString("brand_name", "")
+	sortStr := receiver.GetString("sort", "")
+	orderBy := receiver.GetString("order_by", "")
+	shopType, _ := receiver.GetInt("shop_type", 0)
+	page := receiver.GetPage("page")
+	pageSize := receiver.GetPageSize("page_size", 10, 50)
+	if brandName == "不限" {
+		brandName = ""
+	}
+	if firstCate == "不限" {
+		firstCate = ""
+	}
+	authorBusiness := business.NewAuthorBusiness()
+	list, analysisCount, cateList, brandList, total, comErr := authorBusiness.GetAuthorProductAnalyse(authorId, keyword, firstCate, secondCate, thirdCate, brandName, sortStr, orderBy, shopType, startTime, endTime, page, pageSize)
+	if comErr != nil {
+		receiver.FailReturn(comErr)
+		return
+	}
+	receiver.SuccReturn(map[string]interface{}{
+		"list":           list,
+		"cate_list":      cateList,
+		"brand_list":     brandList,
+		"analysis_count": analysisCount,
+		"total":          total,
+	})
+	return
+}

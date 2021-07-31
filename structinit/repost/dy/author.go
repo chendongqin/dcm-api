@@ -39,3 +39,11 @@ type DyAuthorBasicChart struct {
 	CommentCount   int64 `json:"comment_count"`
 	ForwardCount   int64 `json:"forward_count"`
 }
+
+type DyAuthorProductAnalysisCount struct {
+	ProductNum int     `json:"product_num"`
+	Sales      float64 `json:"sales"`
+	Gmv        float64 `json:"gmv"`
+	RoomNum    int     `json:"room_num"`
+	VideoNum   int     `json:"video_num"`
+}

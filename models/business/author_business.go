@@ -5,10 +5,12 @@ import (
 	"dongchamao/global"
 	"dongchamao/global/utils"
 	"dongchamao/models/business/es"
+	esModel "dongchamao/models/es"
 	"dongchamao/services/dyimg"
 	"dongchamao/services/hbaseService"
 	"dongchamao/services/hbaseService/hbasehelper"
 	"dongchamao/structinit/repost/dy"
+	"math"
 	"sort"
 	"strings"
 	"time"
@@ -618,5 +620,184 @@ func (a *AuthorBusiness) CountLiveRoomAnalyse(authorId string, startTime, endTim
 		Date:       dateChart,
 		CountValue: amountChart,
 	}
+	return
+}
+
+//达人电商分析
+func (a *AuthorBusiness) GetAuthorProductAnalyse(authorId, keyword, firstCate, secondCate, thirdCate, brandName, sortStr, orderBy string, shopType int, startTime, endTime time.Time, page, pageSize int) (list []esModel.EsDyAuthorProductAnalysis, analysisCount dy.DyAuthorProductAnalysisCount, cateList []dy.LiveProductFirstCate, brandList []dy.NameValueChart, total int, comErr global.CommonError) {
+	if orderBy == "" {
+		orderBy = "desc"
+	}
+	if !utils.InArrayString(sortStr, []string{"price", "gmv", "sales", ""}) {
+		comErr = global.NewError(4000)
+		return
+	}
+	if !utils.InArrayString(orderBy, []string{"desc", "asc"}) {
+		comErr = global.NewError(4000)
+		return
+	}
+	shopId := ""
+	if shopType != 0 {
+		authorReputation, _ := a.HbaseGetAuthorReputation(authorId)
+		shopId = authorReputation.EncryptShopID
+	}
+	esAuthorBusiness := es.NewEsAuthorBusiness()
+	list, comErr = esAuthorBusiness.AuthorProductAnalysis(authorId, keyword, firstCate, secondCate, thirdCate, brandName, shopId, shopType, startTime, endTime)
+	if len(list) == 0 {
+		return
+	}
+	firstCateCountMap := map[string]int{}
+	brandNameCountMap := map[string]int{}
+	firstCateMap := map[string]map[string]bool{}
+	secondCateMap := map[string]map[string]bool{}
+	videoNum := 0
+	liveNum := 0
+	productMapList := map[string]esModel.EsDyAuthorProductAnalysis{}
+	var sumGmv float64 = 0
+	var sumSale float64 = 0
+	for _, v := range list {
+		//数据累加
+		videoNum += v.VedioCount
+		liveNum += v.RoomCount
+		v.Gmv = v.VideoPredictGmv + v.LivePredictGmv
+		v.Sales = math.Floor(v.VedioProductSales) + math.Floor(v.LivePredictSales)
+		sumGmv += v.Gmv
+		sumSale += math.Floor(v.Sales)
+		if p, ok := productMapList[v.ProductId]; ok {
+			p.Gmv += v.Gmv
+			p.Sales += v.Sales
+			p.VideoPredictGmv += v.VideoPredictGmv
+			p.LivePredictGmv += v.LivePredictGmv
+			p.VedioProductSales += math.Floor(v.VedioProductSales)
+			p.LivePredictSales += math.Floor(v.LivePredictSales)
+			p.RoomCount += v.RoomCount
+			p.VedioCount += v.VedioCount
+		} else {
+			total++
+			productMapList[v.ProductId] = v
+			//品牌聚合
+			brand := v.BrandName
+			if brand == "" {
+				brand = "其他"
+			}
+			if _, ok := brandNameCountMap[brand]; !ok {
+				brandNameCountMap[brand] = 1
+			} else {
+				brandNameCountMap[brand] += 1
+			}
+			//商品分类聚合
+			if v.DcmLevelFirst == "" {
+				v.DcmLevelFirst = "其他"
+			}
+			if _, ok := firstCateMap[v.DcmLevelFirst]; !ok {
+				firstCateMap[v.DcmLevelFirst] = map[string]bool{}
+			}
+			if _, ok := firstCateCountMap[v.DcmLevelFirst]; !ok {
+				firstCateCountMap[v.DcmLevelFirst] = 1
+			} else {
+				firstCateCountMap[v.DcmLevelFirst] += 1
+			}
+			if v.FirstCname == "" || v.DcmLevelFirst == "其他" {
+				continue
+			}
+			firstCateMap[v.DcmLevelFirst][v.FirstCname] = true
+			if _, ok := secondCateMap[v.FirstCname]; !ok {
+				secondCateMap[v.FirstCname] = map[string]bool{}
+			}
+			if v.SecondCname == "" {
+				continue
+			}
+			secondCateMap[v.FirstCname][v.SecondCname] = true
+			//简单数据处理
+			productMapList[v.ProductId] = v
+		}
+	}
+	//分类处理
+	for k, v := range firstCateMap {
+		secondCateList := make([]dy.LiveProductSecondCate, 0)
+		for ck, _ := range v {
+			if cv, ok := secondCateMap[ck]; ok {
+				secondCate := dy.LiveProductSecondCate{
+					Name: ck,
+				}
+				for tk, _ := range cv {
+					secondCate.Cate = append(secondCate.Cate, tk)
+				}
+				if len(secondCate.Cate) == 0 {
+					secondCate.Cate = []string{}
+				}
+				secondCateList = append(secondCateList, secondCate)
+			}
+		}
+		productNumber := 0
+		if n, ok := firstCateCountMap[k]; ok {
+			productNumber = n
+		}
+		item := dy.LiveProductFirstCate{
+			Name:       k,
+			ProductNum: productNumber,
+			Cate:       []dy.LiveProductSecondCate{},
+		}
+		if len(secondCateList) > 0 {
+			item.Cate = secondCateList
+		}
+		cateList = append(cateList, item)
+	}
+	//品牌处理
+	for k, v := range brandNameCountMap {
+		brandList = append(brandList, dy.NameValueChart{
+			Name:  k,
+			Value: v,
+		})
+	}
+	newList := make([]esModel.EsDyAuthorProductAnalysis, 0)
+	for _, v := range productMapList {
+		newList = append(newList, v)
+	}
+	//排序
+	if sortStr != "" {
+		sort.Slice(newList, func(i, j int) bool {
+			var left, right float64
+			switch sortStr {
+			case "price":
+				left = newList[i].Price
+				right = newList[j].Price
+			case "gmv":
+				left = newList[i].Gmv
+				right = newList[j].Gmv
+			case "sale":
+				left = newList[i].Sales
+				right = newList[j].Sales
+			}
+			if left == right {
+				return newList[i].ShelfTime > newList[i].ShelfTime
+			}
+			if orderBy == "desc" {
+				return left > right
+			}
+			return right > left
+		})
+	}
+	start := (page - 1) * pageSize
+	end := start + pageSize
+	listLen := len(newList)
+	if listLen < end {
+		end = listLen
+	}
+	list = newList[start:end]
+	productBusiness := NewProductBusiness()
+	for k, v := range list {
+		productInfo, _ := productBusiness.HbaseGetProductInfo(v.ProductId)
+		if v.Avatar == "" {
+			v.Avatar = productInfo.Image
+		}
+		list[k].Avatar = dyimg.Product(v.Avatar)
+		list[k].ProductStatus = productInfo.Status
+	}
+	analysisCount.ProductNum = total
+	analysisCount.RoomNum = liveNum
+	analysisCount.VideoNum = videoNum
+	analysisCount.Gmv = sumGmv
+	analysisCount.Sales = sumSale
 	return
 }

@@ -18,6 +18,7 @@ func init() {
 			beego.NSRouter("/live/rooms/:author_id/:start/:end", &v1dy.AuthorController{}, "get:AuthorLiveRooms"),
 			beego.NSRouter("/fans/analysis/:author_id", &v1dy.AuthorController{}, "get:AuthorFansAnalyse"),
 			beego.NSRouter("/reputation/:author_id", &v1dy.AuthorController{}, "get:AuthorStarSimpleData"),
+			beego.NSRouter("/product/analysis/:author_id/:start/:end", &v1dy.AuthorController{}, "get:AuthorProductAnalyse"),
 		),
 		beego.NSNamespace("/xt/author",
 			beego.NSRouter("/index/:author_id", &v1dy.AuthorController{}, "get:AuthorStarSimpleData"),

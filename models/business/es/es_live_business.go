@@ -92,7 +92,8 @@ func (receiver *EsLiveBusiness) CountRoomProductByRoomId(roomInfo entity.DyLiveI
 	total, _ := esMultiQuery.
 		SetTable(esTable).
 		AddMust(esQuery.Condition).
-		SetMultiQuery().FindCount()
+		SetMultiQuery().
+		FindCount()
 	return total
 }
 
@@ -111,7 +112,8 @@ func (receiver *EsLiveBusiness) CountRoomProductByAuthorId(authorId string, star
 		SetCollapse("product_id.keyword").
 		SetFields("product_id").
 		AddMust(esQuery.Condition).
-		SetMultiQuery().Query()
+		SetMultiQuery().
+		Query()
 	total := esMultiQuery.Count
 	return int64(total)
 }
@@ -145,7 +147,7 @@ func (receiver *EsLiveBusiness) RoomProductByRoomId(roomInfo entity.DyLiveInfo, 
 				"bool": map[string]interface{}{
 					"should": []map[string]interface{}{
 						{
-							"match_phrase": map[string]interface{}{"dcm_level_first": firstLabel},
+							"terms": map[string]interface{}{"dcm_level_first.keyword": []string{firstLabel, ""}},
 						},
 						{
 							"bool": map[string]interface{}{
@@ -162,19 +164,19 @@ func (receiver *EsLiveBusiness) RoomProductByRoomId(roomInfo entity.DyLiveInfo, 
 			secondLabel = ""
 			thirdLabel = ""
 		} else {
-			esQuery.SetMatchPhrase("dcm_level_first", firstLabel)
+			esQuery.SetTerm("dcm_level_first", firstLabel)
 		}
 	}
 	if secondLabel != "" {
-		esQuery.SetMatchPhrase("first_cname", secondLabel)
+		esQuery.SetTerm("first_cname", secondLabel)
 	}
 	if thirdLabel != "" {
-		esQuery.SetMatchPhrase("second_cname", thirdLabel)
+		esQuery.SetTerm("second_cname", thirdLabel)
 	}
 	results := esMultiQuery.
 		SetTable(esTable).
 		AddMust(esQuery.Condition).
-		SetLimit(0, 1000).
+		SetLimit(0, 5000).
 		SetOrderBy(elasticsearch.NewElasticOrder().Add(sortStr, orderBy).Order).
 		SetMultiQuery().
 		Query()
@@ -243,7 +245,7 @@ func (receiver *EsLiveBusiness) AllRoomProductCateByRoomId(roomInfo entity.DyLiv
 		SetFields("dcm_level_first", "first_cname", "second_cname").
 		SetTable(esTable).
 		AddMust(esQuery.Condition).
-		SetLimit(0, 1000).
+		SetLimit(0, 5000).
 		SetOrderBy(elasticsearch.NewElasticOrder().Add("start_time", "desc").Order).
 		SetMultiQuery().
 		Query()
@@ -299,13 +301,13 @@ func (receiver *EsLiveBusiness) AllRoomProductCateByRoomId(roomInfo entity.DyLiv
 				secondCateList = append(secondCateList, secondCate)
 			}
 		}
-		productNum := 0
+		productNumber := 0
 		if n, ok := firstCateCountMap[k]; ok {
-			productNum = n
+			productNumber = n
 		}
 		item := dy.LiveProductFirstCate{
 			Name:       k,
-			ProductNum: productNum,
+			ProductNum: productNumber,
 			Cate:       []dy.LiveProductSecondCate{},
 		}
 		if len(secondCateList) > 0 {
