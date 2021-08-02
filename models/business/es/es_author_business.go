@@ -18,10 +18,10 @@ func NewEsAuthorBusiness() *EsAuthorBusiness {
 func (receiver *EsAuthorBusiness) AuthorProductAnalysis(authorId, keyword string, startTime, endTime time.Time) (list []es.EsDyAuthorProductAnalysis, comErr global.CommonError) {
 	esTable := GetESTableByTime(es.DyAuthorProductAnalysis, startTime, endTime)
 	esQuery, esMultiQuery := elasticsearch.NewElasticQueryGroup()
-	esQuery.SetTerm("author_id", authorId)
+	//esQuery.SetTerm("author_id", authorId)
 	esQuery.SetRange("shelf_time", map[string]interface{}{
-		"gte": startTime.Unix(),
-		"lt":  endTime.AddDate(0, 0, 1).Unix(),
+		"gte": 0,
+		//"lt":  endTime.AddDate(0, 0, 1).Unix(),
 	})
 	if keyword != "" {
 		esQuery.SetMatchPhrase("title", keyword)
