@@ -2,7 +2,7 @@ package dy
 
 import (
 	controllers "dongchamao/controllers/api"
-	"dongchamao/models/business"
+	"dongchamao/models/hbase"
 )
 
 type RankController struct {
@@ -13,8 +13,7 @@ type RankController struct {
 func (receiver *RankController) DyStartAuthorVideoRank() {
 	rankType := receiver.GetString("rank_type", "达人指数榜")
 	category := receiver.GetString("category", "全部")
-	rankBusiness := business.NewRankBusiness()
-	data, _ := rankBusiness.HbaseStartAuthorVideoRank(rankType, category)
+	data, _ := hbase.GetStartAuthorVideoRank(rankType, category)
 	receiver.SuccReturn(data)
 	return
 }
@@ -22,8 +21,7 @@ func (receiver *RankController) DyStartAuthorVideoRank() {
 //抖音直播达人热榜
 func (receiver *RankController) DyStartAuthorLiveRank() {
 	rankType := receiver.GetString("rank_type", "达人指数榜")
-	rankBusiness := business.NewRankBusiness()
-	data, _ := rankBusiness.HbaseStartAuthorLiveRank(rankType)
+	data, _ := hbase.GetStartAuthorLiveRank(rankType)
 	receiver.SuccReturn(data)
 	return
 }

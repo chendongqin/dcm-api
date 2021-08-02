@@ -1,7 +1,7 @@
 package business
 
 import (
-	"dongchamao/entity"
+	"dongchamao/models/hbase/entity"
 	"dongchamao/structinit/repost/dy"
 	"sort"
 )

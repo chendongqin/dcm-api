@@ -2,11 +2,12 @@ package dy
 
 import (
 	controllers "dongchamao/controllers/api"
-	"dongchamao/entity"
 	"dongchamao/global"
 	"dongchamao/global/utils"
 	"dongchamao/models/business"
 	"dongchamao/models/business/es"
+	"dongchamao/models/hbase"
+	entity2 "dongchamao/models/hbase/entity"
 	"dongchamao/services/dyimg"
 	"dongchamao/structinit/repost/dy"
 	"time"
@@ -35,10 +36,9 @@ func (receiver *ProductController) ProductBaseAnalysis() {
 		receiver.FailReturn(comErr)
 		return
 	}
-	productBusiness := business.NewProductBusiness()
-	info, _ := productBusiness.HbaseGetProductDailyRangDate(productId, startTime, endTime)
-	monthData, _ := productBusiness.HbaseGetPromotionMonth(productId)
-	dailyMapData := map[string]entity.DyLiveProductDaily{}
+	info, _ := hbase.GetProductDailyRangDate(productId, startTime, endTime)
+	monthData, _ := hbase.GetPromotionMonth(productId)
+	dailyMapData := map[string]entity2.DyLiveProductDaily{}
 	for _, v := range monthData.DailyList {
 		t, _ := time.ParseInLocation("2006/01/02", v.StatisticsTime, time.Local)
 		if t.Before(startTime) || t.After(endTime) {
@@ -153,17 +153,17 @@ func (receiver *ProductController) ProductBase() {
 		return
 	}
 	productBusiness := business.NewProductBusiness()
-	productInfo, comErr := productBusiness.HbaseGetProductInfo(productId)
+	productInfo, comErr := hbase.GetProductInfo(productId)
 	if comErr != nil {
 		receiver.FailReturn(comErr)
 		return
 	}
-	brandInfo, _ := productBusiness.HbaseGetDyProductBrand(productId)
+	brandInfo, _ := hbase.GetDyProductBrand(productId)
 	yesterdayDate := time.Now().AddDate(0, 0, -1).Format("20060102")
 	yesterdayTime, _ := time.ParseInLocation("20060102", yesterdayDate, time.Local)
 	startTime := yesterdayTime.AddDate(0, 0, -30)
-	monthData, _ := productBusiness.HbaseGetPromotionMonth(productId)
-	relatedInfo, _ := productBusiness.HbaseGetProductDailyRangDate(productId, startTime, yesterdayTime)
+	monthData, _ := hbase.GetPromotionMonth(productId)
+	relatedInfo, _ := hbase.GetProductDailyRangDate(productId, startTime, yesterdayTime)
 	var roomNum int
 	var awemeNum int
 	authorMap := map[string]string{}
@@ -223,7 +223,7 @@ func (receiver *ProductController) ProductBase() {
 	last15Day := utils.ToInt64(time.Now().AddDate(0, 0, -15).Format("20060102"))
 	last7Day := utils.ToInt64(time.Now().AddDate(0, 0, -7).Format("20060102"))
 	priceTrends := business.ProductPriceTrendsListOrderByTime(productInfo.PriceTrends)
-	priceMap := map[int64]entity.DyProductPriceTrend{}
+	priceMap := map[int64]entity2.DyProductPriceTrend{}
 	for _, v := range priceTrends {
 		if last30Day > v.StartTime {
 			continue
@@ -231,7 +231,7 @@ func (receiver *ProductController) ProductBase() {
 		priceMap[v.StartTime] = v
 	}
 	begin, _ := time.ParseInLocation("20060102", time.Now().AddDate(0, 0, -30).Format("20060102"), time.Local)
-	beforeData := entity.DyProductPriceTrend{}
+	beforeData := entity2.DyProductPriceTrend{}
 	for {
 		if begin.After(time.Now()) {
 			break
@@ -297,8 +297,7 @@ func (receiver *ProductController) ProductLiveChart() {
 		receiver.FailReturn(comErr)
 		return
 	}
-	productBusiness := business.NewProductBusiness()
-	infoMap, _ := productBusiness.HbaseGetProductLiveSalesRangDate(productId, startTime, endTime)
+	infoMap, _ := hbase.GetProductLiveSalesRangDate(productId, startTime, endTime)
 	dateChart := make([]string, 0)
 	saleChart := make([]int64, 0)
 	roomNumChart := make([]int, 0)
@@ -363,14 +362,14 @@ func (receiver *ProductController) ProductLiveRoomList() {
 		pmtMap := map[string][]dy.LiveRoomProductSaleStatus{}
 		curChan := make(chan map[string]dy.LiveCurProductCount, 0)
 		pmtChan := make(chan map[string][]dy.LiveRoomProductSaleStatus, 0)
-		authorChan := make(chan map[string]entity.DyAuthorData, 0)
-		authorMap := map[string]entity.DyAuthorData{}
+		authorChan := make(chan map[string]entity2.DyAuthorData, 0)
+		authorMap := map[string]entity2.DyAuthorData{}
 		for _, v := range list {
-			go func(curCh chan map[string]dy.LiveCurProductCount, pmtCh chan map[string][]dy.LiveRoomProductSaleStatus, authorCh chan map[string]entity.DyAuthorData, roomId, productId, authorId string) {
+			go func(curCh chan map[string]dy.LiveCurProductCount, pmtCh chan map[string][]dy.LiveRoomProductSaleStatus, authorCh chan map[string]entity2.DyAuthorData, roomId, productId, authorId string) {
 				curMapTmp := liveBusiness.RoomCurProductByIds(roomId, []string{productId})
 				pmtMapTmp := liveBusiness.RoomPmtProductByIds(roomId, []string{productId})
 				authorData, _ := authorBusiness.HbaseGetAuthor(authorId)
-				authorMapTmp := map[string]entity.DyAuthorData{}
+				authorMapTmp := map[string]entity2.DyAuthorData{}
 				roomProductCurMap := map[string]dy.LiveCurProductCount{}
 				roomProductPmtMap := map[string][]dy.LiveRoomProductSaleStatus{}
 				if c, ok := curMapTmp[productId]; ok {
@@ -418,7 +417,7 @@ func (receiver *ProductController) ProductLiveRoomList() {
 				v.Avatar = dyimg.Fix(author.Avatar)
 			}
 			if v.RoomCover == "" {
-				liveInfo, _ := liveBusiness.HbaseGetLiveInfo(v.RoomID)
+				liveInfo, _ := hbase.GetLiveInfo(v.RoomID)
 				v.RoomCover = dyimg.Fix(liveInfo.Cover)
 			}
 			item := dy.LiveRoomProductCount{

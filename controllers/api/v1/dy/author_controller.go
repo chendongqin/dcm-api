@@ -2,10 +2,11 @@ package dy
 
 import (
 	controllers "dongchamao/controllers/api"
-	"dongchamao/entity"
 	"dongchamao/global"
 	"dongchamao/models/business"
 	"dongchamao/models/business/es"
+	"dongchamao/models/hbase"
+	entity2 "dongchamao/models/hbase/entity"
 	"dongchamao/structinit/repost/dy"
 	"time"
 )
@@ -41,8 +42,8 @@ func (receiver *AuthorController) AuthorBaseData() {
 		receiver.FailReturn(comErr)
 		return
 	}
-	fansClub, _ := authorBusiness.HbaseGetAuthorFansClub(authorId)
-	basic, _ := authorBusiness.HbaseGetAuthorBasic(authorId, "")
+	fansClub, _ := hbase.GetAuthorFansClub(authorId)
+	basic, _ := hbase.GetAuthorBasic(authorId, "")
 	returnMap := map[string]interface{}{
 		"author_base": authorBase,
 		"reputation": dy.RepostSimpleReputation{
@@ -72,7 +73,7 @@ func (receiver *AuthorController) AuthorStarSimpleData() {
 		"star_detail":     nil,
 	}
 	authorBusiness := business.NewAuthorBusiness()
-	xtDetail, comErr := authorBusiness.HbaseGetXtAuthorDetail(authorId)
+	xtDetail, comErr := hbase.GetXtAuthorDetail(authorId)
 	if comErr == nil {
 		returnMap["has_star_detail"] = true
 		returnMap["star_detail"] = authorBusiness.GetDyAuthorScore(xtDetail.LiveScore, xtDetail.Score)
@@ -180,20 +181,19 @@ func (receiver *AuthorController) AuthorFansAnalyse() {
 		receiver.FailReturn(global.NewError(4000))
 		return
 	}
-	authorBusiness := business.NewAuthorBusiness()
-	detail, comErr := authorBusiness.HbaseGetXtAuthorDetail(authorId)
-	data := map[string][]entity.XtDistributionsList{}
+	detail, comErr := hbase.GetXtAuthorDetail(authorId)
+	data := map[string][]entity2.XtDistributionsList{}
 	if comErr == nil {
 		for _, v := range detail.Distributions {
 			name := ""
 			switch v.Type {
-			case entity.XtGenderDistribution:
+			case entity2.XtGenderDistribution:
 				name = "gender"
-			case entity.XtCityDistribution:
+			case entity2.XtCityDistribution:
 				name = "city"
-			case entity.XtAgeDistribution:
+			case entity2.XtAgeDistribution:
 				name = "age"
-			case entity.XtProvinceDistribution:
+			case entity2.XtProvinceDistribution:
 				name = "province"
 			default:
 				continue
@@ -201,13 +201,13 @@ func (receiver *AuthorController) AuthorFansAnalyse() {
 			data[name] = v.DistributionList
 		}
 	} else {
-		data["gender"] = []entity.XtDistributionsList{}
-		data["city"] = []entity.XtDistributionsList{}
-		data["age"] = []entity.XtDistributionsList{}
-		data["province"] = []entity.XtDistributionsList{}
+		data["gender"] = []entity2.XtDistributionsList{}
+		data["city"] = []entity2.XtDistributionsList{}
+		data["age"] = []entity2.XtDistributionsList{}
+		data["province"] = []entity2.XtDistributionsList{}
 	}
-	data["active_day"] = []entity.XtDistributionsList{}
-	data["active_week"] = []entity.XtDistributionsList{}
+	data["active_day"] = []entity2.XtDistributionsList{}
+	data["active_week"] = []entity2.XtDistributionsList{}
 	var countCity int64 = 0
 	var countPro int64 = 0
 	for _, v := range data["city"] {

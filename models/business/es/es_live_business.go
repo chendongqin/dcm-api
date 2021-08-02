@@ -1,11 +1,11 @@
 package es
 
 import (
-	"dongchamao/entity"
 	"dongchamao/global"
 	"dongchamao/global/cache"
 	"dongchamao/global/utils"
 	"dongchamao/models/es"
+	entity2 "dongchamao/models/hbase/entity"
 	"dongchamao/services/dyimg"
 	"dongchamao/services/elasticsearch"
 	"dongchamao/structinit/repost/dy"
@@ -84,7 +84,7 @@ func (receiver *EsLiveBusiness) SearchAuthorRooms(authorId, keyword, sortStr, or
 }
 
 //直播间商品统计
-func (receiver *EsLiveBusiness) CountRoomProductByRoomId(roomInfo entity.DyLiveInfo) int64 {
+func (receiver *EsLiveBusiness) CountRoomProductByRoomId(roomInfo entity2.DyLiveInfo) int64 {
 	date := time.Unix(roomInfo.DiscoverTime, 0).Format("20060102")
 	esTable := fmt.Sprintf(es.DyRoomProductRecords, date)
 	esQuery, esMultiQuery := elasticsearch.NewElasticQueryGroup()
@@ -119,7 +119,7 @@ func (receiver *EsLiveBusiness) CountRoomProductByAuthorId(authorId string, star
 }
 
 //直播间筛选
-func (receiver *EsLiveBusiness) RoomProductByRoomId(roomInfo entity.DyLiveInfo, keyword, sortStr, orderBy, firstLabel, secondLabel, thirdLabel string, page, pageSize int) (list []es.EsAuthorLiveProduct, productCount dy.LiveProductCount, total int, comErr global.CommonError) {
+func (receiver *EsLiveBusiness) RoomProductByRoomId(roomInfo entity2.DyLiveInfo, keyword, sortStr, orderBy, firstLabel, secondLabel, thirdLabel string, page, pageSize int) (list []es.EsAuthorLiveProduct, productCount dy.LiveProductCount, total int, comErr global.CommonError) {
 	if sortStr == "" {
 		sortStr = "start_time"
 	}
@@ -229,7 +229,7 @@ func (receiver *EsLiveBusiness) RoomProductByRoomId(roomInfo entity.DyLiveInfo, 
 }
 
 //直播间商品分类统计
-func (receiver *EsLiveBusiness) AllRoomProductCateByRoomId(roomInfo entity.DyLiveInfo) (productCount dy.LiveProductCateCount) {
+func (receiver *EsLiveBusiness) AllRoomProductCateByRoomId(roomInfo entity2.DyLiveInfo) (productCount dy.LiveProductCateCount) {
 	cKey := cache.GetCacheKey(cache.LiveRoomProductCount, roomInfo.RoomID)
 	productCountJson := global.Cache.Get(cKey)
 	if productCountJson != "" {

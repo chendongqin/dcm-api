@@ -2,9 +2,10 @@ package dy
 
 import (
 	controllers "dongchamao/controllers/api"
-	"dongchamao/entity"
 	"dongchamao/global"
 	"dongchamao/models/business"
+	"dongchamao/models/hbase"
+	entity2 "dongchamao/models/hbase/entity"
 	"dongchamao/structinit/repost/dy"
 )
 
@@ -18,8 +19,7 @@ func (receiver *AwemeController) AwemeBaseData() {
 		receiver.FailReturn(global.NewError(4000))
 		return
 	}
-	awemeBusiness := business.NewAwemeBusiness()
-	awemeBase, comErr := awemeBusiness.HbaseGetAweme(awemeId)
+	awemeBase, comErr := hbase.GetVideo(awemeId)
 	if comErr != nil {
 		receiver.FailReturn(comErr)
 		return
@@ -65,12 +65,12 @@ func (receiver *AwemeController) AwemeChart() {
 	}
 	//前一天数据，做增量计算
 	beginDatetime := t1
-	beforeData := entity.DyAwemeDiggCommentForwardCount{}
+	beforeData := entity2.DyAwemeDiggCommentForwardCount{}
 	beforeDay := beginDatetime.AddDate(0, 0, -1).Format("20060102")
 	if _, ok := awemeCount[beforeDay]; ok {
 		beforeData = awemeCount[beforeDay]
 	} else {
-		beforeData, _ = awemeBusiness.HbaseGetAwemeCountData(awemeId, beforeDay)
+		beforeData, _ = hbase.GetVideoCountData(awemeId, beforeDay)
 	}
 	dateArr := make([]string, 0)
 	diggCountArr := make([]int64, 0)

@@ -1,13 +1,14 @@
 package business
 
 import (
-	"dongchamao/entity"
 	"dongchamao/global"
 	"dongchamao/global/utils"
+	"dongchamao/models/hbase"
+	"dongchamao/models/hbase/entity"
 	"dongchamao/services/hbaseService"
-	"dongchamao/services/hbaseService/hbasehelper"
 	"dongchamao/structinit/repost/dy"
 	"fmt"
+	"sync"
 	"time"
 )
 
@@ -20,14 +21,7 @@ func NewAuthorAwemeBusiness() *AuthorAwemeBusiness {
 
 //获取视频概览数据
 func (a *AuthorAwemeBusiness) HbaseGetVideoAggRangeDate(authorId string, startTime, endTime time.Time) (data dy.AuthorVideoOverview) {
-	query := hbasehelper.NewQuery()
-	startRow := authorId + "_" + startTime.Format("20060102")
-	endRow := authorId + "_" + endTime.AddDate(0, 0, 1).Format("20060102")
-	results, err := query.
-		SetTable(hbaseService.HbaseDyAuthorAwemeAgg).
-		SetStartRow([]byte(startRow)).
-		SetStopRow([]byte(endRow)).
-		Scan(1000)
+	results, err := hbase.GetAuthorVideoAggRangeDate(authorId, startTime, endTime)
 	if err != nil {
 		return
 	}
@@ -41,9 +35,11 @@ func (a *AuthorAwemeBusiness) HbaseGetVideoAggRangeDate(authorId string, startTi
 		"up_0":   0,
 	}
 	publishChartMap := map[string]int{}
-	allAwemeChan := make(chan map[string]map[string]entity.DyAwemeDiggCommentForwardCount, 0)
+	allAwemeList := make([]map[string]map[string]entity.DyAwemeDiggCommentForwardCount, 0)
 	allAwemeData := map[string]map[string]entity.DyAwemeDiggCommentForwardCount{}
 	awemeIds := make([]string, 0)
+	var wg sync.WaitGroup
+	wg.Add(len(results))
 	for _, v := range results {
 		dataMap := hbaseService.HbaseFormat(v, entity.DyAuthorAwemeAggMap)
 		hData := &entity.DyAuthorAwemeAggData{}
@@ -101,17 +97,20 @@ func (a *AuthorAwemeBusiness) HbaseGetVideoAggRangeDate(authorId string, startTi
 			}
 			//视频趋势数据处理
 			createTime := time.Unix(agg.AwemeCreateTime, 0)
-			go func(ch chan map[string]map[string]entity.DyAwemeDiggCommentForwardCount, awemeId string, startT, endT time.Time) {
+			go func(awemeId string, startT, endT time.Time, wg *sync.WaitGroup) {
+				defer global.RecoverPanic()
+				defer wg.Done()
 				awemeBusiness := NewAwemeBusiness()
 				awemeData, comErr := awemeBusiness.GetAwemeChart(awemeId, startT, endT, false)
 				if comErr == nil {
-					allAwemeDataMap := map[string]map[string]entity.DyAwemeDiggCommentForwardCount{}
-					allAwemeDataMap[awemeId] = awemeData
-					ch <- allAwemeDataMap
+					allAwemeList = append(allAwemeList, map[string]map[string]entity.DyAwemeDiggCommentForwardCount{
+						awemeId: awemeData,
+					})
 				}
-			}(allAwemeChan, agg.AwemeID, createTime, endTime)
+			}(agg.AwemeID, createTime, endTime, &wg)
 		}
 	}
+	wg.Wait()
 	if videoNum > 0 {
 		data.AvgDiggCount = diggCount / videoNum
 		data.AvgCommentCount = commentCount / videoNum
@@ -143,11 +142,7 @@ func (a *AuthorAwemeBusiness) HbaseGetVideoAggRangeDate(authorId string, startTi
 		})
 	}
 	//总增量图表
-	for i := 0; i < int(videoNum); i++ {
-		tmp, ok := <-allAwemeChan
-		if !ok {
-			break
-		}
+	for _, tmp := range allAwemeList {
 		for k, v := range tmp {
 			allAwemeData[k] = v
 		}
@@ -208,47 +203,5 @@ func (a *AuthorAwemeBusiness) HbaseGetVideoAggRangeDate(authorId string, startTi
 		CountValue: commentCountArr,
 		IncValue:   commentIncArr,
 	}
-	return
-}
-
-//粉丝某天数据
-func (a *AuthorAwemeBusiness) HbaseGetAwemeCountDataRangeDate(awemeId, startDate, endDate string) (data map[string]entity.DyAwemeDiggCommentForwardCount, comErr global.CommonError) {
-	query := hbasehelper.NewQuery()
-	startRow := awemeId + "_" + startDate
-	endRow := awemeId + "_" + endDate
-	results, err := query.
-		SetTable(hbaseService.HbaseDyAwemeDiggCommentForwardCount).
-		SetStartRow([]byte(startRow)).
-		SetStopRow([]byte(endRow)).
-		Scan(1000)
-	if err != nil {
-		comErr = global.NewMsgError(err.Error())
-		return
-	}
-	data = map[string]entity.DyAwemeDiggCommentForwardCount{}
-	for _, v := range results {
-		dataMap := hbaseService.HbaseFormat(v, entity.DyAwemeDiggCommentForwardCountMap)
-		hData := entity.DyAwemeDiggCommentForwardCount{}
-		utils.MapToStruct(dataMap, &hData)
-		t := time.Unix(hData.CrawlTime, 0)
-		date := t.Format("20060102")
-		data[date] = hData
-	}
-	return
-}
-
-//获取视频每天详情数据
-func (a *AuthorAwemeBusiness) HbaseGetAwemeCountData(awemeId, date string) (data entity.DyAwemeDiggCommentForwardCount, comErr global.CommonError) {
-	query := hbasehelper.NewQuery()
-	startRow := awemeId + "_" + date
-	result, err := query.
-		SetTable(hbaseService.HbaseDyAwemeDiggCommentForwardCount).
-		GetByRowKey([]byte(startRow))
-	if err != nil {
-		comErr = global.NewMsgError(err.Error())
-		return
-	}
-	dataMap := hbaseService.HbaseFormat(result, entity.DyAwemeDiggCommentForwardCountMap)
-	utils.MapToStruct(dataMap, &data)
 	return
 }

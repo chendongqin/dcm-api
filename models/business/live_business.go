@@ -1,12 +1,10 @@
 package business
 
 import (
-	"dongchamao/entity"
 	"dongchamao/global"
 	"dongchamao/global/utils"
-	"dongchamao/services/dyimg"
-	"dongchamao/services/hbaseService"
-	"dongchamao/services/hbaseService/hbasehelper"
+	"dongchamao/models/hbase"
+	"dongchamao/models/hbase/entity"
 	"dongchamao/structinit/repost/dy"
 	"math"
 	"time"
@@ -21,44 +19,9 @@ func NewLiveBusiness() *LiveBusiness {
 	return new(LiveBusiness)
 }
 
-//获取直播间商品讲解数据
-func (l *LiveBusiness) HbaseGetLiveCurProduct(roomId string) (data entity.DyLiveCurProduct, comErr global.CommonError) {
-	query := hbasehelper.NewQuery()
-	result, err := query.SetTable(hbaseService.HbaseDyLiveCurProduct).GetByRowKey([]byte(roomId))
-	if err != nil {
-		comErr = global.NewMsgError(err.Error())
-		return
-	}
-	if result.Row == nil {
-		comErr = global.NewError(4040)
-		return
-	}
-	infoMap := hbaseService.HbaseFormat(result, entity.DyLiveCurProductMap)
-	utils.MapToStruct(infoMap, &data)
-	return
-}
-
-//直播间全网销量
-func (l *LiveBusiness) GetHbaseRoomProductInfo(roomId, productId string) (data entity.DyRoomProduct, comErr global.CommonError) {
-	query := hbasehelper.NewQuery()
-	rowKey := roomId + "_" + productId
-	result, err := query.SetTable(hbaseService.HbaseDyRoomProduct).GetByRowKey([]byte(rowKey))
-	if err != nil {
-		comErr = global.NewMsgError(err.Error())
-		return
-	}
-	if result.Row == nil {
-		comErr = global.NewError(4040)
-		return
-	}
-	infoMap := hbaseService.HbaseFormat(result, entity.DyRoomProductMap)
-	utils.MapToStruct(infoMap, &data)
-	return
-}
-
 //获取讲解商品数据
 func (l *LiveBusiness) RoomCurProductByIds(roomId string, productIds []string) map[string]dy.LiveCurProductCount {
-	curInfo, _ := l.HbaseGetLiveCurProduct(roomId)
+	curInfo, _ := hbase.GetLiveCurProduct(roomId)
 	productMap := map[string]dy.LiveCurProductCount{}
 	for _, v := range curInfo.Promotion {
 		if !utils.InArrayString(v.ProductID, productIds) {
@@ -111,7 +74,7 @@ func (l *LiveBusiness) RoomCurProductByIds(roomId string, productIds []string) m
 
 //获取商品数据
 func (l *LiveBusiness) RoomPmtProductByIds(roomId string, productIds []string) map[string][]dy.LiveRoomProductSaleStatus {
-	pmtInfo, _ := l.HbaseGetLivePmt(roomId)
+	pmtInfo, _ := hbase.GetLivePmt(roomId)
 	productMap := map[string][]dy.LiveRoomProductSaleStatus{}
 	for _, v := range pmtInfo.Promotions {
 		if !utils.InArrayString(v.ProductID, productIds) {
@@ -132,44 +95,6 @@ func (l *LiveBusiness) RoomPmtProductByIds(roomId string, productIds []string) m
 	return productMap
 }
 
-//直播间信息
-func (l *LiveBusiness) HbaseGetLiveInfo(roomId string) (data entity.DyLiveInfo, comErr global.CommonError) {
-	query := hbasehelper.NewQuery()
-	result, err := query.SetTable(hbaseService.HbaseDyLiveInfo).GetByRowKey([]byte(roomId))
-	if err != nil {
-		comErr = global.NewMsgError(err.Error())
-		return
-	}
-	if result.Row == nil {
-		comErr = global.NewError(4040)
-		return
-	}
-	liveInfoMap := hbaseService.HbaseFormat(result, entity.DyLiveInfoMap)
-	utils.MapToStruct(liveInfoMap, &data)
-	data.Cover = dyimg.Fix(data.Cover)
-	data.User.Avatar = dyimg.Fix(data.User.Avatar)
-	data.RoomID = roomId
-	return
-}
-
-//直播间带货口碑数据
-func (l *LiveBusiness) HbaseGetLiveReputation(roomId string) (data entity.DyLiveReputation, comErr global.CommonError) {
-	query := hbasehelper.NewQuery()
-	result, err := query.SetTable(hbaseService.HbaseDyLiveReputation).GetByRowKey([]byte(roomId))
-	if err != nil {
-		comErr = global.NewMsgError(err.Error())
-		return
-	}
-	if result.Row == nil {
-		comErr = global.NewError(4040)
-		return
-	}
-	infoMap := hbaseService.HbaseFormat(result, entity.DyLiveReputationMap)
-	utils.MapToStruct(infoMap, &data)
-	data.RoomId = roomId
-	return
-}
-
 //直播间商品趋势
 //func (l *LiveBusiness) CountRoomProductSaleChart(roomId string) {
 //	pmtInfo,comErr := l.HbaseGetLivePmt(roomId)
@@ -183,23 +108,6 @@ func (l *LiveBusiness) HbaseGetLiveReputation(roomId string) (data entity.DyLive
 //	productRoomChan := make(chan map[string]entity.DyRoomProduct,0)
 //
 //}
-
-//直播间带货数据
-func (l *LiveBusiness) HbaseGetLiveSalesData(roomId string) (data entity.DyAuthorLiveSalesData, comErr global.CommonError) {
-	query := hbasehelper.NewQuery()
-	result, err := query.SetTable(hbaseService.HbaseDyAuthorLiveSalesData).GetByRowKey([]byte(roomId))
-	if err != nil {
-		comErr = global.NewMsgError(err.Error())
-		return
-	}
-	if result.Row == nil {
-		comErr = global.NewError(4040)
-		return
-	}
-	detailMap := hbaseService.HbaseFormat(result, entity.DyAuthorLiveSalesDataMap)
-	utils.MapToStruct(detailMap, &data)
-	return
-}
 
 //OnlineTrends转化
 func (l *LiveBusiness) DealOnlineTrends(liveInfo entity.DyLiveInfo) (entity.DyLiveIncOnlineTrendsChart, entity.DyLiveOnlineTrends, int64) {
@@ -249,10 +157,11 @@ func (l *LiveBusiness) DealOnlineTrends(liveInfo entity.DyLiveInfo) (entity.DyLi
 //直播间分析
 func (l *LiveBusiness) LiveRoomAnalyse(roomId string) (data dy.DyLiveRoomAnalyse, comErr global.CommonError) {
 	data = dy.DyLiveRoomAnalyse{}
-	liveInfo, comErr := l.HbaseGetLiveInfo(roomId)
+	liveInfo, comErr := hbase.GetLiveInfo(roomId)
 	if comErr != nil {
 		return
 	}
+	data.DiscoverTime = liveInfo.DiscoverTime
 	data.TotalUserCount = liveInfo.TotalUser
 	data.LiveStartTime = liveInfo.CreateTime
 	data.BarrageCount = liveInfo.BarrageCount
@@ -267,7 +176,7 @@ func (l *LiveBusiness) LiveRoomAnalyse(roomId string) (data dy.DyLiveRoomAnalyse
 	} else {
 		data.LiveLongTime = liveInfo.FinishTime - liveInfo.CreateTime
 	}
-	salesData, _ := l.HbaseGetLiveSalesData(roomId)
+	salesData, _ := hbase.GetLiveSalesData(roomId)
 	if liveInfo.TotalUser > 0 {
 		data.Uv = (salesData.Gmv + float64(salesData.TicketCount)/10) / float64(liveInfo.TotalUser)
 		data.SaleRate = salesData.Sales / float64(liveInfo.TotalUser)
@@ -315,38 +224,9 @@ func (l *LiveBusiness) CountAvgOnlineTime(onlineTrends []entity.DyLiveOnlineTren
 	return avgOnlineTime
 }
 
-//直播间信息
-func (l *LiveBusiness) HbaseGetLivePmt(roomId string) (data entity.DyLivePmt, comErr global.CommonError) {
-	query := hbasehelper.NewQuery()
-	result, err := query.SetTable(hbaseService.HbaseDyLivePmt).GetByRowKey([]byte(roomId))
-	if err != nil {
-		comErr = global.NewMsgError(err.Error())
-		return
-	}
-	if result.Row == nil {
-		comErr = global.NewError(4040)
-		return
-	}
-	detailMap := hbaseService.HbaseFormat(result, entity.DyLivePmtMap)
-	utils.MapToStruct(detailMap, &data)
-	return
-}
-
 //获取直播榜单数据
 func (l *LiveBusiness) HbaseGetRankTrends(roomId string) (data []entity.DyLiveRankTrend, comErr global.CommonError) {
-	query := hbasehelper.NewQuery()
-	result, err := query.SetTable(hbaseService.HbaseDyLiveRankTrend).GetByRowKey([]byte(roomId))
-	if err != nil {
-		comErr = global.NewMsgError(err.Error())
-		return
-	}
-	if result.Row == nil {
-		comErr = global.NewError(4040)
-		return
-	}
-	detailMap := hbaseService.HbaseFormat(result, entity.DyLiveRankTrendsMap)
-	hData := &entity.DyLiveRankTrends{}
-	utils.MapToStruct(detailMap, hData)
+	hData, comErr := hbase.GetRankTrends(roomId)
 	data = RankTrendOrderByTime(hData.RankData)
 	return
 }
