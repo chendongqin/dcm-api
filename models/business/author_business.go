@@ -2,12 +2,14 @@ package business
 
 import (
 	"dongchamao/global"
+	"dongchamao/global/cache"
 	"dongchamao/global/utils"
 	"dongchamao/models/business/es"
 	"dongchamao/models/hbase"
 	"dongchamao/models/hbase/entity"
 	"dongchamao/services/dyimg"
 	"dongchamao/structinit/repost/dy"
+	jsoniter "github.com/json-iterator/go"
 	"math"
 	"sort"
 	"sync"
@@ -273,6 +275,7 @@ func (a *AuthorBusiness) CountLiveRoomAnalyse(authorId string, startTime, endTim
 	}
 	wg := sync.WaitGroup{}
 	wg.Add(roomNum)
+	hbaseDataChan := make(chan dy.DyLiveRoomAnalyse, roomNum)
 	for _, rooms := range roomsMap {
 		for _, room := range rooms {
 			go func(roomId string, wg *sync.WaitGroup) {
@@ -281,12 +284,19 @@ func (a *AuthorBusiness) CountLiveRoomAnalyse(authorId string, startTime, endTim
 				liveBusiness := NewLiveBusiness()
 				roomAnalyse, comErr := liveBusiness.LiveRoomAnalyse(roomId)
 				if comErr == nil {
-					liveDataList = append(liveDataList, roomAnalyse)
+					hbaseDataChan <- roomAnalyse
 				}
 			}(room.RoomID, &wg)
 		}
 	}
 	wg.Wait()
+	for i := 0; i < roomNum; i++ {
+		roomAnalyse, ok := <-hbaseDataChan
+		if !ok {
+			break
+		}
+		liveDataList = append(liveDataList, roomAnalyse)
+	}
 	sumData := map[string]dy.DyLiveRoomAnalyse{}
 	sumLongTime := map[string]int{}
 	sumHourTime := map[string]int{}
@@ -442,11 +452,6 @@ func (a *AuthorBusiness) GetAuthorProductAnalyse(authorId, keyword, firstCate, s
 		authorReputation, _ := a.HbaseGetAuthorReputation(authorId)
 		shopId = authorReputation.EncryptShopID
 	}
-	esAuthorBusiness := es.NewEsAuthorBusiness()
-	searchList, comErr := esAuthorBusiness.AuthorProductAnalysis(authorId, keyword, startTime, endTime)
-	if len(searchList) == 0 {
-		return
-	}
 	firstCateCountMap := map[string]int{}
 	brandNameCountMap := map[string]int{}
 	firstCateMap := map[string]map[string]bool{}
@@ -457,17 +462,45 @@ func (a *AuthorBusiness) GetAuthorProductAnalyse(authorId, keyword, firstCate, s
 	var sumGmv float64 = 0
 	var sumSale float64 = 0
 	hbaseDataList := make([]entity.DyAuthorProductAnalysis, 0)
-	var wg sync.WaitGroup
-	wg.Add(len(searchList))
-	for _, l := range searchList {
-		go func(rowKey string, wg *sync.WaitGroup) {
-			defer global.RecoverPanic()
-			defer wg.Done()
-			d, _ := hbase.GetAuthorProductAnalysis(rowKey)
-			hbaseDataList = append(hbaseDataList, d)
-		}(l.AuthorProductDate, &wg)
+	cacheKey := cache.GetCacheKey(cache.AuthorLiveProductList, authorId, startTime.Format("20210102"), endTime.Format("20210102"))
+	jsonStr := global.Cache.Get(cacheKey)
+	if jsonStr != "" && keyword == "" {
+		_ = jsoniter.Unmarshal([]byte(jsonStr), &hbaseDataList)
+	} else {
+		esAuthorBusiness := es.NewEsAuthorBusiness()
+		searchList, tmpErr := esAuthorBusiness.AuthorProductAnalysis(authorId, keyword, startTime, endTime)
+		if tmpErr != nil {
+			comErr = tmpErr
+			return
+		}
+		if len(searchList) == 0 {
+			return
+		}
+		var wg sync.WaitGroup
+		wg.Add(len(searchList))
+		hbaseDataChan := make(chan entity.DyAuthorProductAnalysis, len(searchList))
+		for _, l := range searchList {
+			go func(rowKey string, wg *sync.WaitGroup) {
+				defer global.RecoverPanic()
+				defer wg.Done()
+				d, _ := hbase.GetAuthorProductAnalysis(rowKey)
+				hbaseDataChan <- d
+			}(l.AuthorProductDate, &wg)
+		}
+		wg.Wait()
+		for i := 0; i < len(searchList); i++ {
+			v, ok := <-hbaseDataChan
+			if !ok {
+				break
+			}
+			hbaseDataList = append(hbaseDataList, v)
+		}
+		//缓存三分钟
+		if keyword == "" {
+			jsonByte, _ := jsoniter.Marshal(hbaseDataList)
+			global.Cache.Set(cacheKey, string(jsonByte), 180)
+		}
 	}
-	wg.Wait()
 	for _, v := range hbaseDataList {
 		//数据过滤
 		if firstCate == "其他" {

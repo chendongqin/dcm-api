@@ -164,14 +164,14 @@ func (receiver *EsLiveBusiness) RoomProductByRoomId(roomInfo entity2.DyLiveInfo,
 			secondLabel = ""
 			thirdLabel = ""
 		} else {
-			esQuery.SetTerm("dcm_level_first", firstLabel)
+			esQuery.SetTerm("dcm_level_first.keyword", firstLabel)
 		}
 	}
 	if secondLabel != "" {
-		esQuery.SetTerm("first_cname", secondLabel)
+		esQuery.SetTerm("first_cname.keyword", secondLabel)
 	}
 	if thirdLabel != "" {
-		esQuery.SetTerm("second_cname", thirdLabel)
+		esQuery.SetTerm("second_cname.keyword", thirdLabel)
 	}
 	results := esMultiQuery.
 		SetTable(esTable).
