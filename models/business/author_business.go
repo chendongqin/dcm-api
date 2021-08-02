@@ -2,14 +2,12 @@ package business
 
 import (
 	"dongchamao/global"
-	"dongchamao/global/cache"
 	"dongchamao/global/utils"
 	"dongchamao/models/business/es"
 	"dongchamao/models/hbase"
 	"dongchamao/models/hbase/entity"
 	"dongchamao/services/dyimg"
 	"dongchamao/structinit/repost/dy"
-	jsoniter "github.com/json-iterator/go"
 	"math"
 	"sort"
 	"sync"
@@ -462,44 +460,33 @@ func (a *AuthorBusiness) GetAuthorProductAnalyse(authorId, keyword, firstCate, s
 	var sumGmv float64 = 0
 	var sumSale float64 = 0
 	hbaseDataList := make([]entity.DyAuthorProductAnalysis, 0)
-	cacheKey := cache.GetCacheKey(cache.AuthorLiveProductList, authorId, startTime.Format("20210102"), endTime.Format("20210102"))
-	jsonStr := global.Cache.Get(cacheKey)
-	if jsonStr != "" && keyword == "" {
-		_ = jsoniter.Unmarshal([]byte(jsonStr), &hbaseDataList)
-	} else {
-		esAuthorBusiness := es.NewEsAuthorBusiness()
-		searchList, tmpErr := esAuthorBusiness.AuthorProductAnalysis(authorId, keyword, startTime, endTime)
-		if tmpErr != nil {
-			comErr = tmpErr
-			return
+	esAuthorBusiness := es.NewEsAuthorBusiness()
+	searchList, tmpErr := esAuthorBusiness.AuthorProductAnalysis(authorId, keyword, startTime, endTime)
+	if tmpErr != nil {
+		comErr = tmpErr
+		return
+	}
+	if len(searchList) == 0 {
+		return
+	}
+	var wg sync.WaitGroup
+	wg.Add(len(searchList))
+	hbaseDataChan := make(chan entity.DyAuthorProductAnalysis, len(searchList))
+	for _, l := range searchList {
+		go func(rowKey string, wg *sync.WaitGroup) {
+			defer global.RecoverPanic()
+			defer wg.Done()
+			d, _ := hbase.GetAuthorProductAnalysis(rowKey)
+			hbaseDataChan <- d
+		}(l.AuthorProductDate, &wg)
+	}
+	wg.Wait()
+	for i := 0; i < len(searchList); i++ {
+		v, ok := <-hbaseDataChan
+		if !ok {
+			break
 		}
-		if len(searchList) == 0 {
-			return
-		}
-		var wg sync.WaitGroup
-		wg.Add(len(searchList))
-		hbaseDataChan := make(chan entity.DyAuthorProductAnalysis, len(searchList))
-		for _, l := range searchList {
-			go func(rowKey string, wg *sync.WaitGroup) {
-				defer global.RecoverPanic()
-				defer wg.Done()
-				d, _ := hbase.GetAuthorProductAnalysis(rowKey)
-				hbaseDataChan <- d
-			}(l.AuthorProductDate, &wg)
-		}
-		wg.Wait()
-		for i := 0; i < len(searchList); i++ {
-			v, ok := <-hbaseDataChan
-			if !ok {
-				break
-			}
-			hbaseDataList = append(hbaseDataList, v)
-		}
-		//缓存三分钟
-		if keyword == "" {
-			jsonByte, _ := jsoniter.Marshal(hbaseDataList)
-			global.Cache.Set(cacheKey, string(jsonByte), 180)
-		}
+		hbaseDataList = append(hbaseDataList, v)
 	}
 	for _, v := range hbaseDataList {
 		//数据过滤

@@ -219,7 +219,6 @@ func (this *ApiBaseController) CheckSign() {
 	appId := this.Ctx.Input.Header("APPID")
 	this.AppId = utils.ToInt(appId)
 	if utils.InArrayString(appId, []string{"10000", "10001", "10002", "10003", "10004", "10005", ""}) {
-		return
 		if this.Ctx.Input.IP() == "127.0.0.1" {
 			return
 		}
