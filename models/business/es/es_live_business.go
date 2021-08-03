@@ -5,7 +5,7 @@ import (
 	"dongchamao/global/cache"
 	"dongchamao/global/utils"
 	"dongchamao/models/es"
-	entity2 "dongchamao/models/hbase/entity"
+	"dongchamao/models/hbase/entity"
 	"dongchamao/services/dyimg"
 	"dongchamao/services/elasticsearch"
 	"dongchamao/structinit/repost/dy"
@@ -84,7 +84,7 @@ func (receiver *EsLiveBusiness) SearchAuthorRooms(authorId, keyword, sortStr, or
 }
 
 //直播间商品统计
-func (receiver *EsLiveBusiness) CountRoomProductByRoomId(roomInfo entity2.DyLiveInfo) int64 {
+func (receiver *EsLiveBusiness) CountRoomProductByRoomId(roomInfo entity.DyLiveInfo) int64 {
 	date := time.Unix(roomInfo.DiscoverTime, 0).Format("20060102")
 	esTable := fmt.Sprintf(es.DyRoomProductRecords, date)
 	esQuery, esMultiQuery := elasticsearch.NewElasticQueryGroup()
@@ -119,7 +119,7 @@ func (receiver *EsLiveBusiness) CountRoomProductByAuthorId(authorId string, star
 }
 
 //直播间筛选
-func (receiver *EsLiveBusiness) RoomProductByRoomId(roomInfo entity2.DyLiveInfo, keyword, sortStr, orderBy, firstLabel, secondLabel, thirdLabel string, page, pageSize int) (list []es.EsAuthorLiveProduct, productCount dy.LiveProductCount, total int, comErr global.CommonError) {
+func (receiver *EsLiveBusiness) RoomProductByRoomId(roomInfo entity.DyLiveInfo, keyword, sortStr, orderBy, firstLabel, secondLabel, thirdLabel string, page, pageSize int) (list []es.EsAuthorLiveProduct, productCount dy.LiveProductCount, total int, comErr global.CommonError) {
 	if sortStr == "" {
 		sortStr = "start_time"
 	}
@@ -235,7 +235,7 @@ func (receiver *EsLiveBusiness) RoomProductByRoomId(roomInfo entity2.DyLiveInfo,
 }
 
 //直播间商品分类统计
-func (receiver *EsLiveBusiness) AllRoomProductCateByRoomId(roomInfo entity2.DyLiveInfo) (productCount dy.LiveProductCateCount) {
+func (receiver *EsLiveBusiness) AllRoomProductCateByRoomId(roomInfo entity.DyLiveInfo) (productCount dy.LiveProductCateCount) {
 	cKey := cache.GetCacheKey(cache.LiveRoomProductCount, roomInfo.RoomID)
 	productCountJson := global.Cache.Get(cKey)
 	if productCountJson != "" {
@@ -331,7 +331,7 @@ func (receiver *EsLiveBusiness) AllRoomProductCateByRoomId(roomInfo entity2.DyLi
 }
 
 //达人直播带货商品直播列表
-func (receiver *EsLiveBusiness) AuthorProductSearch(authorId, productId string, startTime, stopTime time.Time, page, pageSize int) (list []es.EsAuthorLiveProduct, total int, comErr global.CommonError) {
+func (receiver *EsLiveBusiness) GetAuthorProductSearchRoomIds(authorId, productId string, startTime, stopTime time.Time, page, pageSize int) (roomIds []string, total int, comErr global.CommonError) {
 	esTable := GetESTableByTime(es.DyRoomProductRecords, startTime, stopTime)
 	esQuery, esMultiQuery := elasticsearch.NewElasticQueryGroup()
 	esQuery.SetTerm("author_id", authorId)
@@ -342,31 +342,16 @@ func (receiver *EsLiveBusiness) AuthorProductSearch(authorId, productId string, 
 	})
 	results := esMultiQuery.
 		SetTable(esTable).
+		SetFields("room_id").
 		AddMust(esQuery.Condition).
 		SetMultiQuery().
 		SetLimit((page-1)*pageSize, pageSize).
 		SetOrderBy(elasticsearch.NewElasticOrder().Add("shelf_time", "desc").Order).
 		Query()
+	list := make([]es.EsAuthorLiveProduct, 0)
 	utils.MapToStruct(results, &list)
-	for k, v := range list {
-		list[k].PredictSales = math.Floor(v.PredictSales)
-		list[k].Cover = dyimg.Fix(v.Cover)
-		list[k].RoomCover = dyimg.Fix(v.RoomCover)
-		//todo gmv处理
-		if v.RealGmv > 0 {
-			var sale float64 = 0
-			if v.Price > 0 {
-				sale = math.Floor(v.RealGmv / v.Price)
-			}
-			list[k].PredictGmv = v.RealGmv
-			list[k].PredictSales = sale
-		}
-		if v.IsReturn == 1 && v.StartTime == v.ShelfTime {
-			list[k].IsReturn = 0
-		}
-		if v.Pv > 0 {
-			list[k].BuyRate = v.PredictSales / float64(v.Pv)
-		}
+	for _, v := range list {
+		roomIds = append(roomIds, v.RoomID)
 	}
 	total = esMultiQuery.Count
 	return

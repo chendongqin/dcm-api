@@ -310,3 +310,27 @@ func (receiver *AuthorController) AuthorProductAnalyse() {
 	})
 	return
 }
+
+//达人商品直播间
+func (receiver *AuthorController) AuthorProductRooms() {
+	authorId := receiver.GetString(":author_id", "")
+	productId := receiver.GetString(":product_id", "")
+	startTime, endTime, comErr := receiver.GetRangeDate()
+	if comErr != nil {
+		receiver.FailReturn(comErr)
+		return
+	}
+	page := receiver.GetPage("page")
+	pageSize := receiver.GetPageSize("page_size", 5, 10)
+	authorBusiness := business.NewAuthorBusiness()
+	list, total, comErr := authorBusiness.GetAuthorProductRooms(authorId, productId, startTime, endTime, page, pageSize)
+	if comErr != nil {
+		receiver.FailReturn(comErr)
+		return
+	}
+	receiver.SuccReturn(map[string]interface{}{
+		"list":  list,
+		"total": total,
+	})
+	return
+}

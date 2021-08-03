@@ -674,3 +674,27 @@ func (a *AuthorBusiness) GetAuthorProductAnalyse(authorId, keyword, firstCate, s
 	analysisCount.Sales = sumSale
 	return
 }
+
+//达人电商分析直播列表
+func (a *AuthorBusiness) GetAuthorProductRooms(authorId, productId string, startTime, stopTime time.Time, page, pageSize int) (list []dy.DyAuthorProductRoom, total int, comErr global.CommonError) {
+	esLiveBusiness := es.NewEsLiveBusiness()
+	roomIds, total, comErr := esLiveBusiness.GetAuthorProductSearchRoomIds(authorId, productId, startTime, stopTime, page, pageSize)
+	if len(roomIds) == 0 || comErr != nil {
+		return
+	}
+	list = []dy.DyAuthorProductRoom{}
+	for _, roomId := range roomIds {
+		liveInfo, _ := hbase.GetLiveInfo(roomId)
+		liveSaleData, _ := hbase.GetLiveSalesData(roomId)
+		list = append(list, dy.DyAuthorProductRoom{
+			RoomId:       roomId,
+			Cover:        dyimg.Fix(liveInfo.Cover),
+			CreateTime:   liveInfo.CreateTime,
+			Title:        liveInfo.Title,
+			MaxUserCount: liveInfo.MaxUserCount,
+			Gmv:          liveSaleData.Gmv,
+			Sales:        liveSaleData.Sales,
+		})
+	}
+	return
+}

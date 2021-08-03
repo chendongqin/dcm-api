@@ -32,6 +32,7 @@ var DyLiveInfoMap = HbaseEntity{
 	"trends_crawl_time":             {Long, "trends_crawl_time"},
 	"trends_online_trends":          {AJson, "online_trends"},
 	"other_barrage_count":           {Long, "barrage_count"},
+	"other_max_user_count":          {Long, "max_user_count"},
 	"trends_follower_count_trends":  {AJson, "follower_count_trends"},
 	"trends_fans_club_count_trends": {AJson, "fans_club_count_trends"},
 }
@@ -66,6 +67,7 @@ type DyLiveInfo struct {
 	WatchCnt             int64                      `json:"watch_cnt"`              //总pv
 	TrendsCrawlTime      int64                      `json:"trends_crawl_time"`      //更新时间
 	BarrageCount         int64                      `json:"barrage_count"`          //弹幕人数
+	MaxUserCount         int64                      `json:"max_user_count"`         //人气峰值
 	OnlineTrends         []DyLiveOnlineTrends       `json:"online_trends"`
 	FollowerCountTrends  []LiveFollowerCountTrends  `json:"follower_count_trends"`
 	FansClubCountTrends  []LiveAnsClubCountTrends   `json:"fans_club_count_trends"`

@@ -47,3 +47,13 @@ type DyAuthorProductAnalysisCount struct {
 	RoomNum    int     `json:"room_num"`
 	VideoNum   int     `json:"video_num"`
 }
+
+type DyAuthorProductRoom struct {
+	RoomId       string  `json:"room_id"`
+	Cover        string  `json:"cover"`
+	CreateTime   int64   `json:"create_time"`
+	Title        string  `json:"title"`
+	MaxUserCount int64   `json:"max_user_count"`
+	Gmv          float64 `json:"gmv"`
+	Sales        float64 `json:"sales"`
+}
