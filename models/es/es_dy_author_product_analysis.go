@@ -1,7 +1,7 @@
 package es
 
 type EsDyAuthorProductAnalysis struct {
-	AuthorProductDate string `json:"author_product_date"`
+	AuthorDateProduct string `json:"author_date_product"`
 	AuthorId          string `json:"author_id"`
 	ProductId         string `json:"product_id"`
 	Title             string `json:"title"`

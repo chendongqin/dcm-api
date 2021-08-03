@@ -470,30 +470,30 @@ func (a *AuthorBusiness) GetAuthorProductAnalyse(authorId, keyword, firstCate, s
 	if resLen == 0 {
 		return
 	}
-	//startRowKey := searchList[0].AuthorProductDate
-	//stopRowKey := searchList[resLen-1].AuthorProductDate
-	//hbaseDataList ,_ = hbase.GetAuthorProductAnalysisRange(startRowKey,stopRowKey)
-	//hbaseData ,_ := hbase.GetAuthorProductAnalysis(stopRowKey)
-	//hbaseDataList = append(hbaseDataList,hbaseData)
-	var wg sync.WaitGroup
-	wg.Add(len(searchList))
-	hbaseDataChan := make(chan entity.DyAuthorProductAnalysis, resLen)
-	for _, l := range searchList {
-		go func(rowKey string, wg *sync.WaitGroup) {
-			defer global.RecoverPanic()
-			defer wg.Done()
-			d, _ := hbase.GetAuthorProductAnalysis(rowKey)
-			hbaseDataChan <- d
-		}(l.AuthorProductDate, &wg)
-	}
-	wg.Wait()
-	for i := 0; i < resLen; i++ {
-		v, ok := <-hbaseDataChan
-		if !ok {
-			break
-		}
-		hbaseDataList = append(hbaseDataList, v)
-	}
+	startRowKey := searchList[0].AuthorDateProduct
+	stopRowKey := searchList[resLen-1].AuthorDateProduct
+	hbaseDataList, _ = hbase.GetAuthorProductAnalysisRange(startRowKey, stopRowKey)
+	hbaseData, _ := hbase.GetAuthorProductAnalysis(stopRowKey)
+	hbaseDataList = append(hbaseDataList, hbaseData)
+	//var wg sync.WaitGroup
+	//wg.Add(len(searchList))
+	//hbaseDataChan := make(chan entity.DyAuthorProductAnalysis, resLen)
+	//for _, l := range searchList {
+	//	go func(rowKey string, wg *sync.WaitGroup) {
+	//		defer global.RecoverPanic()
+	//		defer wg.Done()
+	//		d, _ := hbase.GetAuthorProductAnalysis(rowKey)
+	//		hbaseDataChan <- d
+	//	}(l.AuthorDateProduct, &wg)
+	//}
+	//wg.Wait()
+	//for i := 0; i < resLen; i++ {
+	//	v, ok := <-hbaseDataChan
+	//	if !ok {
+	//		break
+	//	}
+	//	hbaseDataList = append(hbaseDataList, v)
+	//}
 	for _, v := range hbaseDataList {
 		//数据过滤
 		if firstCate == "其他" {
