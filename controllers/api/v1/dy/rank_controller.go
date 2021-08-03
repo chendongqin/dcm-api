@@ -13,15 +13,21 @@ type RankController struct {
 func (receiver *RankController) DyStartAuthorVideoRank() {
 	rankType := receiver.GetString("rank_type", "达人指数榜")
 	category := receiver.GetString("category", "全部")
-	data, _ := hbase.GetStartAuthorVideoRank(rankType, category)
-	receiver.SuccReturn(data)
+	data, updateTime, _ := hbase.GetStartAuthorVideoRank(rankType, category)
+	receiver.SuccReturn(map[string]interface{}{
+		"list":        data,
+		"update_time": updateTime,
+	})
 	return
 }
 
 //抖音直播达人热榜
 func (receiver *RankController) DyStartAuthorLiveRank() {
 	rankType := receiver.GetString("rank_type", "达人指数榜")
-	data, _ := hbase.GetStartAuthorLiveRank(rankType)
-	receiver.SuccReturn(data)
+	data, updateTime, _ := hbase.GetStartAuthorLiveRank(rankType)
+	receiver.SuccReturn(map[string]interface{}{
+		"list":        data,
+		"update_time": updateTime,
+	})
 	return
 }

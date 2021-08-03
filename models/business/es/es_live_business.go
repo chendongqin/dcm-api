@@ -330,6 +330,48 @@ func (receiver *EsLiveBusiness) AllRoomProductCateByRoomId(roomInfo entity2.DyLi
 	return
 }
 
+//达人直播带货商品直播列表
+func (receiver *EsLiveBusiness) AuthorProductSearch(authorId, productId string, startTime, stopTime time.Time, page, pageSize int) (list []es.EsAuthorLiveProduct, total int, comErr global.CommonError) {
+	esTable := GetESTableByTime(es.DyRoomProductRecords, startTime, stopTime)
+	esQuery, esMultiQuery := elasticsearch.NewElasticQueryGroup()
+	esQuery.SetTerm("author_id", authorId)
+	esQuery.SetTerm("product_id", productId)
+	esQuery.SetRange("shelf_time", map[string]interface{}{
+		"gte": startTime.Unix(),
+		"lt":  stopTime.AddDate(0, 0, 1).Unix(),
+	})
+	results := esMultiQuery.
+		SetTable(esTable).
+		AddMust(esQuery.Condition).
+		SetMultiQuery().
+		SetLimit((page-1)*pageSize, pageSize).
+		SetOrderBy(elasticsearch.NewElasticOrder().Add("shelf_time", "desc").Order).
+		Query()
+	utils.MapToStruct(results, &list)
+	for k, v := range list {
+		list[k].PredictSales = math.Floor(v.PredictSales)
+		list[k].Cover = dyimg.Fix(v.Cover)
+		list[k].RoomCover = dyimg.Fix(v.RoomCover)
+		//todo gmv处理
+		if v.RealGmv > 0 {
+			var sale float64 = 0
+			if v.Price > 0 {
+				sale = math.Floor(v.RealGmv / v.Price)
+			}
+			list[k].PredictGmv = v.RealGmv
+			list[k].PredictSales = sale
+		}
+		if v.IsReturn == 1 && v.StartTime == v.ShelfTime {
+			list[k].IsReturn = 0
+		}
+		if v.Pv > 0 {
+			list[k].BuyRate = v.PredictSales / float64(v.Pv)
+		}
+	}
+	total = esMultiQuery.Count
+	return
+}
+
 //达人直播间搜索
 func (receiver *EsLiveBusiness) SearchProductRooms(productId, keyword, sortStr, orderBy string, page, size int, startTime, endTime time.Time) (list []es.EsAuthorLiveProduct, total int, comErr global.CommonError) {
 	if sortStr == "" {

@@ -9,7 +9,7 @@ import (
 )
 
 //抖音视频达人热榜
-func GetStartAuthorVideoRank(rankType, category string) (data []entity.XtHotAwemeAuthorData, comErr global.CommonError) {
+func GetStartAuthorVideoRank(rankType, category string) (data []entity.XtHotAwemeAuthorData, crawlTime int64, comErr global.CommonError) {
 	rowKey := utils.Md5_encode(rankType + "_" + category)
 	query := hbasehelper.NewQuery()
 	result, err := query.SetTable(hbaseService.HbaseXtHotAwemeAuthorRank).GetByRowKey([]byte(rowKey))
@@ -25,11 +25,12 @@ func GetStartAuthorVideoRank(rankType, category string) (data []entity.XtHotAwem
 	info := entity.XtHotAwemeAuthor{}
 	utils.MapToStruct(detailMap, &info)
 	data = info.Data
+	crawlTime = info.UpdateTime
 	return
 }
 
 //抖音直播达人热榜
-func GetStartAuthorLiveRank(rankType string) (data []entity.XtHotLiveAuthorData, comErr global.CommonError) {
+func GetStartAuthorLiveRank(rankType string) (data []entity.XtHotLiveAuthorData, crawlTime int64, comErr global.CommonError) {
 	rowKey := utils.Md5_encode(rankType)
 	query := hbasehelper.NewQuery()
 	result, err := query.SetTable(hbaseService.HbaseXtHotLiveAuthorRank).GetByRowKey([]byte(rowKey))
@@ -45,5 +46,6 @@ func GetStartAuthorLiveRank(rankType string) (data []entity.XtHotLiveAuthorData,
 	info := entity.XtHotLiveAuthor{}
 	utils.MapToStruct(detailMap, &info)
 	data = info.Data
+	crawlTime = info.UpdateTime
 	return
 }
