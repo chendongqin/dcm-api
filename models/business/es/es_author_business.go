@@ -29,7 +29,8 @@ func (receiver *EsAuthorBusiness) AuthorProductAnalysis(authorId, keyword string
 	results := esMultiQuery.
 		SetTable(esTable).
 		AddMust(esQuery.Condition).
-		SetLimit(0, 5000).
+		SetLimit(0, 10000).
+		SetOrderBy(elasticsearch.NewElasticOrder().Add("author_product_date.keyword", "asc").Order).
 		SetMultiQuery().
 		Query()
 	utils.MapToStruct(results, &list)

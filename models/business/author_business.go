@@ -466,12 +466,18 @@ func (a *AuthorBusiness) GetAuthorProductAnalyse(authorId, keyword, firstCate, s
 		comErr = tmpErr
 		return
 	}
-	if len(searchList) == 0 {
+	resLen := len(searchList)
+	if resLen == 0 {
 		return
 	}
+	//startRowKey := searchList[0].AuthorProductDate
+	//stopRowKey := searchList[resLen-1].AuthorProductDate
+	//hbaseDataList ,_ = hbase.GetAuthorProductAnalysisRange(startRowKey,stopRowKey)
+	//hbaseData ,_ := hbase.GetAuthorProductAnalysis(stopRowKey)
+	//hbaseDataList = append(hbaseDataList,hbaseData)
 	var wg sync.WaitGroup
 	wg.Add(len(searchList))
-	hbaseDataChan := make(chan entity.DyAuthorProductAnalysis, len(searchList))
+	hbaseDataChan := make(chan entity.DyAuthorProductAnalysis, resLen)
 	for _, l := range searchList {
 		go func(rowKey string, wg *sync.WaitGroup) {
 			defer global.RecoverPanic()
@@ -481,7 +487,7 @@ func (a *AuthorBusiness) GetAuthorProductAnalyse(authorId, keyword, firstCate, s
 		}(l.AuthorProductDate, &wg)
 	}
 	wg.Wait()
-	for i := 0; i < len(searchList); i++ {
+	for i := 0; i < resLen; i++ {
 		v, ok := <-hbaseDataChan
 		if !ok {
 			break
@@ -547,7 +553,7 @@ func (a *AuthorBusiness) GetAuthorProductAnalyse(authorId, keyword, firstCate, s
 				brandNameCountMap[brand] += 1
 			}
 			//商品分类聚合
-			if v.DcmLevelFirst == "" {
+			if v.DcmLevelFirst == "" || v.DcmLevelFirst == "null" {
 				v.DcmLevelFirst = "其他"
 			}
 			if _, ok := firstCateMap[v.DcmLevelFirst]; !ok {

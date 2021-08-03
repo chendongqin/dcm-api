@@ -250,3 +250,22 @@ func GetAuthorProductAnalysis(rowKey string) (data entity.DyAuthorProductAnalysi
 	utils.MapToStruct(infoMap, &data)
 	return
 }
+
+func GetAuthorProductAnalysisRange(startRowKey, stopRowKey string) (data []entity.DyAuthorProductAnalysis, comErr global.CommonError) {
+	query := hbasehelper.NewQuery()
+	results, err := query.
+		SetTable(hbaseService.HbaseDyAuthorProductAnalysis).
+		SetStartRow([]byte(startRowKey)).
+		SetStopRow([]byte(stopRowKey)).
+		Scan(10000)
+	if err != nil {
+		return
+	}
+	for _, v := range results {
+		infoMap := hbaseService.HbaseFormat(v, entity.DyAuthorProductAnalysisMap)
+		detail := entity.DyAuthorProductAnalysis{}
+		utils.MapToStruct(infoMap, &detail)
+		data = append(data, detail)
+	}
+	return
+}
