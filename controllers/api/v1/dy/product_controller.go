@@ -219,9 +219,10 @@ func (receiver *ProductController) ProductBase() {
 	dateChart30 := make([]int64, 0)
 	priceChart30 := make([]float64, 0)
 	cosPriceChart30 := make([]float64, 0)
+	today := utils.ToInt64(time.Now().Format("20060102"))
 	last30Day := utils.ToInt64(time.Now().AddDate(0, 0, -30).Format("20060102"))
-	last15Day := utils.ToInt64(time.Now().AddDate(0, 0, -15).Format("20060102"))
-	last7Day := utils.ToInt64(time.Now().AddDate(0, 0, -7).Format("20060102"))
+	last15Day := utils.ToInt64(time.Now().AddDate(0, 0, -16).Format("20060102"))
+	last7Day := utils.ToInt64(time.Now().AddDate(0, 0, -8).Format("20060102"))
 	priceTrends := business.ProductPriceTrendsListOrderByTime(productInfo.PriceTrends)
 	priceMap := map[int64]entity2.DyProductPriceTrend{}
 	for _, v := range priceTrends {
@@ -243,12 +244,12 @@ func (receiver *ProductController) ProductBase() {
 			beforeData.StartTime = nowDate
 		}
 		cosPrice := beforeData.Price * productInfo.CosRatio / 100
-		if beforeData.StartTime > last7Day {
+		if beforeData.StartTime >= last7Day && today != beforeData.StartTime {
 			dateChart7 = append(dateChart7, begin.Unix())
 			priceChart7 = append(priceChart7, beforeData.Price)
 			cosPriceChart7 = append(cosPriceChart7, cosPrice)
 		}
-		if beforeData.StartTime > last15Day {
+		if beforeData.StartTime >= last15Day && today != beforeData.StartTime {
 			dateChart15 = append(dateChart15, begin.Unix())
 			priceChart15 = append(priceChart15, beforeData.Price)
 			cosPriceChart15 = append(cosPriceChart15, cosPrice)
