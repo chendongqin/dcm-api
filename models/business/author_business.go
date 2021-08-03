@@ -10,6 +10,7 @@ import (
 	"dongchamao/structinit/repost/dy"
 	"math"
 	"sort"
+	"strings"
 	"sync"
 	"time"
 )
@@ -499,6 +500,9 @@ func (a *AuthorBusiness) GetAuthorProductAnalyse(authorId, keyword, firstCate, s
 	//}
 	for _, v := range hbaseDataList {
 		//数据过滤
+		if keyword != "" && strings.Index(v.Title, keyword) < 0 {
+			continue
+		}
 		if firstCate == "其他" {
 			if firstCate != v.DcmLevelFirst || v.DcmLevelFirst != "" {
 				continue
