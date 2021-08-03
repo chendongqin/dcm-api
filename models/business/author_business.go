@@ -445,6 +445,9 @@ func (a *AuthorBusiness) GetAuthorProductAnalyse(authorId, keyword, firstCate, s
 		comErr = global.NewError(4000)
 		return
 	}
+	list = []entity.DyAuthorProductAnalysis{}
+	cateList = []dy.LiveProductFirstCate{}
+	brandList = []dy.NameValueChart{}
 	shopId := ""
 	if shopType != 0 {
 		authorReputation, _ := a.HbaseGetAuthorReputation(authorId)
