@@ -49,11 +49,22 @@ func (receiver *LiveController) LiveInfoData() {
 	incFansRate = 0
 	interactRate = 0
 	liveSale := dy.DyLiveRoomSaleData{}
+	//todo gmv数据兼容
+	gmv := liveSaleData.Gmv
+	sales := liveSaleData.Sales
+	if liveSaleData.Gmv == 0 {
+		gmv = liveInfo.PredictGmv
+		sales = liveInfo.PredictSales
+		if liveInfo.RealGmv > 0 {
+			gmv = liveInfo.RealGmv
+			sales = liveInfo.RealSales
+		}
+	}
 	if liveInfo.TotalUser > 0 {
 		incFansRate = float64(liveInfo.FollowCount) / float64(liveInfo.TotalUser)
 		interactRate = float64(liveInfo.BarrageCount) / float64(liveInfo.TotalUser)
-		liveSale.Uv = (liveSaleData.Gmv + float64(liveSaleData.TicketCount)/10) / float64(liveInfo.TotalUser)
-		liveSale.SaleRate = liveSaleData.Gmv / float64(liveInfo.TotalUser)
+		liveSale.Uv = (gmv + float64(liveSaleData.TicketCount)/10) / float64(liveInfo.TotalUser)
+		liveSale.SaleRate = gmv / float64(liveInfo.TotalUser)
 	}
 	avgOnlineTime := liveBusiness.CountAvgOnlineTime(liveInfo.OnlineTrends, liveInfo.CreateTime, liveInfo.TotalUser)
 	returnLiveInfo := dy.DyLiveInfo{
@@ -79,16 +90,42 @@ func (receiver *LiveController) LiveInfoData() {
 		LiveUrl:             liveInfo.PlayURL,
 		ShareUrl:            business.LiveShareUrl + liveInfo.RoomID,
 	}
-	liveSale.Volume = int64(math.Floor(liveSaleData.Sales))
-	liveSale.Amount = liveSaleData.Gmv
+	liveSale.Volume = int64(math.Floor(sales))
+	liveSale.Amount = gmv
 	esLiveBusiness := es.NewEsLiveBusiness()
 	liveSale.PromotionNum = esLiveBusiness.CountRoomProductByRoomId(liveInfo)
 	if liveSaleData.Sales > 0 {
 		liveSale.PerPrice = liveSaleData.Gmv / liveSaleData.Sales
 	}
+	dateChart := make([]int64, 0)
+	gmvChart := make([]float64, 0)
+	salesChart := make([]float64, 0)
+	salesTrends := liveInfo.SalesTrends
+	//排序
+	sort.Slice(salesTrends, func(i, j int) bool {
+		var left, right int64
+		left = salesTrends[i].CrawlTime
+		right = salesTrends[j].CrawlTime
+		return right > left
+	})
+	for _, v := range salesTrends {
+		dateChart = append(dateChart, v.CrawlTime)
+		if liveInfo.RealGmv > 0 {
+			gmvChart = append(gmvChart, v.RealGmv)
+			salesChart = append(salesChart, v.RealSales)
+		} else {
+			gmvChart = append(gmvChart, v.PredictGmv)
+			salesChart = append(salesChart, v.PredictSales)
+		}
+	}
 	receiver.SuccReturn(map[string]interface{}{
 		"live_info": returnLiveInfo,
 		"live_sale": liveSale,
+		"sales_chart": map[string]interface{}{
+			"time":  dateChart,
+			"gmv":   gmvChart,
+			"sales": salesChart,
+		},
 	})
 	return
 }

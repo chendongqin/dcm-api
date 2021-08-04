@@ -33,6 +33,11 @@ var DyLiveInfoMap = HbaseEntity{
 	"trends_online_trends":          {AJson, "online_trends"},
 	"other_barrage_count":           {Long, "barrage_count"},
 	"other_max_user_count":          {Long, "max_user_count"},
+	"other_sales_trends":            {AJson, "sales_trends"},
+	"other_predict_sales":           {Double, "predict_sales"},
+	"other_predict_gmv":             {Double, "predict_sales"},
+	"other_real_sales":              {Double, "real_sales"},
+	"other_real_gmv":                {Double, "real_gmv"},
 	"trends_follower_count_trends":  {AJson, "follower_count_trends"},
 	"trends_fans_club_count_trends": {AJson, "fans_club_count_trends"},
 }
@@ -68,9 +73,22 @@ type DyLiveInfo struct {
 	TrendsCrawlTime      int64                      `json:"trends_crawl_time"`      //更新时间
 	BarrageCount         int64                      `json:"barrage_count"`          //弹幕人数
 	MaxUserCount         int64                      `json:"max_user_count"`         //人气峰值
+	PredictSales         float64                    `json:"predict_sales"`
+	PredictGmv           float64                    `json:"predict_gmv"`
+	RealSales            float64                    `json:"real_sales"`
+	RealGmv              float64                    `json:"real_gmv"`
+	SalesTrends          []DyLiveInfoSalesTrend     `json:"sales_trends"`
 	OnlineTrends         []DyLiveOnlineTrends       `json:"online_trends"`
 	FollowerCountTrends  []LiveFollowerCountTrends  `json:"follower_count_trends"`
 	FansClubCountTrends  []LiveAnsClubCountTrends   `json:"fans_club_count_trends"`
+}
+
+type DyLiveInfoSalesTrend struct {
+	CrawlTime    int64   `json:"crawl_time"`
+	PredictSales float64 `json:"predict_sales"`
+	PredictGmv   float64 `json:"predict_gmv"`
+	RealSales    float64 `json:"real_sales"`
+	RealGmv      float64 `json:"real_gmv"`
 }
 
 type DyLiveInfoChallenge struct {

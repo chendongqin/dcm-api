@@ -686,14 +686,25 @@ func (a *AuthorBusiness) GetAuthorProductRooms(authorId, productId string, start
 	for _, roomId := range roomIds {
 		liveInfo, _ := hbase.GetLiveInfo(roomId)
 		liveSaleData, _ := hbase.GetLiveSalesData(roomId)
+		//todo gmv数据兼容
+		gmv := liveSaleData.Gmv
+		sales := liveSaleData.Sales
+		if liveSaleData.Gmv == 0 {
+			gmv = liveInfo.PredictGmv
+			sales = liveInfo.PredictSales
+			if liveInfo.RealGmv > 0 {
+				gmv = liveInfo.RealGmv
+				sales = liveInfo.RealSales
+			}
+		}
 		list = append(list, dy.DyAuthorProductRoom{
 			RoomId:       roomId,
 			Cover:        dyimg.Fix(liveInfo.Cover),
 			CreateTime:   liveInfo.CreateTime,
 			Title:        liveInfo.Title,
 			MaxUserCount: liveInfo.MaxUserCount,
-			Gmv:          liveSaleData.Gmv,
-			Sales:        liveSaleData.Sales,
+			Gmv:          gmv,
+			Sales:        sales,
 		})
 	}
 	return
