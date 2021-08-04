@@ -1,13 +1,13 @@
 package v1
 
 import (
+	business2 "dongchamao/business"
 	"dongchamao/controllers/api"
 	"dongchamao/global"
 	"dongchamao/global/cache"
 	"dongchamao/global/utils"
-	"dongchamao/models/business"
 	"dongchamao/models/dcm"
-	"dongchamao/structinit/repost/dy"
+	dy2 "dongchamao/models/repost/dy"
 	"strings"
 )
 
@@ -30,7 +30,7 @@ func (receiver *AccountController) Login() {
 	var expTime int64
 	var isNew int
 	setPassword := 0
-	userBusiness := business.NewUserBusiness()
+	userBusiness := business2.NewUserBusiness()
 	if grantType == "password" {
 		username := InputData.GetString("username", "")
 		password := InputData.GetString("pwd", "")
@@ -58,7 +58,7 @@ func (receiver *AccountController) Login() {
 	receiver.RegisterLogin(authToken, expTime)
 	receiver.SuccReturn(map[string]interface{}{
 		"set_password": setPassword,
-		"token_info": dy.RepostAccountToken{
+		"token_info": dy2.RepostAccountToken{
 			UserId:      user.Id,
 			TokenString: authToken,
 			ExpTime:     expTime,
@@ -153,7 +153,7 @@ func (receiver *AccountController) ResetPwd() {
 		return
 	}
 	pwd := utils.Md5_encode(newPwd + receiver.UserInfo.Salt)
-	userBusiness := business.NewUserBusiness()
+	userBusiness := business2.NewUserBusiness()
 	updateData := map[string]interface{}{
 		"password":     pwd,
 		"set_password": 1,
@@ -171,21 +171,21 @@ func (receiver *AccountController) ResetPwd() {
 
 func (receiver *AccountController) Info() {
 	username := receiver.UserInfo.Username
-	account := dy.RepostAccountData{
+	account := dy2.RepostAccountData{
 		UserId:      receiver.UserInfo.Id,
 		Username:    username[:3] + "****" + username[7:],
 		Nickname:    receiver.UserInfo.Nickname,
 		Avatar:      receiver.UserInfo.Avatar,
 		PasswordSet: receiver.UserInfo.SetPassword,
 	}
-	vipBusiness := business.NewVipBusiness()
+	vipBusiness := business2.NewVipBusiness()
 	vipLevelsMap := vipBusiness.GetVipLevels(receiver.UserInfo.Id)
 	for k, v := range vipLevelsMap {
-		if k == business.VipPlatformDouYin {
+		if k == business2.VipPlatformDouYin {
 			account.DyLevel.Level = v
-		} else if k == business.VipPlatformXiaoHongShu {
+		} else if k == business2.VipPlatformXiaoHongShu {
 			account.XhsLevel.Level = v
-		} else if k == business.VipPlatformTaoBao {
+		} else if k == business2.VipPlatformTaoBao {
 			account.TbLevel.Level = v
 		}
 	}
@@ -205,7 +205,7 @@ func (receiver *AccountController) Logout() {
 	//执行登出事件
 	receiver.RegisterLogout()
 	//uniquetoken更新置为空  旧的token不可用
-	userBusiness := business.NewUserBusiness()
+	userBusiness := business2.NewUserBusiness()
 	_ = userBusiness.AddOrUpdateUniqueToken(receiver.UserId, receiver.AppId, "")
 	userBusiness.DeleteUserInfoCache(receiver.UserInfo.Id)
 	receiver.SuccReturn("success")

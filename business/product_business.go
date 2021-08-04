@@ -4,7 +4,7 @@ import (
 	"dongchamao/global"
 	"dongchamao/global/cache"
 	"dongchamao/models/dcm"
-	"dongchamao/structinit/repost/dy"
+	"dongchamao/models/repost/dy"
 	"fmt"
 	jsoniter "github.com/json-iterator/go"
 )

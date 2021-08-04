@@ -2,8 +2,8 @@ package business
 
 import (
 	"dongchamao/global"
-	"dongchamao/models/hbase"
-	"dongchamao/models/hbase/entity"
+	"dongchamao/hbase"
+	"dongchamao/models/entity"
 	"time"
 )
 

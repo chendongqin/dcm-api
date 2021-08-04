@@ -3,9 +3,9 @@ package business
 import (
 	"dongchamao/global"
 	"dongchamao/global/utils"
-	"dongchamao/models/hbase"
-	"dongchamao/models/hbase/entity"
-	"dongchamao/structinit/repost/dy"
+	"dongchamao/hbase"
+	"dongchamao/models/entity"
+	"dongchamao/models/repost/dy"
 	"math"
 	"time"
 )

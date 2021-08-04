@@ -1,7 +1,7 @@
 package business
 
 import (
-	"dongchamao/structinit/repost/dy"
+	"dongchamao/models/repost/dy"
 	jsoniter "github.com/json-iterator/go"
 	"strings"
 	"time"

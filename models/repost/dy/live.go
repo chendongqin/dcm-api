@@ -1,32 +1,32 @@
 package dy
 
 import (
+	"dongchamao/models/entity"
 	"dongchamao/models/es"
-	entity2 "dongchamao/models/hbase/entity"
 )
 
 type DyLiveInfo struct {
-	Cover               string                             `json:"cover"`       //封面
-	CreateTime          int64                              `json:"create_time"` //开播时间
-	FinishTime          int64                              `json:"finish_time"` //结束时间
-	LikeCount           int64                              `json:"like_count"`  //点赞数
-	RoomID              string                             `json:"room_id"`
-	RoomStatus          int                                `json:"room_status"` //直播状态 2:在播 4:下播
-	Title               string                             `json:"title"`
-	TotalUser           int64                              `json:"total_user"` //总pv
-	User                DyLiveUserSimple                   `json:"user"`
-	UserCount           int64                              `json:"user_count"`        //当前在线人数
-	AvgUserCount        int64                              `json:"avg_user_count"`    //平均当前在线人数
-	TrendsCrawlTime     int64                              `json:"trends_crawl_time"` //更新时间
-	IncFans             int64                              `json:"inc_fans"`
-	IncFansRate         float64                            `json:"inc_fans_rate"`
-	InteractRate        float64                            `json:"interact_rate"`
-	OnlineTrends        entity2.DyLiveIncOnlineTrendsChart `json:"online_trends"`
-	MaxWatchOnlineTrend entity2.DyLiveOnlineTrends         `json:"max_watch_online_trend"`
-	RenewalTime         int64                              `json:"renewal_time"`
-	AvgOnlineTime       float64                            `json:"avg_online_time"`
-	LiveUrl             string                             `json:"live_url"`
-	ShareUrl            string                             `json:"share_url"`
+	Cover               string                            `json:"cover"`       //封面
+	CreateTime          int64                             `json:"create_time"` //开播时间
+	FinishTime          int64                             `json:"finish_time"` //结束时间
+	LikeCount           int64                             `json:"like_count"`  //点赞数
+	RoomID              string                            `json:"room_id"`
+	RoomStatus          int                               `json:"room_status"` //直播状态 2:在播 4:下播
+	Title               string                            `json:"title"`
+	TotalUser           int64                             `json:"total_user"` //总pv
+	User                DyLiveUserSimple                  `json:"user"`
+	UserCount           int64                             `json:"user_count"`        //当前在线人数
+	AvgUserCount        int64                             `json:"avg_user_count"`    //平均当前在线人数
+	TrendsCrawlTime     int64                             `json:"trends_crawl_time"` //更新时间
+	IncFans             int64                             `json:"inc_fans"`
+	IncFansRate         float64                           `json:"inc_fans_rate"`
+	InteractRate        float64                           `json:"interact_rate"`
+	OnlineTrends        entity.DyLiveIncOnlineTrendsChart `json:"online_trends"`
+	MaxWatchOnlineTrend entity.DyLiveOnlineTrends         `json:"max_watch_online_trend"`
+	RenewalTime         int64                             `json:"renewal_time"`
+	AvgOnlineTime       float64                           `json:"avg_online_time"`
+	LiveUrl             string                            `json:"live_url"`
+	ShareUrl            string                            `json:"share_url"`
 }
 
 type DyLiveUserSimple struct {

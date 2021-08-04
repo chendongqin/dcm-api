@@ -1,12 +1,12 @@
 package dy
 
 import (
+	business2 "dongchamao/business"
 	controllers "dongchamao/controllers/api"
 	"dongchamao/global"
-	"dongchamao/models/business"
-	"dongchamao/models/hbase"
-	entity2 "dongchamao/models/hbase/entity"
-	"dongchamao/structinit/repost/dy"
+	hbase2 "dongchamao/hbase"
+	"dongchamao/models/entity"
+	dy2 "dongchamao/models/repost/dy"
 )
 
 type AwemeController struct {
@@ -19,12 +19,12 @@ func (receiver *AwemeController) AwemeBaseData() {
 		receiver.FailReturn(global.NewError(4000))
 		return
 	}
-	awemeBase, comErr := hbase.GetVideo(awemeId)
+	awemeBase, comErr := hbase2.GetVideo(awemeId)
 	if comErr != nil {
 		receiver.FailReturn(comErr)
 		return
 	}
-	awemeSimple := dy.DySimpleAweme{
+	awemeSimple := dy2.DySimpleAweme{
 		AuthorID:        awemeBase.AuthorID,
 		AwemeCover:      awemeBase.AwemeCover,
 		AwemeTitle:      awemeBase.AwemeTitle,
@@ -57,7 +57,7 @@ func (receiver *AwemeController) AwemeChart() {
 		receiver.FailReturn(comErr)
 		return
 	}
-	awemeBusiness := business.NewAwemeBusiness()
+	awemeBusiness := business2.NewAwemeBusiness()
 	awemeCount, comErr := awemeBusiness.GetAwemeChart(awemeId, t1, t2, true)
 	if comErr != nil {
 		receiver.FailReturn(comErr)
@@ -65,12 +65,12 @@ func (receiver *AwemeController) AwemeChart() {
 	}
 	//前一天数据，做增量计算
 	beginDatetime := t1
-	beforeData := entity2.DyAwemeDiggCommentForwardCount{}
+	beforeData := entity.DyAwemeDiggCommentForwardCount{}
 	beforeDay := beginDatetime.AddDate(0, 0, -1).Format("20060102")
 	if _, ok := awemeCount[beforeDay]; ok {
 		beforeData = awemeCount[beforeDay]
 	} else {
-		beforeData, _ = hbase.GetVideoCountData(awemeId, beforeDay)
+		beforeData, _ = hbase2.GetVideoCountData(awemeId, beforeDay)
 	}
 	dateArr := make([]string, 0)
 	diggCountArr := make([]int64, 0)
@@ -99,17 +99,17 @@ func (receiver *AwemeController) AwemeChart() {
 		beginDatetime = beginDatetime.AddDate(0, 0, 1)
 	}
 	returnMap := map[string]interface{}{
-		"digg": dy.DateChart{
+		"digg": dy2.DateChart{
 			Date:       dateArr,
 			CountValue: diggCountArr,
 			IncValue:   diggIncArr,
 		},
-		"forward": dy.DateChart{
+		"forward": dy2.DateChart{
 			Date:       dateArr,
 			CountValue: forwardCountArr,
 			IncValue:   forwardIncArr,
 		},
-		"comment": dy.DateChart{
+		"comment": dy2.DateChart{
 			Date:       dateArr,
 			CountValue: commentCountArr,
 			IncValue:   commentIncArr,

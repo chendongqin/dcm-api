@@ -3,10 +3,10 @@ package business
 import (
 	"dongchamao/global"
 	"dongchamao/global/utils"
-	"dongchamao/models/hbase"
-	"dongchamao/models/hbase/entity"
+	"dongchamao/hbase"
+	"dongchamao/models/entity"
+	"dongchamao/models/repost/dy"
 	"dongchamao/services/hbaseService"
-	"dongchamao/structinit/repost/dy"
 	"fmt"
 	"sync"
 	"time"
