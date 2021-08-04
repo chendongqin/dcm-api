@@ -3,7 +3,7 @@ package hbase
 import (
 	"dongchamao/global"
 	"dongchamao/global/utils"
-	entity2 "dongchamao/models/entity"
+	"dongchamao/models/entity"
 	"dongchamao/services/dyimg"
 	"dongchamao/services/hbaseService"
 	"dongchamao/services/hbaseService/hbase"
@@ -13,7 +13,7 @@ import (
 )
 
 //视频详情
-func GetVideo(awemeId string) (data entity2.DyAwemeData, comErr global.CommonError) {
+func GetVideo(awemeId string) (data entity.DyAwemeData, comErr global.CommonError) {
 	query := hbasehelper.NewQuery()
 	result, err := query.SetTable(hbaseService.HbaseDyAweme).GetByRowKey([]byte(awemeId))
 	if err != nil {
@@ -24,8 +24,8 @@ func GetVideo(awemeId string) (data entity2.DyAwemeData, comErr global.CommonErr
 		comErr = global.NewError(4040)
 		return
 	}
-	authorMap := hbaseService.HbaseFormat(result, entity2.DyAwemeMap)
-	aweme := &entity2.DyAweme{}
+	authorMap := hbaseService.HbaseFormat(result, entity.DyAwemeMap)
+	aweme := &entity.DyAweme{}
 	utils.MapToStruct(authorMap, aweme)
 	duration := math.Ceil(float64(aweme.Data.Duration) / 1000)
 	data = aweme.Data
@@ -36,7 +36,7 @@ func GetVideo(awemeId string) (data entity2.DyAwemeData, comErr global.CommonErr
 }
 
 //视频某天数据
-func GetVideoCountDataRangeDate(awemeId string, startTime, endTime time.Time) (data map[string]entity2.DyAwemeDiggCommentForwardCount, comErr global.CommonError) {
+func GetVideoCountDataRangeDate(awemeId string, startTime, endTime time.Time) (data map[string]entity.DyAwemeDiggCommentForwardCount, comErr global.CommonError) {
 	query := hbasehelper.NewQuery()
 	startRow := awemeId + "_" + startTime.Format("20060102")
 	endRow := awemeId + "_" + endTime.AddDate(0, 0, 1).Format("20060102")
@@ -49,10 +49,10 @@ func GetVideoCountDataRangeDate(awemeId string, startTime, endTime time.Time) (d
 		comErr = global.NewMsgError(err.Error())
 		return
 	}
-	data = map[string]entity2.DyAwemeDiggCommentForwardCount{}
+	data = map[string]entity.DyAwemeDiggCommentForwardCount{}
 	for _, v := range results {
-		dataMap := hbaseService.HbaseFormat(v, entity2.DyAwemeDiggCommentForwardCountMap)
-		hData := entity2.DyAwemeDiggCommentForwardCount{}
+		dataMap := hbaseService.HbaseFormat(v, entity.DyAwemeDiggCommentForwardCountMap)
+		hData := entity.DyAwemeDiggCommentForwardCount{}
 		utils.MapToStruct(dataMap, &hData)
 		t := time.Unix(hData.CrawlTime, 0)
 		date := t.Format("20060102")
@@ -62,7 +62,7 @@ func GetVideoCountDataRangeDate(awemeId string, startTime, endTime time.Time) (d
 }
 
 //获取视频每天详情数据
-func GetVideoCountData(awemeId, date string) (data entity2.DyAwemeDiggCommentForwardCount, comErr global.CommonError) {
+func GetVideoCountData(awemeId, date string) (data entity.DyAwemeDiggCommentForwardCount, comErr global.CommonError) {
 	query := hbasehelper.NewQuery()
 	startRow := awemeId + "_" + date
 	result, err := query.
@@ -72,7 +72,7 @@ func GetVideoCountData(awemeId, date string) (data entity2.DyAwemeDiggCommentFor
 		comErr = global.NewMsgError(err.Error())
 		return
 	}
-	dataMap := hbaseService.HbaseFormat(result, entity2.DyAwemeDiggCommentForwardCountMap)
+	dataMap := hbaseService.HbaseFormat(result, entity.DyAwemeDiggCommentForwardCountMap)
 	utils.MapToStruct(dataMap, &data)
 	return
 }
@@ -94,7 +94,7 @@ func GetAuthorVideoAggRangeDate(authorId string, startTime, endTime time.Time) (
 }
 
 //视频某天数据
-func GetAuthorVideoCountDataRangeDate(awemeId, startDate, endDate string) (data map[string]entity2.DyAwemeDiggCommentForwardCount, comErr global.CommonError) {
+func GetAuthorVideoCountDataRangeDate(awemeId, startDate, endDate string) (data map[string]entity.DyAwemeDiggCommentForwardCount, comErr global.CommonError) {
 	query := hbasehelper.NewQuery()
 	startRow := awemeId + "_" + startDate
 	endRow := awemeId + "_" + endDate
@@ -107,10 +107,10 @@ func GetAuthorVideoCountDataRangeDate(awemeId, startDate, endDate string) (data 
 		comErr = global.NewMsgError(err.Error())
 		return
 	}
-	data = map[string]entity2.DyAwemeDiggCommentForwardCount{}
+	data = map[string]entity.DyAwemeDiggCommentForwardCount{}
 	for _, v := range results {
-		dataMap := hbaseService.HbaseFormat(v, entity2.DyAwemeDiggCommentForwardCountMap)
-		hData := entity2.DyAwemeDiggCommentForwardCount{}
+		dataMap := hbaseService.HbaseFormat(v, entity.DyAwemeDiggCommentForwardCountMap)
+		hData := entity.DyAwemeDiggCommentForwardCount{}
 		utils.MapToStruct(dataMap, &hData)
 		t := time.Unix(hData.CrawlTime, 0)
 		date := t.Format("20060102")
@@ -120,7 +120,7 @@ func GetAuthorVideoCountDataRangeDate(awemeId, startDate, endDate string) (data 
 }
 
 //获取视频每天详情数据
-func GetAuthorVideoCountData(awemeId, date string) (data entity2.DyAwemeDiggCommentForwardCount, comErr global.CommonError) {
+func GetAuthorVideoCountData(awemeId, date string) (data entity.DyAwemeDiggCommentForwardCount, comErr global.CommonError) {
 	query := hbasehelper.NewQuery()
 	startRow := awemeId + "_" + date
 	result, err := query.
@@ -130,7 +130,7 @@ func GetAuthorVideoCountData(awemeId, date string) (data entity2.DyAwemeDiggComm
 		comErr = global.NewMsgError(err.Error())
 		return
 	}
-	dataMap := hbaseService.HbaseFormat(result, entity2.DyAwemeDiggCommentForwardCountMap)
+	dataMap := hbaseService.HbaseFormat(result, entity.DyAwemeDiggCommentForwardCountMap)
 	utils.MapToStruct(dataMap, &data)
 	return
 }

@@ -7,7 +7,7 @@ import (
 	"dongchamao/global/cache"
 	"dongchamao/global/utils"
 	"dongchamao/models/dcm"
-	dy2 "dongchamao/models/repost/dy"
+	"dongchamao/models/repost/dy"
 	"strings"
 )
 
@@ -58,7 +58,7 @@ func (receiver *AccountController) Login() {
 	receiver.RegisterLogin(authToken, expTime)
 	receiver.SuccReturn(map[string]interface{}{
 		"set_password": setPassword,
-		"token_info": dy2.RepostAccountToken{
+		"token_info": dy.RepostAccountToken{
 			UserId:      user.Id,
 			TokenString: authToken,
 			ExpTime:     expTime,
@@ -171,7 +171,7 @@ func (receiver *AccountController) ResetPwd() {
 
 func (receiver *AccountController) Info() {
 	username := receiver.UserInfo.Username
-	account := dy2.RepostAccountData{
+	account := dy.RepostAccountData{
 		UserId:      receiver.UserInfo.Id,
 		Username:    username[:3] + "****" + username[7:],
 		Nickname:    receiver.UserInfo.Nickname,
