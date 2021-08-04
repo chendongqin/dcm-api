@@ -1,7 +1,7 @@
 package v1
 
 import (
-	business2 "dongchamao/business"
+	"dongchamao/business"
 	"dongchamao/controllers/api"
 	"dongchamao/global"
 	"dongchamao/global/cache"
@@ -30,7 +30,7 @@ func (receiver *AccountController) Login() {
 	var expTime int64
 	var isNew int
 	setPassword := 0
-	userBusiness := business2.NewUserBusiness()
+	userBusiness := business.NewUserBusiness()
 	if grantType == "password" {
 		username := InputData.GetString("username", "")
 		password := InputData.GetString("pwd", "")
@@ -153,7 +153,7 @@ func (receiver *AccountController) ResetPwd() {
 		return
 	}
 	pwd := utils.Md5_encode(newPwd + receiver.UserInfo.Salt)
-	userBusiness := business2.NewUserBusiness()
+	userBusiness := business.NewUserBusiness()
 	updateData := map[string]interface{}{
 		"password":     pwd,
 		"set_password": 1,
@@ -178,14 +178,14 @@ func (receiver *AccountController) Info() {
 		Avatar:      receiver.UserInfo.Avatar,
 		PasswordSet: receiver.UserInfo.SetPassword,
 	}
-	vipBusiness := business2.NewVipBusiness()
+	vipBusiness := business.NewVipBusiness()
 	vipLevelsMap := vipBusiness.GetVipLevels(receiver.UserInfo.Id)
 	for k, v := range vipLevelsMap {
-		if k == business2.VipPlatformDouYin {
+		if k == business.VipPlatformDouYin {
 			account.DyLevel.Level = v
-		} else if k == business2.VipPlatformXiaoHongShu {
+		} else if k == business.VipPlatformXiaoHongShu {
 			account.XhsLevel.Level = v
-		} else if k == business2.VipPlatformTaoBao {
+		} else if k == business.VipPlatformTaoBao {
 			account.TbLevel.Level = v
 		}
 	}
@@ -205,7 +205,7 @@ func (receiver *AccountController) Logout() {
 	//执行登出事件
 	receiver.RegisterLogout()
 	//uniquetoken更新置为空  旧的token不可用
-	userBusiness := business2.NewUserBusiness()
+	userBusiness := business.NewUserBusiness()
 	_ = userBusiness.AddOrUpdateUniqueToken(receiver.UserId, receiver.AppId, "")
 	userBusiness.DeleteUserInfoCache(receiver.UserInfo.Id)
 	receiver.SuccReturn("success")

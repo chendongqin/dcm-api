@@ -1,11 +1,11 @@
 package dy
 
 import (
-	business2 "dongchamao/business"
-	es2 "dongchamao/business/es"
+	"dongchamao/business"
+	"dongchamao/business/es"
 	controllers "dongchamao/controllers/api"
 	"dongchamao/global"
-	hbase2 "dongchamao/hbase"
+	"dongchamao/hbase"
 	"dongchamao/models/entity"
 	dy2 "dongchamao/models/repost/dy"
 	"dongchamao/services/dyimg"
@@ -25,14 +25,14 @@ func (receiver *LiveController) LiveInfoData() {
 		receiver.FailReturn(global.NewError(4000))
 		return
 	}
-	liveBusiness := business2.NewLiveBusiness()
-	liveInfo, comErr := hbase2.GetLiveInfo(roomId)
+	liveBusiness := business.NewLiveBusiness()
+	liveInfo, comErr := hbase.GetLiveInfo(roomId)
 	if comErr != nil {
 		receiver.FailReturn(comErr)
 		return
 	}
-	authorBusiness := business2.NewAuthorBusiness()
-	reputation, _ := hbase2.GetLiveReputation(roomId)
+	authorBusiness := business.NewAuthorBusiness()
+	reputation, _ := hbase.GetLiveReputation(roomId)
 	authorInfo, _ := authorBusiness.HbaseGetAuthor(liveInfo.User.ID)
 	liveUser := dy2.DyLiveUserSimple{
 		Avatar:          liveInfo.User.Avatar,
@@ -43,7 +43,7 @@ func (receiver *LiveController) LiveInfoData() {
 		ReputationScore: reputation.AuthorReputation.Score,
 		ReputationLevel: reputation.AuthorReputation.Level,
 	}
-	liveSaleData, _ := hbase2.GetLiveSalesData(roomId)
+	liveSaleData, _ := hbase.GetLiveSalesData(roomId)
 	incOnlineTrends, maxOnlineTrends, avgUserCount := liveBusiness.DealOnlineTrends(liveInfo)
 	var incFansRate, interactRate float64
 	incFansRate = 0
@@ -88,11 +88,11 @@ func (receiver *LiveController) LiveInfoData() {
 		RenewalTime:         liveInfo.CrawlTime,
 		AvgOnlineTime:       avgOnlineTime,
 		LiveUrl:             liveInfo.PlayURL,
-		ShareUrl:            business2.LiveShareUrl + liveInfo.RoomID,
+		ShareUrl:            business.LiveShareUrl + liveInfo.RoomID,
 	}
 	liveSale.Volume = int64(math.Floor(sales))
 	liveSale.Amount = gmv
-	esLiveBusiness := es2.NewEsLiveBusiness()
+	esLiveBusiness := es.NewEsLiveBusiness()
 	liveSale.PromotionNum = esLiveBusiness.CountRoomProductByRoomId(liveInfo)
 	if sales > 0 {
 		liveSale.PerPrice = gmv / sales
@@ -137,7 +137,7 @@ func (receiver *LiveController) LivePromotions() {
 		receiver.FailReturn(global.NewError(4000))
 		return
 	}
-	livePmt, _ := hbase2.GetLivePmt(roomId)
+	livePmt, _ := hbase.GetLivePmt(roomId)
 	livePromotionsMap := map[int]entity.DyLivePromotion{}
 	for _, v := range livePmt.Promotions {
 		livePromotionsMap[v.Index] = v
@@ -201,7 +201,7 @@ func (receiver *LiveController) LiveRankTrends() {
 		receiver.FailReturn(global.NewError(4000))
 		return
 	}
-	liveBusiness := business2.NewLiveBusiness()
+	liveBusiness := business.NewLiveBusiness()
 	liveRankTrends, _ := liveBusiness.HbaseGetRankTrends(roomId)
 	saleDates := make([]int64, 0)
 	hourDates := make([]int64, 0)
@@ -224,10 +224,10 @@ func (receiver *LiveController) LiveRankTrends() {
 			}
 		}
 	}
-	hourDates = business2.DealChartInt64(hourDates, 60)
-	hourRanks = business2.DealChartInt(hourRanks, 60)
-	saleDates = business2.DealChartInt64(saleDates, 60)
-	saleRanks = business2.DealChartInt(saleRanks, 60)
+	hourDates = business.DealChartInt64(hourDates, 60)
+	hourRanks = business.DealChartInt(hourRanks, 60)
+	saleDates = business.DealChartInt64(saleDates, 60)
+	saleRanks = business.DealChartInt(saleRanks, 60)
 	receiver.SuccReturn(map[string]interface{}{
 		"hour_rank": map[string]interface{}{
 			"time":  hourDates,
@@ -258,8 +258,8 @@ func (receiver *LiveController) LiveProductList() {
 	firstLabel := InputData.GetString("first_label", "")
 	secondLabel := InputData.GetString("second_label", "")
 	thirdLabel := InputData.GetString("third_label", "")
-	roomInfo, _ := hbase2.GetLiveInfo(roomId)
-	esLiveBusiness := es2.NewEsLiveBusiness()
+	roomInfo, _ := hbase.GetLiveInfo(roomId)
+	esLiveBusiness := es.NewEsLiveBusiness()
 	list, productCount, total, err := esLiveBusiness.RoomProductByRoomId(roomInfo, keyword, sortStr, orderBy, firstLabel, secondLabel, thirdLabel, page, pageSize)
 	if err != nil {
 		receiver.FailReturn(err)
@@ -271,7 +271,7 @@ func (receiver *LiveController) LiveProductList() {
 		for _, v := range list {
 			productIds = append(productIds, v.ProductID)
 		}
-		liveBusiness := business2.NewLiveBusiness()
+		liveBusiness := business.NewLiveBusiness()
 		curMap := liveBusiness.RoomCurProductByIds(roomId, productIds)
 		pmtMap := liveBusiness.RoomPmtProductByIds(roomId, productIds)
 		for _, v := range list {
@@ -297,7 +297,7 @@ func (receiver *LiveController) LiveProductList() {
 				}
 			}
 			if c, ok := curMap[v.ProductID]; ok {
-				c.CurList = business2.ProductCurOrderByTime(c.CurList)
+				c.CurList = business.ProductCurOrderByTime(c.CurList)
 				item.ProductCur = c
 			} else {
 				item.ProductCur = dy2.LiveCurProductCount{
@@ -322,8 +322,8 @@ func (receiver *LiveController) LiveProductCateList() {
 		receiver.FailReturn(global.NewError(4000))
 		return
 	}
-	roomInfo, _ := hbase2.GetLiveInfo(roomId)
-	esLiveBusiness := es2.NewEsLiveBusiness()
+	roomInfo, _ := hbase.GetLiveInfo(roomId)
+	esLiveBusiness := es.NewEsLiveBusiness()
 	countData := esLiveBusiness.AllRoomProductCateByRoomId(roomInfo)
 	receiver.SuccReturn(map[string]interface{}{
 		"count": countData,
@@ -343,8 +343,8 @@ func (receiver *LiveController) LiveProductSaleChart() {
 		receiver.FailReturn(global.NewError(4000))
 		return
 	}
-	info, _ := hbase2.GetRoomProductInfo(roomId, productId)
-	trends := business2.RoomProductTrendOrderByTime(info.TrendData)
+	info, _ := hbase.GetRoomProductInfo(roomId, productId)
+	trends := business.RoomProductTrendOrderByTime(info.TrendData)
 	timestamps := make([]int64, 0)
 	sales := make([]float64, 0)
 	for _, v := range trends {
@@ -365,7 +365,7 @@ func (receiver *LiveController) LiveFansTrends() {
 		receiver.FailReturn(global.NewError(4000))
 		return
 	}
-	info, comErr := hbase2.GetLiveInfo(roomId)
+	info, comErr := hbase.GetLiveInfo(roomId)
 	if comErr != nil {
 		receiver.FailReturn(comErr)
 		return
@@ -377,7 +377,7 @@ func (receiver *LiveController) LiveFansTrends() {
 	clubTrends := make([]int64, 0)
 	clubIncTrends := make([]int64, 0)
 	if len(info.FollowerCountTrends) > 0 {
-		followerCountTrends := business2.LiveFansTrendsListOrderByTime(info.FollowerCountTrends)
+		followerCountTrends := business.LiveFansTrendsListOrderByTime(info.FollowerCountTrends)
 		fansDate = append(fansDate, info.CreateTime)
 		lenNum := len(followerCountTrends)
 		//beforeFansTrend := entity.LiveFollowerCountTrends{
@@ -397,7 +397,7 @@ func (receiver *LiveController) LiveFansTrends() {
 	}
 	var clubInc int64 = 0
 	if len(info.FansClubCountTrends) > 0 {
-		fansClubCountTrends := business2.LiveClubFansTrendsListOrderByTime(info.FansClubCountTrends)
+		fansClubCountTrends := business.LiveClubFansTrendsListOrderByTime(info.FansClubCountTrends)
 		beforeClubTrend := entity.LiveAnsClubCountTrends{
 			FansClubCount:     fansClubCountTrends[0].FansClubCount - fansClubCountTrends[0].TodayNewFansCount,
 			TodayNewFansCount: fansClubCountTrends[0].TodayNewFansCount,

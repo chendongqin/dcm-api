@@ -1,7 +1,7 @@
 package business
 
 import (
-	es2 "dongchamao/business/es"
+	"dongchamao/business/es"
 	"dongchamao/global"
 	"dongchamao/global/utils"
 	"dongchamao/hbase"
@@ -412,7 +412,7 @@ func (a *AuthorBusiness) CountLiveRoomAnalyse(authorId string, startTime, endTim
 	if data.UserData.AvgUserTotal > 0 {
 		data.SaleData.SaleRate = float64(data.SaleData.AvgVolume) / float64(data.UserData.AvgUserTotal)
 	}
-	esLiveBusiness := es2.NewEsLiveBusiness()
+	esLiveBusiness := es.NewEsLiveBusiness()
 	data.SaleData.PromotionNum = esLiveBusiness.CountRoomProductByAuthorId(authorId, startTime, endTime)
 	data.UserTotalChart = dy.DateCountChart{
 		Date:       dateChart,
@@ -464,7 +464,7 @@ func (a *AuthorBusiness) GetAuthorProductAnalyse(authorId, keyword, firstCate, s
 	var sumGmv float64 = 0
 	var sumSale float64 = 0
 	hbaseDataList := make([]entity.DyAuthorProductAnalysis, 0)
-	esAuthorBusiness := es2.NewEsAuthorBusiness()
+	esAuthorBusiness := es.NewEsAuthorBusiness()
 	searchList, tmpErr := esAuthorBusiness.AuthorProductAnalysis(authorId, keyword, startTime, endTime)
 	if tmpErr != nil {
 		comErr = tmpErr
@@ -677,7 +677,7 @@ func (a *AuthorBusiness) GetAuthorProductAnalyse(authorId, keyword, firstCate, s
 
 //达人电商分析直播列表
 func (a *AuthorBusiness) GetAuthorProductRooms(authorId, productId string, startTime, stopTime time.Time, page, pageSize int) (list []dy.DyAuthorProductRoom, total int, comErr global.CommonError) {
-	esLiveBusiness := es2.NewEsLiveBusiness()
+	esLiveBusiness := es.NewEsLiveBusiness()
 	roomIds, total, comErr := esLiveBusiness.GetAuthorProductSearchRoomIds(authorId, productId, startTime, stopTime, page, pageSize)
 	if len(roomIds) == 0 || comErr != nil {
 		return

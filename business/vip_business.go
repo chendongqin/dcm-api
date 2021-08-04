@@ -20,12 +20,6 @@ const (
 	VipPlatformTaoBao      = 3 //淘宝
 )
 
-var DyVipPayMoney = map[int]float64{
-	30:  259,
-	180: 799,
-	365: 1199,
-}
-
 type VipBusiness struct {
 }
 

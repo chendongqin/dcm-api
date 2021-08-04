@@ -1,10 +1,10 @@
 package dy
 
 import (
-	business2 "dongchamao/business"
+	"dongchamao/business"
 	controllers "dongchamao/controllers/api"
 	"dongchamao/global"
-	hbase2 "dongchamao/hbase"
+	"dongchamao/hbase"
 	"dongchamao/models/entity"
 	dy2 "dongchamao/models/repost/dy"
 )
@@ -19,7 +19,7 @@ func (receiver *AwemeController) AwemeBaseData() {
 		receiver.FailReturn(global.NewError(4000))
 		return
 	}
-	awemeBase, comErr := hbase2.GetVideo(awemeId)
+	awemeBase, comErr := hbase.GetVideo(awemeId)
 	if comErr != nil {
 		receiver.FailReturn(comErr)
 		return
@@ -57,7 +57,7 @@ func (receiver *AwemeController) AwemeChart() {
 		receiver.FailReturn(comErr)
 		return
 	}
-	awemeBusiness := business2.NewAwemeBusiness()
+	awemeBusiness := business.NewAwemeBusiness()
 	awemeCount, comErr := awemeBusiness.GetAwemeChart(awemeId, t1, t2, true)
 	if comErr != nil {
 		receiver.FailReturn(comErr)
@@ -70,7 +70,7 @@ func (receiver *AwemeController) AwemeChart() {
 	if _, ok := awemeCount[beforeDay]; ok {
 		beforeData = awemeCount[beforeDay]
 	} else {
-		beforeData, _ = hbase2.GetVideoCountData(awemeId, beforeDay)
+		beforeData, _ = hbase.GetVideoCountData(awemeId, beforeDay)
 	}
 	dateArr := make([]string, 0)
 	diggCountArr := make([]int64, 0)

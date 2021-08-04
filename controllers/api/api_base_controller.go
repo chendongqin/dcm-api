@@ -2,7 +2,7 @@ package controllers
 
 import (
 	"bytes"
-	business2 "dongchamao/business"
+	"dongchamao/business"
 	"dongchamao/controllers"
 	"dongchamao/global"
 	"dongchamao/global/cache"
@@ -145,11 +145,11 @@ func (this *ApiBaseController) InitUserToken() (commonErr global.CommonError) {
 	if token == nil {
 		return global.NewError(4001)
 	}
-	userBusiness := business2.NewUserBusiness()
+	userBusiness := business.NewUserBusiness()
 	if claims, ok := token.Claims.(jwt.MapClaims); ok && token.Valid {
 		json.Marshal(claims)
 		jsonstr, err0 := json.Marshal(claims)
-		tokenStruct := &business2.TokenData{}
+		tokenStruct := &business.TokenData{}
 		err0 = json.Unmarshal(jsonstr, tokenStruct)
 		if err0 != nil {
 			return global.NewError(4001)
@@ -215,7 +215,7 @@ func (this *ApiBaseController) InitUserToken() (commonErr global.CommonError) {
 }
 
 func (this *ApiBaseController) CheckSign() {
-	authBusiness := business2.NewAccountAuthBusiness()
+	authBusiness := business.NewAccountAuthBusiness()
 	appId := this.Ctx.Input.Header("APPID")
 	this.AppId = utils.ToInt(appId)
 	if utils.InArrayString(appId, []string{"10000", "10001", "10002", "10003", "10004", "10005", ""}) {
@@ -241,7 +241,7 @@ func (this *ApiBaseController) CheckSign() {
 
 //校验token
 func (this *ApiBaseController) CheckToken() {
-	authBusiness := business2.NewAccountAuthBusiness()
+	authBusiness := business.NewAccountAuthBusiness()
 	if authBusiness.AuthLoginWhiteUri(this.TrueUri) {
 		return
 	}
@@ -286,7 +286,7 @@ func (this *ApiBaseController) InitApi() {
 	} else {
 		this.ApiDatas = this.GetDatas
 	}
-	authBusiness := business2.NewAccountAuthBusiness()
+	authBusiness := business.NewAccountAuthBusiness()
 	this.TrueUri = authBusiness.GetTrueRequestUri(this.Ctx.Input.URI(), this.Ctx.Input.Params())
 	this.LogInputOutput("Input", this.ApiDatas)
 }

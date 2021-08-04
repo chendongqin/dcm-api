@@ -1,11 +1,11 @@
 package dy
 
 import (
-	business2 "dongchamao/business"
-	es2 "dongchamao/business/es"
+	"dongchamao/business"
+	"dongchamao/business/es"
 	controllers "dongchamao/controllers/api"
 	"dongchamao/global"
-	hbase2 "dongchamao/hbase"
+	"dongchamao/hbase"
 	"dongchamao/models/entity"
 	dy2 "dongchamao/models/repost/dy"
 	"time"
@@ -17,9 +17,9 @@ type AuthorController struct {
 
 //达人分类
 func (receiver *AuthorController) AuthorCate() {
-	configBusiness := business2.NewConfigBusiness()
+	configBusiness := business.NewConfigBusiness()
 	cateJson := configBusiness.GetConfigJson("author_cate", true)
-	cate := business2.DealAuthorCateJson(cateJson)
+	cate := business.DealAuthorCateJson(cateJson)
 	receiver.SuccReturn(cate)
 	return
 }
@@ -31,7 +31,7 @@ func (receiver *AuthorController) AuthorBaseData() {
 		receiver.FailReturn(global.NewError(4000))
 		return
 	}
-	authorBusiness := business2.NewAuthorBusiness()
+	authorBusiness := business.NewAuthorBusiness()
 	authorBase, comErr := authorBusiness.HbaseGetAuthor(authorId)
 	if comErr != nil {
 		receiver.FailReturn(comErr)
@@ -42,8 +42,8 @@ func (receiver *AuthorController) AuthorBaseData() {
 		receiver.FailReturn(comErr)
 		return
 	}
-	fansClub, _ := hbase2.GetAuthorFansClub(authorId)
-	basic, _ := hbase2.GetAuthorBasic(authorId, "")
+	fansClub, _ := hbase.GetAuthorFansClub(authorId)
+	basic, _ := hbase.GetAuthorBasic(authorId, "")
 	returnMap := map[string]interface{}{
 		"author_base": authorBase,
 		"reputation": dy2.RepostSimpleReputation{
@@ -72,8 +72,8 @@ func (receiver *AuthorController) AuthorStarSimpleData() {
 		"has_star_detail": false,
 		"star_detail":     nil,
 	}
-	authorBusiness := business2.NewAuthorBusiness()
-	xtDetail, comErr := hbase2.GetXtAuthorDetail(authorId)
+	authorBusiness := business.NewAuthorBusiness()
+	xtDetail, comErr := hbase.GetXtAuthorDetail(authorId)
 	if comErr == nil {
 		returnMap["has_star_detail"] = true
 		returnMap["star_detail"] = authorBusiness.GetDyAuthorScore(xtDetail.LiveScore, xtDetail.Score)
@@ -89,7 +89,7 @@ func (receiver *AuthorController) Reputation() {
 		receiver.FailReturn(global.NewError(4000))
 		return
 	}
-	authorBusiness := business2.NewAuthorBusiness()
+	authorBusiness := business.NewAuthorBusiness()
 	reputation, comErr := authorBusiness.HbaseGetAuthorReputation(authorId)
 	if comErr != nil {
 		receiver.FailReturn(comErr)
@@ -113,7 +113,7 @@ func (receiver *AuthorController) AuthorAwemesByDay() {
 	if endDay == "" {
 		endDay = time.Now().Format("2006-01-02")
 	}
-	aABusiness := business2.NewAuthorAwemeBusiness()
+	aABusiness := business.NewAuthorAwemeBusiness()
 	pslTime := "2006-01-02"
 	t1, err := time.ParseInLocation(pslTime, startDay, time.Local)
 	if err != nil {
@@ -164,7 +164,7 @@ func (receiver *AuthorController) AuthorBasicChart() {
 		receiver.FailReturn(global.NewError(4000))
 		return
 	}
-	authorBusiness := business2.NewAuthorBusiness()
+	authorBusiness := business.NewAuthorBusiness()
 	data, comErr := authorBusiness.HbaseGetAuthorBasicRangeDate(authorId, t1, t2)
 	if comErr != nil {
 		receiver.FailReturn(comErr)
@@ -181,7 +181,7 @@ func (receiver *AuthorController) AuthorFansAnalyse() {
 		receiver.FailReturn(global.NewError(4000))
 		return
 	}
-	detail, comErr := hbase2.GetXtAuthorDetail(authorId)
+	detail, comErr := hbase.GetXtAuthorDetail(authorId)
 	data := map[string][]entity.XtDistributionsList{}
 	if comErr == nil {
 		for _, v := range detail.Distributions {
@@ -234,7 +234,7 @@ func (receiver *AuthorController) CountLiveRoomAnalyse() {
 		receiver.FailReturn(comErr)
 		return
 	}
-	authorBusiness := business2.NewAuthorBusiness()
+	authorBusiness := business.NewAuthorBusiness()
 	data := authorBusiness.CountLiveRoomAnalyse(authorId, t1, t2)
 	receiver.SuccReturn(data)
 	return
@@ -258,7 +258,7 @@ func (receiver *AuthorController) AuthorLiveRooms() {
 		receiver.FailReturn(comErr)
 		return
 	}
-	esLiveBusiness := es2.NewEsLiveBusiness()
+	esLiveBusiness := es.NewEsLiveBusiness()
 	list, total, comErr := esLiveBusiness.SearchAuthorRooms(authorId, keyword, sortStr, orderBy, page, size, t1, t2)
 	if comErr != nil {
 		receiver.FailReturn(comErr)
@@ -295,7 +295,7 @@ func (receiver *AuthorController) AuthorProductAnalyse() {
 	if firstCate == "不限" {
 		firstCate = ""
 	}
-	authorBusiness := business2.NewAuthorBusiness()
+	authorBusiness := business.NewAuthorBusiness()
 	list, analysisCount, cateList, brandList, total, comErr := authorBusiness.GetAuthorProductAnalyse(authorId, keyword, firstCate, secondCate, thirdCate, brandName, sortStr, orderBy, shopType, startTime, endTime, page, pageSize)
 	if comErr != nil {
 		receiver.FailReturn(comErr)
@@ -322,7 +322,7 @@ func (receiver *AuthorController) AuthorProductRooms() {
 	}
 	page := receiver.GetPage("page")
 	pageSize := receiver.GetPageSize("page_size", 5, 10)
-	authorBusiness := business2.NewAuthorBusiness()
+	authorBusiness := business.NewAuthorBusiness()
 	list, total, comErr := authorBusiness.GetAuthorProductRooms(authorId, productId, startTime, endTime, page, pageSize)
 	if comErr != nil {
 		receiver.FailReturn(comErr)
