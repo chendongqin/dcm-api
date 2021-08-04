@@ -251,7 +251,7 @@ func (receiver *LiveController) LiveProductList() {
 	}
 	InputData := receiver.InputFormat()
 	keyword := InputData.GetString("keyword", "")
-	sortStr := InputData.GetString("sort", "start_time")
+	sortStr := InputData.GetString("sort", "shelf_time")
 	orderBy := InputData.GetString("order_by", "desc")
 	page := InputData.GetInt("page", 1)
 	pageSize := InputData.GetInt("page_size", 10)

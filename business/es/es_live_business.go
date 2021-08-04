@@ -121,12 +121,12 @@ func (receiver *EsLiveBusiness) CountRoomProductByAuthorId(authorId string, star
 //直播间筛选
 func (receiver *EsLiveBusiness) RoomProductByRoomId(roomInfo entity.DyLiveInfo, keyword, sortStr, orderBy, firstLabel, secondLabel, thirdLabel string, page, pageSize int) (list []es.EsAuthorLiveProduct, productCount dy.LiveProductCount, total int, comErr global.CommonError) {
 	if sortStr == "" {
-		sortStr = "start_time"
+		sortStr = "shelf_time"
 	}
 	if orderBy == "" {
 		orderBy = "desc"
 	}
-	if !utils.InArrayString(sortStr, []string{"start_time", "predict_sales", "predict_gmv"}) {
+	if !utils.InArrayString(sortStr, []string{"shelf_time", "predict_sales", "predict_gmv"}) {
 		comErr = global.NewError(4000)
 		return
 	}
