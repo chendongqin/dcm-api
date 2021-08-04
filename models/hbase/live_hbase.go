@@ -7,6 +7,7 @@ import (
 	"dongchamao/services/dyimg"
 	"dongchamao/services/hbaseService"
 	"dongchamao/services/hbaseService/hbasehelper"
+	"math"
 )
 
 //获取直播间商品讲解数据
@@ -60,6 +61,8 @@ func GetLiveInfo(roomId string) (data entity.DyLiveInfo, comErr global.CommonErr
 	utils.MapToStruct(liveInfoMap, &data)
 	data.Cover = dyimg.Fix(data.Cover)
 	data.User.Avatar = dyimg.Fix(data.User.Avatar)
+	data.RealSales = math.Floor(data.RealSales)
+	data.PredictSales = math.Floor(data.PredictSales)
 	data.RoomID = roomId
 	return
 }
@@ -96,6 +99,7 @@ func GetLiveSalesData(roomId string) (data entity.DyAuthorLiveSalesData, comErr 
 	}
 	detailMap := hbaseService.HbaseFormat(result, entity.DyAuthorLiveSalesDataMap)
 	utils.MapToStruct(detailMap, &data)
+	data.Sales = math.Floor(data.Sales)
 	return
 }
 

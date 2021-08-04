@@ -112,10 +112,10 @@ func (receiver *LiveController) LiveInfoData() {
 		dateChart = append(dateChart, v.CrawlTime)
 		if liveInfo.RealGmv > 0 {
 			gmvChart = append(gmvChart, v.RealGmv)
-			salesChart = append(salesChart, v.RealSales)
+			salesChart = append(salesChart, math.Floor(v.RealSales))
 		} else {
 			gmvChart = append(gmvChart, v.PredictGmv)
-			salesChart = append(salesChart, v.PredictSales)
+			salesChart = append(salesChart, math.Floor(v.PredictSales))
 		}
 	}
 	receiver.SuccReturn(map[string]interface{}{
