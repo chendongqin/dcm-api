@@ -35,7 +35,7 @@ var DyLiveInfoMap = HbaseEntity{
 	"other_max_user_count":          {Long, "max_user_count"},
 	"other_sales_trends":            {AJson, "sales_trends"},
 	"other_predict_sales":           {Double, "predict_sales"},
-	"other_predict_gmv":             {Double, "predict_sales"},
+	"other_predict_gmv":             {Double, "predict_gmv"},
 	"other_real_sales":              {Double, "real_sales"},
 	"other_real_gmv":                {Double, "real_gmv"},
 	"trends_follower_count_trends":  {AJson, "follower_count_trends"},

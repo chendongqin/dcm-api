@@ -94,8 +94,8 @@ func (receiver *LiveController) LiveInfoData() {
 	liveSale.Amount = gmv
 	esLiveBusiness := es.NewEsLiveBusiness()
 	liveSale.PromotionNum = esLiveBusiness.CountRoomProductByRoomId(liveInfo)
-	if liveSaleData.Sales > 0 {
-		liveSale.PerPrice = liveSaleData.Gmv / liveSaleData.Sales
+	if sales > 0 {
+		liveSale.PerPrice = gmv / sales
 	}
 	dateChart := make([]int64, 0)
 	gmvChart := make([]float64, 0)
