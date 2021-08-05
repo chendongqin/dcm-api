@@ -25,6 +25,12 @@ func GetStartAuthorVideoRank(rankType, category string) (data []entity.XtHotAwem
 	info := entity.XtHotAwemeAuthor{}
 	utils.MapToStruct(detailMap, &info)
 	data = info.Data
+	for k, v := range data {
+		data[k].FieldsMap = map[string]interface{}{}
+		for _, d := range v.Fields {
+			data[k].FieldsMap[d.Label] = d.Value
+		}
+	}
 	crawlTime = info.UpdateTime
 	return
 }
@@ -46,6 +52,29 @@ func GetStartAuthorLiveRank(rankType string) (data []entity.XtHotLiveAuthorData,
 	info := entity.XtHotLiveAuthor{}
 	utils.MapToStruct(detailMap, &info)
 	data = info.Data
+	for k, v := range data {
+		data[k].FieldsMap = map[string]interface{}{}
+		for _, d := range v.Fields {
+			data[k].FieldsMap[d.Label] = d.Value
+		}
+	}
 	crawlTime = info.UpdateTime
+	return
+}
+
+func GetDyLiveHourRank(hour string) (data entity.DyLiveHourRanks, comErr global.CommonError) {
+	rowKey := utils.Md5_encode(hour + "_小时榜")
+	query := hbasehelper.NewQuery()
+	result, err := query.SetTable(hbaseService.HbaseDyLiveHourRank).GetByRowKey([]byte(rowKey))
+	if err != nil {
+		comErr = global.NewMsgError(err.Error())
+		return
+	}
+	if result.Row == nil {
+		comErr = global.NewError(4040)
+		return
+	}
+	detailMap := hbaseService.HbaseFormat(result, entity.DyLiveHourRankMap)
+	utils.MapToStruct(detailMap, &data)
 	return
 }

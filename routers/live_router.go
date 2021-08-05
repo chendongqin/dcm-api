@@ -9,6 +9,7 @@ func init() {
 	//直播
 	ns := beego.NewNamespace("/v1/dy",
 		beego.NSNamespace("/live",
+			beego.NSRouter("/search", &v1dy.LiveController{}, "get:SearchRoom"),
 			beego.NSRouter("/info/:room_id", &v1dy.LiveController{}, "get:LiveInfoData"),
 			beego.NSRouter("/promotion/sale/:room_id/:product_id", &v1dy.LiveController{}, "get:LiveProductSaleChart"),
 			beego.NSRouter("/promotion/list/:room_id", &v1dy.LiveController{}, "get:LiveProductList"),

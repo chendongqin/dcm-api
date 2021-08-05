@@ -433,3 +433,108 @@ func (receiver *EsLiveBusiness) SearchProductRooms(productId, keyword, sortStr, 
 	total = esMultiQuery.Count
 	return
 }
+
+func (receiver *EsLiveBusiness) SearchLiveRooms(keyword, category string, minAmount, maxAmount, minAvgUserCount, maxAvgUserCount int64, minUv, maxUv, hasProduct, brand, keywordType, cateType int, sortStr, orderBy string, page, size int, startTime, endTime time.Time) (list []es.EsDyLiveInfo, total int, comErr global.CommonError) {
+	if sortStr == "" {
+		sortStr = "avg_user_count"
+	}
+	if orderBy == "" {
+		orderBy = "desc"
+	}
+	if !utils.InArrayString(sortStr, []string{"create_time", "predict_gmv", "predict_uv_value", "avg_user_count"}) {
+		comErr = global.NewError(4000)
+		return
+	}
+	if !utils.InArrayString(orderBy, []string{"desc", "asc"}) {
+		comErr = global.NewError(4000)
+		return
+	}
+	if size > 50 {
+		comErr = global.NewError(4000)
+		return
+	}
+	esTable := GetESTableByTime(es.DyLiveInfoBase, startTime, endTime)
+	esQuery, esMultiQuery := elasticsearch.NewElasticQueryGroup()
+	esQuery.SetRange("create_time", map[string]interface{}{
+		"gte": startTime.Unix(),
+		"lt":  endTime.AddDate(0, 0, 1).Unix(),
+	})
+	if minAmount > 0 || maxAmount > 0 {
+		rangeMap := map[string]interface{}{}
+		if minAmount > 0 {
+			rangeMap["gte"] = minAmount
+		}
+		if maxAmount > 0 {
+			rangeMap["lt"] = maxAmount
+		}
+		esQuery.SetRange("predict_gmv", rangeMap)
+	}
+	if minUv > 0 || maxUv > 0 {
+		rangeMap := map[string]interface{}{}
+		if minUv > 0 {
+			rangeMap["gte"] = minUv
+		}
+		if maxUv > 0 {
+			rangeMap["lt"] = maxUv
+		}
+		esQuery.SetRange("predict_uv_value", rangeMap)
+	}
+	if minAvgUserCount > 0 || maxAvgUserCount > 0 {
+		rangeMap := map[string]interface{}{}
+		if minAvgUserCount > 0 {
+			rangeMap["gte"] = minAvgUserCount
+		}
+		if maxAvgUserCount > 0 {
+			rangeMap["lt"] = maxAvgUserCount
+		}
+		esQuery.SetRange("avg_user_count", rangeMap)
+	}
+	if keyword != "" {
+		if keywordType == 1 {
+			esQuery.SetMatchPhrase("product_title", keyword)
+		} else {
+			esQuery.SetMultiMatch([]string{"unique_id", "short_id", "nickname"}, keyword)
+		}
+	}
+	if brand == 1 {
+		esQuery.SetTerm("brand", 1)
+	}
+	if hasProduct == 1 {
+		esQuery.SetRange("num_promotions", map[string]interface{}{
+			"gt": 0,
+		})
+	}
+	if category != "" {
+		if cateType == 1 {
+			esQuery.SetMatchPhrase("tags", category)
+		} else {
+			esQuery.SetMatchPhrase("tags", category)
+		}
+	}
+	results := esMultiQuery.
+		SetTable(esTable).
+		AddMust(esQuery.Condition).
+		SetLimit((page-1)*size, size).
+		SetOrderBy(elasticsearch.NewElasticOrder().Add(sortStr, orderBy).Order).
+		SetMultiQuery().
+		Query()
+	utils.MapToStruct(results, &list)
+	for k, v := range list {
+		list[k].Cover = dyimg.Fix(v.Cover)
+		list[k].Avatar = dyimg.Fix(v.Avatar)
+		//todo gmv处理
+		if v.RealGmv > 0 {
+			list[k].PredictGmv = v.RealGmv
+		}
+		if v.RealUvValue > 0 {
+			list[k].PredictUvValue = v.RealUvValue
+		}
+		list[k].AvgUserCount = math.Floor(v.AvgUserCount)
+		if v.DisplayId == "" {
+			list[k].DisplayId = v.ShortId
+		}
+		list[k].TagsArr = v.GetTagsArr()
+	}
+	total = esMultiQuery.Count
+	return
+}

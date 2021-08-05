@@ -11,6 +11,7 @@ func init() {
 		beego.NSNamespace("/rank",
 			beego.NSRouter("/author/aweme", &v1dy.RankController{}, "get:DyStartAuthorVideoRank"),
 			beego.NSRouter("/author/live", &v1dy.RankController{}, "get:DyStartAuthorLiveRank"),
+			beego.NSRouter("/live/hour/:date/:hour", &v1dy.RankController{}, "get:DyLiveHourRank"),
 		),
 	)
 	// 注册路由组

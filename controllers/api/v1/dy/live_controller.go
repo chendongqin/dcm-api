@@ -18,6 +18,75 @@ type LiveController struct {
 	controllers.ApiBaseController
 }
 
+func (receiver *LiveController) SearchRoom() {
+	hasAuth := false
+	if receiver.DyLevel == 3 {
+		hasAuth = true
+	}
+	startDay := receiver.Ctx.Input.Param("start")
+	endDay := receiver.Ctx.Input.Param("end")
+	if startDay == "" {
+		startDay = time.Now().AddDate(0, 0, -7).Format("2006-01-02")
+	}
+	if endDay == "" {
+		endDay = time.Now().Format("2006-01-02")
+	}
+	pslTime := "2006-01-02"
+	startTime, err := time.ParseInLocation(pslTime, startDay, time.Local)
+	if err != nil {
+		receiver.FailReturn(global.NewError(4000))
+		return
+	}
+	endTime, err := time.ParseInLocation(pslTime, endDay, time.Local)
+	if err != nil {
+		receiver.FailReturn(global.NewError(4000))
+		return
+	}
+	if startTime.After(endTime) || endTime.After(startTime.AddDate(0, 0, 90)) || endTime.After(time.Now()) {
+		receiver.FailReturn(global.NewError(4000))
+		return
+	}
+	keyword := receiver.GetString("keyword", "")
+	category := receiver.GetString("category", "")
+	sortStr := receiver.GetString("sort", "")
+	orderBy := receiver.GetString("order_by", "")
+	minAmount, _ := receiver.GetInt64("min_amount", 0)
+	maxAmount, _ := receiver.GetInt64("max_amount", 0)
+	minAvgUserCount, _ := receiver.GetInt64("min_avg_user_count", 0)
+	maxAvgUserCount, _ := receiver.GetInt64("max_avg_user_count", 0)
+	minUv, _ := receiver.GetInt("min_uv", 0)
+	maxUv, _ := receiver.GetInt("max_uv", 0)
+	hasProduct, _ := receiver.GetInt("has_product", 0)
+	isBrand, _ := receiver.GetInt("is_brand", 0)
+	keywordType, _ := receiver.GetInt("keyword_type", 0)
+	cateType, _ := receiver.GetInt("cate_type", 0)
+	page := receiver.GetPage("page")
+	pageSize := receiver.GetPageSize("page_size", 10, 50)
+	if !hasAuth {
+		today := time.Now().Format("20060102")
+		lastDay := time.Now().AddDate(0, 0, -7).Format("20060102")
+		start := startTime.Format("20060102")
+		end := endTime.Format("20060102")
+		if lastDay != start || today != end || keyword != "" || category != "" || sortStr != "" || orderBy != "" || minAmount > 0 || maxAmount > 0 || minUv > 0 || maxUv > 0 || minAvgUserCount > 0 || maxAvgUserCount > 0 || hasProduct == 1 || isBrand == 1 || page != 1 {
+			receiver.FailReturn(global.NewError(4004))
+			return
+		}
+		pageSize = 10
+	}
+	esLiveBusiness := es.NewEsLiveBusiness()
+	list, total, comErr := esLiveBusiness.SearchLiveRooms(keyword, category, minAmount, maxAmount, minAvgUserCount, maxAvgUserCount, minUv, maxUv, hasProduct, isBrand, keywordType, cateType, sortStr, orderBy, page, pageSize, startTime, endTime)
+	if comErr != nil {
+		receiver.FailReturn(comErr)
+		return
+	}
+	receiver.SuccReturn(map[string]interface{}{
+		"list":     list,
+		"total":    total,
+		"has_auth": hasAuth,
+	})
+	return
+}
+
 //直播详细
 func (receiver *LiveController) LiveInfoData() {
 	roomId := receiver.Ctx.Input.Param(":room_id")

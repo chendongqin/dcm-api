@@ -32,4 +32,5 @@ const (
 
 	HbaseXtHotAwemeAuthorRank = "xt_hot_aweme_author"
 	HbaseXtHotLiveAuthorRank  = "xt_hot_live_author"
+	HbaseDyLiveHourRank       = "dy_live_hour_rank"
 )
