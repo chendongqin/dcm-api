@@ -123,3 +123,39 @@ func GetProductLiveSalesRangDate(productId string, startTime, endTime time.Time)
 	}
 	return
 }
+
+func GetProductAuthorAnalysis(rowKey string) (data entity.DyProductAuthorAnalysis, comErr global.CommonError) {
+	query := hbasehelper.NewQuery()
+	result, err := query.SetTable(hbaseService.HbaseDyProductAuthorAnalysis).GetByRowKey([]byte(rowKey))
+	if err != nil {
+		comErr = global.NewMsgError(err.Error())
+		return
+	}
+	if result.Row == nil {
+		comErr = global.NewError(4040)
+		return
+	}
+	detailMap := hbaseService.HbaseFormat(result, entity.DyProductAuthorAnalysisMap)
+	utils.MapToStruct(detailMap, &data)
+	return
+}
+
+func GetProductAuthorAnalysisRange(startRowKey, stopRowKey string) (data []entity.DyProductAuthorAnalysis, comErr global.CommonError) {
+	query := hbasehelper.NewQuery()
+	results, err := query.
+		SetTable(hbaseService.HbaseDyProductAuthorAnalysis).
+		SetStartRow([]byte(startRowKey)).
+		SetStopRow([]byte(stopRowKey)).
+		Scan(50000)
+	if err != nil {
+		comErr = global.NewMsgError(err.Error())
+		return
+	}
+	for _, v := range results {
+		dataMap := hbaseService.HbaseFormat(v, entity.DyProductAuthorAnalysisMap)
+		hData := entity.DyProductAuthorAnalysis{}
+		utils.MapToStruct(dataMap, &hData)
+		data = append(data, hData)
+	}
+	return
+}

@@ -1,12 +1,17 @@
 package business
 
 import (
+	"dongchamao/business/es"
 	"dongchamao/global"
 	"dongchamao/global/cache"
+	"dongchamao/hbase"
 	"dongchamao/models/dcm"
+	"dongchamao/models/entity"
 	"dongchamao/models/repost/dy"
 	"fmt"
 	jsoniter "github.com/json-iterator/go"
+	"strings"
+	"time"
 )
 
 type ProductBusiness struct {
@@ -26,20 +31,47 @@ func (receiver *ProductBusiness) GetCacheProductCate(enableCache bool) []dy.DyCa
 			return pCate
 		}
 	}
+	allList := make([]dcm.DcProductCate, 0)
+	_ = dcm.GetSlaveDbSession().Where("level<4").Desc("weight").Find(&allList)
 	firstList := make([]dcm.DcProductCate, 0)
-	_ = dcm.GetSlaveDbSession().Where("level=1").Desc("weight").Find(&firstList)
+	secondMap := map[int][]dcm.DcProductCate{}
+	thirdMap := map[int][]dcm.DcProductCate{}
+	for _, v := range allList {
+		if v.Level == 3 {
+			if _, ok := thirdMap[v.ParentId]; !ok {
+				thirdMap[v.ParentId] = []dcm.DcProductCate{}
+			}
+			thirdMap[v.ParentId] = append(thirdMap[v.ParentId], v)
+		} else if v.Level == 2 {
+			if _, ok := secondMap[v.ParentId]; !ok {
+				secondMap[v.ParentId] = []dcm.DcProductCate{}
+			}
+			secondMap[v.ParentId] = append(secondMap[v.ParentId], v)
+		} else {
+			firstList = append(firstList, v)
+		}
+	}
 	for _, v := range firstList {
-		secondList := make([]dcm.DcProductCate, 0)
 		item := dy.DyCate{
 			Name:    v.Name,
 			SonCate: []dy.DyCate{},
 		}
-		_ = dcm.GetSlaveDbSession().Where("level=2 AND parent_id = ?", v.Id).Desc("weight").Find(&secondList)
-		for _, vs := range secondList {
-			item.SonCate = append(item.SonCate, dy.DyCate{
-				Name:    vs.Name,
-				SonCate: []dy.DyCate{},
-			})
+		if s, ok := secondMap[v.Id]; ok {
+			for _, s1 := range s {
+				sonCate := make([]dy.DyCate, 0)
+				if t, ok2 := thirdMap[s1.Id]; ok2 {
+					for _, t1 := range t {
+						sonCate = append(sonCate, dy.DyCate{
+							Name:    t1.Name,
+							SonCate: []dy.DyCate{},
+						})
+					}
+				}
+				item.SonCate = append(item.SonCate, dy.DyCate{
+					Name:    s1.Name,
+					SonCate: sonCate,
+				})
+			}
 		}
 		pCate = append(pCate, item)
 	}
@@ -73,4 +105,50 @@ func (receiver *ProductBusiness) GetProductUrl(platform, productId string) strin
 		url = fmt.Sprintf(url, productId)
 	}
 	return url
+}
+
+func (receiver *ProductBusiness) ProductAuthorAnalysis(productId, keyword, tag string, startTime, endTime time.Time, minFollow, maxFollow int64, scoreType, page, pageSize int) (list []entity.DyProductAuthorAnalysis, total int, comErr global.CommonError) {
+	esProductBusiness := es.NewEsProductBusiness()
+	if tag == "" && minFollow == 0 && maxFollow == 0 && scoreType == 0 {
+		searchList, searchTotal, err := esProductBusiness.SearchRangeDateList(productId, keyword, startTime, endTime, page, pageSize)
+		if err != nil {
+			comErr = err
+			return
+		}
+		total = searchTotal
+		for _, v := range searchList {
+			rowKey := v.ProductId + "_" + v.CreateSdf + "_" + v.AuthorId
+			data, _ := hbase.GetProductAuthorAnalysis(rowKey)
+			list = append(list, data)
+		}
+		return
+	}
+	startRow, stopRow, total, comErr := esProductBusiness.SearchRangeDateRowKey(productId, keyword, startTime, endTime)
+	if comErr != nil {
+		return
+	}
+	startRowKey := startRow.ProductId + "_" + startRow.CreateSdf + "_" + startRow.AuthorId
+	stopRowKey := stopRow.ProductId + "_" + stopRow.CreateSdf + "_" + stopRow.AuthorId
+	allList, _ := hbase.GetProductAuthorAnalysisRange(startRowKey, stopRowKey)
+	lastRow, _ := hbase.GetProductAuthorAnalysis(stopRowKey)
+	allList = append(allList, lastRow)
+	for _, v := range allList {
+		if keyword != "" && !(strings.Index(v.NickName, keyword) >= 0 || v.DisplayId == keyword || v.ShortId == keyword) {
+			continue
+		}
+		if minFollow > 0 && v.FollowCount < minFollow {
+			continue
+		}
+		if maxFollow > 0 && v.FollowCount >= maxFollow {
+			continue
+		}
+		if scoreType != 5 && scoreType != v.Level {
+			continue
+		}
+		if tag != "" && strings.Index(v.ShopTags, tag) < 0 {
+			continue
+		}
+		list = append(list, v)
+	}
+	return
 }

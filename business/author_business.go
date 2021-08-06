@@ -490,17 +490,13 @@ func (a *AuthorBusiness) GetAuthorProductAnalyse(authorId, keyword, firstCate, s
 	var sumSale float64 = 0
 	hbaseDataList := make([]entity.DyAuthorProductAnalysis, 0)
 	esAuthorBusiness := es.NewEsAuthorBusiness()
-	searchList, tmpErr := esAuthorBusiness.AuthorProductAnalysis(authorId, keyword, startTime, endTime)
+	startRow, stopRow, tmpErr := esAuthorBusiness.AuthorProductAnalysis(authorId, keyword, startTime, endTime)
 	if tmpErr != nil {
 		comErr = tmpErr
 		return
 	}
-	resLen := len(searchList)
-	if resLen == 0 {
-		return
-	}
-	startRowKey := searchList[0].AuthorDateProduct
-	stopRowKey := searchList[resLen-1].AuthorDateProduct
+	startRowKey := startRow.AuthorDateProduct
+	stopRowKey := stopRow.AuthorDateProduct
 	hbaseDataList, _ = hbase.GetAuthorProductAnalysisRange(startRowKey, stopRowKey)
 	hbaseData, _ := hbase.GetAuthorProductAnalysis(stopRowKey)
 	hbaseDataList = append(hbaseDataList, hbaseData)

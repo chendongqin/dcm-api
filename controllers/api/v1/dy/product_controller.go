@@ -459,3 +459,7 @@ func (receiver *ProductController) ProductLiveRoomList() {
 	})
 	return
 }
+
+func (receiver *ProductController) ProductAuthorAnalysis() {
+
+}
