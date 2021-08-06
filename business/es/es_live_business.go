@@ -434,7 +434,7 @@ func (receiver *EsLiveBusiness) SearchProductRooms(productId, keyword, sortStr, 
 	return
 }
 
-func (receiver *EsLiveBusiness) SearchLiveRooms(keyword, category string, minAmount, maxAmount, minAvgUserCount, maxAvgUserCount int64, minUv, maxUv, hasProduct, brand, keywordType, cateType int, sortStr, orderBy string, page, size int, startTime, endTime time.Time) (list []es.EsDyLiveInfo, total int, comErr global.CommonError) {
+func (receiver *EsLiveBusiness) SearchLiveRooms(keyword, category, firstName, secondName, thirdName string, minAmount, maxAmount, minAvgUserCount, maxAvgUserCount int64, minUv, maxUv, hasProduct, brand, keywordType int, sortStr, orderBy string, page, size int, startTime, endTime time.Time) (list []es.EsDyLiveInfo, total int, comErr global.CommonError) {
 	if sortStr == "" {
 		sortStr = "avg_user_count"
 	}
@@ -505,11 +505,16 @@ func (receiver *EsLiveBusiness) SearchLiveRooms(keyword, category string, minAmo
 		})
 	}
 	if category != "" {
-		if cateType == 1 {
-			esQuery.SetMatchPhrase("tags", category)
-		} else {
-			esQuery.SetMatchPhrase("tags", category)
-		}
+		esQuery.SetMatchPhrase("tags", category)
+	}
+	if firstName != "" {
+		esQuery.SetMatchPhrase("dcm_level_first", firstName)
+	}
+	if secondName != "" {
+		esQuery.SetMatchPhrase("first_cname", secondName)
+	}
+	if thirdName != "" {
+		esQuery.SetMatchPhrase("second_cname", thirdName)
 	}
 	results := esMultiQuery.
 		SetTable(esTable).

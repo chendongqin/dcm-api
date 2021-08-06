@@ -48,6 +48,9 @@ func (receiver *LiveController) SearchRoom() {
 	}
 	keyword := receiver.GetString("keyword", "")
 	category := receiver.GetString("category", "")
+	firstName := receiver.GetString("first_name", "")
+	secondName := receiver.GetString("second_name", "")
+	thirdName := receiver.GetString("third_name", "")
 	sortStr := receiver.GetString("sort", "")
 	orderBy := receiver.GetString("order_by", "")
 	minAmount, _ := receiver.GetInt64("min_amount", 0)
@@ -59,7 +62,6 @@ func (receiver *LiveController) SearchRoom() {
 	hasProduct, _ := receiver.GetInt("has_product", 0)
 	isBrand, _ := receiver.GetInt("is_brand", 0)
 	keywordType, _ := receiver.GetInt("keyword_type", 0)
-	cateType, _ := receiver.GetInt("cate_type", 0)
 	page := receiver.GetPage("page")
 	pageSize := receiver.GetPageSize("page_size", 10, 50)
 	if !hasAuth {
@@ -74,7 +76,7 @@ func (receiver *LiveController) SearchRoom() {
 		pageSize = 10
 	}
 	esLiveBusiness := es.NewEsLiveBusiness()
-	list, total, comErr := esLiveBusiness.SearchLiveRooms(keyword, category, minAmount, maxAmount, minAvgUserCount, maxAvgUserCount, minUv, maxUv, hasProduct, isBrand, keywordType, cateType, sortStr, orderBy, page, pageSize, startTime, endTime)
+	list, total, comErr := esLiveBusiness.SearchLiveRooms(keyword, category, firstName, secondName, thirdName, minAmount, maxAmount, minAvgUserCount, maxAvgUserCount, minUv, maxUv, hasProduct, isBrand, keywordType, sortStr, orderBy, page, pageSize, startTime, endTime)
 	if comErr != nil {
 		receiver.FailReturn(comErr)
 		return
