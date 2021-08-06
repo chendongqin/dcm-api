@@ -269,3 +269,24 @@ func GetAuthorProductAnalysisRange(startRowKey, stopRowKey string) (data []entit
 	}
 	return
 }
+
+//达人带货行业
+func GetAuthorLiveTags() (data []entity.DyAuthorLiveTags, comErr global.CommonError) {
+	query := hbasehelper.NewQuery()
+	results, err := query.
+		SetTable(hbaseService.HbaseDyAuthorLiveTags).
+		Scan(10000)
+	if err != nil {
+		return
+	}
+	for _, v := range results {
+		infoMap := hbaseService.HbaseFormat(v, entity.DyAuthorLiveTagsMap)
+		detail := entity.DyAuthorLiveTags{}
+		utils.MapToStruct(infoMap, &detail)
+		if detail.Tags == "" || detail.Tags == "null" {
+			continue
+		}
+		data = append(data, detail)
+	}
+	return
+}

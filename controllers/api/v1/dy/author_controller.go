@@ -24,6 +24,15 @@ func (receiver *AuthorController) AuthorCate() {
 	return
 }
 
+func (receiver *AuthorController) GetCacheAuthorLiveTags() {
+	authorBusiness := business.NewAuthorBusiness()
+	cateList := authorBusiness.GetCacheAuthorLiveTags(true)
+	receiver.SuccReturn(map[string]interface{}{
+		"list": cateList,
+	})
+	return
+}
+
 //达人数据
 func (receiver *AuthorController) AuthorBaseData() {
 	authorId := receiver.Ctx.Input.Param(":author_id")

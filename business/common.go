@@ -1,6 +1,8 @@
 package business
 
 import (
+	"dongchamao/hbase"
+	"dongchamao/models/dcm"
 	"dongchamao/models/repost/dy"
 	jsoniter "github.com/json-iterator/go"
 	"strings"
@@ -148,4 +150,25 @@ func DealAuthorCateJson(authorCateJson string) []dy.DyCate {
 		dyAuthorCate = append(dyAuthorCate, item)
 	}
 	return dyAuthorCate
+}
+
+func DealAuthorLiveTags() {
+	data, _ := hbase.GetAuthorLiveTags()
+	tagsMap := map[string]string{}
+	for _, v := range data {
+		tags := strings.Split(v.Tags, "_")
+		for _, tag := range tags {
+			tagsMap[tag] = tag
+		}
+	}
+	for _, tag := range tagsMap {
+		tagM := dcm.DyAuthorLiveTags{}
+		exist, _ := dcm.GetBy("name", tag, &tagM)
+		if exist {
+			continue
+		}
+		tagM.Name = tag
+		dcm.Insert(nil, &tagM)
+	}
+	return
 }

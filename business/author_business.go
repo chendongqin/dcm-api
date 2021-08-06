@@ -3,11 +3,14 @@ package business
 import (
 	"dongchamao/business/es"
 	"dongchamao/global"
+	"dongchamao/global/cache"
 	"dongchamao/global/utils"
 	"dongchamao/hbase"
+	"dongchamao/models/dcm"
 	"dongchamao/models/entity"
 	"dongchamao/models/repost/dy"
 	"dongchamao/services/dyimg"
+	jsoniter "github.com/json-iterator/go"
 	"math"
 	"sort"
 	"strings"
@@ -22,6 +25,28 @@ type AuthorBusiness struct {
 
 func NewAuthorBusiness() *AuthorBusiness {
 	return new(AuthorBusiness)
+}
+
+func (a *AuthorBusiness) GetCacheAuthorLiveTags(enableCache bool) []string {
+	memberKey := cache.GetCacheKey(cache.ConfigKeyCache, "author_live_tags")
+	tags := make([]string, 0)
+	if enableCache == true {
+		jsonStr := global.Cache.Get(memberKey)
+		if jsonStr != "" {
+			_ = jsoniter.Unmarshal([]byte(jsonStr), &tags)
+			return tags
+		}
+	}
+	list := make([]dcm.DyAuthorLiveTags, 0)
+	_ = dcm.GetSlaveDbSession().Desc("weight").Find(&list)
+	for _, v := range list {
+		tags = append(tags, v.Name)
+	}
+	if len(tags) > 0 {
+		tagsByte, _ := jsoniter.Marshal(tags)
+		_ = global.Cache.Set(memberKey, string(tagsByte), 1800)
+	}
+	return tags
 }
 
 //粉丝｜粉丝团趋势数据

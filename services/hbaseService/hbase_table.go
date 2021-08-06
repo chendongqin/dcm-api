@@ -23,6 +23,7 @@ const (
 	HbaseDyAuthorRoomMapping     = "dy_author_room_mapping"     //达人直播间
 	HbaseDyAuthorProductAnalysis = "dy_author_product_analysis" //达人电商分析
 	HbaseXtAuthorDetail          = "xt_author_detail"           //星图达人详情
+	HbaseDyAuthorLiveTags        = "dy_live_hour_rank_sell"     //达人带货行业
 
 	HbaseDyProduct               = "dy_product"
 	HbaseDyProductBrand          = "dy_product_brand"

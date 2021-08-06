@@ -1,7 +1,6 @@
 package v1
 
 import (
-	"dongchamao/business"
 	"dongchamao/controllers/api"
 	"dongchamao/global"
 	"dongchamao/global/cache"
@@ -88,15 +87,6 @@ func (receiver *CommonController) CheckSmsCode() {
 }
 
 func (receiver *CommonController) Test() {
-	payBusiness := business.NewPayBusiness()
-	value := payBusiness.CountDySurplusValue(11)
-	value1 := payBusiness.CountDySurplusValue(140)
-	value2 := payBusiness.CountDySurplusValue(300)
-	value3 := payBusiness.CountDySurplusValue(400)
-	value4 := payBusiness.CountDySurplusValue(600)
-	value5 := payBusiness.CountDySurplusValue(1300)
-	receiver.SuccReturn([]interface{}{
-		value, value1, value2, value3, value4, value5,
-	})
+	receiver.SuccReturn(nil)
 	return
 }
