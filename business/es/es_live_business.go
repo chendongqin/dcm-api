@@ -190,20 +190,20 @@ func (receiver *EsLiveBusiness) RoomProductByRoomId(roomInfo entity.DyLiveInfo, 
 	productCount = dy.LiveProductCount{}
 	for k, v := range list {
 		productCount.ProductNum++
-		//todo gmv处理
-		if v.RealGmv > 0 {
-			var sale float64 = 0
-			if v.Price > 0 {
-				sale = math.Floor(v.RealGmv / v.Price)
-			}
-			productCount.Sales += sale
-			productCount.Gmv += v.RealGmv
-			list[k].PredictGmv = v.RealGmv
-			list[k].PredictSales = sale
-		} else {
-			productCount.Sales += math.Floor(v.PredictSales)
-			productCount.Gmv += v.PredictGmv
-		}
+		////todo gmv处理
+		//if v.RealGmv > 0 {
+		//	var sale float64 = 0
+		//	if v.Price > 0 {
+		//		sale = math.Floor(v.RealGmv / v.Price)
+		//	}
+		//	productCount.Sales += sale
+		//	productCount.Gmv += v.RealGmv
+		//	list[k].PredictGmv = v.RealGmv
+		//	list[k].PredictSales = sale
+		//} else {
+		productCount.Sales += math.Floor(v.PredictSales)
+		productCount.Gmv += v.PredictGmv
+		//}
 		if v.IsReturn == 1 && v.StartTime == v.ShelfTime {
 			list[k].IsReturn = 0
 		}
@@ -217,15 +217,15 @@ func (receiver *EsLiveBusiness) RoomProductByRoomId(roomInfo entity.DyLiveInfo, 
 	list = list[start:end]
 	for k, v := range list {
 		list[k].Cover = dyimg.Product(v.Cover)
-		//todo 真实gmv存在，按gmv处理
-		if v.RealGmv > 0 {
-			list[k].PredictGmv = v.RealGmv
-			if v.Price > 0 {
-				list[k].PredictSales = math.Floor(v.RealGmv / v.Price)
-			}
-		} else {
-			list[k].PredictSales = math.Floor(v.PredictSales)
-		}
+		////todo 真实gmv存在，按gmv处理
+		//if v.RealGmv > 0 {
+		//	list[k].PredictGmv = v.RealGmv
+		//	if v.Price > 0 {
+		//		list[k].PredictSales = math.Floor(v.RealGmv / v.Price)
+		//	}
+		//} else {
+		list[k].PredictSales = math.Floor(v.PredictSales)
+		//}
 		if v.Pv > 0 {
 			list[k].BuyRate = v.PredictSales / float64(v.Pv)
 		}
@@ -259,14 +259,7 @@ func (receiver *EsLiveBusiness) AllRoomProductCateByRoomId(roomInfo entity.DyLiv
 	firstCateCountMap := map[string]int{}
 	firstCateMap := map[string]map[string]bool{}
 	secondCateMap := map[string]map[string]bool{}
-	//gmv写入数据数
-	gmvNum := 0
-	productNum := 0
 	for _, v := range list {
-		if v.RealGmv > 0 {
-			gmvNum++
-		}
-		productNum++
 		if v.DcmLevelFirst == "" {
 			v.DcmLevelFirst = "其他"
 		}
@@ -323,7 +316,7 @@ func (receiver *EsLiveBusiness) AllRoomProductCateByRoomId(roomInfo entity.DyLiv
 	}
 	cateListByte, _ := jsoniter.Marshal(productCount)
 	var timeout time.Duration = 60
-	if gmvNum == productNum {
+	if roomInfo.FinishTime <= (time.Now().Unix() - 3600) {
 		timeout = 1800
 	}
 	_ = global.Cache.Set(cKey, string(cateListByte), timeout)
@@ -414,15 +407,15 @@ func (receiver *EsLiveBusiness) SearchProductRooms(productId, keyword, sortStr, 
 		list[k].PredictSales = math.Floor(v.PredictSales)
 		list[k].Cover = dyimg.Fix(v.Cover)
 		list[k].RoomCover = dyimg.Fix(v.RoomCover)
-		//todo gmv处理
-		if v.RealGmv > 0 {
-			var sale float64 = 0
-			if v.Price > 0 {
-				sale = math.Floor(v.RealGmv / v.Price)
-			}
-			list[k].PredictGmv = v.RealGmv
-			list[k].PredictSales = sale
-		}
+		////todo gmv处理
+		//if v.RealGmv > 0 {
+		//	var sale float64 = 0
+		//	if v.Price > 0 {
+		//		sale = math.Floor(v.RealGmv / v.Price)
+		//	}
+		//	list[k].PredictGmv = v.RealGmv
+		//	list[k].PredictSales = sale
+		//}
 		if v.IsReturn == 1 && v.StartTime == v.ShelfTime {
 			list[k].IsReturn = 0
 		}
@@ -527,10 +520,10 @@ func (receiver *EsLiveBusiness) SearchLiveRooms(keyword, category, firstName, se
 	for k, v := range list {
 		list[k].Cover = dyimg.Fix(v.Cover)
 		list[k].Avatar = dyimg.Fix(v.Avatar)
-		//todo gmv处理
-		if v.RealGmv > 0 {
-			list[k].PredictGmv = v.RealGmv
-		}
+		////todo gmv处理
+		//if v.RealGmv > 0 {
+		//	list[k].PredictGmv = v.RealGmv
+		//}
 		if v.RealUvValue > 0 {
 			list[k].PredictUvValue = v.RealUvValue
 		}

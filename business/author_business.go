@@ -692,10 +692,10 @@ func (a *AuthorBusiness) GetAuthorProductRooms(authorId, productId string, start
 		if liveSaleData.Gmv == 0 {
 			gmv = liveInfo.PredictGmv
 			sales = liveInfo.PredictSales
-			if liveInfo.RealGmv > 0 {
-				gmv = liveInfo.RealGmv
-				sales = liveInfo.RealSales
-			}
+			//if liveInfo.RealGmv > 0 {
+			//	gmv = liveInfo.RealGmv
+			//	sales = liveInfo.RealSales
+			//}
 		}
 		list = append(list, dy.DyAuthorProductRoom{
 			RoomId:       roomId,

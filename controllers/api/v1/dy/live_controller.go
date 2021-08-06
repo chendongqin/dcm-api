@@ -126,10 +126,10 @@ func (receiver *LiveController) LiveInfoData() {
 	if liveSaleData.Gmv == 0 {
 		gmv = liveInfo.PredictGmv
 		sales = liveInfo.PredictSales
-		if liveInfo.RealGmv > 0 {
-			gmv = liveInfo.RealGmv
-			sales = liveInfo.RealSales
-		}
+		//if liveInfo.RealGmv > 0 {
+		//	gmv = liveInfo.RealGmv
+		//	sales = liveInfo.RealSales
+		//}
 	}
 	if liveInfo.TotalUser > 0 {
 		incFansRate = float64(liveInfo.FollowCount) / float64(liveInfo.TotalUser)
@@ -181,13 +181,13 @@ func (receiver *LiveController) LiveInfoData() {
 	})
 	for _, v := range salesTrends {
 		dateChart = append(dateChart, v.CrawlTime)
-		if liveInfo.RealGmv > 0 {
-			gmvChart = append(gmvChart, v.RealGmv)
-			salesChart = append(salesChart, math.Floor(v.RealSales))
-		} else {
-			gmvChart = append(gmvChart, v.PredictGmv)
-			salesChart = append(salesChart, math.Floor(v.PredictSales))
-		}
+		//if liveInfo.RealGmv > 0 {
+		//	gmvChart = append(gmvChart, v.RealGmv)
+		//	salesChart = append(salesChart, math.Floor(v.RealSales))
+		//} else {
+		gmvChart = append(gmvChart, v.PredictGmv)
+		salesChart = append(salesChart, math.Floor(v.PredictSales))
+		//}
 	}
 	receiver.SuccReturn(map[string]interface{}{
 		"live_info": returnLiveInfo,
