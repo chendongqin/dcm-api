@@ -473,7 +473,7 @@ func (receiver *ProductController) ProductAuthorAnalysis() {
 	maxFollow, _ := receiver.GetInt64("max_follow", 0)
 	scoreType, _ := receiver.GetInt("score_type", 5)
 	page := receiver.GetPage("page")
-	pageSize := receiver.GetPageSize("page", 10, 50)
+	pageSize := receiver.GetPageSize("page_size", 10, 50)
 	productBusiness := business.NewProductBusiness()
 	list, total, comErr := productBusiness.ProductAuthorAnalysis(productId, keyword, tag, startTime, endTime, minFollow, maxFollow, scoreType, page, pageSize)
 	if comErr != nil {
