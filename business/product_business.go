@@ -138,8 +138,10 @@ func (receiver *ProductBusiness) ProductAuthorAnalysis(productId, keyword, tag s
 		allList = append(allList, lastRow)
 	}
 	for _, v := range allList {
-		if keyword != "" && !(strings.Index(v.NickName, keyword) >= 0 || v.DisplayId == keyword || v.ShortId == keyword) {
-			continue
+		if keyword != "" {
+			if strings.Index(v.NickName, keyword) < 0 && v.DisplayId != keyword && v.ShortId != keyword {
+				continue
+			}
 		}
 		if minFollow > 0 && v.FollowCount < minFollow {
 			continue
@@ -189,6 +191,11 @@ func (receiver *ProductBusiness) ProductAuthorAnalysisCount(productId, keyword s
 	}
 	tagsMap := map[string]int{}
 	for _, v := range allList {
+		if keyword != "" {
+			if strings.Index(v.NickName, keyword) < 0 && v.DisplayId != keyword && v.ShortId != keyword {
+				continue
+			}
+		}
 		if v.ShopTags == "" || v.ShopTags == "null" {
 			v.ShopTags = "其他"
 		}
