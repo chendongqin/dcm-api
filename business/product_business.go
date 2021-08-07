@@ -189,6 +189,9 @@ func (receiver *ProductBusiness) ProductAuthorAnalysisCount(productId, keyword s
 	}
 	tagsMap := map[string]int{}
 	for _, v := range allList {
+		if v.ShopTags == "" || v.ShopTags == "null" {
+			v.ShopTags = "其他"
+		}
 		shopTags := strings.Split(v.ShopTags, "_")
 		for _, s := range shopTags {
 			if _, ok := tagsMap[s]; ok {
@@ -204,7 +207,7 @@ func (receiver *ProductBusiness) ProductAuthorAnalysisCount(productId, keyword s
 			Num:  v,
 		})
 	}
-	if keyword == "" {
+	if keyword == "" && len(countList) > 0 {
 		countJson := utils.SerializeData(countList)
 		_ = global.Cache.Set(cKey, countJson, 300)
 	}

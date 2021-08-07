@@ -42,7 +42,7 @@ func (i *EsProductBusiness) SearchRangeDateList(productId, keyword string, start
 func (i *EsProductBusiness) SearchRangeDateRowKey(productId, keyword string, startTime, endTime time.Time) (startRow es.DyProductAuthorAnalysis, stopRow es.DyProductAuthorAnalysis, total int, comErr global.CommonError) {
 	esTable := GetESTableByTime(es.DyProductAuthorAnalysisTable, startTime, endTime)
 	esQuery, esMultiQuery := elasticsearch.NewElasticQueryGroup()
-	esQuery.SetTerm("product_id", productId)
+	esQuery.SetTerm("productId", productId)
 	esQuery.SetRange("createSdf.keyword", map[string]interface{}{
 		"gte": startTime.Format("20060102"),
 		"lte": endTime.Format("20060102"),
@@ -58,7 +58,8 @@ func (i *EsProductBusiness) SearchRangeDateRowKey(productId, keyword string, sta
 		SetMultiQuery().
 		QueryOne()
 	utils.MapToStruct(result, &startRow)
-	result2 := esMultiQuery.
+	_, esMultiQuery2 := elasticsearch.NewElasticQueryGroup()
+	result2 := esMultiQuery2.
 		SetTable(esTable).
 		SetFields("productId", "authorId", "createSdf").
 		AddMust(esQuery.Condition).

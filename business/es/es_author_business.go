@@ -33,7 +33,8 @@ func (receiver *EsAuthorBusiness) AuthorProductAnalysis(authorId, keyword string
 		SetMultiQuery().
 		QueryOne()
 	utils.MapToStruct(result, &startRow)
-	result2 := esMultiQuery.
+	_, esMultiQuery2 := elasticsearch.NewElasticQueryGroup()
+	result2 := esMultiQuery2.
 		SetTable(esTable).
 		AddMust(esQuery.Condition).
 		SetOrderBy(elasticsearch.NewElasticOrder().Add("author_date_product.keyword", "asc").Order).
