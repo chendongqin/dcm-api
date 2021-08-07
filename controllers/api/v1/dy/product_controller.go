@@ -461,5 +461,42 @@ func (receiver *ProductController) ProductLiveRoomList() {
 }
 
 func (receiver *ProductController) ProductAuthorAnalysis() {
-
+	productId := receiver.GetString(":product_id")
+	startTime, endTime, comErr := receiver.GetRangeDate()
+	if comErr != nil {
+		receiver.FailReturn(comErr)
+		return
+	}
+	keyword := receiver.GetString("keyword", "")
+	tag := receiver.GetString("tag", "")
+	minFollow, _ := receiver.GetInt64("min_follow", 0)
+	maxFollow, _ := receiver.GetInt64("max_follow", 0)
+	scoreType, _ := receiver.GetInt("score_type", 5)
+	page := receiver.GetPage("page")
+	pageSize := receiver.GetPageSize("page", 10, 50)
+	productBusiness := business.NewProductBusiness()
+	list, total, comErr := productBusiness.ProductAuthorAnalysis(productId, keyword, tag, startTime, endTime, minFollow, maxFollow, scoreType, page, pageSize)
+	if comErr != nil {
+		receiver.FailReturn(comErr)
+		return
+	}
+	for k, v := range list {
+		authorInfo, _ := hbase.GetAuthor(v.AuthorId)
+		list[k].Avatar = dyimg.Fix(authorInfo.Avatar)
+		list[k].NickName = authorInfo.Nickname
+		list[k].RoomNum = len(v.RelatedRooms)
+		for k1, l := range v.RelatedRooms {
+			list[k].RelatedRooms[k1].Cover = dyimg.Fix(l.Cover)
+			if l.EndTs >= 0 {
+				list[k].RelatedRooms[k1].LiveSecond = l.EndTs - l.StartTs
+			} else {
+				list[k].RelatedRooms[k1].LiveSecond = time.Now().Unix() - l.StartTs
+			}
+		}
+	}
+	receiver.SuccReturn(map[string]interface{}{
+		"list":  list,
+		"total": total,
+	})
+	return
 }

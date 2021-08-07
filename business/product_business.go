@@ -109,7 +109,7 @@ func (receiver *ProductBusiness) GetProductUrl(platform, productId string) strin
 
 func (receiver *ProductBusiness) ProductAuthorAnalysis(productId, keyword, tag string, startTime, endTime time.Time, minFollow, maxFollow int64, scoreType, page, pageSize int) (list []entity.DyProductAuthorAnalysis, total int, comErr global.CommonError) {
 	esProductBusiness := es.NewEsProductBusiness()
-	if tag == "" && minFollow == 0 && maxFollow == 0 && scoreType == 0 {
+	if tag == "" && minFollow == 0 && maxFollow == 0 && scoreType == 5 {
 		searchList, searchTotal, err := esProductBusiness.SearchRangeDateList(productId, keyword, startTime, endTime, page, pageSize)
 		if err != nil {
 			comErr = err
@@ -121,7 +121,6 @@ func (receiver *ProductBusiness) ProductAuthorAnalysis(productId, keyword, tag s
 			data, _ := hbase.GetProductAuthorAnalysis(rowKey)
 			list = append(list, data)
 		}
-		return
 	}
 	startRow, stopRow, total, comErr := esProductBusiness.SearchRangeDateRowKey(productId, keyword, startTime, endTime)
 	if comErr != nil {
@@ -150,5 +149,12 @@ func (receiver *ProductBusiness) ProductAuthorAnalysis(productId, keyword, tag s
 		}
 		list = append(list, v)
 	}
+	total = len(list)
+	start := (page - 1) * pageSize
+	end := start + pageSize
+	if total < end {
+		end = total
+	}
+	list = list[start:end]
 	return
 }

@@ -1,8 +1,9 @@
 package es
 
 const (
-	DyAuthorLiveRecords     = "dy_author_live_records_%s"
-	DyRoomProductRecords    = "dy_room_product_record_%s"
-	DyAuthorProductAnalysis = "dy_author_product_analysis_%s"
-	DyLiveInfoBase          = "dy_live_info_base_%s"
+	DyAuthorLiveRecordsTable     = "dy_author_live_records_%s"
+	DyRoomProductRecordsTable    = "dy_room_product_record_%s"
+	DyAuthorProductAnalysisTable = "dy_author_product_analysis_%s"
+	DyLiveInfoBaseTable          = "dy_live_info_base_%s"
+	DyProductAuthorAnalysisTable = "dy_product_author_analysis_%s"
 )
