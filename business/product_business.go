@@ -118,8 +118,10 @@ func (receiver *ProductBusiness) ProductAuthorAnalysis(productId, keyword, tag s
 		total = searchTotal
 		for _, v := range searchList {
 			rowKey := v.ProductId + "_" + v.CreateSdf + "_" + v.AuthorId
-			data, _ := hbase.GetProductAuthorAnalysis(rowKey)
-			list = append(list, data)
+			data, err := hbase.GetProductAuthorAnalysis(rowKey)
+			if err == nil {
+				list = append(list, data)
+			}
 		}
 	}
 	startRow, stopRow, total, comErr := esProductBusiness.SearchRangeDateRowKey(productId, keyword, startTime, endTime)
@@ -129,8 +131,10 @@ func (receiver *ProductBusiness) ProductAuthorAnalysis(productId, keyword, tag s
 	startRowKey := startRow.ProductId + "_" + startRow.CreateSdf + "_" + startRow.AuthorId
 	stopRowKey := stopRow.ProductId + "_" + stopRow.CreateSdf + "_" + stopRow.AuthorId
 	allList, _ := hbase.GetProductAuthorAnalysisRange(startRowKey, stopRowKey)
-	lastRow, _ := hbase.GetProductAuthorAnalysis(stopRowKey)
-	allList = append(allList, lastRow)
+	lastRow, err := hbase.GetProductAuthorAnalysis(stopRowKey)
+	if err == nil {
+		allList = append(allList, lastRow)
+	}
 	for _, v := range allList {
 		if keyword != "" && !(strings.Index(v.NickName, keyword) >= 0 || v.DisplayId == keyword || v.ShortId == keyword) {
 			continue
