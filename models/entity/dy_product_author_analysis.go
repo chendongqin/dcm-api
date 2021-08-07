@@ -9,7 +9,7 @@ var DyProductAuthorAnalysisMap = HbaseEntity{
 	"price":         {Double, "price"},
 	"product_id":    {String, "product_id"},
 	"related_rooms": {AJson, "related_rooms"},
-	"sales":         {Double, "sales"},
+	"sales":         {Long, "sales"},
 	"score":         {Double, "score"},
 	"level":         {Int, "level"},
 	"shop_tags":     {String, "shop_tags"},
@@ -27,7 +27,7 @@ type DyProductAuthorAnalysis struct {
 	ProductId    string                       `json:"product_id"`
 	RelatedRooms []DyProductAuthorRelatedRoom `json:"related_rooms"`
 	RoomNum      int                          `json:"room_num"`
-	Sales        float64                      `json:"sales"`
+	Sales        int64                        `json:"sales"`
 	Score        float64                      `json:"score"`
 	Level        int                          `json:"level"`
 	ShopTags     string                       `json:"shop_tags"`
