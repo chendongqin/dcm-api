@@ -23,8 +23,8 @@ func (receiver *LiveController) SearchRoom() {
 	if receiver.DyLevel == 3 {
 		hasAuth = true
 	}
-	startDay := receiver.Ctx.Input.Param("start")
-	endDay := receiver.Ctx.Input.Param("end")
+	startDay := receiver.GetString("start", "")
+	endDay := receiver.GetString("end", "")
 	if startDay == "" {
 		startDay = time.Now().AddDate(0, 0, -7).Format("2006-01-02")
 	}
