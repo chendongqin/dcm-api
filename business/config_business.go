@@ -3,6 +3,7 @@ package business
 import (
 	"dongchamao/global"
 	"dongchamao/global/cache"
+	"dongchamao/global/utils"
 	"dongchamao/models/dcm"
 )
 
@@ -18,13 +19,14 @@ func (c *ConfigBusiness) GetConfigJson(keyName string, enableCache bool) string 
 	if enableCache == true {
 		config := global.Cache.Get(memberKey)
 		if config != "" {
-			return config
+			return utils.DeserializeData(config)
 		}
 	}
 	configM := dcm.DcConfigJson{}
 	exist, _ := dcm.GetBy("key_name", keyName, &configM)
 	if exist {
-		_ = global.Cache.Set(memberKey, configM.Value, 3600)
+		jsonData := utils.SerializeData(configM.Value)
+		_ = global.Cache.Set(memberKey, jsonData, 3600)
 	}
 	return configM.Value
 }

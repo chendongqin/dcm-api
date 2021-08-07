@@ -28,5 +28,6 @@ type NameValueChart struct {
 
 type DyCate struct {
 	Name    string   `json:"name"`
+	Num     int      `json:"num"`
 	SonCate []DyCate `json:"son_cate"`
 }

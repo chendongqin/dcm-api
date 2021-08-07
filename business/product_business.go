@@ -4,6 +4,7 @@ import (
 	"dongchamao/business/es"
 	"dongchamao/global"
 	"dongchamao/global/cache"
+	"dongchamao/global/utils"
 	"dongchamao/hbase"
 	"dongchamao/models/dcm"
 	"dongchamao/models/entity"
@@ -27,7 +28,8 @@ func (receiver *ProductBusiness) GetCacheProductCate(enableCache bool) []dy.DyCa
 	if enableCache == true {
 		jsonStr := global.Cache.Get(memberKey)
 		if jsonStr != "" {
-			_ = jsoniter.Unmarshal([]byte(jsonStr), &pCate)
+			jsonData := utils.DeserializeData(jsonStr)
+			_ = jsoniter.Unmarshal([]byte(jsonData), &pCate)
 			return pCate
 		}
 	}
@@ -76,8 +78,8 @@ func (receiver *ProductBusiness) GetCacheProductCate(enableCache bool) []dy.DyCa
 		pCate = append(pCate, item)
 	}
 	if len(pCate) > 0 {
-		userByte, _ := jsoniter.Marshal(pCate)
-		_ = global.Cache.Set(memberKey, string(userByte), 86400)
+		jsonData := utils.SerializeData(pCate)
+		_ = global.Cache.Set(memberKey, jsonData, 86400)
 	}
 	return pCate
 }
@@ -160,5 +162,51 @@ func (receiver *ProductBusiness) ProductAuthorAnalysis(productId, keyword, tag s
 		end = total
 	}
 	list = list[start:end]
+	return
+}
+
+func (receiver *ProductBusiness) ProductAuthorAnalysisCount(productId, keyword string, startTime, endTime time.Time) (countList []dy.DyCate, comErr global.CommonError) {
+	cKey := cache.GetCacheKey(cache.ProductAuthorCount, startTime.Format("20060102"), endTime.Format("20060102"))
+	if keyword == "" {
+		countJson := global.Cache.Get(cKey)
+		if countJson != "" {
+			countJson = utils.DeserializeData(countJson)
+			_ = jsoniter.Unmarshal([]byte(countJson), &countList)
+			return
+		}
+	}
+	esProductBusiness := es.NewEsProductBusiness()
+	startRow, stopRow, _, comErr := esProductBusiness.SearchRangeDateRowKey(productId, keyword, startTime, endTime)
+	if comErr != nil {
+		return
+	}
+	startRowKey := startRow.ProductId + "_" + startRow.CreateSdf + "_" + startRow.AuthorId
+	stopRowKey := stopRow.ProductId + "_" + stopRow.CreateSdf + "_" + stopRow.AuthorId
+	allList, _ := hbase.GetProductAuthorAnalysisRange(startRowKey, stopRowKey)
+	lastRow, err := hbase.GetProductAuthorAnalysis(stopRowKey)
+	if err == nil {
+		allList = append(allList, lastRow)
+	}
+	tagsMap := map[string]int{}
+	for _, v := range allList {
+		shopTags := strings.Split(v.ShopTags, "_")
+		for _, s := range shopTags {
+			if _, ok := tagsMap[s]; ok {
+				tagsMap[s] += 1
+			} else {
+				tagsMap[s] = 1
+			}
+		}
+	}
+	for k, v := range tagsMap {
+		countList = append(countList, dy.DyCate{
+			Name: k,
+			Num:  v,
+		})
+	}
+	if keyword == "" {
+		countJson := utils.SerializeData(countList)
+		_ = global.Cache.Set(cKey, countJson, 300)
+	}
 	return
 }

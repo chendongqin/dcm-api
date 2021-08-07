@@ -118,19 +118,13 @@ type SumDyLiveRoomSaleData struct {
 }
 
 type LiveProductCateCount struct {
-	CateList []LiveProductFirstCate `json:"cate_list"`
+	CateList []DyCate `json:"cate_list"`
 }
 
 type LiveProductCount struct {
 	ProductNum int     `json:"product_num"`
 	Sales      float64 `json:"sales"`
 	Gmv        float64 `json:"gmv"`
-}
-
-type LiveProductFirstCate struct {
-	Name       string                  `json:"name"`
-	ProductNum int                     `json:"product_num"`
-	Cate       []LiveProductSecondCate `json:"cate"`
 }
 
 type LiveRoomProductCount struct {
@@ -150,11 +144,6 @@ type LiveRoomProductSaleStatus struct {
 	StopTime   int64 `json:"stop_time"`
 	StartSales int64 `json:"start_sales"`
 	FinalSales int64 `json:"final_sales"`
-}
-
-type LiveProductSecondCate struct {
-	Name string   `json:"name"`
-	Cate []string `json:"cate"`
 }
 
 type LiveCurProductCount struct {

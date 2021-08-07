@@ -2,6 +2,7 @@ package utils
 
 import (
 	"bytes"
+	"compress/gzip"
 	"crypto/md5"
 	"crypto/sha1"
 	"crypto/sha256"
@@ -411,13 +412,13 @@ func KeyDecode(token string) string {
  */
 
 func CurlData(url string, method string, headers map[string]string, postData map[string]interface{}) string {
-	postJson ,_ := jsoniter.Marshal(postData)
- 	client := &http.Client{}
+	postJson, _ := jsoniter.Marshal(postData)
+	client := &http.Client{}
 	req, err := http.NewRequest(method, url, strings.NewReader(string(postJson))) //建立一个请求
 	if err != nil {
 		return ""
 	}
-	for k,v := range headers {
+	for k, v := range headers {
 		req.Header.Add(k, v)
 	}
 	resp, err := client.Do(req) //提交
@@ -1553,7 +1554,6 @@ func MatchDouyinNewText(text string) string {
 	return text
 }
 
-
 func FormatAppVersion(appVersion, GitCommit, BuildDate string) (string, error) {
 	content := `
    Version: {{.Version}}
@@ -1586,17 +1586,49 @@ func GetNowTimeStamp() string {
 	return time.Now().Format("2006-01-02 15:04:05")
 }
 
-func GetTimeStamp(t time.Time , layout string) string {
+func GetTimeStamp(t time.Time, layout string) string {
 	if layout == "" {
 		layout = "2006-01-02 15:04:05"
 	}
 	return t.Format(layout)
 }
 
-
 //验证手机号
 func VerifyMobileFormat(mobileNum string) bool {
 	regular := "^((13[0-9])|(14[5,7])|(15[0-3,5-9])|(17[0,3,5-8])|(18[0-9])|166|198|199|(147))\\d{8}$"
 	reg := regexp.MustCompile(regular)
 	return reg.MatchString(mobileNum)
+}
+
+func DeserializeData(data string) string {
+	if len(data) == 0 {
+		return "nil"
+	}
+	buf, _ := base64.StdEncoding.DecodeString(data)
+	zr, err := gzip.NewReader(bytes.NewReader(buf))
+	if err != nil {
+		return ""
+	}
+	dataJson, _ := ioutil.ReadAll(zr)
+	return string(dataJson)
+}
+
+func SerializeData(data interface{}) string {
+	var dataJson []byte
+	val, ok := data.(string)
+	if ok {
+		dataJson = []byte(val)
+	} else {
+		dataJson, _ = jsoniter.Marshal(data)
+	}
+	var buf bytes.Buffer
+	zw := gzip.NewWriter(&buf)
+	_, err := zw.Write(dataJson)
+	if err != nil {
+		return ""
+	}
+	if err := zw.Close(); err != nil {
+		return ""
+	}
+	return base64.StdEncoding.EncodeToString(buf.Bytes())
 }

@@ -500,3 +500,23 @@ func (receiver *ProductController) ProductAuthorAnalysis() {
 	})
 	return
 }
+
+func (receiver *ProductController) ProductAuthorAnalysisCount() {
+	productId := receiver.GetString(":product_id")
+	startTime, endTime, comErr := receiver.GetRangeDate()
+	if comErr != nil {
+		receiver.FailReturn(comErr)
+		return
+	}
+	keyword := receiver.GetString("keyword", "")
+	productBusiness := business.NewProductBusiness()
+	countList, comErr := productBusiness.ProductAuthorAnalysisCount(productId, keyword, startTime, endTime)
+	if comErr != nil {
+		receiver.FailReturn(comErr)
+		return
+	}
+	receiver.SuccReturn(map[string]interface{}{
+		"list": countList,
+	})
+	return
+}

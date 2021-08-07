@@ -239,7 +239,8 @@ func (receiver *EsLiveBusiness) AllRoomProductCateByRoomId(roomInfo entity.DyLiv
 	cKey := cache.GetCacheKey(cache.LiveRoomProductCount, roomInfo.RoomID)
 	productCountJson := global.Cache.Get(cKey)
 	if productCountJson != "" {
-		jsoniter.Unmarshal([]byte(productCountJson), &productCount)
+		productCountJson = utils.DeserializeData(productCountJson)
+		_ = jsoniter.Unmarshal([]byte(productCountJson), &productCount)
 		return
 	}
 	date := time.Unix(roomInfo.DiscoverTime, 0).Format("20060102")
@@ -283,43 +284,47 @@ func (receiver *EsLiveBusiness) AllRoomProductCateByRoomId(roomInfo entity.DyLiv
 		}
 		secondCateMap[v.FirstCname][v.SecondCname] = true
 	}
-	productCount.CateList = []dy.LiveProductFirstCate{}
+	productCount.CateList = []dy.DyCate{}
 	for k, v := range firstCateMap {
-		secondCateList := make([]dy.LiveProductSecondCate, 0)
+		secondCateList := make([]dy.DyCate, 0)
 		for ck, _ := range v {
 			if cv, ok := secondCateMap[ck]; ok {
-				secondCate := dy.LiveProductSecondCate{
+				secondCateItem := dy.DyCate{
 					Name: ck,
 				}
 				for tk, _ := range cv {
-					secondCate.Cate = append(secondCate.Cate, tk)
+					secondCateItem.SonCate = append(secondCateItem.SonCate, dy.DyCate{
+						Name:    tk,
+						Num:     0,
+						SonCate: nil,
+					})
 				}
-				if len(secondCate.Cate) == 0 {
-					secondCate.Cate = []string{}
+				if len(secondCateItem.SonCate) == 0 {
+					secondCateItem.SonCate = []dy.DyCate{}
 				}
-				secondCateList = append(secondCateList, secondCate)
+				secondCateList = append(secondCateList, secondCateItem)
 			}
 		}
 		productNumber := 0
 		if n, ok := firstCateCountMap[k]; ok {
 			productNumber = n
 		}
-		item := dy.LiveProductFirstCate{
-			Name:       k,
-			ProductNum: productNumber,
-			Cate:       []dy.LiveProductSecondCate{},
+		item := dy.DyCate{
+			Name:    k,
+			Num:     productNumber,
+			SonCate: []dy.DyCate{},
 		}
 		if len(secondCateList) > 0 {
-			item.Cate = secondCateList
+			item.SonCate = secondCateList
 		}
 		productCount.CateList = append(productCount.CateList, item)
 	}
-	cateListByte, _ := jsoniter.Marshal(productCount)
 	var timeout time.Duration = 60
 	if roomInfo.FinishTime <= (time.Now().Unix() - 3600) {
 		timeout = 1800
 	}
-	_ = global.Cache.Set(cKey, string(cateListByte), timeout)
+	cateListJson := utils.SerializeData(productCount)
+	_ = global.Cache.Set(cKey, cateListJson, timeout)
 	return
 }
 

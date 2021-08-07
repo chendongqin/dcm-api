@@ -459,7 +459,7 @@ func (a *AuthorBusiness) CountLiveRoomAnalyse(authorId string, startTime, endTim
 }
 
 //达人电商分析
-func (a *AuthorBusiness) GetAuthorProductAnalyse(authorId, keyword, firstCate, secondCate, thirdCate, brandName, sortStr, orderBy string, shopType int, startTime, endTime time.Time, page, pageSize int) (list []entity.DyAuthorProductAnalysis, analysisCount dy.DyAuthorProductAnalysisCount, cateList []dy.LiveProductFirstCate, brandList []dy.NameValueChart, total int, comErr global.CommonError) {
+func (a *AuthorBusiness) GetAuthorProductAnalyse(authorId, keyword, firstCate, secondCate, thirdCate, brandName, sortStr, orderBy string, shopType int, startTime, endTime time.Time, page, pageSize int) (list []entity.DyAuthorProductAnalysis, analysisCount dy.DyAuthorProductAnalysisCount, cateList []dy.DyCate, brandList []dy.NameValueChart, total int, comErr global.CommonError) {
 	if orderBy == "" {
 		orderBy = "desc"
 	}
@@ -472,7 +472,7 @@ func (a *AuthorBusiness) GetAuthorProductAnalyse(authorId, keyword, firstCate, s
 		return
 	}
 	list = []entity.DyAuthorProductAnalysis{}
-	cateList = []dy.LiveProductFirstCate{}
+	cateList = []dy.DyCate{}
 	brandList = []dy.NameValueChart{}
 	shopId := ""
 	if shopType != 0 {
@@ -609,32 +609,36 @@ func (a *AuthorBusiness) GetAuthorProductAnalyse(authorId, keyword, firstCate, s
 	}
 	//分类处理
 	for k, v := range firstCateMap {
-		secondCateList := make([]dy.LiveProductSecondCate, 0)
+		secondCateList := make([]dy.DyCate, 0)
 		for ck, _ := range v {
 			if cv, ok := secondCateMap[ck]; ok {
-				secondCate := dy.LiveProductSecondCate{
+				secondCateItem := dy.DyCate{
 					Name: ck,
 				}
 				for tk, _ := range cv {
-					secondCate.Cate = append(secondCate.Cate, tk)
+					secondCateItem.SonCate = append(secondCateItem.SonCate, dy.DyCate{
+						Name:    tk,
+						Num:     0,
+						SonCate: nil,
+					})
 				}
-				if len(secondCate.Cate) == 0 {
-					secondCate.Cate = []string{}
+				if len(secondCateItem.SonCate) == 0 {
+					secondCateItem.SonCate = []dy.DyCate{}
 				}
-				secondCateList = append(secondCateList, secondCate)
+				secondCateList = append(secondCateList, secondCateItem)
 			}
 		}
 		productNumber := 0
 		if n, ok := firstCateCountMap[k]; ok {
 			productNumber = n
 		}
-		item := dy.LiveProductFirstCate{
-			Name:       k,
-			ProductNum: productNumber,
-			Cate:       []dy.LiveProductSecondCate{},
+		item := dy.DyCate{
+			Name:    k,
+			Num:     productNumber,
+			SonCate: []dy.DyCate{},
 		}
 		if len(secondCateList) > 0 {
-			item.Cate = secondCateList
+			item.SonCate = secondCateList
 		}
 		cateList = append(cateList, item)
 	}
