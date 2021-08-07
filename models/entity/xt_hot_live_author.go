@@ -26,4 +26,6 @@ type XtHotLiveAuthorData struct {
 	NickName   string                 `json:"nick_name"`
 	Province   string                 `json:"province"`
 	IncRank    int                    `json:"inc_rank"`
+	ShortId    string                 `json:"short_id"`
+	UniqueId   string                 `json:"unique_id"`
 }

@@ -13,27 +13,10 @@ type DyLiveHourRanks struct {
 }
 
 type DyLiveHourRank struct {
-	Category string `json:"category"`
-	LiveInfo struct {
-		Cover      string `json:"cover"`
-		CreateTime int    `json:"create_time"`
-		Tag        string `json:"tag"`
-		Title      string `json:"title"`
-		TotalUser  int    `json:"total_user"`
-		UserCount  int    `json:"user_count"`
-		User       struct {
-			Avatar        string `json:"avatar"`
-			DisplayId     string `json:"display_id"`
-			FollowerCount int    `json:"follower_count"`
-			Gender        int    `json:"gender"`
-			Id            string `json:"id"`
-			Nickname      string `json:"nickname"`
-			RoomId        string `json:"room_id"`
-			ShortId       string `json:"short_id"`
-		} `json:"user"`
-	} `json:"live_info"`
-	Rank     int    `json:"rank"`
-	RoomId   string `json:"room_id"`
-	ShareUrl string `json:"share_url"`
-	Score    int    `json:"score"`
+	Category string           `json:"category"`
+	LiveInfo LiveRankLiveInfo `json:"live_info"`
+	Rank     int              `json:"rank"`
+	RoomId   string           `json:"room_id"`
+	ShareUrl string           `json:"share_url"`
+	Score    int              `json:"score"`
 }

@@ -36,7 +36,7 @@ func (receiver *RankController) DyStartAuthorLiveRank() {
 	return
 }
 
-//抖音直播达人热榜
+//抖音直播小时热榜
 func (receiver *RankController) DyLiveHourRank() {
 	date := receiver.GetString(":date", "")
 	hour := receiver.GetString(":hour", "")
@@ -54,6 +54,89 @@ func (receiver *RankController) DyLiveHourRank() {
 		}
 		data.Ranks[k].ShareUrl = business.LiveShareUrl + v.RoomId
 	}
+	receiver.SuccReturn(map[string]interface{}{
+		"list":        data.Ranks,
+		"update_time": data.CrawlTime,
+	})
+	return
+}
+
+//抖音直播实时榜
+func (receiver *RankController) DyLiveTopRank() {
+	date := receiver.GetString(":date", "")
+	hour := receiver.GetString(":hour", "")
+	dateTime, err := time.ParseInLocation("2006-01-02 15:04", date+" "+hour, time.Local)
+	if err != nil {
+		receiver.FailReturn(global.NewError(4000))
+		return
+	}
+	data, _ := hbase.GetDyLiveTopRank(dateTime.Format("2006010215"))
+	for k, v := range data.Ranks {
+		data.Ranks[k].LiveInfo.Cover = dyimg.Fix(v.LiveInfo.Cover)
+		data.Ranks[k].LiveInfo.User.Avatar = dyimg.Fix(v.LiveInfo.User.Avatar)
+		if v.LiveInfo.User.DisplayId == "" {
+			data.Ranks[k].LiveInfo.User.DisplayId = v.LiveInfo.User.ShortId
+		}
+		data.Ranks[k].ShareUrl = business.LiveShareUrl + v.RoomId
+	}
+	receiver.SuccReturn(map[string]interface{}{
+		"list":        data.Ranks,
+		"update_time": data.CrawlTime,
+	})
+	return
+}
+
+//抖音直播小时带货榜
+func (receiver *RankController) DyLiveHourSellRank() {
+	date := receiver.GetString(":date", "")
+	hour := receiver.GetString(":hour", "")
+	dateTime, err := time.ParseInLocation("2006-01-02 15:04", date+" "+hour, time.Local)
+	if err != nil {
+		receiver.FailReturn(global.NewError(4000))
+		return
+	}
+	data, _ := hbase.GetDyLiveHourSellRank(dateTime.Format("2006010215"))
+	for k, v := range data.Ranks {
+		data.Ranks[k].LiveInfo.Cover = dyimg.Fix(v.LiveInfo.Cover)
+		data.Ranks[k].LiveInfo.User.Avatar = dyimg.Fix(v.LiveInfo.User.Avatar)
+		if v.LiveInfo.User.DisplayId == "" {
+			data.Ranks[k].LiveInfo.User.DisplayId = v.LiveInfo.User.ShortId
+		}
+		data.Ranks[k].ShareUrl = business.LiveShareUrl + v.RoomId
+		if v.RealGmv > 0 {
+			data.Ranks[k].PredictGmv = v.RealGmv
+			data.Ranks[k].PredictSales = v.RealSales
+		}
+	}
+	receiver.SuccReturn(map[string]interface{}{
+		"list":        data.Ranks,
+		"update_time": data.CrawlTime,
+	})
+	return
+}
+
+//抖音直播实时榜
+func (receiver *RankController) DyLiveHourPopularityRank() {
+	date := receiver.GetString(":date", "")
+	hour := receiver.GetString(":hour", "")
+	dateTime, err := time.ParseInLocation("2006-01-02 15:04", date+" "+hour, time.Local)
+	if err != nil {
+		receiver.FailReturn(global.NewError(4000))
+		return
+	}
+	data, _ := hbase.GetDyLiveHourPopularityRank(dateTime.Format("2006010215"))
+	//for k, v := range data.Ranks {
+	//	data.Ranks[k].LiveInfo.Cover = dyimg.Fix(v.LiveInfo.Cover)
+	//	data.Ranks[k].LiveInfo.User.Avatar = dyimg.Fix(v.LiveInfo.User.Avatar)
+	//	if v.LiveInfo.User.DisplayId == "" {
+	//		data.Ranks[k].LiveInfo.User.DisplayId = v.LiveInfo.User.ShortId
+	//	}
+	//	data.Ranks[k].ShareUrl = business.LiveShareUrl + v.RoomId
+	//	if v.RealGmv > 0 {
+	//		data.Ranks[k].PredictGmv = v.RealGmv
+	//		data.Ranks[k].PredictSales = v.RealSales
+	//	}
+	//}
 	receiver.SuccReturn(map[string]interface{}{
 		"list":        data.Ranks,
 		"update_time": data.CrawlTime,

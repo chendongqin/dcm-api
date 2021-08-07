@@ -26,6 +26,9 @@ func GetStartAuthorVideoRank(rankType, category string) (data []entity.XtHotAwem
 	utils.MapToStruct(detailMap, &info)
 	data = info.Data
 	for k, v := range data {
+		if v.UniqueId == "" {
+			data[k].UniqueId = v.ShortId
+		}
 		data[k].FieldsMap = map[string]interface{}{}
 		for _, d := range v.Fields {
 			data[k].FieldsMap[d.Label] = d.Value
@@ -53,6 +56,9 @@ func GetStartAuthorLiveRank(rankType string) (data []entity.XtHotLiveAuthorData,
 	utils.MapToStruct(detailMap, &info)
 	data = info.Data
 	for k, v := range data {
+		if v.UniqueId == "" {
+			data[k].UniqueId = v.ShortId
+		}
 		data[k].FieldsMap = map[string]interface{}{}
 		for _, d := range v.Fields {
 			data[k].FieldsMap[d.Label] = d.Value
@@ -75,6 +81,57 @@ func GetDyLiveHourRank(hour string) (data entity.DyLiveHourRanks, comErr global.
 		return
 	}
 	detailMap := hbaseService.HbaseFormat(result, entity.DyLiveHourRankMap)
+	utils.MapToStruct(detailMap, &data)
+	return
+}
+
+func GetDyLiveTopRank(hour string) (data entity.DyLiveTopRanks, comErr global.CommonError) {
+	rowKey := utils.Md5_encode(hour + "_实时热榜")
+	query := hbasehelper.NewQuery()
+	result, err := query.SetTable(hbaseService.HbaseDyLiveTopRank).GetByRowKey([]byte(rowKey))
+	if err != nil {
+		comErr = global.NewMsgError(err.Error())
+		return
+	}
+	if result.Row == nil {
+		comErr = global.NewError(4040)
+		return
+	}
+	detailMap := hbaseService.HbaseFormat(result, entity.DyLiveTopMap)
+	utils.MapToStruct(detailMap, &data)
+	return
+}
+
+func GetDyLiveHourSellRank(hour string) (data entity.DyLiveHourSellRanks, comErr global.CommonError) {
+	rowKey := utils.Md5_encode(hour + "_带货榜")
+	query := hbasehelper.NewQuery()
+	result, err := query.SetTable(hbaseService.HbaseDyLiveHourRankSell).GetByRowKey([]byte(rowKey))
+	if err != nil {
+		comErr = global.NewMsgError(err.Error())
+		return
+	}
+	if result.Row == nil {
+		comErr = global.NewError(4040)
+		return
+	}
+	detailMap := hbaseService.HbaseFormat(result, entity.DyLiveHourSellRanksMap)
+	utils.MapToStruct(detailMap, &data)
+	return
+}
+
+func GetDyLiveHourPopularityRank(hour string) (data entity.DyLiveHourPopularityRanks, comErr global.CommonError) {
+	rowKey := utils.Md5_encode(hour + "_人气榜")
+	query := hbasehelper.NewQuery()
+	result, err := query.SetTable(hbaseService.HbaseDyLiveHourRankPopularity).GetByRowKey([]byte(rowKey))
+	if err != nil {
+		comErr = global.NewMsgError(err.Error())
+		return
+	}
+	if result.Row == nil {
+		comErr = global.NewError(4040)
+		return
+	}
+	detailMap := hbaseService.HbaseFormat(result, entity.DyLiveHourPopularityRanksMap)
 	utils.MapToStruct(detailMap, &data)
 	return
 }

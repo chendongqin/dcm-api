@@ -32,7 +32,10 @@ const (
 	HbaseDyLivePromotionMonth    = "dy_live_promotion_month"
 	HbaseDyProductAuthorAnalysis = "dy_product_author_analysis"
 
-	HbaseXtHotAwemeAuthorRank = "xt_hot_aweme_author"
-	HbaseXtHotLiveAuthorRank  = "xt_hot_live_author"
-	HbaseDyLiveHourRank       = "dy_live_hour_rank"
+	HbaseXtHotAwemeAuthorRank     = "xt_hot_aweme_author"
+	HbaseXtHotLiveAuthorRank      = "xt_hot_live_author"
+	HbaseDyLiveHourRank           = "dy_live_hour_rank"
+	HbaseDyLiveHourRankSell       = "dy_live_hour_rank_sell_top"
+	HbaseDyLiveHourRankPopularity = "dy_live_hour_rank_popularity"
+	HbaseDyLiveTopRank            = "dy_live_top"
 )

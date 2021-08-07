@@ -26,6 +26,8 @@ type XtHotAwemeAuthorData struct {
 	InitRank   int                    `json:"init_rank"`
 	NickName   string                 `json:"nick_name"`
 	Province   string                 `json:"province"`
+	ShortId    string                 `json:"short_id"`
+	UniqueId   string                 `json:"unique_id"`
 }
 
 type XtHotAuthorFields struct {
