@@ -529,9 +529,9 @@ func (receiver *EsLiveBusiness) SearchLiveRooms(keyword, category, firstName, se
 		//if v.RealGmv > 0 {
 		//	list[k].PredictGmv = v.RealGmv
 		//}
-		if v.RealUvValue > 0 {
-			list[k].PredictUvValue = v.RealUvValue
-		}
+		//if v.RealUvValue > 0 {
+		//	list[k].PredictUvValue = v.RealUvValue
+		//}
 		list[k].AvgUserCount = math.Floor(v.AvgUserCount)
 		if v.DisplayId == "" {
 			list[k].DisplayId = v.ShortId

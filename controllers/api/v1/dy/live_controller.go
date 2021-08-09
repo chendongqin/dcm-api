@@ -83,6 +83,11 @@ func (receiver *LiveController) SearchRoom() {
 			pageSize = 10
 		}
 	}
+	formNum := (page - 1) * pageSize
+	if formNum > business.JewelLiveListShowNum {
+		receiver.FailReturn(global.NewError(4004))
+		return
+	}
 	esLiveBusiness := es.NewEsLiveBusiness()
 	list, total, comErr := esLiveBusiness.SearchLiveRooms(keyword, category, firstName, secondName, thirdName, minAmount, maxAmount, minAvgUserCount, maxAvgUserCount, minUv, maxUv, hasProduct, isBrand, keywordType, sortStr, orderBy, page, pageSize, startTime, endTime)
 	if comErr != nil {
