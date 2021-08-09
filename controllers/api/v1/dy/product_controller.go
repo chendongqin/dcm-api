@@ -58,6 +58,9 @@ func (receiver *ProductController) ProductBaseAnalysis() {
 	orderList := make([]dy2.ProductOrderDaily, 0)
 	countData := dy2.ProductOrderDaily{}
 	beginTime := startTime
+	authorMap := map[string]string{}
+	roomMap := map[string]string{}
+	videoMap := map[string]string{}
 	for {
 		if beginTime.After(endTime) {
 			break
@@ -78,10 +81,18 @@ func (receiver *ProductController) ProductBaseAnalysis() {
 			for _, a := range v.AwemeAuthorList {
 				awemeAuthorNum++
 				authors[a.AuthorId] = a.AuthorId
+				authorMap[a.AuthorId] = a.AuthorId
 			}
 			for _, a := range v.LiveAuthorList {
 				liveAuthorNum++
 				authors[a.AuthorId] = a.AuthorId
+				authorMap[a.AuthorId] = a.AuthorId
+			}
+			for _, aw := range v.AwemeList {
+				videoMap[aw.AwemeId] = aw.AwemeId
+			}
+			for _, r := range v.LiveList {
+				roomMap[r.RoomId] = r.RoomId
 			}
 			authorNum = len(authors)
 			awemeNum = len(v.AwemeList)
@@ -104,9 +115,6 @@ func (receiver *ProductController) ProductBaseAnalysis() {
 		rateChart = append(rateChart, rate)
 		countData.OrderCount += order
 		countData.PvCount += pv
-		countData.AwemeNum += awemeNum
-		countData.RoomNum += roomNum
-		countData.AuthorNum += authorNum
 		orderList = append(orderList, dy2.ProductOrderDaily{
 			Date:       dateStr,
 			OrderCount: order,
@@ -118,6 +126,9 @@ func (receiver *ProductController) ProductBaseAnalysis() {
 		})
 		beginTime = beginTime.AddDate(0, 0, 1)
 	}
+	countData.AwemeNum = len(videoMap)
+	countData.RoomNum = len(roomMap)
+	countData.AuthorNum = len(authorMap)
 	if countData.PvCount > 0 {
 		countData.Rate = float64(countData.OrderCount) / float64(countData.PvCount)
 	}
@@ -166,10 +177,16 @@ func (receiver *ProductController) ProductBase() {
 	relatedInfo, _ := hbase.GetProductDailyRangDate(productId, startTime, yesterdayTime)
 	var roomNum int
 	var awemeNum int
+	roomMap := map[string]string{}
+	awemeMap := map[string]string{}
 	authorMap := map[string]string{}
 	for _, v := range relatedInfo {
-		awemeNum += len(v.AwemeList)
-		roomNum += len(v.LiveList)
+		for _, aw := range v.AwemeList {
+			awemeMap[aw.AwemeId] = aw.AwemeId
+		}
+		for _, r := range v.LiveList {
+			roomMap[r.RoomId] = r.RoomId
+		}
 		for _, a := range v.AwemeAuthorList {
 			authorMap[a.AuthorId] = a.AuthorId
 		}
@@ -177,6 +194,8 @@ func (receiver *ProductController) ProductBase() {
 			authorMap[a.AuthorId] = a.AuthorId
 		}
 	}
+	roomNum = len(roomMap)
+	awemeNum = len(awemeMap)
 	var rate30 float64 = 0
 	if monthData.PvCount > 0 {
 		rate30 = float64(monthData.OrderCount) / float64(monthData.PvCount)
