@@ -262,8 +262,6 @@ func (receiver *AccountController) DyUserSearchDel() {
 	}
 	receiver.SuccReturn(nil)
 	return
-	receiver.SuccReturn(nil)
-	return
 }
 
 func (receiver *AccountController) DyUserSearchList() {
@@ -286,6 +284,7 @@ func (receiver *AccountController) DyUserSearchList() {
 		content := map[string]interface{}{}
 		_ = jsoniter.Unmarshal([]byte(v.Content), &content)
 		repostList = append(repostList, repost.SearchData{
+			Id:         v.Id,
 			SearchType: v.SearchType,
 			Note:       v.Note,
 			Content:    content,
