@@ -29,7 +29,7 @@ func (receiver *EsAuthorBusiness) AuthorProductAnalysis(authorId, keyword string
 	result := esMultiQuery.
 		SetTable(esTable).
 		AddMust(esQuery.Condition).
-		SetOrderBy(elasticsearch.NewElasticOrder().Add("author_date_product.keyword", "desc").Order).
+		SetOrderBy(elasticsearch.NewElasticOrder().Add("author_date_product.keyword", "asc").Order).
 		SetMultiQuery().
 		QueryOne()
 	utils.MapToStruct(result, &startRow)
@@ -37,7 +37,7 @@ func (receiver *EsAuthorBusiness) AuthorProductAnalysis(authorId, keyword string
 	result2 := esMultiQuery2.
 		SetTable(esTable).
 		AddMust(esQuery.Condition).
-		SetOrderBy(elasticsearch.NewElasticOrder().Add("author_date_product.keyword", "asc").Order).
+		SetOrderBy(elasticsearch.NewElasticOrder().Add("author_date_product.keyword", "desc").Order).
 		SetMultiQuery().
 		QueryOne()
 	utils.MapToStruct(result2, &endRow)

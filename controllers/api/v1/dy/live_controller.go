@@ -20,8 +20,12 @@ type LiveController struct {
 
 func (receiver *LiveController) SearchRoom() {
 	hasAuth := false
+	hasLogin := false
 	if receiver.DyLevel == 3 {
 		hasAuth = true
+	}
+	if receiver.UserId > 0 {
+		hasLogin = true
 	}
 	startDay := receiver.GetString("start", "")
 	endDay := receiver.GetString("end", "")
@@ -63,7 +67,7 @@ func (receiver *LiveController) SearchRoom() {
 	isBrand, _ := receiver.GetInt("is_brand", 0)
 	keywordType, _ := receiver.GetInt("keyword_type", 0)
 	page := receiver.GetPage("page")
-	pageSize := receiver.GetPageSize("page_size", 10, 50)
+	pageSize := receiver.GetPageSize("page_size", 50, 50)
 	if !hasAuth {
 		today := time.Now().Format("20060102")
 		lastDay := time.Now().AddDate(0, 0, -7).Format("20060102")
@@ -73,7 +77,11 @@ func (receiver *LiveController) SearchRoom() {
 			receiver.FailReturn(global.NewError(4004))
 			return
 		}
-		pageSize = 10
+		if hasLogin {
+			pageSize = 20
+		} else {
+			pageSize = 10
+		}
 	}
 	esLiveBusiness := es.NewEsLiveBusiness()
 	list, total, comErr := esLiveBusiness.SearchLiveRooms(keyword, category, firstName, secondName, thirdName, minAmount, maxAmount, minAvgUserCount, maxAvgUserCount, minUv, maxUv, hasProduct, isBrand, keywordType, sortStr, orderBy, page, pageSize, startTime, endTime)
@@ -81,10 +89,17 @@ func (receiver *LiveController) SearchRoom() {
 		receiver.FailReturn(comErr)
 		return
 	}
+	totalPage := math.Ceil(float64(total) / float64(pageSize))
+	maxPage := math.Ceil(float64(business.JewelLiveListShowNum) / float64(pageSize))
+	if totalPage > maxPage {
+		totalPage = maxPage
+	}
 	receiver.SuccReturn(map[string]interface{}{
-		"list":     list,
-		"total":    total,
-		"has_auth": hasAuth,
+		"list":       list,
+		"total":      total,
+		"total_page": totalPage,
+		"has_auth":   hasAuth,
+		"has_login":  hasLogin,
 	})
 	return
 }

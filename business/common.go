@@ -17,6 +17,10 @@ const (
 	VoUserUniqueTokenPlatformWap           = 5
 )
 
+const (
+	JewelLiveListShowNum = 500
+)
+
 type AuthorCate struct {
 	First  map[string]string   `json:"first"`
 	Second []map[string]string `json:"second"`

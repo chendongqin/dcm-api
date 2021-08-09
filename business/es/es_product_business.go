@@ -54,7 +54,7 @@ func (i *EsProductBusiness) SearchRangeDateRowKey(productId, keyword string, sta
 		SetTable(esTable).
 		SetFields("productId", "authorId", "createSdf").
 		AddMust(esQuery.Condition).
-		SetOrderBy(elasticsearch.NewElasticOrder().Add("_id", "desc").Order).
+		SetOrderBy(elasticsearch.NewElasticOrder().Add("_id", "asc").Order).
 		SetMultiQuery().
 		QueryOne()
 	utils.MapToStruct(result, &startRow)
@@ -63,7 +63,7 @@ func (i *EsProductBusiness) SearchRangeDateRowKey(productId, keyword string, sta
 		SetTable(esTable).
 		SetFields("productId", "authorId", "createSdf").
 		AddMust(esQuery.Condition).
-		SetOrderBy(elasticsearch.NewElasticOrder().Add("_id", "asc").Order).
+		SetOrderBy(elasticsearch.NewElasticOrder().Add("_id", "desc").Order).
 		SetMultiQuery().
 		QueryOne()
 	utils.MapToStruct(result2, &stopRow)
