@@ -221,8 +221,8 @@ func (receiver *ProductController) ProductBase() {
 	cosPriceChart30 := make([]float64, 0)
 	today := utils.ToInt64(time.Now().Format("20060102"))
 	last30Day := utils.ToInt64(time.Now().AddDate(0, 0, -30).Format("20060102"))
-	last15Day := utils.ToInt64(time.Now().AddDate(0, 0, -16).Format("20060102"))
-	last7Day := utils.ToInt64(time.Now().AddDate(0, 0, -8).Format("20060102"))
+	last15Day := utils.ToInt64(time.Now().AddDate(0, 0, -15).Format("20060102"))
+	last7Day := utils.ToInt64(time.Now().AddDate(0, 0, -7).Format("20060102"))
 	priceTrends := business.ProductPriceTrendsListOrderByTime(productInfo.PriceTrends)
 	priceMap := map[int64]entity.DyProductPriceTrend{}
 	for _, v := range priceTrends {
