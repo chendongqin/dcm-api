@@ -7,8 +7,11 @@ import (
 	"dongchamao/global/cache"
 	"dongchamao/global/utils"
 	"dongchamao/models/dcm"
+	"dongchamao/models/repost"
 	"dongchamao/models/repost/dy"
+	jsoniter "github.com/json-iterator/go"
 	"strings"
+	"time"
 )
 
 type AccountController struct {
@@ -211,4 +214,86 @@ func (receiver *AccountController) Logout() {
 	receiver.SuccReturn("success")
 	return
 
+}
+
+func (receiver *AccountController) DyUserSearchSave() {
+	searchType := receiver.GetString(":type")
+	data := receiver.ApiDatas
+	dataMap, _ := utils.ToMapStringInterface(data)
+	searchData := map[string]interface{}{}
+	note := ""
+	for k, v := range dataMap {
+		if k == "note" {
+			note = utils.ToString(v)
+			continue
+		}
+		searchData[k] = v
+	}
+	if note == "" {
+		receiver.FailReturn(global.NewMsgError("请输入筛选器昵称"))
+		return
+	}
+	contentByte, _ := jsoniter.Marshal(searchData)
+	searchM := dcm.DcUserSearch{
+		UserId:     receiver.UserId,
+		SearchType: searchType,
+		Note:       note,
+		Content:    string(contentByte),
+		CreateTime: time.Now(),
+		UpdateTime: time.Now(),
+	}
+	affect, err := dcm.Insert(nil, &searchM)
+	if affect == 0 || err != nil {
+		receiver.FailReturn(global.NewError(5000))
+		return
+	}
+	receiver.SuccReturn(nil)
+	return
+}
+
+func (receiver *AccountController) DyUserSearchDel() {
+	id := receiver.GetString(":id")
+	dbSession := dcm.GetDbSession()
+	searchM := dcm.DcUserSearch{}
+	affect, err := dbSession.Where("id = ? AND user_id = ?", id, receiver.UserId).Delete(&searchM)
+	if affect == 0 || err != nil {
+		receiver.FailReturn(global.NewError(5000))
+		return
+	}
+	receiver.SuccReturn(nil)
+	return
+	receiver.SuccReturn(nil)
+	return
+}
+
+func (receiver *AccountController) DyUserSearchList() {
+	page := receiver.GetPage("page")
+	pageSize := receiver.GetPageSize("page_size", 10, 50)
+	searchType := receiver.GetString(":type")
+	list := make([]dcm.DcUserSearch, 0)
+	dbSession := dcm.GetSlaveDbSession()
+	start := (page - 1) * pageSize
+	total, err := dbSession.
+		Where("search_type = ?", searchType).
+		Limit(pageSize, start).
+		FindAndCount(&list)
+	if err != nil {
+		receiver.FailReturn(global.NewError(5000))
+		return
+	}
+	repostList := make([]repost.SearchData, 0)
+	for _, v := range list {
+		content := map[string]interface{}{}
+		_ = jsoniter.Unmarshal([]byte(v.Content), &content)
+		repostList = append(repostList, repost.SearchData{
+			SearchType: v.SearchType,
+			Note:       v.Note,
+			Content:    content,
+		})
+	}
+	receiver.SuccReturn(map[string]interface{}{
+		"list":  repostList,
+		"total": total,
+	})
+	return
 }
