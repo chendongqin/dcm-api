@@ -24,7 +24,7 @@ func (receiver *CallbackController) WechatNotify() {
 			updateData := map[string]interface{}{
 				"pay_status":     1,
 				"inter_trade_no": payNotifyContent.TransactionId,
-				"pay_time":       payNotifyContent.SuccessTime,
+				"pay_time":       payNotifyContent.SuccessTime.Local(),
 			}
 			affect, err2 := dcm.UpdateInfo(nil, vipOrder.Id, updateData, new(dcm.DcVipOrder))
 			if affect == 0 || err2 != nil {
