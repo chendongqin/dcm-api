@@ -4,6 +4,7 @@ import (
 	"dongchamao/models/dcm"
 	"dongchamao/services/payer"
 	"github.com/astaxie/beego/logs"
+	"time"
 )
 
 type CallbackController struct {
@@ -21,10 +22,11 @@ func (receiver *CallbackController) WechatNotify() {
 		vipOrder := dcm.DcVipOrder{}
 		exist, _ := dcm.GetBy("trade_no", payNotifyContent.OutTradeNo, &vipOrder)
 		if exist {
+			payTime, _ := time.ParseInLocation("2006-01-02T15:04:05+08:00", payNotifyContent.SuccessTime, time.Local)
 			updateData := map[string]interface{}{
 				"pay_status":     1,
 				"inter_trade_no": payNotifyContent.TransactionId,
-				"pay_time":       payNotifyContent.SuccessTime.Local(),
+				"pay_time":       payTime,
 			}
 			affect, err2 := dcm.UpdateInfo(nil, vipOrder.Id, updateData, new(dcm.DcVipOrder))
 			if affect == 0 || err2 != nil {

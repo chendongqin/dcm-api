@@ -33,11 +33,11 @@ type PayNotifyContent struct {
 	Payer      struct {
 		Openid string `json:"openid"`
 	}
-	SuccessTime    time.Time `json:"success_time"`
-	TradeState     string    `json:"trade_state"`
-	TradeStateDesc string    `json:"trade_state_desc"`
-	TradeType      string    `json:"trade_type"`
-	TransactionId  string    `json:"transaction_id"`
+	SuccessTime    string `json:"success_time"`
+	TradeState     string `json:"trade_state"`
+	TradeStateDesc string `json:"trade_state_desc"`
+	TradeType      string `json:"trade_type"`
+	TransactionId  string `json:"transaction_id"`
 }
 
 func Builder() (*core.Client, error) {
