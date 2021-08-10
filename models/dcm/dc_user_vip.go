@@ -17,4 +17,5 @@ type DcUserVip struct {
 	ParentId      int       `xorm:"not null default 0 comment('主账户id') INT(11)"`
 	SubIds        string    `xorm:"not null default '' comment('子账号集合') VARCHAR(255)"`
 	SubNum        int       `xorm:"not null default 0 comment('子账号数') SMALLINT(3)"`
+	SubExpiration time.Time `xorm:"comment('子账号过期时间') TIMESTAMP"`
 }

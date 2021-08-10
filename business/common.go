@@ -1,6 +1,8 @@
 package business
 
 import (
+	"dongchamao/global"
+	"dongchamao/global/cache"
 	"dongchamao/hbase"
 	"dongchamao/models/dcm"
 	"dongchamao/models/repost/dy"
@@ -175,4 +177,13 @@ func DealAuthorLiveTags() {
 		dcm.Insert(nil, &tagM)
 	}
 	return
+}
+
+func UserActionLock(active string, lockTime time.Duration) bool {
+	memberKey := cache.GetCacheKey(cache.UserActionLock, active)
+	if global.Cache.Get(memberKey) != "" {
+		return false
+	}
+	_ = global.Cache.Set(memberKey, "1", lockTime)
+	return true
 }

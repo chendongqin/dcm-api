@@ -78,7 +78,7 @@ func _initBConfig() {
 }
 
 func _initLogs() {
-	err0 := logs.SetLogger(logs.AdapterFile, `{"filename":"logs/douyin.log","level":6,"maxlines":2000000,"maxsize":0,"daily":true,"maxdays":7,"color":true}`)
+	err0 := logs.SetLogger(logs.AdapterFile, fmt.Sprintf(`{"filename":"%s","level":6,"maxlines":2000000,"maxsize":0,"daily":true,"maxdays":7,"color":true}`, Cfg.String("logfile")))
 	fmt.Println(err0)
 	logs.Async()
 }

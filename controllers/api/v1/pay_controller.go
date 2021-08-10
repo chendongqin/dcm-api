@@ -17,6 +17,10 @@ type PayController struct {
 }
 
 func (receiver *PayController) CreateDyOrder() {
+	if !business.UserActionLock("vip_order", 2) {
+		receiver.FailReturn(global.NewError(4211))
+		return
+	}
 	InputData := receiver.InputFormat()
 	orderType := InputData.GetInt("order_type", 0)
 	groupPeople := InputData.GetInt("group_people", 0)
@@ -37,6 +41,10 @@ func (receiver *PayController) CreateDyOrder() {
 		receiver.FailReturn(global.NewError(5000))
 		return
 	}
+	if userVip.ParentId > 0 && orderType != 1 {
+		receiver.FailReturn(global.NewMsgError("协同子账号只能购买会员业务～"))
+		return
+	}
 	if userVip.Expiration.Before(time.Now()) {
 		userVip.Level = 0
 	}
@@ -44,7 +52,15 @@ func (receiver *PayController) CreateDyOrder() {
 		receiver.FailReturn(global.NewMsgError("购买协同账号请先开通会员"))
 		return
 	}
-	surplusDay := (userVip.Expiration.Unix() - time.Now().Unix()) / 86400
+	subExpiration := userVip.SubExpiration
+	if subExpiration.Before(time.Now()) {
+		subExpiration = time.Now()
+	}
+	surplusDay := (userVip.Expiration.Unix() - subExpiration.Unix()) / 86400
+	if surplusDay == 0 {
+		receiver.FailReturn(global.NewMsgError("协同账号到期时间与账户会员时间一致，不需要续费～"))
+		return
+	}
 	payBusiness := business.NewPayBusiness()
 	var surplusValue float64 = 0
 	vipOrderType := 1
@@ -73,14 +89,24 @@ func (receiver *PayController) CreateDyOrder() {
 		orderInfo["people"] = groupPeople
 		orderInfo["title"] = "协同账号购买"
 		vipOrderType = 3
+	} else if orderType == 3 { //购买协同账号
+		totalPeople := userVip.SubNum
+		title = fmt.Sprintf("协同账号续费%d人", totalPeople)
+		amount = utils.FriendlyFloat64(surplusValue * float64(totalPeople))
+		orderInfo["buy_days"] = surplusDay
+		orderInfo["amount"] = amount
+		orderInfo["people"] = totalPeople
+		orderInfo["title"] = "协同账号续费"
+		vipOrderType = 4
 	} else {
+		title = "团队成员续费"
 		totalPeople := userVip.SubNum + 1
 		amount = utils.FriendlyFloat64(dyVipValue[buyDays] * float64(totalPeople))
 		orderInfo["buy_days"] = buyDays
 		orderInfo["amount"] = amount
 		orderInfo["people"] = totalPeople
 		orderInfo["title"] = "团队成员续费"
-		vipOrderType = 4
+		vipOrderType = 5
 	}
 	uniqueID, _ := utils.Snow.GetSnowflakeId()
 	tradeNo := fmt.Sprintf("%s%d", time.Now().Format("060102"), uniqueID)
@@ -95,7 +121,7 @@ func (receiver *PayController) CreateDyOrder() {
 		Amount:         utils.ToString(amount),
 		TicketAmount:   "0",
 		GoodsInfo:      string(orderInfoJson),
-		ExpirationTime: time.Now().Add(1800),
+		ExpirationTime: time.Now().Add(1800 * time.Second),
 		CreateTime:     time.Now(),
 		UpdateTime:     time.Now(),
 	}
@@ -138,6 +164,9 @@ func (receiver *PayController) WechatPay() {
 	}
 	amount := utils.ToFloat64(vipOrder.Amount) * float64(100)
 	amountInt := utils.ToInt64(amount)
+	if global.IsDev() {
+		amountInt = 1
+	}
 	exp := vipOrder.ExpirationTime.Unix() - time.Now().Unix()
 	if channel == "native" {
 		codeUrl, err := payer.NativePay(amountInt, vipOrder.TradeNo, vipOrder.Title, time.Duration(exp))

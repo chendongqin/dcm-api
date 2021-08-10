@@ -7,6 +7,8 @@ import (
 	"errors"
 	"fmt"
 	"github.com/wechatpay-apiv3/wechatpay-go/core"
+	"github.com/wechatpay-apiv3/wechatpay-go/core/auth/verifiers"
+	"github.com/wechatpay-apiv3/wechatpay-go/core/notify"
 	"github.com/wechatpay-apiv3/wechatpay-go/core/option"
 	"github.com/wechatpay-apiv3/wechatpay-go/services/payments/app"
 	"github.com/wechatpay-apiv3/wechatpay-go/services/payments/h5"
@@ -142,4 +144,18 @@ func Sha256WithRsa(rsaStr string) (string, error) {
 		return "", err
 	}
 	return utils.SignSHA256WithRSA(rsaStr, mchPrivateKey)
+}
+
+func Notify(request *http.Request) (*notify.Request, interface{}, error) {
+	mchAPIv3Key := global.Cfg.String("wechat_pay_v3")
+	wechatPayCertPath := global.Cfg.String("wechat_pay_cert")
+	wechatPayCert, err := utils.LoadCertificateWithPath(wechatPayCertPath)
+	if err != nil {
+		return nil, nil, fmt.Errorf("商户配置有误：%v", err)
+	}
+	verifier := verifiers.NewSHA256WithRSAVerifier(core.NewCertificateMapWithList([]*x509.Certificate{wechatPayCert}))
+	handler := notify.NewNotifyHandler(mchAPIv3Key, verifier)
+	var content interface{}
+	notifyReq, err := handler.ParseNotifyRequest(context.Background(), request, content)
+	return notifyReq, content, err
 }
