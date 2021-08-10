@@ -2,7 +2,7 @@ package controllers
 
 import (
 	"dongchamao/services/payer"
-	"fmt"
+	"github.com/astaxie/beego/logs"
 )
 
 type CallbackController struct {
@@ -11,7 +11,7 @@ type CallbackController struct {
 
 func (receiver *CallbackController) WechatNotify() {
 	info, content, err := payer.Notify(receiver.Ctx.Request)
-	fmt.Println("回调测试", info, content, err)
+	logs.Error("回调测试", info, content, err)
 	receiver.SuccReturn(nil)
 	return
 
