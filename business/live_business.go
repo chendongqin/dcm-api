@@ -203,8 +203,8 @@ func (l *LiveBusiness) LiveRoomAnalyse(roomId string) (data dy.DyLiveRoomAnalyse
 func (l *LiveBusiness) CountAvgOnlineTime(onlineTrends []entity.DyLiveOnlineTrends, startTime, totalUser int64) float64 {
 	lenNum := len(onlineTrends)
 	var avgOnlineTime float64 = 0
-	if lenNum == 0 {
-		return avgOnlineTime
+	if lenNum == 0 || totalUser == 0 {
+		return 0
 	} else if lenNum == 1 {
 		onlineTrend := onlineTrends[0]
 		avgOnlineTime = float64(onlineTrend.CrawlTime-startTime) * (float64(onlineTrend.UserCount) / 2) / float64(totalUser)

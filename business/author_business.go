@@ -352,9 +352,11 @@ func (a *AuthorBusiness) CountLiveRoomAnalyse(authorId string, startTime, endTim
 		if d, ex := sumData[date]; ex {
 			d.TotalUserCount += v.TotalUserCount
 			d.IncFans += v.IncFans
-			d.IncFansRate = float64(d.IncFans) / float64(d.TotalUserCount)
+			if d.TotalUserCount > 0 {
+				d.IncFansRate = float64(d.IncFans) / float64(d.TotalUserCount)
+				d.InteractRate = float64(d.BarrageCount) / float64(d.TotalUserCount)
+			}
 			d.BarrageCount += v.BarrageCount
-			d.InteractRate = float64(d.BarrageCount) / float64(d.TotalUserCount)
 			avgUserCount := (d.AvgUserCount + v.AvgUserCount) / 2
 			d.AvgUserCount = avgUserCount
 			d.Volume += v.Volume
