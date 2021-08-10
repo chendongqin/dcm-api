@@ -110,6 +110,7 @@ func (receiver *PayController) CreateDyOrder() {
 	return
 }
 
+//微信支付
 func (receiver *PayController) WechatPay() {
 	channel := receiver.Ctx.Input.Param(":channel")
 	orderId := utils.ToInt(receiver.Ctx.Input.Param(":order_id"))
