@@ -11,6 +11,8 @@ type CallbackController struct {
 
 func (receiver *CallbackController) WechatNotify() {
 	info, content, err := payer.Notify(receiver.Ctx.Request)
+	logs.Error("回调原始数据", receiver.Ctx.Request.Header)
+	logs.Error("回调原始数据", receiver.Ctx.Request.Body)
 	logs.Error("回调测试", info.Summary, info.RawRequest, err)
 	logs.Error("回调饭回数据", content)
 	receiver.SuccReturn(nil)
