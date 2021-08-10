@@ -222,6 +222,9 @@ func (this *ApiBaseController) CheckSign() {
 		if this.Ctx.Input.IP() == "127.0.0.1" {
 			return
 		}
+		if authBusiness.AuthSignWhiteUri(this.TrueUri) {
+			return
+		}
 		timestamp := this.Ctx.Input.Header("TIMESTAMP")
 		random := this.Ctx.Input.Header("RANDOM")
 		sign := this.Ctx.Input.Header("SIGN")

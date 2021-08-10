@@ -26,11 +26,24 @@ var LoginWitheUri = []string{
 	"/v1/sms/code",
 	"/v1/sms/verify",
 	"/v1/author/cate",
+	"/v1/pay/notify",
+}
+
+var SignWitheUri = []string{
+	"/v1/pay/notify",
 }
 
 //登陆白名单校验
 func (receiver *AccountAuthBusiness) AuthLoginWhiteUri(uri string) bool {
 	if utils.InArrayString(uri, LoginWitheUri) {
+		return true
+	}
+	return false
+}
+
+//登陆白名单校验
+func (receiver *AccountAuthBusiness) AuthSignWhiteUri(uri string) bool {
+	if utils.InArrayString(uri, SignWitheUri) {
 		return true
 	}
 	return false
