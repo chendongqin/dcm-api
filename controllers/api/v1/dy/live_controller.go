@@ -103,6 +103,7 @@ func (receiver *LiveController) SearchRoom() {
 		"list":       list,
 		"total":      total,
 		"total_page": totalPage,
+		"max_num":    business.JewelLiveListShowNum,
 		"has_auth":   hasAuth,
 		"has_login":  hasLogin,
 	})
