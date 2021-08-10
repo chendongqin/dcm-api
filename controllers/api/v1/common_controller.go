@@ -87,6 +87,5 @@ func (receiver *CommonController) CheckSmsCode() {
 }
 
 func (receiver *CommonController) Test() {
-	receiver.SuccReturn(nil)
 	return
 }
