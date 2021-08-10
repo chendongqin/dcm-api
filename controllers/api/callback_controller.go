@@ -1,6 +1,7 @@
 package controllers
 
 import (
+	"dongchamao/models/dcm"
 	"dongchamao/services/payer"
 	"github.com/astaxie/beego/logs"
 )
@@ -10,12 +11,32 @@ type CallbackController struct {
 }
 
 func (receiver *CallbackController) WechatNotify() {
-	info, content, err := payer.Notify(receiver.Ctx.Request)
-	logs.Error("回调原始数据", receiver.Ctx.Request.Header)
-	logs.Error("回调原始数据", receiver.Ctx.Request.Body)
-	logs.Error("回调测试", info.Summary, info.RawRequest, err)
-	logs.Error("回调饭回数据", content)
-	receiver.SuccReturn(nil)
+	payNotifyContent := &payer.PayNotifyContent{}
+	_, payNotifyContent, err := payer.Notify(receiver.Ctx.Request)
+	if err != nil {
+		logs.Error("微信支付回调数据错误：", receiver.Ctx.Request.Header, receiver.Ctx.Request.Body)
+	}
+	logs.Error("微信支付回调数据：", payNotifyContent)
+	if payNotifyContent.TradeState == "SUCCESS" {
+		vipOrder := dcm.DcVipOrder{}
+		exist, _ := dcm.GetBy("trade_no", payNotifyContent.OutTradeNo, &vipOrder)
+		if exist {
+			updateData := map[string]interface{}{
+				"pay_status":     1,
+				"inter_trade_no": payNotifyContent.TransactionId,
+				"pay_time":       payNotifyContent.SuccessTime,
+			}
+			affect, err2 := dcm.UpdateInfo(nil, vipOrder.Id, updateData, new(dcm.DcVipOrder))
+			if affect == 0 || err2 != nil {
+				logs.Error("微信支付更新失败：", vipOrder.Id, updateData)
+			}
+		}
+	}
+	receiver.Data["json"] = map[string]interface{}{
+		"code":    "SUCCESS",
+		"message": "成功",
+	}
+	receiver.ServeJSON()
 	return
 
 }

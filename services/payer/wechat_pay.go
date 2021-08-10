@@ -18,6 +18,28 @@ import (
 	"time"
 )
 
+type PayNotifyContent struct {
+	Amount struct {
+		Currency      string `json:"currency"`
+		PayerCurrency string `json:"payer_currency"`
+		PayerTotal    int64  `json:"payer_total"`
+		Total         int64  `json:"total"`
+	} `json:"amount"`
+	Appid      string `json:"appid"`
+	Attach     string `json:"attach"`
+	BankType   string `json:"bank_type"`
+	Mchid      string `json:"mchid"`
+	OutTradeNo string `json:"out_trade_no"`
+	Payer      struct {
+		Openid string `json:"openid"`
+	}
+	SuccessTime    time.Time `json:"success_time"`
+	TradeState     string    `json:"trade_state"`
+	TradeStateDesc string    `json:"trade_state_desc"`
+	TradeType      string    `json:"trade_type"`
+	TransactionId  string    `json:"transaction_id"`
+}
+
 func Builder() (*core.Client, error) {
 	mchPrivateKeyPath := global.Cfg.String("wechat_pay_cert_key")
 	mchPrivateKey, err := utils.LoadPrivateKeyWithPath(mchPrivateKeyPath)
@@ -146,7 +168,7 @@ func Sha256WithRsa(rsaStr string) (string, error) {
 	return utils.SignSHA256WithRSA(rsaStr, mchPrivateKey)
 }
 
-func Notify(request *http.Request) (*notify.Request, interface{}, error) {
+func Notify(request *http.Request) (*notify.Request, *PayNotifyContent, error) {
 	mchAPIv3Key := global.Cfg.String("wechat_pay_v3")
 	wechatPayCertPath := global.Cfg.String("wechat_pay_cert")
 	wechatPayCert, err := utils.LoadCertificateWithPath(wechatPayCertPath)
@@ -155,7 +177,7 @@ func Notify(request *http.Request) (*notify.Request, interface{}, error) {
 	}
 	verifier := verifiers.NewSHA256WithRSAVerifier(core.NewCertificateMapWithList([]*x509.Certificate{wechatPayCert}))
 	handler := notify.NewNotifyHandler(mchAPIv3Key, verifier)
-	content := new(notify.ContentMap)
+	content := new(PayNotifyContent)
 	notifyReq, err := handler.ParseNotifyRequest(context.Background(), request, content)
 	return notifyReq, content, err
 }
