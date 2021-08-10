@@ -155,7 +155,7 @@ func Notify(request *http.Request) (*notify.Request, interface{}, error) {
 	}
 	verifier := verifiers.NewSHA256WithRSAVerifier(core.NewCertificateMapWithList([]*x509.Certificate{wechatPayCert}))
 	handler := notify.NewNotifyHandler(mchAPIv3Key, verifier)
-	var content interface{}
+	content := new(notify.ContentMap)
 	notifyReq, err := handler.ParseNotifyRequest(context.Background(), request, content)
 	return notifyReq, content, err
 }
