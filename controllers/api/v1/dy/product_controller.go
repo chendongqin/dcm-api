@@ -437,11 +437,7 @@ func (receiver *ProductController) ProductLiveRoomList() {
 		}
 		for _, v := range list {
 			if author, ok := authorMap[v.AuthorID]; ok {
-				if author.RoomID == "0" {
-					v.AuthorRoomID = ""
-				} else {
-					v.AuthorRoomID = author.RoomID
-				}
+				v.AuthorRoomID = author.RoomID
 				v.Avatar = dyimg.Fix(author.Avatar)
 			}
 			if v.RoomCover == "" {

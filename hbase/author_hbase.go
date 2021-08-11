@@ -28,6 +28,9 @@ func GetAuthor(authorId string) (data entity.DyAuthorData, comErr global.CommonE
 	utils.MapToStruct(authorMap, author)
 	data = author.Data
 	data.CrawlTime = author.CrawlTime
+	if data.RoomID == "0" {
+		data.RoomID = ""
+	}
 	return
 }
 
