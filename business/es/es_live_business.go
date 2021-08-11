@@ -175,11 +175,6 @@ func (receiver *EsLiveBusiness) RoomProductByRoomId(roomInfo entity.DyLiveInfo, 
 		esQuery.SetTerm("second_cname.keyword", thirdLabel)
 	}
 	orderEs := elasticsearch.NewElasticOrder().Add(sortStr, orderBy).Order
-	if sortStr == "predict_sales" {
-		orderEs = elasticsearch.NewElasticOrder().Add("real_sales").Add(sortStr, orderBy).Order
-	} else if sortStr == "predict_gmv" {
-		orderEs = elasticsearch.NewElasticOrder().Add("real_gmv").Add(sortStr, orderBy).Order
-	}
 	results := esMultiQuery.
 		SetTable(esTable).
 		AddMust(esQuery.Condition).
