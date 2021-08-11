@@ -25,16 +25,11 @@ func NewPayBusiness() *PayBusiness {
 	return new(PayBusiness)
 }
 
-func (receiver *PayBusiness) DoPayDyCallback(orderId int) bool {
-	vipOrder := dcm.DcVipOrder{}
-	exist, _ := dcm.Get(orderId, &vipOrder)
-	if !exist {
-		return false
-	}
+func (receiver *PayBusiness) DoPayDyCallback(vipOrder dcm.DcVipOrder) bool {
 	dbSession := dcm.GetDbSession()
 	_ = dbSession.Begin()
 	userLevel := dcm.DcUserVip{}
-	exist, _ = dbSession.Where("user_id=? AND platform=?", vipOrder.UserId, 1).Get(&userLevel)
+	exist, _ := dbSession.Where("user_id=? AND platform=?", vipOrder.UserId, 1).Get(&userLevel)
 	if !exist {
 		userLevel.UserId = vipOrder.UserId
 		userLevel.Platform = 1
