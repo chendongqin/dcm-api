@@ -36,7 +36,7 @@ func (receiver *CallbackController) WechatNotify() {
 				logs.Error("微信支付更新失败：", vipOrder.Id, updateData)
 			}
 			payBusiness := business.NewPayBusiness()
-			doRes := payBusiness.DoPayDyCallback(vipOrder)
+			doRes := payBusiness.DoPayDyCallback(vipOrder.Id)
 			if !doRes {
 				logs.Error("会员数据更新失败：", vipOrder.Id)
 			}
