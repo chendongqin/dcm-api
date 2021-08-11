@@ -133,6 +133,7 @@ func (receiver *PayController) CreateDyOrder() {
 		Title:          title,
 		Amount:         utils.ToString(amount),
 		TicketAmount:   "0",
+		Level:          business.UserLevelJewel,
 		BuyDays:        orderInfo.BuyDays,
 		GoodsInfo:      string(orderInfoJson),
 		ExpirationTime: time.Now().Add(1800 * time.Second),
