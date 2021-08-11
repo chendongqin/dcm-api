@@ -82,7 +82,7 @@ func (receiver *PayController) CreateDyOrder() {
 		surplusValue = payBusiness.CountDySurplusValue(int(surplusDay))
 	}
 	dyVipValue := business.DyVipPayMoney
-	title := fmt.Sprintf("专业版%d天", buyDays)
+	title := fmt.Sprintf("旗舰版%d天", buyDays)
 	var amount float64 = 0
 	orderInfo := repost.VipOrderInfo{
 		SurplusValue: surplusValue,
@@ -133,6 +133,7 @@ func (receiver *PayController) CreateDyOrder() {
 		Title:          title,
 		Amount:         utils.ToString(amount),
 		TicketAmount:   "0",
+		BuyDays:        orderInfo.BuyDays,
 		GoodsInfo:      string(orderInfoJson),
 		ExpirationTime: time.Now().Add(1800 * time.Second),
 		CreateTime:     time.Now(),
