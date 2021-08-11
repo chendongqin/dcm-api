@@ -5,6 +5,7 @@ import (
 	controllers "dongchamao/controllers/api"
 	"dongchamao/global"
 	"dongchamao/hbase"
+	"dongchamao/models/entity"
 	"dongchamao/services/dyimg"
 	"time"
 )
@@ -125,20 +126,64 @@ func (receiver *RankController) DyLiveHourPopularityRank() {
 		return
 	}
 	data, _ := hbase.GetDyLiveHourPopularityRank(dateTime.Format("2006010215"))
-	//for k, v := range data.Ranks {
-	//	data.Ranks[k].LiveInfo.Cover = dyimg.Fix(v.LiveInfo.Cover)
-	//	data.Ranks[k].LiveInfo.User.Avatar = dyimg.Fix(v.LiveInfo.User.Avatar)
-	//	if v.LiveInfo.User.DisplayId == "" {
-	//		data.Ranks[k].LiveInfo.User.DisplayId = v.LiveInfo.User.ShortId
-	//	}
-	//	data.Ranks[k].ShareUrl = business.LiveShareUrl + v.RoomId
-	//	if v.RealGmv > 0 {
-	//		data.Ranks[k].PredictGmv = v.RealGmv
-	//		data.Ranks[k].PredictSales = v.RealSales
-	//	}
-	//}
+	for k, v := range data.Ranks {
+		data.Ranks[k].LiveInfo.Cover = dyimg.Fix(v.LiveInfo.Cover)
+		data.Ranks[k].LiveInfo.User.Avatar = dyimg.Fix(v.LiveInfo.User.Avatar)
+		if v.LiveInfo.User.DisplayId == "" {
+			data.Ranks[k].LiveInfo.User.DisplayId = v.LiveInfo.User.ShortId
+		}
+		data.Ranks[k].ShareUrl = business.LiveShareUrl + v.RoomId
+	}
 	receiver.SuccReturn(map[string]interface{}{
 		"list":        data.Ranks,
+		"update_time": data.CrawlTime,
+	})
+	return
+}
+
+//抖音直播实时榜
+func (receiver *RankController) DyLiveShareWeekRank() {
+	start, end, comErr := receiver.GetRangeDate()
+	if comErr != nil {
+		receiver.FailReturn(comErr)
+		return
+	}
+	if start.Weekday() != 1 || end.Weekday() != 0 {
+		receiver.FailReturn(global.NewError(4000))
+		return
+	}
+	if end.Day()-start.Day() != 6 {
+		receiver.FailReturn(global.NewError(4000))
+		return
+	}
+	data, _ := hbase.GetLiveShareWeekRank(start.Format("20060102") + "_" + end.Format("20060102"))
+	list := make([]entity.DyLiveShareWeekData, 0)
+	for _, v := range data.Data {
+		var gmv float64 = 0
+		var sales int64 = 0
+		for _, r := range v.Rooms {
+			gmv += r.PredictGmv
+			sales += r.PredictSales
+		}
+		uniqueId := v.UniqueId
+		if uniqueId == "" || uniqueId == "0" {
+			uniqueId = v.ShortId
+		}
+		list = append(list, entity.DyLiveShareWeekData{
+			AuthorId:   v.AuthorId,
+			Avatar:     dyimg.Avatar(v.Avatar),
+			Category:   v.Category,
+			InitRank:   v.InitRank,
+			Name:       v.Name,
+			RankChange: v.RankChange,
+			Score:      v.Score,
+			UniqueId:   uniqueId,
+			Gmv:        gmv,
+			Sales:      sales,
+		})
+	}
+	receiver.SuccReturn(map[string]interface{}{
+		"list":        list,
 		"update_time": data.CrawlTime,
 	})
 	return

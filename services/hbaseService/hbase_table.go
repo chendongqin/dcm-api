@@ -38,4 +38,5 @@ const (
 	HbaseDyLiveHourRankSell       = "dy_live_hour_rank_sell_top"
 	HbaseDyLiveHourRankPopularity = "dy_live_hour_rank_popularity"
 	HbaseDyLiveTopRank            = "dy_live_top"
+	HbaseDyLiveShareWeekRank      = "dy_live_share_top"
 )
