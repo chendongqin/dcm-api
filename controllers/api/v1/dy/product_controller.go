@@ -10,6 +10,7 @@ import (
 	"dongchamao/models/entity"
 	dy2 "dongchamao/models/repost/dy"
 	"dongchamao/services/dyimg"
+	"sort"
 	"time"
 )
 
@@ -132,6 +133,9 @@ func (receiver *ProductController) ProductBaseAnalysis() {
 	if countData.PvCount > 0 {
 		countData.Rate = float64(countData.OrderCount) / float64(countData.PvCount)
 	}
+	sort.Slice(orderList, func(i, j int) bool {
+		return orderList[i].Date > orderList[j].Date
+	})
 	receiver.SuccReturn(map[string]interface{}{
 		"author_chart": dy2.ProductAuthorChart{
 			Date:             dateChart,
@@ -355,7 +359,7 @@ func (receiver *ProductController) ProductLiveRoomList() {
 	productId := receiver.Ctx.Input.Param(":product_id")
 	InputData := receiver.InputFormat()
 	keyword := InputData.GetString("keyword", "")
-	sortStr := InputData.GetString("sort", "predict_gmv")
+	sortStr := InputData.GetString("sort", "shelf_time")
 	orderBy := InputData.GetString("order_by", "desc")
 	page := InputData.GetInt("page", 1)
 	size := InputData.GetInt("page_size", 10)
@@ -479,7 +483,7 @@ func (receiver *ProductController) ProductLiveRoomList() {
 	return
 }
 
-func (receiver *ProductController) ProductAuthorAnalysis() {
+func (receiver *ProductController) ProductLiveAuthorAnalysis() {
 	productId := receiver.GetString(":product_id")
 	startTime, endTime, comErr := receiver.GetRangeDate()
 	if comErr != nil {
@@ -520,7 +524,7 @@ func (receiver *ProductController) ProductAuthorAnalysis() {
 	return
 }
 
-func (receiver *ProductController) ProductAuthorAnalysisCount() {
+func (receiver *ProductController) ProductLiveAuthorAnalysisCount() {
 	productId := receiver.GetString(":product_id")
 	startTime, endTime, comErr := receiver.GetRangeDate()
 	if comErr != nil {

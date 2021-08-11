@@ -13,8 +13,8 @@ func init() {
 			beego.NSRouter("/analysis/:product_id/:start/:end", &v1dy.ProductController{}, "get:ProductBaseAnalysis"),
 			beego.NSRouter("/live/chart/:product_id/:start/:end", &v1dy.ProductController{}, "get:ProductLiveChart"),
 			beego.NSRouter("/live/room/:product_id/:start/:end", &v1dy.ProductController{}, "get:ProductLiveRoomList"),
-			beego.NSRouter("/author/:product_id/:start/:end", &v1dy.ProductController{}, "get:ProductAuthorAnalysis"),
-			beego.NSRouter("/author/count/:product_id/:start/:end", &v1dy.ProductController{}, "get:ProductAuthorAnalysisCount"),
+			beego.NSRouter("/author/:product_id/:start/:end", &v1dy.ProductController{}, "get:ProductLiveAuthorAnalysis"),
+			beego.NSRouter("/author/count/:product_id/:start/:end", &v1dy.ProductController{}, "get:ProductLiveAuthorAnalysisCount"),
 		),
 	)
 	// 注册路由组

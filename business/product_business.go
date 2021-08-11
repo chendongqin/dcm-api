@@ -168,6 +168,7 @@ func (receiver *ProductBusiness) ProductAuthorAnalysis(productId, keyword, tag s
 }
 
 func (receiver *ProductBusiness) ProductAuthorAnalysisCount(productId, keyword string, startTime, endTime time.Time) (countList []dy.DyCate, comErr global.CommonError) {
+	countList = []dy.DyCate{}
 	cKey := cache.GetCacheKey(cache.ProductAuthorCount, startTime.Format("20060102"), endTime.Format("20060102"))
 	if keyword == "" {
 		countJson := global.Cache.Get(cKey)

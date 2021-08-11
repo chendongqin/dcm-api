@@ -2,6 +2,7 @@ package es
 
 import (
 	"dongchamao/global"
+	"dongchamao/global/alias"
 	"dongchamao/global/cache"
 	"dongchamao/global/utils"
 	"dongchamao/models/entity"
@@ -358,12 +359,12 @@ func (receiver *EsLiveBusiness) GetAuthorProductSearchRoomIds(authorId, productI
 //达人直播间搜索
 func (receiver *EsLiveBusiness) SearchProductRooms(productId, keyword, sortStr, orderBy string, page, size int, startTime, endTime time.Time) (list []es.EsAuthorLiveProduct, total int, comErr global.CommonError) {
 	if sortStr == "" {
-		sortStr = "predict_gmv"
+		sortStr = "shelf_time"
 	}
 	if orderBy == "" {
 		orderBy = "desc"
 	}
-	if !utils.InArrayString(sortStr, []string{"predict_gmv", "predict_sales"}) {
+	if !utils.InArrayString(sortStr, []string{"shelf_time", "predict_gmv", "predict_sales"}) {
 		comErr = global.NewError(4000)
 		return
 	}
@@ -491,7 +492,19 @@ func (receiver *EsLiveBusiness) SearchLiveRooms(keyword, category, firstName, se
 		if keywordType == 1 {
 			esQuery.SetMatchPhrase("product_title", keyword)
 		} else {
-			esQuery.SetMultiMatch([]string{"unique_id", "short_id", "nickname"}, keyword)
+			if utils.HasChinese(keyword) {
+				slop := 100
+				length := len([]rune(keyword))
+				if length <= 3 {
+					slop = 2
+				}
+				esMultiQuery.AddMust(elasticsearch.Query().
+					SetMatchPhraseWithParams("nickname", keyword, alias.M{
+						"slop": slop,
+					}).Condition)
+			} else {
+				esQuery.SetMultiMatch([]string{"unique_id", "short_id", "nickname"}, keyword)
+			}
 		}
 	}
 	if brand == 1 {
