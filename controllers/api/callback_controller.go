@@ -33,7 +33,7 @@ func (receiver *CallbackController) WechatNotify() {
 			}
 			affect, err2 := dcm.UpdateInfo(nil, vipOrder.Id, updateData, new(dcm.DcVipOrder))
 			if affect == 0 || err2 != nil {
-				logs.Error("微信支付更新失败：", vipOrder.Id, updateData)
+				logs.Error("微信支付更新失败：", vipOrder.Id, updateData, err2)
 			}
 			payBusiness := business.NewPayBusiness()
 			doRes := payBusiness.DoPayDyCallback(vipOrder.Id)
