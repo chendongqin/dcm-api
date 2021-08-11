@@ -53,7 +53,15 @@ func (receiver *PayController) CreateDyOrder() {
 	if userVip.Expiration.Before(time.Now()) {
 		userVip.Level = 0
 	}
-	if orderType > 1 && userVip.Level == 0 {
+	if orderType == 2 && userVip.Level == 0 {
+		receiver.FailReturn(global.NewError(4000))
+		return
+	}
+	if orderType == 5 && userVip.Expiration.Unix() != userVip.SubExpiration.Unix() {
+		receiver.FailReturn(global.NewError(4000))
+		return
+	}
+	if orderType > 2 && userVip.Level == 0 {
 		receiver.FailReturn(global.NewMsgError("购买协同账号请先开通会员"))
 		return
 	}

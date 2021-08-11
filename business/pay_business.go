@@ -55,24 +55,23 @@ func (receiver *PayBusiness) DoPayDyCallback(vipOrder dcm.DcVipOrder) bool {
 	updateMap["level"] = vipOrder.Level
 	updateMap["value_type"] = 2
 	updateMap["update_time"] = time.Now().Format("2006-01-02 15:04:05")
+	nowTime := time.Now()
 	switch vipOrder.OrderType {
 	case 1, 2:
 		if userLevel.Level == 0 || userLevel.Level < vipOrder.Level {
-			updateMap["expiration"] = time.Now().AddDate(0, 0, orderInfo.BuyDays).Format("2006-01-02 15:04:05")
+			updateMap["expiration"] = nowTime.AddDate(0, 0, orderInfo.BuyDays).Format("2006-01-02 15:04:05")
 		} else {
 			updateMap["expiration"] = userLevel.Expiration.AddDate(0, 0, orderInfo.BuyDays).Format("2006-01-02 15:04:05")
 		}
-	case 3, 4:
-		if userLevel.SubExpiration.Before(time.Now()) {
-			userLevel.SubExpiration = time.Now()
-		}
-		updateMap["sub_expiration"] = userLevel.Expiration.AddDate(0, 0, orderInfo.BuyDays).Format("2006-01-02 15:04:05")
-		if vipOrder.OrderType == 3 {
-			updateMap["sub_num"] = userLevel.SubNum + orderInfo.People
-		}
+	case 3:
+		updateMap["sub_expiration"] = userLevel.Expiration
+		updateMap["sub_num"] = userLevel.SubNum + orderInfo.People
+	case 4:
+		updateMap["sub_expiration"] = userLevel.Expiration
 	case 5:
-		updateMap["expiration"] = userLevel.Expiration.AddDate(0, 0, orderInfo.BuyDays).Format("2006-01-02 15:04:05")
-		updateMap["sub_expiration"] = userLevel.Expiration.AddDate(0, 0, orderInfo.BuyDays).Format("2006-01-02 15:04:05")
+		expiration := userLevel.Expiration.AddDate(0, 0, orderInfo.BuyDays).Format("2006-01-02 15:04:05")
+		updateMap["expiration"] = expiration
+		updateMap["sub_expiration"] = expiration
 	}
 	affect, err := dcm.UpdateInfo(dbSession, userLevel.Id, updateMap, new(dcm.DcUserVip))
 	if affect == 0 || err != nil {
