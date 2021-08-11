@@ -4,6 +4,7 @@ import (
 	"dongchamao/business"
 	controllers "dongchamao/controllers/api"
 	"dongchamao/global"
+	"dongchamao/global/utils"
 	"dongchamao/hbase"
 	"dongchamao/models/entity"
 	"dongchamao/services/dyimg"
@@ -141,7 +142,7 @@ func (receiver *RankController) DyLiveHourPopularityRank() {
 	return
 }
 
-//抖音直播实时榜
+//抖音直播达人分享周榜
 func (receiver *RankController) DyLiveShareWeekRank() {
 	start, end, comErr := receiver.GetRangeDate()
 	if comErr != nil {
@@ -170,7 +171,7 @@ func (receiver *RankController) DyLiveShareWeekRank() {
 			uniqueId = v.ShortId
 		}
 		list = append(list, entity.DyLiveShareWeekData{
-			AuthorId:   v.AuthorId,
+			AuthorId:   utils.ToString(v.AuthorId),
 			Avatar:     dyimg.Avatar(v.Avatar),
 			Category:   v.Category,
 			InitRank:   v.InitRank,
@@ -186,5 +187,45 @@ func (receiver *RankController) DyLiveShareWeekRank() {
 		"list":        list,
 		"update_time": data.CrawlTime,
 	})
+	return
+}
+
+func (receiver *RankController) DyAwemeShareRank() {
+	date := receiver.Ctx.Input.Param(":date")
+	if date == "" {
+		receiver.FailReturn(global.NewError(4000))
+		return
+	}
+	pslTime := "2006-01-02"
+	dateTime, err := time.ParseInLocation(pslTime, date, time.Local)
+	if err != nil {
+		receiver.FailReturn(global.NewError(4000))
+		return
+	}
+	data, _ := hbase.GetAwemeShareRank(dateTime.Format("20060102"))
+	list := make([]entity.DyAwemeShareTop, 0)
+	for _, v := range data.Data {
+		uniqueId := v.UniqueId
+		if uniqueId == "" || uniqueId == "0" {
+			uniqueId = v.ShortId
+		}
+		list = append(list, entity.DyAwemeShareTop{
+			AuthorId:      v.AuthorId,
+			Category:      v.Category,
+			Avatar:        dyimg.Avatar(v.Avatar),
+			InitRank:      v.InitRank,
+			Name:          v.Name,
+			RankChange:    v.RankChange,
+			Score:         v.Score,
+			UniqueId:      uniqueId,
+			FollowerCount: v.FollowerCount,
+			IncDiggCount:  v.IncDiggCount,
+		})
+	}
+	receiver.SuccReturn(map[string]interface{}{
+		"list":        list,
+		"update_time": data.CrawlTime,
+	})
+	receiver.SuccReturn(data)
 	return
 }

@@ -16,6 +16,7 @@ func init() {
 			beego.NSRouter("/live/hour/popularity/:date/:hour", &v1dy.RankController{}, "get:DyLiveHourPopularityRank"),
 			beego.NSRouter("/live/top/:date/:hour", &v1dy.RankController{}, "get:DyLiveTopRank"),
 			beego.NSRouter("/live/share/:start/:end", &v1dy.RankController{}, "get:DyLiveShareWeekRank"),
+			beego.NSRouter("/video/share/:date", &v1dy.RankController{}, "get:DyAwemeShareRank"),
 		),
 	)
 	// 注册路由组

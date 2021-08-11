@@ -11,7 +11,7 @@ type DyLiveShareTops struct {
 }
 
 type DyLiveShareTop struct {
-	AuthorId   string                     `json:"author_id"`
+	AuthorId   int64                      `json:"author_id"`
 	Avatar     string                     `json:"avatar"`
 	Category   string                     `json:"category"`
 	InitRank   int                        `json:"init_rank"`
