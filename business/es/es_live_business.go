@@ -503,7 +503,7 @@ func (receiver *EsLiveBusiness) SearchLiveRooms(keyword, category, firstName, se
 						"slop": slop,
 					}).Condition)
 			} else {
-				esQuery.SetMultiMatch([]string{"unique_id", "short_id", "nickname"}, keyword)
+				esQuery.SetMultiMatch([]string{"display_id", "short_id", "nickname"}, keyword)
 			}
 		}
 	}
