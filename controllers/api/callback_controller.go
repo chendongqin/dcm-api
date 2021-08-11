@@ -26,7 +26,7 @@ func (receiver *CallbackController) WechatNotify() {
 			payTime, _ := time.Parse("2006-01-02T15:04:05+08:00", payNotifyContent.SuccessTime)
 			updateData := map[string]interface{}{
 				"pay_status":     1,
-				"order_status":   1,
+				"status":         1,
 				"pay_type":       "wechat",
 				"inter_trade_no": payNotifyContent.TransactionId,
 				"pay_time":       payTime.Format("2006-01-02 15:04:05"),
