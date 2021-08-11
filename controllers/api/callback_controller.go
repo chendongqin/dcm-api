@@ -1,6 +1,7 @@
 package controllers
 
 import (
+	"dongchamao/business"
 	"dongchamao/models/dcm"
 	"dongchamao/services/payer"
 	"github.com/astaxie/beego/logs"
@@ -25,12 +26,19 @@ func (receiver *CallbackController) WechatNotify() {
 			payTime, _ := time.Parse("2006-01-02T15:04:05+08:00", payNotifyContent.SuccessTime)
 			updateData := map[string]interface{}{
 				"pay_status":     1,
+				"order_status":   1,
+				"pay_type":       "wechat",
 				"inter_trade_no": payNotifyContent.TransactionId,
 				"pay_time":       payTime.Format("2006-01-02 15:04:05"),
 			}
 			affect, err2 := dcm.UpdateInfo(nil, vipOrder.Id, updateData, new(dcm.DcVipOrder))
 			if affect == 0 || err2 != nil {
 				logs.Error("微信支付更新失败：", vipOrder.Id, updateData)
+			}
+			payBusiness := business.NewPayBusiness()
+			doRes := payBusiness.DoPayDyCallback(vipOrder)
+			if !doRes {
+				logs.Error("会员数据更新失败：", vipOrder.Id)
 			}
 		}
 	}

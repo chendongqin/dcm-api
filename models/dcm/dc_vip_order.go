@@ -13,6 +13,7 @@ type DcVipOrder struct {
 	OrderType      int       `xorm:"not null comment('订单类型1购买会员2会员续费3协同账号购买4协同账号续费5团队续费6赠送') TINYINT(1)"`
 	PayType        string    `xorm:"not null default '' comment('支付方式') VARCHAR(10)"`
 	Platform       string    `xorm:"not null comment('douyin：抖音，xiaohongshu：小红书，taobao：淘宝') ENUM('douyin','taobao','xiaohongshu')"`
+	Level          int       `xorm:"not null default 0 comment('购买等级') TINYINT(1)"`
 	Title          string    `xorm:"not null comment('订单描述标题') VARCHAR(100)"`
 	Amount         string    `xorm:"not null default 0.00 comment('订单支付金额') DECIMAL(10,2)"`
 	TicketAmount   string    `xorm:"not null default 0.00 comment('优惠券金额') DECIMAL(10,2)"`

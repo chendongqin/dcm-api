@@ -1,6 +1,12 @@
 package business
 
-import "math"
+import (
+	"dongchamao/models/dcm"
+	"dongchamao/models/repost"
+	jsoniter "github.com/json-iterator/go"
+	"math"
+	"time"
+)
 
 var monthDay = 30
 var halfYearDay = 180
@@ -17,6 +23,64 @@ type PayBusiness struct {
 
 func NewPayBusiness() *PayBusiness {
 	return new(PayBusiness)
+}
+
+func (receiver *PayBusiness) DoPayDyCallback(vipOrder dcm.DcVipOrder) bool {
+	dbSession := dcm.GetDbSession()
+	_ = dbSession.Begin()
+	userLevel := dcm.DcUserVip{}
+	exist, _ := dbSession.Where("user_id=? AND platform=?", vipOrder.UserId, 1).Get(&userLevel)
+	if !exist {
+		userLevel.UserId = vipOrder.UserId
+		userLevel.Platform = 1
+		userLevel.UpdateTime = time.Now()
+		userLevel.Expiration = time.Now().AddDate(0, 0, -1)
+		userLevel.SubExpiration = time.Now().AddDate(0, 0, -1)
+		affect, err := dcm.Insert(dbSession, &userLevel)
+		if affect == 0 || err != nil {
+			_ = dbSession.Rollback()
+			return false
+		}
+	}
+	if userLevel.Expiration.Before(time.Now()) {
+		userLevel.Level = 0
+	}
+	orderInfo := repost.VipOrderInfo{}
+	_ = jsoniter.Unmarshal([]byte(vipOrder.GoodsInfo), &orderInfo)
+	updateMap := map[string]interface{}{}
+	if userLevel.ParentId > 0 {
+		userLevel.Level = 0
+		updateMap["parent_id"] = 0
+	}
+	updateMap["level"] = vipOrder.Level
+	updateMap["value_type"] = 2
+	updateMap["update_time"] = time.Now().Format("2006-01-02 15:04:05")
+	switch vipOrder.OrderType {
+	case 1, 2:
+		if userLevel.Level == 0 || userLevel.Level < vipOrder.Level {
+			updateMap["expiration"] = time.Now().AddDate(0, 0, orderInfo.BuyDays).Format("2006-01-02 15:04:05")
+		} else {
+			updateMap["expiration"] = userLevel.Expiration.AddDate(0, 0, orderInfo.BuyDays).Format("2006-01-02 15:04:05")
+		}
+	case 3, 4:
+		if userLevel.SubExpiration.Before(time.Now()) {
+			userLevel.SubExpiration = time.Now()
+		}
+		updateMap["sub_expiration"] = userLevel.Expiration.AddDate(0, 0, orderInfo.BuyDays).Format("2006-01-02 15:04:05")
+		if vipOrder.OrderType == 3 {
+			updateMap["sub_num"] = userLevel.SubNum + orderInfo.People
+		}
+	case 5:
+		updateMap["expiration"] = userLevel.Expiration.AddDate(0, 0, orderInfo.BuyDays).Format("2006-01-02 15:04:05")
+		updateMap["sub_expiration"] = userLevel.Expiration.AddDate(0, 0, orderInfo.BuyDays).Format("2006-01-02 15:04:05")
+	}
+	affect, err := dcm.UpdateInfo(dbSession, userLevel.Id, updateMap, new(dcm.DcUserVip))
+	if affect == 0 || err != nil {
+		_ = dbSession.Rollback()
+		return false
+	}
+	_ = dbSession.Commit()
+	return true
 }
 
 //剩余价值计算

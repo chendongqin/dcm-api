@@ -80,7 +80,8 @@ func (receiver *VipBusiness) GetVipLevel(userId, appId int) int {
 		vip.Platform = appId
 		vip.UpdateTime = time.Now()
 		vip.Expiration = time.Now().AddDate(0, 0, -1)
-		dcm.Insert(nil, vip)
+		vip.SubExpiration = time.Now().AddDate(0, 0, -1)
+		_, _ = dcm.Insert(nil, &vip)
 	}
 	if vip.Expiration.Unix() > time.Now().Unix() {
 		level = vip.Level

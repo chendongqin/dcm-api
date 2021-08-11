@@ -6,6 +6,7 @@ import (
 	"dongchamao/global"
 	"dongchamao/global/utils"
 	"dongchamao/models/dcm"
+	"dongchamao/models/repost"
 	"dongchamao/services/payer"
 	"fmt"
 	jsoniter "github.com/json-iterator/go"
@@ -45,6 +46,10 @@ func (receiver *PayController) CreateDyOrder() {
 		receiver.FailReturn(global.NewMsgError("协同子账号只能购买会员业务～"))
 		return
 	}
+	if userVip.Expiration != userVip.SubExpiration && userVip.SubExpiration.After(time.Now()) && orderType == 3 {
+		receiver.FailReturn(global.NewMsgError("请先续费协同子账号才可购买协同子账号～"))
+		return
+	}
 	if userVip.Expiration.Before(time.Now()) {
 		userVip.Level = 0
 	}
@@ -71,41 +76,41 @@ func (receiver *PayController) CreateDyOrder() {
 	dyVipValue := business.DyVipPayMoney
 	title := fmt.Sprintf("专业版%d天", buyDays)
 	var amount float64 = 0
-	orderInfo := map[string]interface{}{
-		"surplus_value": surplusValue,
+	orderInfo := repost.VipOrderInfo{
+		SurplusValue: surplusValue,
 	}
 	//购买会员
 	if orderType == 1 {
 		amount = dyVipValue[buyDays]
-		orderInfo["buy_days"] = buyDays
-		orderInfo["amount"] = amount
-		orderInfo["people"] = 1
-		orderInfo["title"] = "会员购买"
+		orderInfo.BuyDays = buyDays
+		orderInfo.Amount = amount
+		orderInfo.People = 1
+		orderInfo.Title = "会员购买"
 	} else if orderType == 2 { //购买协同账号
 		title = fmt.Sprintf("购买协同账号%d人", groupPeople)
 		amount = utils.FriendlyFloat64(surplusValue * float64(groupPeople))
-		orderInfo["buy_days"] = surplusDay
-		orderInfo["amount"] = amount
-		orderInfo["people"] = groupPeople
-		orderInfo["title"] = "协同账号购买"
+		orderInfo.BuyDays = int(surplusDay)
+		orderInfo.Amount = amount
+		orderInfo.People = groupPeople
+		orderInfo.Title = "协同账号购买"
 		vipOrderType = 3
-	} else if orderType == 3 { //购买协同账号
+	} else if orderType == 3 { //协同账号续费
 		totalPeople := userVip.SubNum
 		title = fmt.Sprintf("协同账号续费%d人", totalPeople)
 		amount = utils.FriendlyFloat64(surplusValue * float64(totalPeople))
-		orderInfo["buy_days"] = surplusDay
-		orderInfo["amount"] = amount
-		orderInfo["people"] = totalPeople
-		orderInfo["title"] = "协同账号续费"
+		orderInfo.BuyDays = int(surplusDay)
+		orderInfo.Amount = amount
+		orderInfo.People = totalPeople
+		orderInfo.Title = "协同账号续费"
 		vipOrderType = 4
 	} else {
 		title = "团队成员续费"
 		totalPeople := userVip.SubNum + 1
 		amount = utils.FriendlyFloat64(dyVipValue[buyDays] * float64(totalPeople))
-		orderInfo["buy_days"] = buyDays
-		orderInfo["amount"] = amount
-		orderInfo["people"] = totalPeople
-		orderInfo["title"] = "团队成员续费"
+		orderInfo.BuyDays = buyDays
+		orderInfo.Amount = amount
+		orderInfo.People = totalPeople
+		orderInfo.Title = "团队成员续费"
 		vipOrderType = 5
 	}
 	uniqueID, _ := utils.Snow.GetSnowflakeId()
