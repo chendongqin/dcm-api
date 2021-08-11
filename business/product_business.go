@@ -110,6 +110,7 @@ func (receiver *ProductBusiness) GetProductUrl(platform, productId string) strin
 }
 
 func (receiver *ProductBusiness) ProductAuthorAnalysis(productId, keyword, tag string, startTime, endTime time.Time, minFollow, maxFollow int64, scoreType, page, pageSize int) (list []entity.DyProductAuthorAnalysis, total int, comErr global.CommonError) {
+	list = []entity.DyProductAuthorAnalysis{}
 	esProductBusiness := es.NewEsProductBusiness()
 	if tag == "" && minFollow == 0 && maxFollow == 0 && scoreType == 5 {
 		searchList, searchTotal, err := esProductBusiness.SearchRangeDateList(productId, keyword, startTime, endTime, page, pageSize)
@@ -167,8 +168,11 @@ func (receiver *ProductBusiness) ProductAuthorAnalysis(productId, keyword, tag s
 	return
 }
 
-func (receiver *ProductBusiness) ProductAuthorAnalysisCount(productId, keyword string, startTime, endTime time.Time) (countList []dy.DyCate, comErr global.CommonError) {
-	countList = []dy.DyCate{}
+func (receiver *ProductBusiness) ProductAuthorAnalysisCount(productId, keyword string, startTime, endTime time.Time) (countList dy.DyProductLiveCount, comErr global.CommonError) {
+	countList = dy.DyProductLiveCount{
+		Tags:  []dy.DyCate{},
+		Level: []dy.DyIntCate{},
+	}
 	cKey := cache.GetCacheKey(cache.ProductAuthorCount, startTime.Format("20060102"), endTime.Format("20060102"))
 	if keyword == "" {
 		countJson := global.Cache.Get(cKey)
@@ -191,6 +195,7 @@ func (receiver *ProductBusiness) ProductAuthorAnalysisCount(productId, keyword s
 		allList = append(allList, lastRow)
 	}
 	tagsMap := map[string]int{}
+	levelMap := map[int]int{}
 	for _, v := range allList {
 		if keyword != "" {
 			if strings.Index(v.NickName, keyword) < 0 && v.DisplayId != keyword && v.ShortId != keyword {
@@ -208,14 +213,25 @@ func (receiver *ProductBusiness) ProductAuthorAnalysisCount(productId, keyword s
 				tagsMap[s] = 1
 			}
 		}
+		if _, ok := levelMap[v.Level]; ok {
+			levelMap[v.Level] += 1
+		} else {
+			levelMap[v.Level] = 1
+		}
 	}
 	for k, v := range tagsMap {
-		countList = append(countList, dy.DyCate{
+		countList.Tags = append(countList.Tags, dy.DyCate{
 			Name: k,
 			Num:  v,
 		})
 	}
-	if keyword == "" && len(countList) > 0 {
+	for k, v := range levelMap {
+		countList.Level = append(countList.Level, dy.DyIntCate{
+			Name: k,
+			Num:  v,
+		})
+	}
+	if keyword == "" && (len(countList.Tags) > 0 || len(countList.Level) > 0) {
 		countJson := utils.SerializeData(countList)
 		_ = global.Cache.Set(cKey, countJson, 300)
 	}

@@ -48,3 +48,8 @@ type ProductLiveAwemeChart struct {
 	LiveCount  []int    `json:"live_count"`
 	AwemeCount []int    `json:"aweme_count"`
 }
+
+type DyProductLiveCount struct {
+	Tags  []DyCate    `json:"tags"`
+	Level []DyIntCate `json:"level"`
+}

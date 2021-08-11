@@ -6,6 +6,7 @@ import (
 	"dongchamao/hbase"
 	"dongchamao/models/entity"
 	"dongchamao/models/repost/dy"
+	"dongchamao/services/dyimg"
 	"math"
 	"time"
 )
@@ -156,8 +157,12 @@ func (l *LiveBusiness) DealOnlineTrends(liveInfo entity.DyLiveInfo) (entity.DyLi
 
 //直播间分析
 func (l *LiveBusiness) LiveRoomAnalyse(roomId string) (data dy.DyLiveRoomAnalyse, comErr global.CommonError) {
-	data = dy.DyLiveRoomAnalyse{}
 	liveInfo, comErr := hbase.GetLiveInfo(roomId)
+	data = dy.DyLiveRoomAnalyse{
+		RoomId: liveInfo.RoomID,
+		Title:  liveInfo.Title,
+		Cover:  dyimg.Fix(liveInfo.Cover),
+	}
 	if comErr != nil {
 		return
 	}

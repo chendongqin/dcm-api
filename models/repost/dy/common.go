@@ -31,3 +31,9 @@ type DyCate struct {
 	Num     int      `json:"num"`
 	SonCate []DyCate `json:"son_cate"`
 }
+
+type DyIntCate struct {
+	Name    int      `json:"name"`
+	Num     int      `json:"num"`
+	SonCate []DyCate `json:"son_cate"`
+}

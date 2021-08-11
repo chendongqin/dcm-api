@@ -324,6 +324,7 @@ func (a *AuthorBusiness) CountLiveRoomAnalyse(authorId string, startTime, endTim
 	sumData := map[string]dy.DyLiveRoomAnalyse{}
 	sumLongTime := map[string]int{}
 	sumHourTime := map[string]int{}
+	dateRoomMap := map[string][]dy.DyLiveRoomChart{}
 	for _, v := range liveDataList {
 		date := time.Unix(v.DiscoverTime, 0).Format("01/02")
 		longStr := ""
@@ -349,6 +350,14 @@ func (a *AuthorBusiness) CountLiveRoomAnalyse(authorId string, startTime, endTim
 		} else {
 			sumLongTime[longStr] = 1
 		}
+		if _, ok := dateRoomMap[date]; !ok {
+			dateRoomMap[date] = []dy.DyLiveRoomChart{}
+		}
+		dateRoomMap[date] = append(dateRoomMap[date], dy.DyLiveRoomChart{
+			RoomId:    v.RoomId,
+			Title:     v.Title,
+			UserTotal: v.TotalUserCount,
+		})
 		if d, ex := sumData[date]; ex {
 			d.TotalUserCount += v.TotalUserCount
 			d.IncFans += v.IncFans
@@ -401,6 +410,7 @@ func (a *AuthorBusiness) CountLiveRoomAnalyse(authorId string, startTime, endTim
 	dateChart := make([]string, 0)
 	userTotalChart := make([]int64, 0)
 	onlineUserChart := make([]float64, 0)
+	roomChart := make([][]dy.DyLiveRoomChart, 0)
 	uvChart := make([]float64, 0)
 	amountChart := make([]float64, 0)
 	for _, date := range keys {
@@ -423,6 +433,11 @@ func (a *AuthorBusiness) CountLiveRoomAnalyse(authorId string, startTime, endTim
 		if v.PromotionNum > 0 {
 			data.UserData.PromotionLiveNum += 1
 		}
+		if rv, ok := dateRoomMap[date]; ok {
+			roomChart = append(roomChart, rv)
+		} else {
+			roomChart = append(roomChart, []dy.DyLiveRoomChart{})
+		}
 	}
 	if data.UserData.LiveNum > 0 {
 		data.UserData.AvgUserTotal /= int64(data.UserData.LiveNum)
@@ -441,9 +456,10 @@ func (a *AuthorBusiness) CountLiveRoomAnalyse(authorId string, startTime, endTim
 	}
 	esLiveBusiness := es.NewEsLiveBusiness()
 	data.SaleData.PromotionNum = esLiveBusiness.CountRoomProductByAuthorId(authorId, startTime, endTime)
-	data.UserTotalChart = dy.DateCountChart{
+	data.UserTotalChart = dy.DyUserTotalChart{
 		Date:       dateChart,
 		CountValue: userTotalChart,
+		Rooms:      roomChart,
 	}
 	data.OnlineTimeChart = dy.DateCountFChart{
 		Date:       dateChart,
