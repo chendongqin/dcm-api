@@ -218,13 +218,13 @@ func (receiver *PayController) WechatPay() {
 	sign, _ := payer.Sha256WithRsa(signStr)
 	_, _ = dcm.UpdateInfo(nil, orderId, map[string]interface{}{"pay_type": "wechat", "channel": 2}, new(dcm.DcVipOrder))
 	receiver.SuccReturn(map[string]interface{}{
-		"appid":     appId,
-		"partnerid": mchId,
-		"prepayid":  prepayId,
-		"package":   "Sign=WXPay",
-		"noncestr":  nonceStr,
-		"timestamp": timestamp,
-		"sign":      sign,
+		"appid":          appId,
+		"partnerid":      mchId,
+		"prepayid":       prepayId,
+		"wechat_package": "Sign=WXPay",
+		"noncestr":       nonceStr,
+		"timestamp":      timestamp,
+		"sign":           sign,
 	})
 	return
 }
