@@ -57,7 +57,7 @@ func (receiver *CallbackController) WechatNotify() {
 
 }
 
-func (receiver *CallbackController) ApipayNotify() {
+func (receiver *CallbackController) AlipayNotify() {
 	logStr := "====AliPayNotify====" + string(receiver.Ctx.Input.RequestBody)
 	logs.Info(logStr)
 
