@@ -62,12 +62,11 @@ func (receiver *CallbackController) WechatNotify() {
 func (receiver *CallbackController) AlipayNotify() {
 	logStr := "====AliPayNotify====" + string(receiver.Ctx.Input.RequestBody)
 	logs.Info(logStr)
-	logs.Info(receiver.Ctx.Request.Body)
 
-	publicKey := global.Cfg.String("ali_pay_csr_app_public_key")
+	publicKey := global.Cfg.String("ali_pay_cert_path_ali")
 
 	notifyReq, _ := alipay.ParseNotifyResult(receiver.Ctx.Request)
-	checkSign, _ := alipay.VerifySign(publicKey, notifyReq)
+	checkSign, _ := alipay.VerifySignWithCert(publicKey, notifyReq)
 	w := receiver.Ctx.ResponseWriter
 	w.WriteHeader(http.StatusOK)
 	if !checkSign {
@@ -76,28 +75,30 @@ func (receiver *CallbackController) AlipayNotify() {
 		_, _ = w.Write([]byte("fail"))
 		return
 	}
-	vipOrder := dcm.DcVipOrder{}
-	exist, _ := dcm.GetBy("trade_no", notifyReq.OutTradeNo, &vipOrder)
-	if exist {
-		if vipOrder.PayStatus == 1 {
-			logs.Error("微信支付回调：", receiver.Ctx.Request.Header, receiver.Ctx.Request.Body)
-		}
-		payTime := notifyReq.NotifyTime
-		updateData := map[string]interface{}{
-			"pay_status":     1,
-			"status":         1,
-			"pay_type":       "alipay",
-			"inter_trade_no": notifyReq.TradeNo,
-			"pay_time":       payTime,
-		}
-		affect, err2 := dcm.UpdateInfo(nil, vipOrder.Id, updateData, new(dcm.DcVipOrder))
-		if affect == 0 || err2 != nil {
-			logs.Error("支付宝支付更新失败：", vipOrder.Id, updateData, err2)
-		}
-		payBusiness := business.NewPayBusiness()
-		doRes := payBusiness.DoPayDyCallback(vipOrder)
-		if !doRes {
-			logs.Error("会员数据更新失败：", vipOrder.Id)
+	if notifyReq.TradeStatus == "TRADE_SUCCESS" {
+		vipOrder := dcm.DcVipOrder{}
+		exist, _ := dcm.GetBy("trade_no", notifyReq.OutTradeNo, &vipOrder)
+		if exist {
+			if vipOrder.PayStatus == 1 {
+				logs.Error("微信支付回调：", receiver.Ctx.Request.Header, receiver.Ctx.Request.Body)
+			}
+			payTime, _ := time.ParseInLocation("2006-01-02+15:04:05", notifyReq.NotifyTime, time.Local)
+			updateData := map[string]interface{}{
+				"pay_status":     1,
+				"status":         1,
+				"pay_type":       "alipay",
+				"inter_trade_no": notifyReq.TradeNo,
+				"pay_time":       payTime.Format("2006-01-02 15:04:05"),
+			}
+			affect, err2 := dcm.UpdateInfo(nil, vipOrder.Id, updateData, new(dcm.DcVipOrder))
+			if affect == 0 || err2 != nil {
+				logs.Error("支付宝支付更新失败：", vipOrder.Id, updateData, err2)
+			}
+			payBusiness := business.NewPayBusiness()
+			doRes := payBusiness.DoPayDyCallback(vipOrder)
+			if !doRes {
+				logs.Error("会员数据更新失败：", vipOrder.Id)
+			}
 		}
 	}
 	_, _ = w.Write([]byte("success"))
