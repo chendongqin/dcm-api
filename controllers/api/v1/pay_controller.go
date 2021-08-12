@@ -304,6 +304,7 @@ func (receiver *PayController) OrderDetail() {
 		status = 2
 	}
 	orderDetail := repost.VipOrderDetail{
+		OrderId:      orderId,
 		TradeNo:      vipOrder.TradeNo,
 		OrderType:    vipOrder.OrderType,
 		PayType:      vipOrder.PayType,
@@ -363,6 +364,7 @@ func (receiver *PayController) OrderList() {
 			status = 2
 		}
 		list = append(list, repost.VipOrderDetail{
+			OrderId:      v.Id,
 			TradeNo:      v.TradeNo,
 			OrderType:    v.OrderType,
 			PayType:      v.PayType,

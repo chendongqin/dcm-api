@@ -8,6 +8,7 @@ type SearchData struct {
 }
 
 type VipOrderDetail struct {
+	OrderId      int    `json:"order_id"`
 	TradeNo      string `json:"trade_no"`
 	OrderType    int    `json:"order_type"`
 	PayType      string `json:"pay_type"`
