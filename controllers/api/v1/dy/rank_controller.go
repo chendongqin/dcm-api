@@ -184,7 +184,7 @@ func (receiver *RankController) DyLiveShareWeekRank() {
 			Gmv:        gmv,
 			Sales:      sales,
 			TotalUser:  totalUser,
-			RoomId:     len(v.Rooms),
+			RoomNum:    len(v.Rooms),
 		})
 	}
 	receiver.SuccReturn(map[string]interface{}{

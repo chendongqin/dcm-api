@@ -35,7 +35,7 @@ type DyLiveShareWeekData struct {
 	Gmv        float64 `json:"gmv"`
 	Sales      int64   `json:"sales"`
 	TotalUser  int64   `json:"total_user"`
-	RoomId     int     `json:"room_id"`
+	RoomNum    int     `json:"room_num"`
 }
 
 type DyLiveShareRoom struct {
