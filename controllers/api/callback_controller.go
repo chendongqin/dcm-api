@@ -63,7 +63,7 @@ func (receiver *CallbackController) AlipayNotify() {
 	logStr := "====AliPayNotify====" + string(receiver.Ctx.Input.RequestBody)
 	logs.Info(logStr)
 
-	publicKey := global.Cfg.String("ali_pay_public_key")
+	publicKey := global.Cfg.String("ali_pay_csr_app_public_key")
 
 	notifyReq, _ := alipay.ParseNotifyResult(receiver.Ctx.Request)
 	checkSign, _ := alipay.VerifySign(publicKey, notifyReq)
