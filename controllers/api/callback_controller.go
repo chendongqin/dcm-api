@@ -62,6 +62,7 @@ func (receiver *CallbackController) WechatNotify() {
 func (receiver *CallbackController) AlipayNotify() {
 	logStr := "====AliPayNotify====" + string(receiver.Ctx.Input.RequestBody)
 	logs.Info(logStr)
+	logs.Info(receiver.Ctx.Request.Body)
 
 	publicKey := global.Cfg.String("ali_pay_csr_app_public_key")
 
