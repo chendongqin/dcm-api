@@ -18,6 +18,7 @@ type PayController struct {
 	controllers.ApiBaseController
 }
 
+//创建抖音订单
 func (receiver *PayController) CreateDyOrder() {
 	if !business.UserActionLock("vip_order", 2) {
 		receiver.FailReturn(global.NewError(4211))
@@ -283,4 +284,103 @@ func (receiver *PayController) AliPay() {
 		"pay_param": payParam,
 	})
 	return
+}
+
+//订单详情
+func (receiver *PayController) OrderDetail() {
+	orderId := utils.ToInt(receiver.Ctx.Input.Param(":order_id"))
+	if orderId == 0 {
+		receiver.FailReturn(global.NewError(4000))
+		return
+	}
+	vipOrder := dcm.DcVipOrder{}
+	exist, _ := dcm.Get(orderId, &vipOrder)
+	if !exist || vipOrder.UserId != receiver.UserId {
+		receiver.FailReturn(global.NewError(4000))
+		return
+	}
+	status := vipOrder.Status
+	if vipOrder.PayStatus == 0 && vipOrder.ExpirationTime.Before(time.Now()) {
+		status = 2
+	}
+	orderDetail := repost.VipOrderDetail{
+		TradeNo:      vipOrder.TradeNo,
+		OrderType:    vipOrder.OrderType,
+		PayType:      vipOrder.PayType,
+		Level:        vipOrder.Level,
+		BuyDays:      vipOrder.BuyDays,
+		Title:        vipOrder.Title,
+		Amount:       vipOrder.Amount,
+		TicketAmount: vipOrder.TicketAmount,
+		Status:       status,
+		PayStatus:    vipOrder.PayStatus,
+		CreateTime:   vipOrder.CreateTime.Format("2006-01-02 15:04:05"),
+		PayTime:      vipOrder.PayTime.Format("2006-01-02 15:04:05"),
+		InvoiceId:    vipOrder.InvoiceId,
+	}
+	receiver.SuccReturn(map[string]interface{}{
+		"detail": orderDetail,
+	})
+}
+
+//订单删除
+func (receiver *PayController) OrderDel() {
+	orderId := utils.ToInt(receiver.Ctx.Input.Param(":order_id"))
+	if orderId == 0 {
+		receiver.FailReturn(global.NewError(4000))
+		return
+	}
+	vipOrder := dcm.DcVipOrder{}
+	exist, _ := dcm.Get(orderId, &vipOrder)
+	if !exist || vipOrder.UserId != receiver.UserId {
+		receiver.FailReturn(global.NewError(4000))
+		return
+	}
+	affect, err := dcm.UpdateInfo(nil, orderId, map[string]interface{}{"status": -1}, new(dcm.DcVipOrder))
+	if affect == 0 || err != nil {
+		receiver.FailReturn(global.NewError(500))
+		return
+	}
+	receiver.SuccReturn(nil)
+}
+
+//订单列表
+func (receiver *PayController) OrderList() {
+	platform := receiver.Ctx.Input.Param(":platform")
+	page := receiver.GetPage("page")
+	pageSize := receiver.GetPageSize("page_size", 10, 30)
+	vipOrderList := make([]dcm.DcVipOrder, 0)
+	start := (page - 1) * pageSize
+	total, _ := dcm.GetSlaveDbSession().
+		Where("user_id=? AND platform=? AND status > 0", receiver.UserId, platform).
+		Limit(pageSize, start).
+		Desc("create_time").
+		FindAndCount(&vipOrderList)
+	list := make([]repost.VipOrderDetail, 0)
+	for _, v := range vipOrderList {
+		status := v.Status
+		if v.PayStatus == 0 && v.ExpirationTime.Before(time.Now()) {
+			status = 2
+		}
+		list = append(list, repost.VipOrderDetail{
+			TradeNo:      v.TradeNo,
+			OrderType:    v.OrderType,
+			PayType:      v.PayType,
+			Level:        v.Level,
+			BuyDays:      v.BuyDays,
+			Title:        v.Title,
+			Amount:       v.Amount,
+			TicketAmount: v.TicketAmount,
+			Status:       status,
+			PayStatus:    v.PayStatus,
+			CreateTime:   v.CreateTime.Format("2006-01-02 15:04:05"),
+			PayTime:      v.PayTime.Format("2006-01-02 15:04:05"),
+			InvoiceId:    v.InvoiceId,
+		})
+	}
+
+	receiver.SuccReturn(map[string]interface{}{
+		"list":  list,
+		"total": total,
+	})
 }

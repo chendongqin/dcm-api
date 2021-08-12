@@ -3,6 +3,7 @@ package controllers
 import (
 	"dongchamao/business"
 	"dongchamao/global"
+	"dongchamao/global/utils"
 	"dongchamao/models/dcm"
 	"dongchamao/services/payer"
 	"github.com/astaxie/beego/logs"
@@ -28,7 +29,25 @@ func (receiver *CallbackController) WechatNotify() {
 		exist, _ := dcm.GetBy("trade_no", payNotifyContent.OutTradeNo, &vipOrder)
 		if exist {
 			if vipOrder.PayStatus == 1 {
-				logs.Error("微信支付回调：", receiver.Ctx.Request.Header, receiver.Ctx.Request.Body)
+				logs.Error("微信支付回调重复")
+				receiver.Data["json"] = map[string]interface{}{
+					"code":    "SUCCESS",
+					"message": "成功",
+				}
+				receiver.ServeJSON()
+				return
+			}
+			if !global.IsDev() {
+				amount := float64(payNotifyContent.Amount.Total) / float64(100)
+				if utils.ToFloat64(vipOrder.Amount) != amount {
+					logs.Error("支付金额与订单金额不匹配")
+					receiver.Data["json"] = map[string]interface{}{
+						"code":    "SUCCESS",
+						"message": "成功",
+					}
+					receiver.ServeJSON()
+					return
+				}
 			}
 			payTime, _ := time.Parse("2006-01-02T15:04:05+08:00", payNotifyContent.SuccessTime)
 			updateData := map[string]interface{}{
@@ -80,7 +99,16 @@ func (receiver *CallbackController) AlipayNotify() {
 		exist, _ := dcm.GetBy("trade_no", notifyReq.OutTradeNo, &vipOrder)
 		if exist {
 			if vipOrder.PayStatus == 1 {
-				logs.Error("微信支付回调：", receiver.Ctx.Request.Header, receiver.Ctx.Request.Body)
+				logs.Error("微信支付回调重复")
+				_, _ = w.Write([]byte("success"))
+				return
+			}
+			if !global.IsDev() {
+				if vipOrder.Amount != notifyReq.BuyerPayAmount {
+					logs.Error("支付金额与订单金额不匹配")
+					_, _ = w.Write([]byte("success"))
+					return
+				}
 			}
 			payTime := notifyReq.NotifyTime
 			updateData := map[string]interface{}{
@@ -102,4 +130,5 @@ func (receiver *CallbackController) AlipayNotify() {
 		}
 	}
 	_, _ = w.Write([]byte("success"))
+	return
 }
