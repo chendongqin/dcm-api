@@ -67,13 +67,13 @@ func Builder() (*core.Client, error) {
 	return client, nil
 }
 
-func AppPay(amount int64, tradeNo, description string, expire time.Duration) (*string, error) {
+func AppPay(amount int64, tradeNo, description, notifyUrl string, expire time.Duration) (*string, error) {
 	client, err := Builder()
 	svc := app.AppApiService{Client: client}
 	ctx := context.Background()
 	appID := global.Cfg.String("wechat_pay_app_appId")
 	mchId := global.Cfg.String("wechat_pay_mchid")
-	notifyUrl := global.Cfg.String("wechat_pay_notify_url")
+	notifyUrl = global.Cfg.String("pay_notify_url") + notifyUrl
 	resp, result, err := svc.Prepay(ctx,
 		app.PrepayRequest{
 			Appid:         core.String(appID),
@@ -98,13 +98,13 @@ func AppPay(amount int64, tradeNo, description string, expire time.Duration) (*s
 	return resp.PrepayId, nil
 }
 
-func NativePay(amount int64, tradeNo, description string, expire time.Duration) (*string, error) {
+func NativePay(amount int64, tradeNo, description, notifyUrl string, expire time.Duration) (*string, error) {
 	client, err := Builder()
 	svc := native.NativeApiService{Client: client}
 	ctx := context.Background()
 	appID := global.Cfg.String("wechat_pay_appId")
 	mchId := global.Cfg.String("wechat_pay_mchid")
-	notifyUrl := global.Cfg.String("wechat_pay_notify_url")
+	notifyUrl = global.Cfg.String("pay_notify_url") + notifyUrl
 	resp, result, err := svc.Prepay(ctx,
 		native.PrepayRequest{
 			Appid:         core.String(appID),
@@ -135,7 +135,7 @@ func H5Pay(amount int64, tradeNo, description string, expire time.Duration) (*st
 	ctx := context.Background()
 	appID := global.Cfg.String("wechat_pay_appId")
 	mchId := global.Cfg.String("wechat_pay_mchid")
-	notifyUrl := global.Cfg.String("wechat_pay_notify_url")
+	notifyUrl := global.Cfg.String("pay_notify_url") + "/v1/pay/notify/wechat"
 	resp, result, err := svc.Prepay(ctx,
 		h5.PrepayRequest{
 			Appid:       core.String(appID),

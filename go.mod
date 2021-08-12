@@ -20,6 +20,7 @@ require (
 	github.com/go-xorm/xorm v0.7.9
 	github.com/gogo/protobuf v1.3.1
 	github.com/gomodule/redigo v2.0.0+incompatible
+	github.com/iGoogle-ink/gopay v1.5.7
 	github.com/json-iterator/go v1.1.11
 	github.com/mailru/easyjson v0.7.7 // indirect
 	github.com/olivere/elastic v6.2.35+incompatible
@@ -29,7 +30,7 @@ require (
 	github.com/stretchr/testify v1.7.0
 	github.com/urfave/cli v1.22.5
 	github.com/vmihailenco/msgpack/v4 v4.3.12
-	github.com/wechatpay-apiv3/wechatpay-go v0.2.5 // indirect
+	github.com/wechatpay-apiv3/wechatpay-go v0.2.5
 	gopkg.in/mgo.v2 v2.0.0-20190816093944-a6b53ec6cb22
 	xorm.io/core v0.7.3
 )

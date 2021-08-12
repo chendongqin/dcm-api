@@ -27,10 +27,12 @@ var LoginWitheUri = []string{
 	"/v1/sms/verify",
 	"/v1/author/cate",
 	"/v1/pay/notify/wechat",
+	"/v1/pay/notify/alipay",
 }
 
 var SignWitheUri = []string{
 	"/v1/pay/notify/wechat",
+	"/v1/pay/notify/alipay",
 }
 
 //登陆白名单校验

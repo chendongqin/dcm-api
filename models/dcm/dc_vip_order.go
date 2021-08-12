@@ -9,6 +9,7 @@ type DcVipOrder struct {
 	UserId         int       `xorm:"not null comment('用户id') INT(11)"`
 	Username       string    `xorm:"not null default '' comment('用户手机号') CHAR(11)"`
 	TradeNo        string    `xorm:"not null comment('交易订单号') CHAR(25)"`
+	Channel        int       `xorm:"not null default 0 comment('1web,2app,第一次支付请求，当微信支付时，不可跨平台支付') TINYINT(1)"`
 	InterTradeNo   string    `xorm:"not null default '' comment('第三方饭回交易订单号') VARCHAR(100)"`
 	OrderType      int       `xorm:"not null comment('订单类型1购买会员2会员续费3协同账号购买4协同账号续费5团队续费6赠送') TINYINT(1)"`
 	PayType        string    `xorm:"not null default '' comment('支付方式') VARCHAR(10)"`

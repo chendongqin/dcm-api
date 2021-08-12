@@ -162,9 +162,11 @@ func (receiver *RankController) DyLiveShareWeekRank() {
 	for _, v := range data.Data {
 		var gmv float64 = 0
 		var sales int64 = 0
+		var totalUser int64 = 0
 		for _, r := range v.Rooms {
 			gmv += r.PredictGmv
 			sales += r.PredictSales
+			totalUser += r.TotalUser
 		}
 		uniqueId := v.UniqueId
 		if uniqueId == "" || uniqueId == "0" {
@@ -181,6 +183,7 @@ func (receiver *RankController) DyLiveShareWeekRank() {
 			UniqueId:   uniqueId,
 			Gmv:        gmv,
 			Sales:      sales,
+			TotalUser:  totalUser,
 		})
 	}
 	receiver.SuccReturn(map[string]interface{}{

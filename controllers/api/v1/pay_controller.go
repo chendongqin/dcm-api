@@ -10,6 +10,7 @@ import (
 	"dongchamao/services/payer"
 	"fmt"
 	jsoniter "github.com/json-iterator/go"
+	"net/url"
 	"time"
 )
 
@@ -24,6 +25,7 @@ func (receiver *PayController) CreateDyOrder() {
 	}
 	InputData := receiver.InputFormat()
 	orderType := InputData.GetInt("order_type", 0)
+	referrer := InputData.GetString("referrer", "")
 	groupPeople := InputData.GetInt("group_people", 0)
 	buyDays := InputData.GetInt("days", 0)
 	if !utils.InArrayInt(buyDays, []int{30, 180, 365}) {
@@ -82,7 +84,7 @@ func (receiver *PayController) CreateDyOrder() {
 		surplusValue = payBusiness.CountDySurplusValue(int(surplusDay))
 	}
 	dyVipValue := business.DyVipPayMoney
-	title := fmt.Sprintf("旗舰版%d天", buyDays)
+	title := fmt.Sprintf("专业版%d天", buyDays)
 	var amount float64 = 0
 	orderInfo := repost.VipOrderInfo{
 		SurplusValue: surplusValue,
@@ -136,6 +138,7 @@ func (receiver *PayController) CreateDyOrder() {
 		Level:          business.UserLevelJewel,
 		BuyDays:        orderInfo.BuyDays,
 		GoodsInfo:      string(orderInfoJson),
+		Referrer:       referrer,
 		ExpirationTime: time.Now().Add(1800 * time.Second),
 		CreateTime:     time.Now(),
 		UpdateTime:     time.Now(),
@@ -169,6 +172,12 @@ func (receiver *PayController) WechatPay() {
 		receiver.FailReturn(global.NewError(4000))
 		return
 	}
+	if vipOrder.PayType == "wechat" {
+		if (channel == "native" && vipOrder.Channel == 2) || (channel == "app" && vipOrder.Channel == 1) {
+			receiver.FailReturn(global.NewMsgError("订单不可支付，请刷新重试～"))
+			return
+		}
+	}
 	if vipOrder.PayStatus == 1 {
 		receiver.FailReturn(global.NewMsgError("请勿重复付款～"))
 		return
@@ -184,17 +193,18 @@ func (receiver *PayController) WechatPay() {
 	}
 	exp := vipOrder.ExpirationTime.Unix() - time.Now().Unix()
 	if channel == "native" {
-		codeUrl, err := payer.NativePay(amountInt, vipOrder.TradeNo, vipOrder.Title, time.Duration(exp))
+		codeUrl, err := payer.NativePay(amountInt, vipOrder.TradeNo, vipOrder.Title, "/v1/pay/notify/wechat", time.Duration(exp))
 		if err != nil {
 			receiver.FailReturn(global.NewError(5000))
 			return
 		}
+		_, _ = dcm.UpdateInfo(nil, orderId, map[string]interface{}{"pay_type": "wechat", "channel": 1}, new(dcm.DcVipOrder))
 		receiver.SuccReturn(map[string]interface{}{
 			"code_url": codeUrl,
 		})
 		return
 	}
-	prepayId, err := payer.AppPay(amountInt, vipOrder.TradeNo, vipOrder.Title, time.Duration(exp))
+	prepayId, err := payer.AppPay(amountInt, vipOrder.TradeNo, vipOrder.Title, "/v1/pay/notify/wechat", time.Duration(exp))
 	if err != nil {
 		receiver.FailReturn(global.NewError(5000))
 		return
@@ -206,6 +216,7 @@ func (receiver *PayController) WechatPay() {
 	mchId := global.Cfg.String("wechat_pay_mchid")
 	signStr := fmt.Sprintf("%s%d%s%s", appId, timestamp, nonceStr, prepayIdString)
 	sign, _ := payer.Sha256WithRsa(signStr)
+	_, _ = dcm.UpdateInfo(nil, orderId, map[string]interface{}{"pay_type": "wechat", "channel": 2}, new(dcm.DcVipOrder))
 	receiver.SuccReturn(map[string]interface{}{
 		"appid":      appId,
 		"partnerid ": mchId,
@@ -214,6 +225,62 @@ func (receiver *PayController) WechatPay() {
 		"noncestr":   nonceStr,
 		"timestamp":  timestamp,
 		"sign":       sign,
+	})
+	return
+}
+
+func (receiver *PayController) AliPay() {
+	channel := receiver.Ctx.Input.Param(":channel")
+	orderId := utils.ToInt(receiver.Ctx.Input.Param(":order_id"))
+	if orderId == 0 {
+		receiver.FailReturn(global.NewError(4000))
+		return
+	}
+	returnUrl := receiver.GetString("return_url", "")
+	returnUrl, _ = url.QueryUnescape(returnUrl)
+	if !utils.InArrayString(channel, []string{"app", "page"}) {
+		receiver.FailReturn(global.NewError(4000))
+		return
+	}
+	vipOrder := dcm.DcVipOrder{}
+	exist, _ := dcm.Get(orderId, &vipOrder)
+	if !exist || vipOrder.UserId != receiver.UserId {
+		receiver.FailReturn(global.NewError(4000))
+		return
+	}
+	if vipOrder.PayStatus == 1 {
+		receiver.FailReturn(global.NewMsgError("请勿重复付款～"))
+		return
+	}
+	if vipOrder.ExpirationTime.Before(time.Now()) {
+		receiver.FailReturn(global.NewMsgError("订单已失效～"))
+		return
+	}
+	amount := utils.ToFloat64(vipOrder.Amount)
+	if global.IsDev() {
+		amount = 0.01
+	}
+	timeOutExp := "30m"
+	if channel == "page" {
+		payUrl, err := payer.AliTradePagePay(amount, vipOrder.TradeNo, vipOrder.Title, "/v1/pay/notify/alipay", returnUrl, timeOutExp)
+		if err != nil {
+			receiver.FailReturn(global.NewError(5000))
+			return
+		}
+		_, _ = dcm.UpdateInfo(nil, orderId, map[string]interface{}{"pay_type": "alipay", "channel": 1}, new(dcm.DcVipOrder))
+		receiver.SuccReturn(map[string]interface{}{
+			"pay_url": payUrl,
+		})
+		return
+	}
+	payParam, err := payer.AliTradeAppPay(amount, vipOrder.TradeNo, vipOrder.Title, "/v1/pay/notify/alipay", returnUrl, timeOutExp)
+	if err != nil {
+		receiver.FailReturn(global.NewError(5000))
+		return
+	}
+	_, _ = dcm.UpdateInfo(nil, orderId, map[string]interface{}{"pay_type": "alipay", "channel": 2}, new(dcm.DcVipOrder))
+	receiver.SuccReturn(map[string]interface{}{
+		"pay_param": payParam,
 	})
 	return
 }
