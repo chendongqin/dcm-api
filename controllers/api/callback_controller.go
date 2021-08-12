@@ -15,6 +15,7 @@ type CallbackController struct {
 	ApiBaseController
 }
 
+//微信支付抖音账号回调
 func (receiver *CallbackController) WechatNotify() {
 	payNotifyContent := &payer.PayNotifyContent{}
 	_, payNotifyContent, err := payer.Notify(receiver.Ctx.Request)
@@ -57,6 +58,7 @@ func (receiver *CallbackController) WechatNotify() {
 
 }
 
+//支付宝抖音账号回调
 func (receiver *CallbackController) AlipayNotify() {
 	logStr := "====AliPayNotify====" + string(receiver.Ctx.Input.RequestBody)
 	logs.Info(logStr)
