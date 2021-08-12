@@ -82,13 +82,13 @@ func (receiver *CallbackController) AlipayNotify() {
 			if vipOrder.PayStatus == 1 {
 				logs.Error("微信支付回调：", receiver.Ctx.Request.Header, receiver.Ctx.Request.Body)
 			}
-			payTime, _ := time.ParseInLocation("2006-01-02+15:04:05", notifyReq.NotifyTime, time.Local)
+			payTime := notifyReq.NotifyTime
 			updateData := map[string]interface{}{
 				"pay_status":     1,
 				"status":         1,
 				"pay_type":       "alipay",
 				"inter_trade_no": notifyReq.TradeNo,
-				"pay_time":       payTime.Format("2006-01-02 15:04:05"),
+				"pay_time":       payTime,
 			}
 			affect, err2 := dcm.UpdateInfo(nil, vipOrder.Id, updateData, new(dcm.DcVipOrder))
 			if affect == 0 || err2 != nil {
