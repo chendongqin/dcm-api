@@ -244,12 +244,12 @@ func (this *ApiBaseController) CheckSign() {
 
 //校验token
 func (this *ApiBaseController) CheckToken() {
-	authBusiness := business.NewAccountAuthBusiness()
-	if authBusiness.AuthLoginWhiteUri(this.TrueUri) {
-		return
-	}
 	err := this.InitUserToken()
 	if err != nil {
+		authBusiness := business.NewAccountAuthBusiness()
+		if authBusiness.AuthLoginWhiteUri(this.TrueUri) {
+			return
+		}
 		this.FailReturn(err)
 		return
 	}
