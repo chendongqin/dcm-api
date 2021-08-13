@@ -86,7 +86,7 @@ func (receiver *AuthorController) BaseSearch() {
 		if category != "" || secondCategory != "" || sellTags != "" || province != "" || city != "" || fanProvince != "" || fanCity != "" || sortStr != "" || orderBy != "" ||
 			minFollower > 0 || maxFollower > 0 || minWatch > 0 || maxWatch > 0 || minDigg > 0 || maxDigg > 0 || minGmv > 0 || maxGmv > 0 ||
 			gender > 0 || minAge > 0 || maxAge > 0 || minFanAge > 0 || maxFanAge > 0 || verification > 0 || level > 0 || fanGender > 0 ||
-			superSeller == 1 || isDelivery == 1 || isBrand == 1 || page != 1 {
+			superSeller == 1 || isDelivery > 0 || isBrand == 1 || page != 1 {
 			receiver.FailReturn(global.NewError(4004))
 			return
 		}

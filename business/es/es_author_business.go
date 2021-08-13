@@ -23,7 +23,7 @@ func (receiver *EsAuthorBusiness) BaseSearch(
 	sortStr, orderBy string) (list []es.DyAuthor, total int, comErr global.CommonError) {
 	list = []es.DyAuthor{}
 	if sortStr == "" {
-		sortStr = "follower_count"
+		sortStr = "follower_incre_count"
 	}
 	if orderBy == "" {
 		orderBy = "desc"
@@ -77,6 +77,8 @@ func (receiver *EsAuthorBusiness) BaseSearch(
 	}
 	if isDelivery == 1 {
 		esQuery.SetTerm("is_delivery", 1)
+	} else if isDelivery == 2 {
+		esQuery.SetTerm("is_delivery", 0)
 	}
 	if isBrand == 1 {
 		esQuery.SetTerm("brand", 1)
