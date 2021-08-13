@@ -9,6 +9,7 @@ func init() {
 	//抖音达人
 	ns := beego.NewNamespace("/v1/dy",
 		beego.NSNamespace("/author",
+			beego.NSRouter("/search", &v1dy.AuthorController{}, "get:BaseSearch"),
 			beego.NSRouter("/cate", &v1dy.AuthorController{}, "get:AuthorCate"),
 			beego.NSRouter("/live/tags", &v1dy.AuthorController{}, "get:GetCacheAuthorLiveTags"),
 			beego.NSRouter("/info/:author_id", &v1dy.AuthorController{}, "get:AuthorBaseData"),

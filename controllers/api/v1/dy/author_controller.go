@@ -5,9 +5,12 @@ import (
 	"dongchamao/business/es"
 	controllers "dongchamao/controllers/api"
 	"dongchamao/global"
+	"dongchamao/global/utils"
 	"dongchamao/hbase"
 	"dongchamao/models/entity"
 	dy2 "dongchamao/models/repost/dy"
+	"dongchamao/services/dyimg"
+	"math"
 	"time"
 )
 
@@ -24,11 +27,117 @@ func (receiver *AuthorController) AuthorCate() {
 	return
 }
 
+//达人带货行业
 func (receiver *AuthorController) GetCacheAuthorLiveTags() {
 	authorBusiness := business.NewAuthorBusiness()
 	cateList := authorBusiness.GetCacheAuthorLiveTags(true)
 	receiver.SuccReturn(map[string]interface{}{
 		"list": cateList,
+	})
+	return
+}
+
+//达人库
+func (receiver *AuthorController) BaseSearch() {
+	hasAuth := false
+	hasLogin := false
+	if receiver.DyLevel == 3 {
+		hasAuth = true
+	}
+	if receiver.UserId > 0 {
+		hasLogin = true
+	}
+	keyword := receiver.GetString("keyword", "")
+	category := receiver.GetString("category", "")
+	secondCategory := receiver.GetString("second_category", "")
+	sellTags := receiver.GetString("sell_tags", "")
+	province := receiver.GetString("province", "")
+	city := receiver.GetString("city", "")
+	fanProvince := receiver.GetString("fan_province", "")
+	fanCity := receiver.GetString("fan_city", "")
+	sortStr := receiver.GetString("sort", "")
+	orderBy := receiver.GetString("order_by", "")
+	minFollower, _ := receiver.GetInt64("min_follower", 0)
+	maxFollower, _ := receiver.GetInt64("max_follower", 0)
+	minWatch, _ := receiver.GetInt64("min_watch", 0)
+	maxWatch, _ := receiver.GetInt64("max_watch", 0)
+	minDigg, _ := receiver.GetInt64("min_digg", 0)
+	maxDigg, _ := receiver.GetInt64("max_digg", 0)
+	minGmv, _ := receiver.GetInt64("min_gmv", 0)
+	maxGmv, _ := receiver.GetInt64("max_gmv", 0)
+	minAge, _ := receiver.GetInt("min_age", 0)
+	maxAge, _ := receiver.GetInt("max_age", 0)
+	minFanAge, _ := receiver.GetInt("min_fan_age", 0)
+	maxFanAge, _ := receiver.GetInt("max_fan_age", 0)
+	gender, _ := receiver.GetInt("gender", 0)
+	fanGender, _ := receiver.GetInt("fan_gender", 0)
+	verification, _ := receiver.GetInt("verification", 0)
+	level, _ := receiver.GetInt("level", 0)
+	isBrand, _ := receiver.GetInt("is_brand", 0)
+	isDelivery, _ := receiver.GetInt("is_delivery", 0)
+	superSeller, _ := receiver.GetInt("super_seller", 0)
+	page := receiver.GetPage("page")
+	pageSize := receiver.GetPageSize("page_size", 50, 50)
+	if !hasLogin && keyword != "" {
+		receiver.FailReturn(global.NewError(4001))
+		return
+	}
+	if !hasAuth {
+		if category != "" || secondCategory != "" || sellTags != "" || province != "" || city != "" || fanProvince != "" || fanCity != "" || sortStr != "" || orderBy != "" ||
+			minFollower > 0 || maxFollower > 0 || minWatch > 0 || maxWatch > 0 || minDigg > 0 || maxDigg > 0 || minGmv > 0 || maxGmv > 0 ||
+			gender > 0 || minAge > 0 || maxAge > 0 || minFanAge > 0 || maxFanAge > 0 || verification > 0 || level > 0 || fanGender > 0 ||
+			superSeller == 1 || isDelivery == 1 || isBrand == 1 || page != 1 {
+			receiver.FailReturn(global.NewError(4004))
+			return
+		}
+		if pageSize > 10 {
+			pageSize = 10
+		}
+	}
+	formNum := (page - 1) * pageSize
+	if formNum > business.DyJewelBaseShowNum {
+		receiver.FailReturn(global.NewError(4004))
+		return
+	}
+	authorId := ""
+	if utils.CheckType(keyword, "url") {
+		url := business.ParseDyShortUrl(keyword)
+		authorId = utils.ParseDyAuthorUrl(url)
+		keyword = ""
+	} else {
+		keyword = utils.MatchDouyinNewText(keyword)
+	}
+	EsAuthorBusiness := es.NewEsAuthorBusiness()
+	list, total, comErr := EsAuthorBusiness.BaseSearch(authorId, keyword, category, secondCategory, sellTags, province, city, fanProvince, fanCity,
+		minFollower, maxFollower, minWatch, maxWatch, minDigg, maxDigg, minGmv, maxGmv,
+		gender, minAge, maxAge, minFanAge, maxFanAge, verification, level, isDelivery, isBrand, superSeller, fanGender, page, pageSize,
+		sortStr, orderBy)
+	if comErr != nil {
+		receiver.FailReturn(comErr)
+		return
+	}
+	for k, v := range list {
+		list[k].Avatar = dyimg.Fix(v.Avatar)
+		if v.UniqueId == "" || v.UniqueId == "0" {
+			list[k].UniqueId = v.ShortId
+		}
+	}
+	totalPage := math.Ceil(float64(total) / float64(pageSize))
+	maxPage := math.Ceil(float64(business.DyJewelBaseShowNum) / float64(pageSize))
+	if totalPage > maxPage {
+		totalPage = maxPage
+	}
+	maxTotal := business.DyJewelBaseShowNum
+	if maxTotal > total {
+		maxTotal = total
+	}
+	receiver.SuccReturn(map[string]interface{}{
+		"list":       list,
+		"total":      total,
+		"total_page": totalPage,
+		"max_num":    maxTotal,
+		"has_auth":   hasAuth,
+		"has_login":  hasLogin,
 	})
 	return
 }

@@ -6,4 +6,5 @@ const (
 	DyAuthorProductAnalysisTable = "dy_author_product_analysis_%s"
 	DyLiveInfoBaseTable          = "dy_live_info_base_%s"
 	DyProductAuthorAnalysisTable = "dy_product_author_analysis_%s"
+	DyAuthorTable                = "dy_author_base"
 )

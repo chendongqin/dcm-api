@@ -77,14 +77,12 @@ func (receiver *LiveController) SearchRoom() {
 			receiver.FailReturn(global.NewError(4004))
 			return
 		}
-		if hasLogin {
-			pageSize = 20
-		} else {
+		if pageSize > 10 {
 			pageSize = 10
 		}
 	}
 	formNum := (page - 1) * pageSize
-	if formNum > business.JewelLiveListShowNum {
+	if formNum > business.DyJewelBaseShowNum {
 		receiver.FailReturn(global.NewError(4004))
 		return
 	}
@@ -95,15 +93,19 @@ func (receiver *LiveController) SearchRoom() {
 		return
 	}
 	totalPage := math.Ceil(float64(total) / float64(pageSize))
-	maxPage := math.Ceil(float64(business.JewelLiveListShowNum) / float64(pageSize))
+	maxPage := math.Ceil(float64(business.DyJewelBaseShowNum) / float64(pageSize))
 	if totalPage > maxPage {
 		totalPage = maxPage
+	}
+	maxTotal := business.DyJewelBaseShowNum
+	if maxTotal > total {
+		maxTotal = total
 	}
 	receiver.SuccReturn(map[string]interface{}{
 		"list":       list,
 		"total":      total,
 		"total_page": totalPage,
-		"max_num":    business.JewelLiveListShowNum,
+		"max_num":    maxTotal,
 		"has_auth":   hasAuth,
 		"has_login":  hasLogin,
 	})

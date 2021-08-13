@@ -3,10 +3,14 @@ package business
 import (
 	"dongchamao/global"
 	"dongchamao/global/cache"
+	"dongchamao/global/utils"
 	"dongchamao/hbase"
 	"dongchamao/models/dcm"
 	"dongchamao/models/repost/dy"
+	"dongchamao/services"
 	jsoniter "github.com/json-iterator/go"
+	"net/http"
+	"regexp"
 	"strings"
 	"time"
 )
@@ -20,7 +24,7 @@ const (
 )
 
 const (
-	JewelLiveListShowNum = 500
+	DyJewelBaseShowNum = 500
 )
 
 type AuthorCate struct {
@@ -186,4 +190,35 @@ func UserActionLock(active string, lockTime time.Duration) bool {
 	}
 	_ = global.Cache.Set(memberKey, "1", lockTime)
 	return true
+}
+
+//短url还原解析
+func ParseDyShortUrl(url string) string {
+	filterUrl := utils.ParseDyVideoShare(url)
+	if filterUrl != "" && filterUrl != url {
+		url = filterUrl
+	}
+	url = strings.TrimSpace(url)
+	//判断是否短网址,之后加入缓存
+	pattern := `^(http|https):\/\/v\.douyin\.com\/.*?`
+	reg := regexp.MustCompile(pattern)
+	returl := ""
+	if reg.MatchString(url) == true {
+		redisService := services.NewRedisService()
+		returl = redisService.Hget("douyin:shorturl:hashmap", url)
+		if returl == "" {
+			client := &http.Client{}
+			request, _ := http.NewRequest("GET", url, nil)
+			response, err := client.Do(request)
+			if err != nil {
+				return ""
+			}
+			defer response.Body.Close()
+			returl = response.Request.URL.String()
+			redisService.Hset("douyin:shorturl:hashmap", url, returl)
+		}
+		return returl
+	} else {
+		return url
+	}
 }
