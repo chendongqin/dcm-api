@@ -310,7 +310,7 @@ func (receiver *UserBusiness) GetCacheUserLevel(userId, levelType int, enableCac
 		}
 	}
 	vipBusiness := NewVipBusiness()
-	level := vipBusiness.GetVipLevel(userId, levelType)
-	_ = global.Cache.Set(memberKey, utils.ToString(level), 1800)
-	return level
+	vipLevel := vipBusiness.GetVipLevel(userId, levelType)
+	_ = global.Cache.Set(memberKey, utils.ToString(vipLevel.Level), 1800)
+	return vipLevel.Level
 }

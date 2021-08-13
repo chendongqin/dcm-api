@@ -2,6 +2,7 @@ package business
 
 import (
 	"dongchamao/models/dcm"
+	"dongchamao/models/repost/dy"
 	"time"
 )
 
@@ -47,34 +48,37 @@ func (receiver *VipBusiness) GetUserLevel(level int) string {
 }
 
 //获取用户vip等级
-func (receiver *VipBusiness) GetVipLevels(userId int) map[int]int {
+func (receiver *VipBusiness) GetVipLevels(userId int) []dy.AccountVipLevel {
 	vipLists := make([]dcm.DcUserVip, 0)
-	err := dcm.GetSlaveDbSession().Where("user_id=? ", userId).Find(&vipLists)
-	vipMap := map[int]int{}
+	err := dcm.GetSlaveDbSession().Where("user_id=?", userId).Find(&vipLists)
+	vipList := make([]dy.AccountVipLevel, 0)
 	if err == nil {
 		for _, v := range vipLists {
 			var level = 0
-			if v.Expiration.Unix() > time.Now().Unix() {
+			if v.Expiration.After(time.Now()) {
 				level = v.Level
-			} else if v.OrderValidDay > 0 {
-				levelTmp, res := receiver.UpdateValidDayOne(userId, v.Platform)
-				if res {
-					level = levelTmp
-				}
 			}
-			vipMap[v.Platform] = level
+			isSub := 0
+			if v.ParentId > 0 && level > 0 {
+				isSub = 1
+			}
+			vipList = append(vipList, dy.AccountVipLevel{
+				PlatForm:          v.Platform,
+				Level:             level,
+				SubNum:            v.SubNum,
+				IsSub:             isSub,
+				ExpirationTime:    v.Expiration,
+				SubExpirationTime: v.SubExpiration,
+			})
 		}
 	}
-	return vipMap
+	return vipList
 }
 
-func (receiver *VipBusiness) GetVipLevel(userId, appId int) int {
+func (receiver *VipBusiness) GetVipLevel(userId, appId int) dy.AccountVipLevel {
 	vip := &dcm.DcUserVip{}
 	var level = 0
-	exist, err := dcm.GetSlaveDbSession().Where("user_id=? AND platform=?", userId, appId).Get(vip)
-	if err != nil {
-		return 0
-	}
+	exist, _ := dcm.GetSlaveDbSession().Where("user_id=? AND platform=?", userId, appId).Get(vip)
 	if !exist {
 		vip.UserId = userId
 		vip.Platform = appId
@@ -85,13 +89,20 @@ func (receiver *VipBusiness) GetVipLevel(userId, appId int) int {
 	}
 	if vip.Expiration.Unix() > time.Now().Unix() {
 		level = vip.Level
-	} else if vip.OrderValidDay > 0 {
-		levelTmp, res := receiver.UpdateValidDayOne(userId, vip.Platform)
-		if res {
-			level = levelTmp
-		}
 	}
-	return level
+	isSub := 0
+	if vip.ParentId > 0 && level > 0 {
+		isSub = 1
+	}
+	info := dy.AccountVipLevel{
+		PlatForm:          vip.Platform,
+		Level:             level,
+		SubNum:            vip.SubNum,
+		IsSub:             isSub,
+		ExpirationTime:    vip.Expiration,
+		SubExpirationTime: vip.SubExpiration,
+	}
+	return info
 }
 
 //更新会员等级

@@ -174,27 +174,45 @@ func (receiver *AccountController) ResetPwd() {
 
 func (receiver *AccountController) Info() {
 	username := receiver.UserInfo.Username
+	isWechat := 0
+	if receiver.UserInfo.Unionid != "" {
+
+	}
 	account := dy.RepostAccountData{
 		UserId:      receiver.UserInfo.Id,
 		Username:    username[:3] + "****" + username[7:],
 		Nickname:    receiver.UserInfo.Nickname,
 		Avatar:      receiver.UserInfo.Avatar,
 		PasswordSet: receiver.UserInfo.SetPassword,
+		Wechat:      isWechat,
 	}
 	vipBusiness := business.NewVipBusiness()
-	vipLevelsMap := vipBusiness.GetVipLevels(receiver.UserInfo.Id)
-	for k, v := range vipLevelsMap {
-		if k == business.VipPlatformDouYin {
-			account.DyLevel.Level = v
-		} else if k == business.VipPlatformXiaoHongShu {
-			account.XhsLevel.Level = v
-		} else if k == business.VipPlatformTaoBao {
-			account.TbLevel.Level = v
+	vipLevels := vipBusiness.GetVipLevels(receiver.UserInfo.Id)
+	for _, v := range vipLevels {
+		expiration := "-"
+		subExpiration := "-"
+		if v.ExpirationTime.After(time.Now()) {
+			expiration = v.ExpirationTime.Format("2006-01-02 15:04:05")
+		}
+		if v.SubExpirationTime.After(time.Now()) {
+			subExpiration = v.SubExpirationTime.Format("2006-01-02 15:04:05")
+		}
+		vipLevel := dy.RepostAccountVipLevel{
+			Level:             v.Level,
+			LevelName:         vipBusiness.GetUserLevel(v.Level),
+			ExpirationTime:    expiration,
+			SubNum:            v.SubNum,
+			IsSub:             v.IsSub,
+			SubExpirationTime: subExpiration,
+		}
+		if v.PlatForm == business.VipPlatformDouYin {
+			account.DyLevel = vipLevel
+		} else if v.PlatForm == business.VipPlatformXiaoHongShu {
+			account.XhsLevel = vipLevel
+		} else if v.PlatForm == business.VipPlatformTaoBao {
+			account.TbLevel = vipLevel
 		}
 	}
-	account.DyLevel.LevelName = vipBusiness.GetUserLevel(account.DyLevel.Level)
-	account.XhsLevel.LevelName = vipBusiness.GetUserLevel(account.XhsLevel.Level)
-	account.TbLevel.LevelName = vipBusiness.GetUserLevel(account.TbLevel.Level)
 	receiver.SuccReturn(map[string]interface{}{
 		"info": account,
 	})
