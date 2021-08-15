@@ -1,6 +1,7 @@
 package dingding
 
 import (
+	"dongchamao/global/logger"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -78,7 +79,7 @@ func (this *dingDing) SendMarkDown(title, content string) error {
 	if jsonData, err := json.Marshal(tpl); err == nil {
 		fmt.Println(string(jsonData))
 		ret, err := CurlData(this.tokenUrl, "POST", string(jsonData), "application/json")
-		if err != nil {
+		if logger.CheckError(err) != nil {
 			return err
 		}
 		return this._retHandle(ret)
@@ -110,7 +111,7 @@ func CurlData(url string, method string, postData string, contentType string) (s
 	}
 	defer resp.Body.Close()
 	body, err := ioutil.ReadAll(resp.Body)
-	if err != nil {
+	if logger.CheckError(err) != nil {
 		return "", err
 	}
 	return string(body), nil

@@ -1,6 +1,7 @@
 package business
 
 import (
+	"dongchamao/global/logger"
 	"dongchamao/models/dcm"
 	"dongchamao/models/repost/dy"
 	"time"
@@ -121,7 +122,7 @@ func (receiver *VipBusiness) UpdateValidDayOne(userId, platformId int) (int, boo
 		"expiration":      vipModel.Expiration.AddDate(0, 0, vipModel.OrderValidDay).Format("2006-01-02 15:04:05"),
 	}
 	affect, err := dbSession.Table(new(dcm.DcUserVip)).Where(whereStr, vipModel.Id, time.Now().Format("2006-01-02 15:04:05")).Update(updateData)
-	if affect == 0 || err != nil {
+	if affect == 0 || logger.CheckError(err) != nil {
 		return 0, false
 	}
 	return vipModel.OrderLevel, true

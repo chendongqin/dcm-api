@@ -130,7 +130,7 @@ func (receiver *LiveController) LiveInfoData() {
 	authorInfo, _ := authorBusiness.HbaseGetAuthor(liveInfo.User.ID)
 	liveUser := dy2.DyLiveUserSimple{
 		Avatar:          liveInfo.User.Avatar,
-		FollowerCount:   authorInfo.FollowerCount,
+		FollowerCount:   authorInfo.Data.FollowerCount,
 		ID:              liveInfo.User.ID,
 		Nickname:        liveInfo.User.Nickname,
 		WithCommerce:    liveInfo.User.WithCommerce,

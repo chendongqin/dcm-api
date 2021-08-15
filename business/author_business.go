@@ -121,16 +121,16 @@ func (a *AuthorBusiness) HbaseGetFansRangDate(authorId, startDate, endDate strin
 }
 
 //达人数据
-func (a *AuthorBusiness) HbaseGetAuthor(authorId string) (data entity.DyAuthorData, comErr global.CommonError) {
+func (a *AuthorBusiness) HbaseGetAuthor(authorId string) (data entity.DyAuthor, comErr global.CommonError) {
 	data, comErr = hbase.GetAuthor(authorId)
 	if comErr != nil {
 		return
 	}
-	data.Age = GetAge(data.Birthday)
-	data.Avatar = dyimg.Fix(data.Avatar)
-	data.ShareUrl = ShareUrlPrefix + data.ID
-	if data.UniqueID == "" {
-		data.UniqueID = data.ShortID
+	data.Data.Age = GetAge(data.Data.Birthday)
+	data.Data.Avatar = dyimg.Fix(data.Data.Avatar)
+	data.Data.ShareUrl = ShareUrlPrefix + data.Data.ID
+	if data.Data.UniqueID == "" {
+		data.Data.UniqueID = data.Data.ShortID
 	}
 	return
 }
@@ -231,7 +231,7 @@ func (a *AuthorBusiness) HbaseGetAuthorBasicRangeDate(authorId string, startTime
 }
 
 //达人（带货）口碑
-func (a *AuthorBusiness) HbaseGetAuthorReputation(authorId string) (data *entity.DyReputation, comErr global.CommonError) {
+func (a *AuthorBusiness) HbaseGetAuthorReputation(authorId string) (data entity.DyReputation, comErr global.CommonError) {
 	data, comErr = hbase.GetAuthorReputation(authorId)
 	if len(data.ScoreList) == 0 {
 		data.ScoreList = make([]entity.DyReputationMonthScoreList, 0)

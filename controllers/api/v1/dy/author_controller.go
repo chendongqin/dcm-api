@@ -163,7 +163,7 @@ func (receiver *AuthorController) AuthorBaseData() {
 	fansClub, _ := hbase.GetAuthorFansClub(authorId)
 	basic, _ := hbase.GetAuthorBasic(authorId, "")
 	returnMap := map[string]interface{}{
-		"author_base": authorBase,
+		"author_base": authorBase.Data,
 		"reputation": dy2.RepostSimpleReputation{
 			Score:         reputation.Score,
 			Level:         reputation.Level,
@@ -176,6 +176,111 @@ func (receiver *AuthorController) AuthorBaseData() {
 		"basic":     basic,
 	}
 	receiver.SuccReturn(returnMap)
+	return
+}
+
+func (receiver *AuthorController) AuthorViewData() {
+	authorId := receiver.Ctx.Input.Param(":author_id")
+	if authorId == "" {
+		receiver.FailReturn(global.NewError(4000))
+		return
+	}
+	authorBusiness := business.NewAuthorBusiness()
+	authorBase, comErr := authorBusiness.HbaseGetAuthor(authorId)
+	if comErr != nil {
+		receiver.FailReturn(comErr)
+		return
+	}
+	todayString := time.Now().Format("20060102")
+	monthString := time.Now().Format("200601")
+	todayTime, _ := time.ParseInLocation("20060102", todayString, time.Local)
+	monthTime, _ := time.ParseInLocation("20060102", monthString+"01", time.Local)
+	lastMonthDay := todayTime.AddDate(0, 0, -29)
+	nowWeek := int(time.Now().Weekday())
+	if nowWeek == 0 {
+		nowWeek = 7
+	}
+	lastWeekDay := todayTime.AddDate(0, 0, -(nowWeek - 1))
+	var monthRoom int64 = 0
+	var weekRoom int64 = 0
+	var room30Count int64 = 0
+	for _, v := range authorBase.RoomList {
+		if v.CreateTime >= monthTime.Unix() {
+			monthRoom++
+		}
+		if v.CreateTime >= lastWeekDay.Unix() {
+			weekRoom++
+		}
+		if v.CreateTime >= lastMonthDay.Unix() {
+			room30Count++
+		}
+	}
+	data := dy2.DyAuthorBaseCount{
+		LiveCount: dy2.DyAuthorBaseLiveCount{
+			RoomCount:      authorBase.RoomCount,
+			Room30Count:    room30Count,
+			Predict30Sales: math.Floor(authorBase.Predict30Sales),
+			Predict30Gmv:   utils.FriendlyFloat64(authorBase.Predict30Gmv),
+			AgeDuration:    authorBase.AgeLiveDuration,
+			WeekRoomCount:  weekRoom,
+			MonthRoomCount: monthRoom,
+		},
+		VideoCount: dy2.DyAuthorBaseVideoCount{
+			VideoCount:       authorBase.AwemeCount,
+			AvgDigg:          authorBase.DiggCount,
+			DiggFollowerRate: authorBase.DiggFollowerRate,
+			Predict30Sales:   math.Floor(authorBase.Predict30Sales),
+			Predict30Gmv:     utils.FriendlyFloat64(authorBase.Predict30Gmv),
+			AgeDuration:      authorBase.Duration / 1000,
+		},
+		ProductCount: dy2.DyAuthorBaseProductCount{
+			ProductNum:            0,
+			Sales30Top3:           []string{},
+			ProductNum30Top3:      []string{},
+			Sales30Top3Chart:      []dy2.NameValueInt64Chart{},
+			ProductNum30Top3Chart: []dy2.NameValueChart{},
+			Predict30Sales:        0,
+			Predict30Gmv:          0,
+			Sales30Chart:          []dy2.DyAuthorBaseProductPriceChart{},
+		},
+	}
+	firstLiveTimestamp := authorBase.FirstLiveTime
+	firstVideoTimestamp := authorBase.FirstAwemeTime
+	if firstLiveTimestamp > 0 {
+		firstLiveTime := time.Unix(firstLiveTimestamp, 0)
+		tmpWeek := int(firstLiveTime.Weekday())
+		if tmpWeek == 0 {
+			tmpWeek = 7
+		}
+		days := todayTime.AddDate(0, 0, 7-nowWeek).Day() - firstLiveTime.AddDate(0, 0, -(tmpWeek-1)).Day()
+		days += 1
+		weekNum := utils.ToInt64(days / 7)
+		if weekNum > 0 {
+			data.LiveCount.AvgWeekRoomCount = authorBase.RoomCount / weekNum
+		}
+		month := time.Now().Month() - firstLiveTime.Month()
+		if month > 0 {
+			data.LiveCount.AvgMonthRoomCount = authorBase.RoomCount / utils.ToInt64(month)
+		}
+	}
+	if firstVideoTimestamp > 0 {
+		firstVideoTime := time.Unix(firstVideoTimestamp, 0)
+		tmpWeek := int(firstVideoTime.Weekday())
+		if tmpWeek == 0 {
+			tmpWeek = 7
+		}
+		days := todayTime.AddDate(0, 0, 7-nowWeek).Day() - firstVideoTime.AddDate(0, 0, -(tmpWeek-1)).Day()
+		days += 1
+		weekNum := utils.ToInt64(days / 7)
+		if weekNum > 0 {
+			data.VideoCount.WeekVideoCount = authorBase.AwemeCount / weekNum
+		}
+		month := time.Now().Month() - firstVideoTime.Month()
+		if month > 0 {
+			data.VideoCount.MonthVideoCount = authorBase.AwemeCount / utils.ToInt64(month)
+		}
+	}
+	receiver.SuccReturn(data)
 	return
 }
 

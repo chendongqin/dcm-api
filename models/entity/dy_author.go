@@ -1,17 +1,72 @@
 package entity
 
 var DyAuthorMap = HbaseEntity{
-	"id":         {String, "author_id"},
-	"collection": {Int, "collection"},
-	"crawl_time": {Long, "crawl_time"},
-	"data":       {Json, "data"},
+	"id":                       {String, "author_id"},
+	"collection":               {Int, "collection"},
+	"crawl_time":               {Long, "crawl_time"},
+	"data":                     {Json, "data"},
+	"tags":                     {String, "tags"},
+	"tags_level_two":           {String, "tags_level_two"},
+	"other_aweme_list":         {AJson, "aweme_list"},
+	"other_room_list":          {AJson, "room_list"},
+	"other_room_count":         {Long, "room_count"},
+	"other_live_duration":      {String, "live_duration"},
+	"other_avg_live_duration":  {Long, "avg_live_duration"},
+	"other_med_watch_cnt":      {Long, "med_watch_cnt"},
+	"other_interaction_rate":   {Double, "interaction_rate"},
+	"other_predict_30_gmv":     {Double, "predict_30_gmv"},
+	"other_real_30_gmv":        {Double, "real_30_gmv"},
+	"other_predict_30_salas":   {Double, "predict_30_salas"},
+	"other_real_30_salas":      {Double, "real_30_salas"},
+	"other_aweme_count":        {Long, "aweme_count"},
+	"other_digg_count":         {Long, "digg_count"},
+	"other_digg_follower_rate": {Double, "digg_follower_rate"},
+	"other_duration":           {Long, "duration"},
+	"other_med_digg":           {Long, "med_digg"},
+	"other_first_live_time":    {Long, "first_live_time"},
+	"other_first_aweme_time":   {Long, "first_aweme_time"},
 }
 
 type DyAuthor struct {
-	AuthorID   string       `json:"author_id"`
-	Collection int          `json:"collection"`
-	CrawlTime  int64        `json:"crawl_time"`
-	Data       DyAuthorData `json:"data"`
+	AuthorID         string          `json:"author_id"`
+	Collection       int             `json:"collection"`
+	CrawlTime        int64           `json:"crawl_time"`
+	Data             DyAuthorData    `json:"data"`
+	Tags             string          `json:"tags"`
+	TagsLevelTwo     string          `json:"tags_level_two"`
+	AwemeList        []DyAuthorAweme `json:"aweme_list"`
+	RoomList         []DyAuthorRoom  `json:"room_list"`
+	RoomCount        int64           `json:"room_count"`
+	LiveDuration     string          `json:"live_duration"`
+	AgeLiveDuration  int64           `json:"avg_live_duration"`
+	MedWatchCnt      int64           `json:"med_watch_cnt"`
+	InteractionRate  float64         `json:"interaction_rate"`
+	Predict30Gmv     float64         `json:"predict_30_gmv"`
+	Real30Gmv        float64         `json:"real_30_gmv"`
+	Predict30Sales   float64         `json:"predict_30_sales"`
+	Real30Sales      float64         `json:"real_30_sales"`
+	AwemeCount       int64           `json:"aweme_count"`
+	DiggCount        int64           `json:"digg_count"`
+	DiggFollowerRate float64         `json:"digg_follower_rate"`
+	Duration         int64           `json:"duration"`
+	MedDigg          int64           `json:"med_digg"`
+	FirstLiveTime    int64           `json:"first_live_time"`
+	FirstAwemeTime   int64           `json:"first_aweme_time"`
+}
+
+type DyAuthorRoom struct {
+	RoomId     string `json:"room_id"`
+	CreateTime int64  `json:"create_time"`
+	FinishTime int64  `json:"finish_time"`
+}
+
+type DyAuthorAweme struct {
+	AwemeId          string  `json:"aweme_id"`
+	CreateTime       int64   `json:"create_time"`
+	DiggCount        int64   `json:"digg_count"`
+	DiggFollowerRate float64 `json:"digg_follower_rate"`
+	Duration         int64   `json:"duration"`
+	FollowerCount    int64   `json:"follower_count"`
 }
 
 type DyAuthorData struct {

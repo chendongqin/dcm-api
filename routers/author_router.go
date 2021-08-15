@@ -13,6 +13,7 @@ func init() {
 			beego.NSRouter("/cate", &v1dy.AuthorController{}, "get:AuthorCate"),
 			beego.NSRouter("/live/tags", &v1dy.AuthorController{}, "get:GetCacheAuthorLiveTags"),
 			beego.NSRouter("/info/:author_id", &v1dy.AuthorController{}, "get:AuthorBaseData"),
+			beego.NSRouter("/view/:author_id", &v1dy.AuthorController{}, "get:AuthorViewData"),
 			beego.NSRouter("/reputation/:author_id", &v1dy.AuthorController{}, "get:Reputation"),
 			beego.NSRouter("/awemes/:author_id/:start/:end", &v1dy.AuthorController{}, "get:AuthorAwemesByDay"),
 			beego.NSRouter("/basic/chart/:author_id/:start/:end", &v1dy.AuthorController{}, "get:AuthorBasicChart"),

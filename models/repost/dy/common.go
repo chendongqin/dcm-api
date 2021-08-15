@@ -26,6 +26,16 @@ type NameValueChart struct {
 	Value int    `json:"value"`
 }
 
+type NameValueInt64Chart struct {
+	Name  string `json:"name"`
+	Value int64  `json:"value"`
+}
+
+type NameValueFloat64Chart struct {
+	Name  string  `json:"name"`
+	Value float64 `json:"value"`
+}
+
 type DyCate struct {
 	Name    string   `json:"name"`
 	Num     int      `json:"num"`

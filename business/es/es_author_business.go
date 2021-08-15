@@ -69,8 +69,10 @@ func (receiver *EsAuthorBusiness) BaseSearch(
 	if sellTags != "" {
 		esQuery.SetTerm("rank_sell_tags.keyword", sellTags)
 	}
-	if gender != 0 {
-		esQuery.SetTerm("gender", gender)
+	if gender == 1 {
+		esQuery.SetTerm("gender", 0)
+	} else if gender == 2 {
+		esQuery.SetTerm("gender", 1)
 	}
 	if level != 0 {
 		esQuery.SetTerm("level", level)

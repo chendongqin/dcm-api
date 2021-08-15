@@ -4,6 +4,7 @@ import (
 	"dongchamao/controllers/api"
 	"dongchamao/global"
 	"dongchamao/global/cache"
+	"dongchamao/global/logger"
 	"dongchamao/global/utils"
 	"dongchamao/models/dcm"
 	"dongchamao/services/ali_sms"
@@ -48,12 +49,12 @@ func (receiver *CommonController) Sms() {
 	cacheKey := cache.GetCacheKey(cache.SmsCodeVerify, grantType, mobile)
 	code := utils.GetRandomInt(6)
 	err := global.Cache.Set(cacheKey, code, 300)
-	if err != nil {
+	if logger.CheckError(err) != nil {
 		receiver.FailReturn(global.NewError(5000))
 		return
 	}
 	res, smsErr := aliSms.SmsCode(mobile, code)
-	if !res || smsErr != nil {
+	if !res || logger.CheckError(smsErr) != nil {
 		receiver.FailReturn(global.NewError(6000))
 		return
 	}

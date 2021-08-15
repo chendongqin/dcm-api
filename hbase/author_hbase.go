@@ -12,7 +12,7 @@ import (
 )
 
 //达人数据
-func GetAuthor(authorId string) (data entity.DyAuthorData, comErr global.CommonError) {
+func GetAuthor(authorId string) (data entity.DyAuthor, comErr global.CommonError) {
 	query := hbasehelper.NewQuery()
 	result, err := query.SetTable(hbaseService.HbaseDyAuthor).GetByRowKey([]byte(authorId))
 	if err != nil {
@@ -24,12 +24,16 @@ func GetAuthor(authorId string) (data entity.DyAuthorData, comErr global.CommonE
 		return
 	}
 	authorMap := hbaseService.HbaseFormat(result, entity.DyAuthorMap)
-	author := &entity.DyAuthor{}
-	utils.MapToStruct(authorMap, author)
-	data = author.Data
-	data.CrawlTime = author.CrawlTime
-	if data.RoomID == "0" {
-		data.RoomID = ""
+	utils.MapToStruct(authorMap, &data)
+	data.AuthorID = data.Data.ID
+	if data.Data.RoomID == "0" {
+		data.Data.RoomID = ""
+	}
+	if data.Tags == "0" {
+		data.Tags = ""
+	}
+	if data.TagsLevelTwo == "0" {
+		data.TagsLevelTwo = ""
 	}
 	return
 }
@@ -150,7 +154,7 @@ func GetAuthorFansClub(authorId string) (data entity.DyLiveFansClub, comErr glob
 }
 
 //达人（带货）口碑
-func GetAuthorReputation(authorId string) (data *entity.DyReputation, comErr global.CommonError) {
+func GetAuthorReputation(authorId string) (data entity.DyReputation, comErr global.CommonError) {
 	query := hbasehelper.NewQuery()
 	result, err := query.SetTable(hbaseService.HbaseDyReputation).GetByRowKey([]byte(authorId))
 	if err != nil {

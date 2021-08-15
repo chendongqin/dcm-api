@@ -402,7 +402,7 @@ func (receiver *ProductController) ProductLiveRoomList() {
 				if p, ok := pmtMapTmp[productId]; ok {
 					roomProductPmtMap[roomId] = p
 				}
-				authorMapTmp[authorId] = authorData
+				authorMapTmp[authorId] = authorData.Data
 				curCh <- roomProductCurMap
 				pmtCh <- roomProductPmtMap
 				authorChan <- authorMapTmp
@@ -505,8 +505,8 @@ func (receiver *ProductController) ProductLiveAuthorAnalysis() {
 	}
 	for k, v := range list {
 		authorInfo, _ := hbase.GetAuthor(v.AuthorId)
-		list[k].Avatar = dyimg.Fix(authorInfo.Avatar)
-		list[k].NickName = authorInfo.Nickname
+		list[k].Avatar = dyimg.Fix(authorInfo.Data.Avatar)
+		list[k].NickName = authorInfo.Data.Nickname
 		list[k].RoomNum = len(v.RelatedRooms)
 		for k1, l := range v.RelatedRooms {
 			list[k].RelatedRooms[k1].Cover = dyimg.Fix(l.Cover)
