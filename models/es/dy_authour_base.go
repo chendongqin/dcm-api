@@ -15,7 +15,7 @@ type DyAuthor struct {
 	CreateTime         string  `json:"create_time"`
 	RowTime            string  `json:"row_time"`
 	RankSellTags       string  `json:"rank_sell_tags"`
-	Exist              int     `json:"exist"`
+	Exist              bool    `json:"exist"`
 	Nickname           string  `json:"nickname"`
 	Tags               string  `json:"tags"`
 	TagsLevelTwo       string  `json:"tags_level_two"`
