@@ -161,6 +161,7 @@ func (receiver *EsAuthorBusiness) BaseSearch(
 		SetMultiQuery().
 		Query()
 	utils.MapToStruct(results, &list)
+	total = esMultiQuery.Count
 	return
 }
 
