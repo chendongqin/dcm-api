@@ -10,6 +10,7 @@ import (
 	"dongchamao/models/entity"
 	dy2 "dongchamao/models/repost/dy"
 	"dongchamao/services/dyimg"
+	"math"
 	"sort"
 	"time"
 )
@@ -22,6 +23,97 @@ func (receiver *ProductController) GetCacheProductCate() {
 	productBusiness := business.NewProductBusiness()
 	cateList := productBusiness.GetCacheProductCate(true)
 	receiver.SuccReturn(cateList)
+	return
+}
+
+func (receiver *ProductController) Search() {
+	hasAuth := false
+	hasLogin := false
+	if receiver.DyLevel == 3 {
+		hasAuth = true
+	}
+	if receiver.UserId > 0 {
+		hasLogin = true
+	}
+	keyword := receiver.GetString("keyword", "")
+	category := receiver.GetString("category", "")
+	secondCategory := receiver.GetString("second_category", "")
+	thirdCategory := receiver.GetString("third_category", "")
+	platform := receiver.GetString("platform", "")
+	sortStr := receiver.GetString("sort", "")
+	orderBy := receiver.GetString("order_by", "")
+	minCommissionRate, _ := receiver.GetFloat("min_commission_rate", 0)
+	minPrice, _ := receiver.GetFloat("min_price", 0)
+	maxPrice, _ := receiver.GetFloat("max_price", 0)
+	commerceType, _ := receiver.GetInt("commerce_type", 0)
+	isCoupon, _ := receiver.GetInt("is_coupon", 0)
+	isStar, _ := receiver.GetInt("is_star", 0)
+	notStar, _ := receiver.GetInt("not_star", 0)
+	page := receiver.GetPage("page")
+	pageSize := receiver.GetPageSize("page_size", 10, 50)
+	if !hasAuth {
+		if category != "" || secondCategory != "" || thirdCategory != "" || platform != "" || minCommissionRate > 0 || minPrice > 0 || maxPrice > 0 || commerceType > 0 ||
+			isCoupon > 0 || isStar > 0 || notStar > 0 || page != 1 {
+			receiver.FailReturn(global.NewError(4004))
+			return
+		}
+		if pageSize > 10 {
+			pageSize = 10
+		}
+	}
+	formNum := (page - 1) * pageSize
+	if formNum > business.DyJewelBaseShowNum {
+		receiver.FailReturn(global.NewError(4004))
+		return
+	}
+	productId := ""
+	productBusiness := business.NewProductBusiness()
+	if keyword != "" {
+		itemId := productBusiness.UrlExplain(keyword)
+		if itemId != "" {
+			if itemId != "" {
+				productId = itemId
+				keyword = ""
+			}
+		} else {
+			tbShortUrl := utils.ParseTaobaoShare(keyword)
+			if tbShortUrl != "" {
+				url := productBusiness.ExplainTaobaoShortUrl(tbShortUrl)
+				id := productBusiness.UrlExplain(url)
+				if id != "" {
+					productId = id
+					keyword = ""
+				} else {
+					page = 0
+					pageSize = 0
+				}
+			}
+		}
+	}
+	esProductBusiness := es.NewEsProductBusiness()
+	list, total, comErr := esProductBusiness.BaseSearch(productId, keyword, category, secondCategory, thirdCategory, platform,
+		minCommissionRate, minPrice, maxPrice, commerceType, isCoupon, isStar, notStar, page, pageSize, sortStr, orderBy)
+	if comErr != nil {
+		receiver.FailReturn(comErr)
+		return
+	}
+	totalPage := math.Ceil(float64(total) / float64(pageSize))
+	maxPage := math.Ceil(float64(business.DyJewelBaseShowNum) / float64(pageSize))
+	if totalPage > maxPage {
+		totalPage = maxPage
+	}
+	maxTotal := business.DyJewelBaseShowNum
+	if maxTotal > total {
+		maxTotal = total
+	}
+	receiver.SuccReturn(map[string]interface{}{
+		"list":       list,
+		"total":      total,
+		"total_page": totalPage,
+		"max_num":    maxTotal,
+		"has_auth":   hasAuth,
+		"has_login":  hasLogin,
+	})
 	return
 }
 

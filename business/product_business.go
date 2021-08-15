@@ -9,8 +9,13 @@ import (
 	"dongchamao/models/dcm"
 	"dongchamao/models/entity"
 	"dongchamao/models/repost/dy"
+	"dongchamao/services"
 	"fmt"
 	jsoniter "github.com/json-iterator/go"
+	"io/ioutil"
+	"net/http"
+	"net/url"
+	"regexp"
 	"strings"
 	"time"
 )
@@ -23,10 +28,11 @@ func NewProductBusiness() *ProductBusiness {
 }
 
 func (receiver *ProductBusiness) GetCacheProductCate(enableCache bool) []dy.DyCate {
-	memberKey := cache.GetCacheKey(cache.ConfigKeyCache, "product_cate")
+	cacheKey := cache.GetCacheKey(cache.LongTimeConfigKeyCache)
+	redisService := services.NewRedisService()
 	pCate := make([]dy.DyCate, 0)
 	if enableCache == true {
-		jsonStr := global.Cache.Get(memberKey)
+		jsonStr := redisService.Hget(cacheKey, "product_cate")
 		if jsonStr != "" {
 			jsonData := utils.DeserializeData(jsonStr)
 			_ = jsoniter.Unmarshal([]byte(jsonData), &pCate)
@@ -79,7 +85,7 @@ func (receiver *ProductBusiness) GetCacheProductCate(enableCache bool) []dy.DyCa
 	}
 	if len(pCate) > 0 {
 		jsonData := utils.SerializeData(pCate)
-		_ = global.Cache.Set(memberKey, jsonData, 86400)
+		_ = redisService.Hset(cacheKey, "product_cate", jsonData)
 	}
 	return pCate
 }
@@ -236,4 +242,80 @@ func (receiver *ProductBusiness) ProductAuthorAnalysisCount(productId, keyword s
 		_ = global.Cache.Set(cKey, countJson, 300)
 	}
 	return
+}
+
+func (receiver *ProductBusiness) UrlExplain(anyStr string) (id string) {
+	urlInfo, err := url.Parse(anyStr)
+	if err != nil {
+		return
+	}
+	switch urlInfo.Host {
+	case "v.douyin.com":
+		retURL := NewDouyinBusiness().ParseDyShortUrl(anyStr)
+		return receiver.UrlExplain(retURL)
+	case "u.jd.com": //京东短链匹配
+		jdUrl := utils.ReversedJDShortUrl(anyStr)
+		return receiver.UrlExplain(jdUrl)
+	case "m.tb.cn":
+		revertURL := utils.GetLocation(anyStr)
+		if revertURL != "" && !strings.Contains(anyStr, "m.tb.cn") {
+			return receiver.UrlExplain(revertURL)
+		}
+		return ""
+	case "m-goods.kaola.com", "item.jd.com", "item.m.jd.com", "m.suning.com", "a.m.tmall.com", "a.m.taobao.com":
+		pattern := `(\d+)\.[html|htm]`
+		re := regexp.MustCompile(pattern)
+		s := re.FindStringSubmatch(urlInfo.Path)
+		if len(s) > 1 {
+			id = strings.TrimLeft(s[1], "0") //苏宁的抹去前导0
+		} else {
+			id = strings.ReplaceAll(urlInfo.Path, "/", "")
+			id = strings.ReplaceAll(id, ".html", "")
+		}
+		break
+	case "":
+		//尝试淘口令接口
+		id, _ = NewTaoBaoBusiness().TpwdConvert(anyStr)
+	default:
+		params, err := url.ParseQuery(urlInfo.RawQuery)
+		if err != nil {
+			return
+		}
+		idParam := params["id"]
+		if len(idParam) > 0 {
+			id = idParam[0]
+		}
+	}
+	return
+}
+
+func (receiver *ProductBusiness) ExplainTaobaoShortUrl(url string) string {
+	client := &http.Client{}
+	request, _ := http.NewRequest("GET", url, nil)
+	response, err := client.Do(request)
+	if err != nil {
+		return ""
+	}
+	defer response.Body.Close()
+	content, err := ioutil.ReadAll(response.Body)
+	if err != nil {
+		return ""
+	}
+	pattern := `(https://item.taobao.com/.*?)\'`
+	reg := regexp.MustCompile(pattern)
+	matches := reg.FindStringSubmatch(string(content))
+	if len(matches) > 1 {
+		return matches[1]
+	}
+	//https://a.m.taobao.com/
+	//http://a.m.tmall.com/
+	//var url = 'https://a.m.taobao.com/i628122154669.htm?price=68&sourceType=item&sourceType=item&suid=74f0fa1e-b0b7-41b8-8326-25d157e6762b&shareUniqueId=4639705295&ut_sk=1.X4Js%2BFcRiVQDAKjZUjx8nWb6_21646297_1603682881302.Copy.1&un=6a7315ee868246b0ee428784da605ae9&share_crt_v=1&spm=a2159r.13376460.0.0&sp_tk=a0NKSGNSTE9IQXI=&cpp=1&shareurl=true&short_name=h.4159Akg&bxsign=scdV_3t5vYCjx090pisOzYWUTCTueGvuhqk8XdISQZ9jty0vONfkaESSKjThfVZqe6NauFgqcQnCQ7QT2yh0r0nD4cODKIS5p075kAwzVGmlbM';
+	pattern = `(http[s*]://a.m.[tmall|taobao]+.com/.*?)\'`
+	reg = regexp.MustCompile(pattern)
+	matches = reg.FindStringSubmatch(string(content))
+	if len(matches) > 1 {
+		return matches[1]
+	}
+
+	return ""
 }

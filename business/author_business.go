@@ -9,6 +9,7 @@ import (
 	"dongchamao/models/dcm"
 	"dongchamao/models/entity"
 	"dongchamao/models/repost/dy"
+	"dongchamao/services"
 	"dongchamao/services/dyimg"
 	jsoniter "github.com/json-iterator/go"
 	"math"
@@ -28,10 +29,11 @@ func NewAuthorBusiness() *AuthorBusiness {
 }
 
 func (a *AuthorBusiness) GetCacheAuthorLiveTags(enableCache bool) []string {
-	memberKey := cache.GetCacheKey(cache.ConfigKeyCache, "author_live_tags")
+	cacheKey := cache.GetCacheKey(cache.LongTimeConfigKeyCache)
+	redisService := services.NewRedisService()
 	tags := make([]string, 0)
 	if enableCache == true {
-		jsonStr := global.Cache.Get(memberKey)
+		jsonStr := redisService.Hget(cacheKey, "author_live_tags")
 		if jsonStr != "" {
 			_ = jsoniter.Unmarshal([]byte(jsonStr), &tags)
 			return tags
@@ -44,7 +46,7 @@ func (a *AuthorBusiness) GetCacheAuthorLiveTags(enableCache bool) []string {
 	}
 	if len(tags) > 0 {
 		tagsByte, _ := jsoniter.Marshal(tags)
-		_ = global.Cache.Set(memberKey, string(tagsByte), 1800)
+		_ = redisService.Hset(cacheKey, "author_live_tags", string(tagsByte))
 	}
 	return tags
 }

@@ -23,6 +23,7 @@ require (
 	github.com/iGoogle-ink/gopay v1.5.7
 	github.com/json-iterator/go v1.1.11
 	github.com/mailru/easyjson v0.7.7 // indirect
+	github.com/nilorg/go-opentaobao v1.0.0
 	github.com/olivere/elastic v6.2.35+incompatible
 	github.com/pkg/errors v0.9.1
 	github.com/satori/go.uuid v1.2.0 // indirect

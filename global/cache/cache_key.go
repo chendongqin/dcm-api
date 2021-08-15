@@ -6,7 +6,8 @@ const (
 	//appid密钥
 	AppIdSecret KeyName = "dcm:appid:secret:%s"
 	//配置缓存
-	ConfigKeyCache KeyName = "dcm:config:cache:%s"
+	ConfigKeyCache         KeyName = "dcm:config:cache:%s"
+	LongTimeConfigKeyCache KeyName = "dcm:config:long:cache"
 	//用户相关
 	UserInfo         KeyName = "dcm:user:info:data:%d"
 	UserLevel        KeyName = "dcm:user:level:%d:%d"
