@@ -229,12 +229,13 @@ func IdEncrypt(id string) string {
 	if id == "" || id == "0" {
 		return ""
 	}
-	key := []byte("2NJwWMPLQ0aGjtxK")
-	idByte, _ := base64.StdEncoding.DecodeString(id)
+	key := []byte("dwVRjLVUN4RMGAKSEvuvPV696PKrEuRT")
+	idByte := []byte(id)
 	str, err := utils.AesEncrypt(idByte, key)
 	if err != nil {
 		return ""
 	}
+
 	return strings.Replace(base64.StdEncoding.EncodeToString(str), "/", "*", 1)
 }
 
@@ -243,19 +244,18 @@ func IdDecrypt(id string) string {
 	if id == "" {
 		return ""
 	}
-	if strings.Index(id, "==") < 0 {
+	if strings.Index(id, "=") < 0 {
 		return ""
 	}
-	key := []byte("2NJwWMPLQ0aGjtxK")
+	key := []byte("dwVRjLVUN4RMGAKSEvuvPV696PKrEuRT")
 	id = strings.Replace(id, "*", "/", 1)
-	idByte, err := base64.StdEncoding.DecodeString(id)
+	s, err := base64.StdEncoding.DecodeString(id)
 	if err != nil {
 		return ""
 	}
-	str, err := utils.AesDecrypt(idByte, key)
+	str, err := utils.AesDecrypt(s, key)
 	if err != nil {
 		return ""
 	}
-
-	return base64.StdEncoding.EncodeToString(str)
+	return string(str)
 }

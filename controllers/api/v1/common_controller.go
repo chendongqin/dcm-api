@@ -92,7 +92,7 @@ func (receiver *CommonController) CheckSmsCode() {
 func (receiver *CommonController) IdEncryptDecrypt() {
 	id := receiver.Ctx.Input.Param(":id")
 	id1 := ""
-	if strings.Index(id, "==") < 0 {
+	if strings.Index(id, "=") < 0 {
 		id1 = business.IdEncrypt(id)
 	}
 	id2 := business.IdDecrypt(id)
