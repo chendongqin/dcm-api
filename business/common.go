@@ -11,7 +11,6 @@ import (
 	"encoding/base64"
 	jsoniter "github.com/json-iterator/go"
 	"net/http"
-	"net/url"
 	"regexp"
 	"strings"
 	"time"
@@ -236,7 +235,7 @@ func IdEncrypt(id string) string {
 	if err != nil {
 		return ""
 	}
-	return url.QueryEscape(base64.StdEncoding.EncodeToString(str))
+	return strings.Replace(base64.StdEncoding.EncodeToString(str), "/", "*", 1)
 }
 
 //id解密
@@ -248,6 +247,7 @@ func IdDecrypt(id string) string {
 		return ""
 	}
 	key := []byte("2NJwWMPLQ0aGjtxK")
+	id = strings.Replace(id, "*", "/", 1)
 	idByte, err := base64.StdEncoding.DecodeString(id)
 	if err != nil {
 		return ""
@@ -256,6 +256,6 @@ func IdDecrypt(id string) string {
 	if err != nil {
 		return ""
 	}
-	s, _ := url.QueryUnescape(base64.StdEncoding.EncodeToString(str))
-	return s
+
+	return base64.StdEncoding.EncodeToString(str)
 }
