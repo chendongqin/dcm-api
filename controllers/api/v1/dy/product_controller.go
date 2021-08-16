@@ -646,7 +646,7 @@ func (receiver *ProductController) ProductAuthorLiveRooms() {
 	}
 	page := receiver.GetPage("page")
 	pageSize := receiver.GetPageSize("page_size", 5, 10)
-	sortStr := receiver.GetString("sort", "tart_ts")
+	sortStr := receiver.GetString("sort", "start_ts")
 	orderBy := receiver.GetString("order_by", "desc")
 	list, total := business.NewProductBusiness().ProductAuthorLiveRooms(productId, authorId, startTime, endTime, sortStr, orderBy, page, pageSize)
 	for k, v := range list {
