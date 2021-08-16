@@ -251,6 +251,14 @@ func (receiver *AccountController) DyUserSearchSave() {
 		receiver.FailReturn(global.NewMsgError("请输入筛选器昵称"))
 		return
 	}
+	total, _ := dcm.GetSlaveDbSession().
+		Table(new(dcm.DcUserSearch)).
+		Where("user_id =? AND search_type = ?", receiver.UserId, searchType).
+		Count()
+	if total >= 10 {
+		receiver.FailReturn(global.NewMsgError("最多保存10条常用筛选器"))
+		return
+	}
 	contentByte, _ := jsoniter.Marshal(searchData)
 	searchM := dcm.DcUserSearch{
 		UserId:     receiver.UserId,
@@ -290,7 +298,7 @@ func (receiver *AccountController) DyUserSearchList() {
 	dbSession := dcm.GetSlaveDbSession()
 	start := (page - 1) * pageSize
 	total, err := dbSession.
-		Where("search_type = ?", searchType).
+		Where("user_id =? AND search_type = ?", receiver.UserId, searchType).
 		Limit(pageSize, start).
 		FindAndCount(&list)
 	if err != nil {
