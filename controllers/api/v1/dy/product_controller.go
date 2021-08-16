@@ -342,7 +342,7 @@ func (receiver *ProductController) ProductBase() {
 	priceChart30 := make([]float64, 0)
 	cosPriceChart30 := make([]float64, 0)
 	today := utils.ToInt64(time.Now().Format("20060102"))
-	last30Day := utils.ToInt64(time.Now().AddDate(0, 0, -29).Format("20060102"))
+	last30Day := utils.ToInt64(time.Now().AddDate(0, 0, -28).Format("20060102"))
 	last15Day := utils.ToInt64(time.Now().AddDate(0, 0, -15).Format("20060102"))
 	last7Day := utils.ToInt64(time.Now().AddDate(0, 0, -7).Format("20060102"))
 	priceTrends := business.ProductPriceTrendsListOrderByTime(productInfo.PriceTrends)
@@ -583,7 +583,7 @@ func (receiver *ProductController) ProductLiveRoomList() {
 }
 
 func (receiver *ProductController) ProductLiveAuthorAnalysis() {
-	productId := receiver.GetString(":product_id")
+	productId := receiver.Ctx.Input.Param(":product_id")
 	startTime, endTime, comErr := receiver.GetRangeDate()
 	if comErr != nil {
 		receiver.FailReturn(comErr)
@@ -605,16 +605,9 @@ func (receiver *ProductController) ProductLiveAuthorAnalysis() {
 	for k, v := range list {
 		authorInfo, _ := hbase.GetAuthor(v.AuthorId)
 		list[k].Avatar = dyimg.Fix(authorInfo.Data.Avatar)
-		list[k].NickName = authorInfo.Data.Nickname
+		list[k].Nickname = authorInfo.Data.Nickname
 		list[k].RoomNum = len(v.RelatedRooms)
-		for k1, l := range v.RelatedRooms {
-			list[k].RelatedRooms[k1].Cover = dyimg.Fix(l.Cover)
-			if l.EndTs >= 0 {
-				list[k].RelatedRooms[k1].LiveSecond = l.EndTs - l.StartTs
-			} else {
-				list[k].RelatedRooms[k1].LiveSecond = time.Now().Unix() - l.StartTs
-			}
-		}
+		list[k].RelatedRooms = []entity.DyProductAuthorRelatedRoom{}
 	}
 	receiver.SuccReturn(map[string]interface{}{
 		"list":  list,
@@ -624,7 +617,7 @@ func (receiver *ProductController) ProductLiveAuthorAnalysis() {
 }
 
 func (receiver *ProductController) ProductLiveAuthorAnalysisCount() {
-	productId := receiver.GetString(":product_id")
+	productId := receiver.Ctx.Input.Param(":product_id")
 	startTime, endTime, comErr := receiver.GetRangeDate()
 	if comErr != nil {
 		receiver.FailReturn(comErr)
@@ -641,4 +634,26 @@ func (receiver *ProductController) ProductLiveAuthorAnalysisCount() {
 		"list": countList,
 	})
 	return
+}
+
+func (receiver *ProductController) ProductAuthorLiveRooms() {
+	productId := receiver.Ctx.Input.Param(":product_id")
+	authorId := receiver.Ctx.Input.Param(":author_id")
+	startTime, endTime, comErr := receiver.GetRangeDate()
+	if comErr != nil {
+		receiver.FailReturn(comErr)
+		return
+	}
+	page := receiver.GetPage("page")
+	pageSize := receiver.GetPageSize("page_size", 5, 10)
+	sortStr := receiver.GetString("sort", "tart_ts")
+	orderBy := receiver.GetString("order_by", "desc")
+	list, total := business.NewProductBusiness().ProductAuthorLiveRooms(productId, authorId, startTime, endTime, sortStr, orderBy, page, pageSize)
+	for k, v := range list {
+		list[k].Cover = dyimg.Fix(v.Cover)
+	}
+	receiver.SuccReturn(map[string]interface{}{
+		"list":  list,
+		"total": total,
+	})
 }

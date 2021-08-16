@@ -2,6 +2,7 @@ package es
 
 import (
 	"dongchamao/global"
+	"dongchamao/global/alias"
 	"dongchamao/global/utils"
 	"dongchamao/models/es"
 	"dongchamao/services/elasticsearch"
@@ -96,7 +97,7 @@ func (i *EsProductBusiness) BaseSearch(productId, keyword, category, secondCateg
 	return
 }
 
-func (i *EsProductBusiness) SearchRangeDateList(productId, keyword string, startTime, endTime time.Time, page, pageSize int) (list []es.DyProductAuthorAnalysis, total int, comErr global.CommonError) {
+func (i *EsProductBusiness) SearchRangeDateList(productId, authorId string, startTime, endTime time.Time, page, pageSize int) (list []es.DyProductAuthorAnalysis, total int, comErr global.CommonError) {
 	esTable := GetESTableByTime(es.DyProductAuthorAnalysisTable, startTime, endTime)
 	esQuery, esMultiQuery := elasticsearch.NewElasticQueryGroup()
 	esQuery.SetTerm("productId", productId)
@@ -104,8 +105,8 @@ func (i *EsProductBusiness) SearchRangeDateList(productId, keyword string, start
 		"gte": startTime.Format("20060102"),
 		"lte": endTime.Format("20060102"),
 	})
-	if keyword != "" {
-		esQuery.SetMultiMatch([]string{"nickname", "displayId", "shortId"}, keyword)
+	if authorId != "" {
+		esQuery.SetTerm("authorId", authorId)
 	}
 	results := esMultiQuery.
 		SetTable(esTable).
@@ -123,13 +124,30 @@ func (i *EsProductBusiness) SearchRangeDateList(productId, keyword string, start
 func (i *EsProductBusiness) SearchRangeDateRowKey(productId, keyword string, startTime, endTime time.Time) (startRow es.DyProductAuthorAnalysis, stopRow es.DyProductAuthorAnalysis, total int, comErr global.CommonError) {
 	esTable := GetESTableByTime(es.DyProductAuthorAnalysisTable, startTime, endTime)
 	esQuery, esMultiQuery := elasticsearch.NewElasticQueryGroup()
+	_, esMultiQuery2 := elasticsearch.NewElasticQueryGroup()
 	esQuery.SetTerm("productId", productId)
 	esQuery.SetRange("createSdf.keyword", map[string]interface{}{
 		"gte": startTime.Format("20060102"),
 		"lte": endTime.Format("20060102"),
 	})
 	if keyword != "" {
-		esQuery.SetMultiMatch([]string{"nickname", "displayId", "shortId"}, keyword)
+		if utils.HasChinese(keyword) {
+			slop := 100
+			length := len([]rune(keyword))
+			if length <= 3 {
+				slop = 2
+			}
+			esMultiQuery.AddMust(elasticsearch.Query().
+				SetMatchPhraseWithParams("nickname", keyword, alias.M{
+					"slop": slop,
+				}).Condition)
+			esMultiQuery2.AddMust(elasticsearch.Query().
+				SetMatchPhraseWithParams("nickname", keyword, alias.M{
+					"slop": slop,
+				}).Condition)
+		} else {
+			esQuery.SetMultiMatch([]string{"displayId", "shortId"}, keyword)
+		}
 	}
 	result := esMultiQuery.
 		SetTable(esTable).
@@ -139,7 +157,6 @@ func (i *EsProductBusiness) SearchRangeDateRowKey(productId, keyword string, sta
 		SetMultiQuery().
 		QueryOne()
 	utils.MapToStruct(result, &startRow)
-	_, esMultiQuery2 := elasticsearch.NewElasticQueryGroup()
 	result2 := esMultiQuery2.
 		SetTable(esTable).
 		SetFields("productId", "authorId", "createSdf").

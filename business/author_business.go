@@ -35,8 +35,11 @@ func (a *AuthorBusiness) GetCacheAuthorLiveTags(enableCache bool) []string {
 	if enableCache == true {
 		jsonStr := redisService.Hget(cacheKey, "author_live_tags")
 		if jsonStr != "" {
-			_ = jsoniter.Unmarshal([]byte(jsonStr), &tags)
-			return tags
+			jsonStr = utils.DeserializeData(jsonStr)
+			if jsonStr != "" {
+				_ = jsoniter.Unmarshal([]byte(jsonStr), &tags)
+				return tags
+			}
 		}
 	}
 	list := make([]dcm.DyAuthorLiveTags, 0)
@@ -45,8 +48,7 @@ func (a *AuthorBusiness) GetCacheAuthorLiveTags(enableCache bool) []string {
 		tags = append(tags, v.Name)
 	}
 	if len(tags) > 0 {
-		tagsByte, _ := jsoniter.Marshal(tags)
-		_ = redisService.Hset(cacheKey, "author_live_tags", string(tagsByte))
+		_ = redisService.Hset(cacheKey, "author_live_tags", utils.SerializeData(tags))
 	}
 	return tags
 }
@@ -753,4 +755,35 @@ func (a *AuthorBusiness) GetAuthorProductRooms(authorId, productId string, start
 		})
 	}
 	return
+}
+
+//channel控制go协程获取达人信息
+func (a *AuthorBusiness) GetAuthorByIdsLimitGo(authorIds []string, maxNum int) map[string]entity.DyAuthorData {
+	var wg sync.WaitGroup
+	authorLen := len(authorIds)
+	if authorLen < maxNum {
+		maxNum = authorLen
+	}
+	authorChan := make(chan string, maxNum)
+	authors := make([]entity.DyAuthorData, 0)
+	authorMap := map[string]entity.DyAuthorData{}
+	for _, v := range authorIds {
+		authorChan <- v
+		wg.Add(1)
+		go func(aCh chan string, wg *sync.WaitGroup) {
+			defer wg.Done()
+			authorId, ok := <-aCh
+			if ok {
+				authorData, comErr := hbase.GetAuthor(authorId)
+				if comErr == nil {
+					authors = append(authors, authorData.Data)
+				}
+			}
+		}(authorChan, &wg)
+	}
+	wg.Wait()
+	for _, v := range authors {
+		authorMap[v.ID] = v
+	}
+	return authorMap
 }

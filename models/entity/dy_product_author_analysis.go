@@ -21,7 +21,7 @@ type DyProductAuthorAnalysis struct {
 	DisplayId    string                       `json:"display_id"`
 	FollowCount  int64                        `json:"follow_count"`
 	Gmv          float64                      `json:"gmv"`
-	NickName     string                       `json:"nick_name"`
+	Nickname     string                       `json:"nickname"`
 	Avatar       string                       `json:"avatar"`
 	Price        float64                      `json:"price"`
 	ProductId    string                       `json:"product_id"`
