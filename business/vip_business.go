@@ -77,9 +77,9 @@ func (receiver *VipBusiness) GetVipLevels(userId int) []dy.AccountVipLevel {
 }
 
 func (receiver *VipBusiness) GetVipLevel(userId, appId int) dy.AccountVipLevel {
-	vip := &dcm.DcUserVip{}
+	vip := dcm.DcUserVip{}
 	var level = 0
-	exist, _ := dcm.GetSlaveDbSession().Where("user_id=? AND platform=?", userId, appId).Get(vip)
+	exist, _ := dcm.GetSlaveDbSession().Where("user_id=? AND platform=?", userId, appId).Get(&vip)
 	if !exist {
 		vip.UserId = userId
 		vip.Platform = appId
