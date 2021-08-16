@@ -26,7 +26,7 @@ const (
 	UserActionLockKey       KeyName = "dcm:user:action:lock:%d"     //userId
 	//直播间商品分类数据缓存
 	LiveRoomProductCount KeyName = "dcm:live:room:product:count:%s"
-	ProductAuthorCount   KeyName = "dcm:product:author:%s:%s"
+	ProductAuthorCount   KeyName = "dcm:product:author:%s:%s:%s"
 	//商品达人数据缓存
 	ProductAuthorAllList KeyName = "dcm:product:author:row:%s:%s"
 )

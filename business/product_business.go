@@ -247,7 +247,7 @@ func (receiver *ProductBusiness) ProductAuthorAnalysisCount(productId, keyword s
 		Tags:  []dy.DyCate{},
 		Level: []dy.DyIntCate{},
 	}
-	cKey := cache.GetCacheKey(cache.ProductAuthorCount, startTime.Format("20060102"), endTime.Format("20060102"))
+	cKey := cache.GetCacheKey(cache.ProductAuthorCount, productId, startTime.Format("20060102"), endTime.Format("20060102"))
 	if keyword == "" {
 		countJson := global.Cache.Get(cKey)
 		if countJson != "" {
