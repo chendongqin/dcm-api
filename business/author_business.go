@@ -673,6 +673,7 @@ func (a *AuthorBusiness) GetAuthorProductAnalyse(authorId, keyword, firstCate, s
 	}
 	newList := make([]entity.DyAuthorProductAnalysis, 0)
 	for _, v := range productMapList {
+
 		newList = append(newList, v)
 	}
 	//排序
@@ -712,6 +713,8 @@ func (a *AuthorBusiness) GetAuthorProductAnalyse(authorId, keyword, firstCate, s
 			v.Avatar = productInfo.Image
 		}
 		list[k].Avatar = dyimg.Product(v.Avatar)
+		list[k].AuthorId = IdEncrypt(v.AuthorId)
+		list[k].ProductId = IdEncrypt(v.ProductId)
 		list[k].ProductStatus = productInfo.Status
 	}
 	analysisCount.ProductNum = total
@@ -745,7 +748,7 @@ func (a *AuthorBusiness) GetAuthorProductRooms(authorId, productId string, start
 			//}
 		}
 		list = append(list, dy.DyAuthorProductRoom{
-			RoomId:       roomId,
+			RoomId:       IdEncrypt(roomId),
 			Cover:        dyimg.Fix(liveInfo.Cover),
 			CreateTime:   liveInfo.CreateTime,
 			Title:        liveInfo.Title,

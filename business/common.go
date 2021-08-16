@@ -8,6 +8,7 @@ import (
 	"dongchamao/models/dcm"
 	"dongchamao/models/repost/dy"
 	"dongchamao/services"
+	"encoding/base64"
 	jsoniter "github.com/json-iterator/go"
 	"net/http"
 	"regexp"
@@ -221,4 +222,38 @@ func ParseDyShortUrl(url string) string {
 	} else {
 		return url
 	}
+}
+
+//id加密
+func IdEncrypt(id string) string {
+	if id == "" || id == "0" {
+		return ""
+	}
+	key := []byte("2NJwWMPLQ0aGjtxK")
+	idByte, _ := base64.StdEncoding.DecodeString(id)
+	str, err := utils.AesEncrypt(idByte, key)
+	if err != nil {
+		return ""
+	}
+	return base64.StdEncoding.EncodeToString(str)
+}
+
+//id解密
+func IdDecrypt(id string) string {
+	if id == "" {
+		return ""
+	}
+	if strings.Index(id, "==") < 0 {
+		return ""
+	}
+	key := []byte("2NJwWMPLQ0aGjtxK")
+	idByte, err := base64.StdEncoding.DecodeString(id)
+	if err != nil {
+		return ""
+	}
+	str, err := utils.AesDecrypt(idByte, key)
+	if err != nil {
+		return ""
+	}
+	return base64.StdEncoding.EncodeToString(str)
 }

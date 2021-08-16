@@ -20,6 +20,9 @@ func (receiver *RankController) DyStartAuthorVideoRank() {
 	rankType := receiver.GetString("rank_type", "达人指数榜")
 	category := receiver.GetString("category", "全部")
 	data, updateTime, _ := hbase.GetStartAuthorVideoRank(rankType, category)
+	for k, v := range data {
+		data[k].CoreUserId = business.IdEncrypt(v.CoreUserId)
+	}
 	receiver.SuccReturn(map[string]interface{}{
 		"list":        data,
 		"update_time": updateTime,
@@ -31,6 +34,9 @@ func (receiver *RankController) DyStartAuthorVideoRank() {
 func (receiver *RankController) DyStartAuthorLiveRank() {
 	rankType := receiver.GetString("rank_type", "达人指数榜")
 	data, updateTime, _ := hbase.GetStartAuthorLiveRank(rankType)
+	for k, v := range data {
+		data[k].CoreUserId = business.IdEncrypt(v.CoreUserId)
+	}
 	receiver.SuccReturn(map[string]interface{}{
 		"list":        data,
 		"update_time": updateTime,
@@ -49,6 +55,8 @@ func (receiver *RankController) DyLiveHourRank() {
 	}
 	data, _ := hbase.GetDyLiveHourRank(dateTime.Format("2006010215"))
 	for k, v := range data.Ranks {
+		data.Ranks[k].LiveInfo.User.Id = business.IdEncrypt(v.LiveInfo.User.Id)
+		data.Ranks[k].RoomId = business.IdEncrypt(v.RoomId)
 		data.Ranks[k].LiveInfo.Cover = dyimg.Fix(v.LiveInfo.Cover)
 		data.Ranks[k].LiveInfo.User.Avatar = dyimg.Fix(v.LiveInfo.User.Avatar)
 		if v.LiveInfo.User.DisplayId == "" {
@@ -74,6 +82,8 @@ func (receiver *RankController) DyLiveTopRank() {
 	}
 	data, _ := hbase.GetDyLiveTopRank(dateTime.Format("2006010215"))
 	for k, v := range data.Ranks {
+		data.Ranks[k].LiveInfo.User.Id = business.IdEncrypt(v.LiveInfo.User.Id)
+		data.Ranks[k].RoomId = business.IdEncrypt(v.RoomId)
 		data.Ranks[k].LiveInfo.Cover = dyimg.Fix(v.LiveInfo.Cover)
 		data.Ranks[k].LiveInfo.User.Avatar = dyimg.Fix(v.LiveInfo.User.Avatar)
 		if v.LiveInfo.User.DisplayId == "" {
@@ -99,6 +109,8 @@ func (receiver *RankController) DyLiveHourSellRank() {
 	}
 	data, _ := hbase.GetDyLiveHourSellRank(dateTime.Format("2006010215"))
 	for k, v := range data.Ranks {
+		data.Ranks[k].LiveInfo.User.Id = business.IdEncrypt(v.LiveInfo.User.Id)
+		data.Ranks[k].RoomId = business.IdEncrypt(v.RoomId)
 		data.Ranks[k].LiveInfo.Cover = dyimg.Fix(v.LiveInfo.Cover)
 		data.Ranks[k].LiveInfo.User.Avatar = dyimg.Fix(v.LiveInfo.User.Avatar)
 		if v.LiveInfo.User.DisplayId == "" {
@@ -128,6 +140,8 @@ func (receiver *RankController) DyLiveHourPopularityRank() {
 	}
 	data, _ := hbase.GetDyLiveHourPopularityRank(dateTime.Format("2006010215"))
 	for k, v := range data.Ranks {
+		data.Ranks[k].LiveInfo.User.Id = business.IdEncrypt(v.LiveInfo.User.Id)
+		data.Ranks[k].RoomId = business.IdEncrypt(v.RoomId)
 		data.Ranks[k].LiveInfo.Cover = dyimg.Fix(v.LiveInfo.Cover)
 		data.Ranks[k].LiveInfo.User.Avatar = dyimg.Fix(v.LiveInfo.User.Avatar)
 		if v.LiveInfo.User.DisplayId == "" {
@@ -173,7 +187,7 @@ func (receiver *RankController) DyLiveShareWeekRank() {
 			uniqueId = v.ShortId
 		}
 		list = append(list, entity.DyLiveShareWeekData{
-			AuthorId:   utils.ToString(v.AuthorId),
+			AuthorId:   business.IdEncrypt(utils.ToString(v.AuthorId)),
 			Avatar:     dyimg.Avatar(v.Avatar),
 			Category:   v.Category,
 			InitRank:   v.InitRank,
@@ -207,14 +221,14 @@ func (receiver *RankController) DyAwemeShareRank() {
 		return
 	}
 	data, _ := hbase.GetAwemeShareRank(dateTime.Format("20060102"))
-	list := make([]entity.DyAwemeShareTop, 0)
+	list := make([]entity.DyAwemeShareTopCopy, 0)
 	for _, v := range data.Data {
 		uniqueId := v.UniqueId
 		if uniqueId == "" || uniqueId == "0" {
 			uniqueId = v.ShortId
 		}
-		list = append(list, entity.DyAwemeShareTop{
-			AuthorId:      v.AuthorId,
+		list = append(list, entity.DyAwemeShareTopCopy{
+			AuthorId:      business.IdEncrypt(utils.ToString(v.AuthorId)),
 			Category:      v.Category,
 			Avatar:        dyimg.Avatar(v.Avatar),
 			InitRank:      v.InitRank,

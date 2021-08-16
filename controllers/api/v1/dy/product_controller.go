@@ -103,6 +103,7 @@ func (receiver *ProductController) Search() {
 	}
 	for k, v := range list {
 		list[k].Image = dyimg.Fix(v.Image)
+		list[k].ProductId = business.IdEncrypt(v.ProductId)
 	}
 	totalPage := math.Ceil(float64(total) / float64(pageSize))
 	maxPage := math.Ceil(float64(business.DyJewelBaseShowNum) / float64(pageSize))
@@ -126,7 +127,7 @@ func (receiver *ProductController) Search() {
 
 //商品分析
 func (receiver *ProductController) ProductBaseAnalysis() {
-	productId := receiver.GetString(":product_id", "")
+	productId := business.IdDecrypt(receiver.GetString(":product_id", ""))
 	if productId == "" {
 		receiver.FailReturn(global.NewError(4000))
 		return
@@ -261,7 +262,7 @@ func (receiver *ProductController) ProductBaseAnalysis() {
 
 //商品基础数据
 func (receiver *ProductController) ProductBase() {
-	productId := receiver.GetString(":product_id", "")
+	productId := business.IdDecrypt(receiver.GetString(":product_id", ""))
 	if productId == "" {
 		receiver.FailReturn(global.NewError(4000))
 		return
@@ -315,7 +316,7 @@ func (receiver *ProductController) ProductBase() {
 		label = "其他"
 	}
 	simpleInfo := dy2.SimpleDyProduct{
-		ProductID:     productInfo.ProductID,
+		ProductID:     business.IdEncrypt(productInfo.ProductID),
 		Title:         productInfo.Title,
 		MarketPrice:   productInfo.MarketPrice,
 		Price:         productInfo.Price,
@@ -410,7 +411,7 @@ func (receiver *ProductController) ProductBase() {
 
 //商品销量趋势
 func (receiver *ProductController) ProductLiveChart() {
-	productId := receiver.GetString(":product_id", "")
+	productId := business.IdDecrypt(receiver.GetString(":product_id", ""))
 	if productId == "" {
 		receiver.FailReturn(global.NewError(4000))
 		return
@@ -455,7 +456,7 @@ func (receiver *ProductController) ProductLiveChart() {
 
 //商品直播间列表
 func (receiver *ProductController) ProductLiveRoomList() {
-	productId := receiver.Ctx.Input.Param(":product_id")
+	productId := business.IdDecrypt(receiver.Ctx.Input.Param(":product_id"))
 	InputData := receiver.InputFormat()
 	keyword := InputData.GetString("keyword", "")
 	sortStr := InputData.GetString("sort", "shelf_time")
@@ -572,6 +573,10 @@ func (receiver *ProductController) ProductLiveRoomList() {
 					CurList: []dy2.LiveCurProduct{},
 				}
 			}
+			item.ProductInfo.ProductID = business.IdEncrypt(item.ProductInfo.ProductID)
+			item.ProductInfo.AuthorRoomID = business.IdEncrypt(item.ProductInfo.AuthorRoomID)
+			item.ProductInfo.RoomID = business.IdEncrypt(item.ProductInfo.RoomID)
+			item.ProductInfo.ProductID = business.IdEncrypt(item.ProductInfo.ProductID)
 			countList = append(countList, item)
 		}
 	}
@@ -583,7 +588,7 @@ func (receiver *ProductController) ProductLiveRoomList() {
 }
 
 func (receiver *ProductController) ProductLiveAuthorAnalysis() {
-	productId := receiver.Ctx.Input.Param(":product_id")
+	productId := business.IdDecrypt(receiver.Ctx.Input.Param(":product_id"))
 	startTime, endTime, comErr := receiver.GetRangeDate()
 	if comErr != nil {
 		receiver.FailReturn(comErr)
@@ -605,6 +610,8 @@ func (receiver *ProductController) ProductLiveAuthorAnalysis() {
 	for k, v := range list {
 		authorInfo, _ := hbase.GetAuthor(v.AuthorId)
 		list[k].Avatar = dyimg.Fix(authorInfo.Data.Avatar)
+		list[k].AuthorId = business.IdEncrypt(v.AuthorId)
+		list[k].ProductId = business.IdEncrypt(v.ProductId)
 		list[k].Nickname = authorInfo.Data.Nickname
 		list[k].RoomNum = len(v.RelatedRooms)
 		list[k].RelatedRooms = []entity.DyProductAuthorRelatedRoom{}
@@ -617,7 +624,7 @@ func (receiver *ProductController) ProductLiveAuthorAnalysis() {
 }
 
 func (receiver *ProductController) ProductLiveAuthorAnalysisCount() {
-	productId := receiver.Ctx.Input.Param(":product_id")
+	productId := business.IdDecrypt(receiver.Ctx.Input.Param(":product_id"))
 	startTime, endTime, comErr := receiver.GetRangeDate()
 	if comErr != nil {
 		receiver.FailReturn(comErr)
@@ -637,8 +644,8 @@ func (receiver *ProductController) ProductLiveAuthorAnalysisCount() {
 }
 
 func (receiver *ProductController) ProductAuthorLiveRooms() {
-	productId := receiver.Ctx.Input.Param(":product_id")
-	authorId := receiver.Ctx.Input.Param(":author_id")
+	productId := business.IdDecrypt(receiver.Ctx.Input.Param(":product_id"))
+	authorId := business.IdDecrypt(receiver.Ctx.Input.Param(":author_id"))
 	startTime, endTime, comErr := receiver.GetRangeDate()
 	if comErr != nil {
 		receiver.FailReturn(comErr)
@@ -651,6 +658,7 @@ func (receiver *ProductController) ProductAuthorLiveRooms() {
 	list, total := business.NewProductBusiness().ProductAuthorLiveRooms(productId, authorId, startTime, endTime, sortStr, orderBy, page, pageSize)
 	for k, v := range list {
 		list[k].Cover = dyimg.Fix(v.Cover)
+		list[k].RoomId = business.IdEncrypt(v.RoomId)
 	}
 	receiver.SuccReturn(map[string]interface{}{
 		"list":  list,

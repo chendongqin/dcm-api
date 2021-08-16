@@ -96,6 +96,10 @@ func (receiver *LiveController) SearchRoom() {
 		receiver.FailReturn(comErr)
 		return
 	}
+	for k, v := range list {
+		list[k].AuthorId = business.IdEncrypt(v.AuthorId)
+		list[k].RoomId = business.IdEncrypt(v.RoomId)
+	}
 	totalPage := math.Ceil(float64(total) / float64(pageSize))
 	maxPage := math.Ceil(float64(business.DyJewelBaseShowNum) / float64(pageSize))
 	if totalPage > maxPage {
@@ -118,7 +122,7 @@ func (receiver *LiveController) SearchRoom() {
 
 //直播详细
 func (receiver *LiveController) LiveInfoData() {
-	roomId := receiver.Ctx.Input.Param(":room_id")
+	roomId := business.IdDecrypt(receiver.Ctx.Input.Param(":room_id"))
 	if roomId == "" {
 		receiver.FailReturn(global.NewError(4000))
 		return
@@ -135,7 +139,7 @@ func (receiver *LiveController) LiveInfoData() {
 	liveUser := dy2.DyLiveUserSimple{
 		Avatar:          liveInfo.User.Avatar,
 		FollowerCount:   authorInfo.Data.FollowerCount,
-		ID:              liveInfo.User.ID,
+		ID:              business.IdEncrypt(liveInfo.User.ID),
 		Nickname:        liveInfo.User.Nickname,
 		WithCommerce:    liveInfo.User.WithCommerce,
 		ReputationScore: reputation.AuthorReputation.Score,
@@ -170,7 +174,7 @@ func (receiver *LiveController) LiveInfoData() {
 		CreateTime:          liveInfo.CreateTime,
 		FinishTime:          liveInfo.FinishTime,
 		LikeCount:           liveInfo.LikeCount,
-		RoomID:              liveInfo.RoomID,
+		RoomID:              business.IdEncrypt(liveInfo.RoomID),
 		RoomStatus:          liveInfo.RoomStatus,
 		Title:               liveInfo.Title,
 		TotalUser:           liveInfo.TotalUser,
@@ -230,7 +234,7 @@ func (receiver *LiveController) LiveInfoData() {
 
 //直播商品明细
 func (receiver *LiveController) LivePromotions() {
-	roomId := receiver.Ctx.Input.Param(":room_id")
+	roomId := business.IdDecrypt(receiver.Ctx.Input.Param(":room_id"))
 	if roomId == "" {
 		receiver.FailReturn(global.NewError(4000))
 		return
@@ -266,7 +270,7 @@ func (receiver *LiveController) LivePromotions() {
 				saleNum = s + 1
 			}
 			item = append(item, dy2.DyLivePromotion{
-				ProductID: v1.ProductID,
+				ProductID: business.IdEncrypt(v1.ProductID),
 				ForSale:   v1.ForSale,
 				StartTime: v1.StartTime,
 				StopTime:  v1.StopTime,
@@ -294,7 +298,7 @@ func (receiver *LiveController) LivePromotions() {
 
 //直播榜单排名趋势
 func (receiver *LiveController) LiveRankTrends() {
-	roomId := receiver.Ctx.Input.Param(":room_id")
+	roomId := business.IdDecrypt(receiver.Ctx.Input.Param(":room_id"))
 	if roomId == "" {
 		receiver.FailReturn(global.NewError(4000))
 		return
@@ -342,7 +346,7 @@ func (receiver *LiveController) LiveRankTrends() {
 
 //直播间商品
 func (receiver *LiveController) LiveProductList() {
-	roomId := receiver.Ctx.Input.Param(":room_id")
+	roomId := business.IdDecrypt(receiver.Ctx.Input.Param(":room_id"))
 	if roomId == "" {
 		receiver.FailReturn(global.NewError(4000))
 		return
@@ -402,6 +406,10 @@ func (receiver *LiveController) LiveProductList() {
 					CurList: []dy2.LiveCurProduct{},
 				}
 			}
+			item.ProductInfo.AuthorID = business.IdEncrypt(item.ProductInfo.AuthorID)
+			item.ProductInfo.AuthorRoomID = business.IdEncrypt(item.ProductInfo.AuthorRoomID)
+			item.ProductInfo.RoomID = business.IdEncrypt(item.ProductInfo.RoomID)
+			item.ProductInfo.ProductID = business.IdEncrypt(item.ProductInfo.ProductID)
 			countList = append(countList, item)
 		}
 	}
@@ -415,7 +423,7 @@ func (receiver *LiveController) LiveProductList() {
 
 //直播间商品分类
 func (receiver *LiveController) LiveProductCateList() {
-	roomId := receiver.Ctx.Input.Param(":room_id")
+	roomId := business.IdDecrypt(receiver.Ctx.Input.Param(":room_id"))
 	if roomId == "" {
 		receiver.FailReturn(global.NewError(4000))
 		return
@@ -431,12 +439,12 @@ func (receiver *LiveController) LiveProductCateList() {
 
 //全网销量趋势图
 func (receiver *LiveController) LiveProductSaleChart() {
-	roomId := receiver.Ctx.Input.Param(":room_id")
+	roomId := business.IdDecrypt(receiver.Ctx.Input.Param(":room_id"))
 	if roomId == "" {
 		receiver.FailReturn(global.NewError(4000))
 		return
 	}
-	productId := receiver.Ctx.Input.Param(":product_id")
+	productId := business.IdDecrypt(receiver.Ctx.Input.Param(":product_id"))
 	if productId == "" {
 		receiver.FailReturn(global.NewError(4000))
 		return
@@ -458,7 +466,7 @@ func (receiver *LiveController) LiveProductSaleChart() {
 
 //直播间粉丝趋势
 func (receiver *LiveController) LiveFansTrends() {
-	roomId := receiver.Ctx.Input.Param(":room_id")
+	roomId := business.IdDecrypt(receiver.Ctx.Input.Param(":room_id"))
 	if roomId == "" {
 		receiver.FailReturn(global.NewError(4000))
 		return

@@ -1,6 +1,7 @@
 package v1
 
 import (
+	"dongchamao/business"
 	"dongchamao/controllers/api"
 	"dongchamao/global"
 	"dongchamao/global/cache"
@@ -84,6 +85,18 @@ func (receiver *CommonController) CheckSmsCode() {
 		return
 	}
 	receiver.SuccReturn(nil)
+	return
+}
+
+func (receiver *CommonController) IdEncryptDecrypt() {
+	id := receiver.Ctx.Input.Param(":id")
+	id1 := business.IdEncrypt(id)
+	id2 := business.IdDecrypt(id)
+	receiver.SuccReturn(map[string]string{
+		"id":      id,
+		"encrypt": id1,
+		"decrypt": id2,
+	})
 	return
 }
 

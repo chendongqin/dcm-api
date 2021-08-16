@@ -125,6 +125,7 @@ func (receiver *AuthorController) BaseSearch() {
 		if v.UniqueId == "" || v.UniqueId == "0" {
 			list[k].UniqueId = v.ShortId
 		}
+		list[k].AuthorId = business.IdEncrypt(v.AuthorId)
 	}
 	totalPage := math.Ceil(float64(total) / float64(pageSize))
 	maxPage := math.Ceil(float64(business.DyJewelBaseShowNum) / float64(pageSize))
@@ -148,7 +149,7 @@ func (receiver *AuthorController) BaseSearch() {
 
 //达人数据
 func (receiver *AuthorController) AuthorBaseData() {
-	authorId := receiver.Ctx.Input.Param(":author_id")
+	authorId := business.IdDecrypt(receiver.Ctx.Input.Param(":author_id"))
 	if authorId == "" {
 		receiver.FailReturn(global.NewError(4000))
 		return
@@ -166,6 +167,8 @@ func (receiver *AuthorController) AuthorBaseData() {
 	}
 	fansClub, _ := hbase.GetAuthorFansClub(authorId)
 	basic, _ := hbase.GetAuthorBasic(authorId, "")
+	authorBase.Data.ID = business.IdEncrypt(authorBase.Data.ID)
+	authorBase.Data.RoomID = business.IdEncrypt(authorBase.Data.RoomID)
 	returnMap := map[string]interface{}{
 		"author_base": authorBase.Data,
 		"reputation": dy2.RepostSimpleReputation{
@@ -184,7 +187,7 @@ func (receiver *AuthorController) AuthorBaseData() {
 }
 
 func (receiver *AuthorController) AuthorViewData() {
-	authorId := receiver.Ctx.Input.Param(":author_id")
+	authorId := business.IdDecrypt(receiver.Ctx.Input.Param(":author_id"))
 	if authorId == "" {
 		receiver.FailReturn(global.NewError(4000))
 		return
@@ -290,7 +293,7 @@ func (receiver *AuthorController) AuthorViewData() {
 
 //星图指数数据
 func (receiver *AuthorController) AuthorStarSimpleData() {
-	authorId := receiver.Ctx.Input.Param(":author_id")
+	authorId := business.IdDecrypt(receiver.Ctx.Input.Param(":author_id"))
 	if authorId == "" {
 		receiver.FailReturn(global.NewError(4000))
 		return
@@ -311,7 +314,7 @@ func (receiver *AuthorController) AuthorStarSimpleData() {
 
 //达人口碑
 func (receiver *AuthorController) Reputation() {
-	authorId := receiver.Ctx.Input.Param(":author_id")
+	authorId := business.IdDecrypt(receiver.Ctx.Input.Param(":author_id"))
 	if authorId == "" {
 		receiver.FailReturn(global.NewError(4000))
 		return
@@ -322,6 +325,7 @@ func (receiver *AuthorController) Reputation() {
 		receiver.FailReturn(comErr)
 		return
 	}
+	reputation.UID = business.IdEncrypt(reputation.UID)
 	receiver.SuccReturn(map[string]interface{}{
 		"reputation": reputation,
 	})
@@ -330,7 +334,7 @@ func (receiver *AuthorController) Reputation() {
 
 //达人视频概览
 func (receiver *AuthorController) AuthorAwemesByDay() {
-	authorId := receiver.Ctx.Input.Param(":author_id")
+	authorId := business.IdDecrypt(receiver.Ctx.Input.Param(":author_id"))
 	startDay := receiver.Ctx.Input.Param(":start")
 	endDay := receiver.Ctx.Input.Param(":end")
 	if authorId == "" || startDay == "" {
@@ -366,7 +370,7 @@ func (receiver *AuthorController) AuthorAwemesByDay() {
 
 //基础数据趋势图
 func (receiver *AuthorController) AuthorBasicChart() {
-	authorId := receiver.Ctx.Input.Param(":author_id")
+	authorId := business.IdDecrypt(receiver.Ctx.Input.Param(":author_id"))
 	startDay := receiver.Ctx.Input.Param(":start")
 	endDay := receiver.Ctx.Input.Param(":end")
 	if authorId == "" || startDay == "" {
@@ -403,7 +407,7 @@ func (receiver *AuthorController) AuthorBasicChart() {
 
 //粉丝分布分析
 func (receiver *AuthorController) AuthorFansAnalyse() {
-	authorId := receiver.Ctx.Input.Param(":author_id")
+	authorId := business.IdDecrypt(receiver.Ctx.Input.Param(":author_id"))
 	if authorId == "" {
 		receiver.FailReturn(global.NewError(4000))
 		return
@@ -455,7 +459,7 @@ func (receiver *AuthorController) AuthorFansAnalyse() {
 
 //达人直播分析
 func (receiver *AuthorController) CountLiveRoomAnalyse() {
-	authorId := receiver.Ctx.Input.Param(":author_id")
+	authorId := business.IdDecrypt(receiver.Ctx.Input.Param(":author_id"))
 	t1, t2, comErr := receiver.GetRangeDate()
 	if comErr != nil {
 		receiver.FailReturn(comErr)
@@ -469,7 +473,7 @@ func (receiver *AuthorController) CountLiveRoomAnalyse() {
 
 //达人直播间列表
 func (receiver *AuthorController) AuthorLiveRooms() {
-	authorId := receiver.Ctx.Input.Param(":author_id")
+	authorId := business.IdDecrypt(receiver.Ctx.Input.Param(":author_id"))
 	InputData := receiver.InputFormat()
 	keyword := InputData.GetString("keyword", "")
 	sortStr := InputData.GetString("sort", "create_timestamp")
@@ -487,6 +491,10 @@ func (receiver *AuthorController) AuthorLiveRooms() {
 	}
 	esLiveBusiness := es.NewEsLiveBusiness()
 	list, total, comErr := esLiveBusiness.SearchAuthorRooms(authorId, keyword, sortStr, orderBy, page, size, t1, t2)
+	for k, v := range list {
+		list[k].RoomID = business.IdEncrypt(v.RoomID)
+		list[k].AuthorID = business.IdEncrypt(v.AuthorID)
+	}
 	if comErr != nil {
 		receiver.FailReturn(comErr)
 		return
@@ -500,7 +508,7 @@ func (receiver *AuthorController) AuthorLiveRooms() {
 
 //达人电商分析
 func (receiver *AuthorController) AuthorProductAnalyse() {
-	authorId := receiver.GetString(":author_id")
+	authorId := business.IdDecrypt(receiver.GetString(":author_id"))
 	startTime, endTime, comErr := receiver.GetRangeDate()
 	if comErr != nil {
 		receiver.FailReturn(comErr)
@@ -540,8 +548,8 @@ func (receiver *AuthorController) AuthorProductAnalyse() {
 
 //达人商品直播间
 func (receiver *AuthorController) AuthorProductRooms() {
-	authorId := receiver.GetString(":author_id", "")
-	productId := receiver.GetString(":product_id", "")
+	authorId := business.IdDecrypt(receiver.GetString(":author_id", ""))
+	productId := business.IdDecrypt(receiver.GetString(":product_id", ""))
 	startTime, endTime, comErr := receiver.GetRangeDate()
 	if comErr != nil {
 		receiver.FailReturn(comErr)
