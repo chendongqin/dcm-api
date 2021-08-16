@@ -147,7 +147,6 @@ func (this *ApiBaseController) InitUserToken() (commonErr global.CommonError) {
 	}
 	userBusiness := business.NewUserBusiness()
 	if claims, ok := token.Claims.(jwt.MapClaims); ok && token.Valid {
-		json.Marshal(claims)
 		jsonstr, err0 := json.Marshal(claims)
 		tokenStruct := &business.TokenData{}
 		err0 = json.Unmarshal(jsonstr, tokenStruct)
@@ -434,9 +433,9 @@ func (this *ApiBaseController) AsfCheck() {
 	} else {
 		verifyIp := global.Cache.Get(cache.GetCacheKey(cache.SecurityVerifyCodeIp, this.Ip))
 		if verifyIp == "verify" || verifyUser == "verify" {
-			if this.Ip == "47.103.153.227" {
-				return
-			}
+			//if this.Ip == "47.103.153.227" {
+			//	return
+			//}
 			this.FailReturn(global.NewError(80000))
 			return
 		}
