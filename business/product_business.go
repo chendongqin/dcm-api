@@ -150,8 +150,12 @@ func (receiver *ProductBusiness) ProductAuthorAnalysis(productId, keyword, tag s
 		if scoreType != 5 && scoreType != v.Level {
 			continue
 		}
-		if tag != "" && strings.Index(v.ShopTags, tag) < 0 {
+		if tag == "其他" && v.ShopTags != "" && strings.Index(v.ShopTags, tag) < 0 {
 			continue
+		} else if tag != "" {
+			if strings.Index(v.ShopTags, tag) < 0 {
+				continue
+			}
 		}
 		if d, ok := authorMap[v.AuthorId]; ok {
 			d.Gmv += v.Gmv
