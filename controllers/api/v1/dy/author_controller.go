@@ -77,7 +77,7 @@ func (receiver *AuthorController) BaseSearch() {
 	isDelivery, _ := receiver.GetInt("is_delivery", 0)
 	superSeller, _ := receiver.GetInt("super_seller", 0)
 	page := receiver.GetPage("page")
-	pageSize := receiver.GetPageSize("page_size", 50, 50)
+	pageSize := receiver.GetPageSize("page_size", 10, 100)
 	if !hasLogin && keyword != "" {
 		receiver.FailReturn(global.NewError(4001))
 		return

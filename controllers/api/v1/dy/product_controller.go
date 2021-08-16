@@ -50,7 +50,7 @@ func (receiver *ProductController) Search() {
 	isStar, _ := receiver.GetInt("is_star", 0)
 	notStar, _ := receiver.GetInt("not_star", 0)
 	page := receiver.GetPage("page")
-	pageSize := receiver.GetPageSize("page_size", 10, 50)
+	pageSize := receiver.GetPageSize("page_size", 10, 100)
 	if !hasAuth {
 		if category != "" || secondCategory != "" || thirdCategory != "" || platform != "" || minCommissionRate > 0 || minPrice > 0 || maxPrice > 0 || commerceType > 0 ||
 			isCoupon > 0 || isStar > 0 || notStar > 0 || page != 1 {
