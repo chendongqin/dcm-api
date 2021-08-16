@@ -79,6 +79,7 @@ func (receiver *PayBusiness) DoPayDyCallback(vipOrder dcm.DcVipOrder) bool {
 		return false
 	}
 	_ = dbSession.Commit()
+	NewUserBusiness().DeleteUserLevelCache(vipOrder.UserId, VipPlatformDouYin)
 	return true
 }
 
