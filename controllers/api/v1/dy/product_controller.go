@@ -54,6 +54,10 @@ func (receiver *ProductController) Search() {
 	if !hasAuth {
 		if category != "" || secondCategory != "" || thirdCategory != "" || platform != "" || minCommissionRate > 0 || minPrice > 0 || maxPrice > 0 || commerceType > 0 ||
 			isCoupon > 0 || isStar > 0 || notStar > 0 || page != 1 {
+			if !hasLogin {
+				receiver.FailReturn(global.NewError(4001))
+				return
+			}
 			receiver.FailReturn(global.NewError(4004))
 			return
 		}
@@ -96,6 +100,9 @@ func (receiver *ProductController) Search() {
 	if comErr != nil {
 		receiver.FailReturn(comErr)
 		return
+	}
+	for k, v := range list {
+		list[k].Image = dyimg.Fix(v.Image)
 	}
 	totalPage := math.Ceil(float64(total) / float64(pageSize))
 	maxPage := math.Ceil(float64(business.DyJewelBaseShowNum) / float64(pageSize))

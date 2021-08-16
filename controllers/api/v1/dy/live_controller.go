@@ -74,6 +74,10 @@ func (receiver *LiveController) SearchRoom() {
 		start := startTime.Format("20060102")
 		end := endTime.Format("20060102")
 		if lastDay != start || today != end || keyword != "" || category != "" || sortStr != "" || orderBy != "" || minAmount > 0 || maxAmount > 0 || minUv > 0 || maxUv > 0 || minAvgUserCount > 0 || maxAvgUserCount > 0 || hasProduct == 1 || isBrand == 1 || page != 1 {
+			if !hasLogin {
+				receiver.FailReturn(global.NewError(4001))
+				return
+			}
 			receiver.FailReturn(global.NewError(4004))
 			return
 		}
