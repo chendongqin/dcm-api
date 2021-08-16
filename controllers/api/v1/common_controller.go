@@ -9,6 +9,7 @@ import (
 	"dongchamao/global/utils"
 	"dongchamao/models/dcm"
 	"dongchamao/services/ali_sms"
+	"strings"
 )
 
 type CommonController struct {
@@ -90,7 +91,10 @@ func (receiver *CommonController) CheckSmsCode() {
 
 func (receiver *CommonController) IdEncryptDecrypt() {
 	id := receiver.Ctx.Input.Param(":id")
-	id1 := business.IdEncrypt(id)
+	id1 := ""
+	if strings.Index(id, "==") < 0 {
+		id1 = business.IdEncrypt(id)
+	}
 	id2 := business.IdDecrypt(id)
 	receiver.SuccReturn(map[string]string{
 		"id":      id,
