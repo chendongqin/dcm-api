@@ -160,11 +160,7 @@ func (receiver *AuthorController) AuthorBaseData() {
 		receiver.FailReturn(comErr)
 		return
 	}
-	reputation, comErr := authorBusiness.HbaseGetAuthorReputation(authorId)
-	if comErr != nil {
-		receiver.FailReturn(comErr)
-		return
-	}
+	reputation, _ := authorBusiness.HbaseGetAuthorReputation(authorId)
 	fansClub, _ := hbase.GetAuthorFansClub(authorId)
 	basic, _ := hbase.GetAuthorBasic(authorId, "")
 	authorBase.Data.ID = business.IdEncrypt(authorBase.Data.ID)
@@ -320,11 +316,7 @@ func (receiver *AuthorController) Reputation() {
 		return
 	}
 	authorBusiness := business.NewAuthorBusiness()
-	reputation, comErr := authorBusiness.HbaseGetAuthorReputation(authorId)
-	if comErr != nil {
-		receiver.FailReturn(comErr)
-		return
-	}
+	reputation, _ := authorBusiness.HbaseGetAuthorReputation(authorId)
 	reputation.UID = business.IdEncrypt(reputation.UID)
 	receiver.SuccReturn(map[string]interface{}{
 		"reputation": reputation,
