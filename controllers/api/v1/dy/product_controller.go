@@ -573,10 +573,10 @@ func (receiver *ProductController) ProductLiveRoomList() {
 					CurList: []dy2.LiveCurProduct{},
 				}
 			}
+			item.ProductInfo.AuthorID = business.IdEncrypt(item.ProductInfo.AuthorID)
 			item.ProductInfo.ProductID = business.IdEncrypt(item.ProductInfo.ProductID)
 			item.ProductInfo.AuthorRoomID = business.IdEncrypt(item.ProductInfo.AuthorRoomID)
 			item.ProductInfo.RoomID = business.IdEncrypt(item.ProductInfo.RoomID)
-			item.ProductInfo.ProductID = business.IdEncrypt(item.ProductInfo.ProductID)
 			countList = append(countList, item)
 		}
 	}
