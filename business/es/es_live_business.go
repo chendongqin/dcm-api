@@ -39,7 +39,7 @@ func (receiver *EsLiveBusiness) SearchAuthorRooms(authorId, keyword, sortStr, or
 		comErr = global.NewError(4000)
 		return
 	}
-	if size > 50 {
+	if size > 100 {
 		comErr = global.NewError(4000)
 		return
 	}
