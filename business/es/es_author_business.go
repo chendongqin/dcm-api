@@ -42,7 +42,7 @@ func (receiver *EsAuthorBusiness) BaseSearch(
 	}
 	esTable := es.DyAuthorTable
 	esQuery, esMultiQuery := elasticsearch.NewElasticQueryGroup()
-	esQuery.SetTerm("exist", false)
+	esQuery.SetTerm("exist", 1)
 	if sortStr == "follower_count" && minFollower == 0 {
 		minFollower = 2600000
 	}
