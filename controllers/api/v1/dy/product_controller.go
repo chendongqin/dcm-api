@@ -659,6 +659,11 @@ func (receiver *ProductController) ProductAuthorLiveRooms() {
 	for k, v := range list {
 		list[k].Cover = dyimg.Fix(v.Cover)
 		list[k].RoomId = business.IdEncrypt(v.RoomId)
+		endLiveTime := v.EndTs
+		if endLiveTime == 0 {
+			endLiveTime = time.Now().Unix()
+		}
+		list[k].LiveSecond = endLiveTime - v.StartTs
 	}
 	receiver.SuccReturn(map[string]interface{}{
 		"list":  list,
