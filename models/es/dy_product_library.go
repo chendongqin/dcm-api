@@ -24,4 +24,5 @@ type DyProduct struct {
 	SecondCname       string  `json:"second_cname"`
 	ThirdCname        string  `json:"third_cname"`
 	IsStar            int     `json:"is_star"`
+	Undercarriage     int     `json:"undercarriage"`
 }
