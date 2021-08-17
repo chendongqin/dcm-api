@@ -34,7 +34,7 @@ func (i *EsProductBusiness) BaseSearch(productId, keyword, category, secondCateg
 		comErr = global.NewError(4000)
 		return
 	}
-	if pageSize > 50 {
+	if pageSize > 100 {
 		comErr = global.NewError(4000)
 		return
 	}
