@@ -291,7 +291,27 @@ func (a *AuthorBusiness) GetDyAuthorScore(liveScore entity.XtAuthorLiveScore, vi
 
 //直播分析
 func (a *AuthorBusiness) CountLiveRoomAnalyse(authorId string, startTime, endTime time.Time) (data dy.SumDyLiveRoom) {
-	data = dy.SumDyLiveRoom{}
+	data = dy.SumDyLiveRoom{
+		UserTotalChart: dy.DyUserTotalChart{
+			Date:       []string{},
+			CountValue: []int64{},
+			Rooms:      [][]dy.DyLiveRoomChart{},
+		},
+		OnlineTimeChart: dy.DateCountFChart{
+			Date:       []string{},
+			CountValue: []float64{},
+		},
+		UvChart: dy.DateCountFChart{
+			Date:       []string{},
+			CountValue: []float64{},
+		},
+		AmountChart: dy.DateCountFChart{
+			Date:       []string{},
+			CountValue: []float64{},
+		},
+		LiveLongTimeChart:  []dy.NameValueChart{},
+		LiveStartHourChart: []dy.NameValueChart{},
+	}
 	roomsMap, _ := hbase.GetAuthorRoomsRangDate(authorId, startTime, endTime)
 	liveDataList := make([]dy.DyLiveRoomAnalyse, 0)
 	roomNum := 0
