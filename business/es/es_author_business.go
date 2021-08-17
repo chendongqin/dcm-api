@@ -43,7 +43,7 @@ func (receiver *EsAuthorBusiness) BaseSearch(
 	esTable := es.DyAuthorTable
 	esQuery, esMultiQuery := elasticsearch.NewElasticQueryGroup()
 	esQuery.SetTerm("exist", 1)
-	if sortStr == "follower_count" && minFollower == 0 {
+	if sortStr == "follower_count" && minFollower == 0 && maxFollower == 0 {
 		minFollower = 2600000
 	}
 	if keyword != "" {
@@ -60,6 +60,12 @@ func (receiver *EsAuthorBusiness) BaseSearch(
 		} else {
 			esQuery.SetMultiMatch([]string{"unique_id", "short_id", "nickname"}, keyword)
 		}
+	}
+	if province != "" {
+		esQuery.SetTerm("province.keyword", province)
+	}
+	if city != "" {
+		esQuery.SetTerm("city.keyword", city)
 	}
 	if authorId != "" {
 		esQuery.SetTerm("author_id", authorId)
@@ -91,9 +97,9 @@ func (receiver *EsAuthorBusiness) BaseSearch(
 	}
 	if verification != 0 {
 		if verification == 1 {
-			esQuery.SetTerm("brand", 0)
+			esQuery.SetTerm("verification_type", 0)
 		} else if verification == 2 {
-			esQuery.SetTerm("brand", 1)
+			esQuery.SetTerm("verification_type", 1)
 		}
 	}
 	if secondCategory != "" {
@@ -107,12 +113,13 @@ func (receiver *EsAuthorBusiness) BaseSearch(
 		if maxGmv > 0 {
 			rangeMap["lt"] = maxGmv
 		}
-		esQuery.SetRange("predict_gmv", rangeMap)
+		esQuery.SetRange("predict_30_gmv", rangeMap)
 	}
 	if minAge > 0 || maxAge > 0 {
 		rangeMap := map[string]interface{}{}
 		if minAge > 0 {
 			rangeMap["gte"] = minAge
+			rangeMap["lt"] = 0
 		}
 		if maxAge > 0 {
 			rangeMap["lt"] = maxAge
