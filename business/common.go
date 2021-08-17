@@ -236,7 +236,7 @@ func IdEncrypt(id string) string {
 		return ""
 	}
 	//restful路由避免错误
-	return strings.Replace(base64.StdEncoding.EncodeToString(str), "/", "*", 1)
+	return strings.ReplaceAll(base64.StdEncoding.EncodeToString(str), "/", "*")
 }
 
 //id解密
@@ -249,7 +249,7 @@ func IdDecrypt(id string) string {
 	}
 	key := []byte("dwVRjLVUN4RMGAKSEvuvPV696PKrEuRT")
 	//restful路由避免错误
-	id = strings.Replace(id, "*", "/", 1)
+	id = strings.ReplaceAll(id, "*", "/")
 	s, err := base64.StdEncoding.DecodeString(id)
 	if err != nil {
 		return ""
