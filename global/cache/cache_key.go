@@ -29,4 +29,5 @@ const (
 	ProductAuthorCount   KeyName = "dcm:product:author:%s:%s:%s"
 	//商品达人数据缓存
 	ProductAuthorAllList KeyName = "dcm:product:author:row:%s:%s"
+	AuthorProductAllList KeyName = "dcm:author:product:row:%s:%s"
 )

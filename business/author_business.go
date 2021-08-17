@@ -539,9 +539,17 @@ func (a *AuthorBusiness) GetAuthorProductAnalyse(authorId, keyword, firstCate, s
 	}
 	startRowKey := startRow.AuthorDateProduct
 	stopRowKey := stopRow.AuthorDateProduct
-	hbaseDataList, _ = hbase.GetAuthorProductAnalysisRange(startRowKey, stopRowKey)
-	hbaseData, _ := hbase.GetAuthorProductAnalysis(stopRowKey)
-	hbaseDataList = append(hbaseDataList, hbaseData)
+	cacheKey := cache.GetCacheKey(cache.AuthorProductAllList, startRowKey, stopRowKey)
+	cacheStr := global.Cache.Get(cacheKey)
+	if cacheStr != "" {
+		cacheStr = utils.DeserializeData(cacheStr)
+		_ = jsoniter.Unmarshal([]byte(cacheStr), &hbaseDataList)
+	} else {
+		hbaseDataList, _ = hbase.GetAuthorProductAnalysisRange(startRowKey, stopRowKey)
+		hbaseData, _ := hbase.GetAuthorProductAnalysis(stopRowKey)
+		hbaseDataList = append(hbaseDataList, hbaseData)
+		_ = global.Cache.Set(cacheKey, utils.SerializeData(hbaseDataList), 300)
+	}
 	//var wg sync.WaitGroup
 	//wg.Add(len(searchList))
 	//hbaseDataChan := make(chan entity.DyAuthorProductAnalysis, resLen)
@@ -582,11 +590,11 @@ func (a *AuthorBusiness) GetAuthorProductAnalyse(authorId, keyword, firstCate, s
 			continue
 		}
 		if brandName == "其他" {
-			if brandName != v.BrandName || v.BrandName != "" {
+			if brandName != v.BrandName && v.BrandName != "" {
 				continue
 			}
 		} else {
-			if brandName != "" && brandName != v.BrandName {
+			if brandName != v.BrandName {
 				continue
 			}
 		}

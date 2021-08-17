@@ -65,6 +65,9 @@ func (receiver *EsAuthorBusiness) BaseSearch(
 		esQuery.SetTerm("author_id", authorId)
 	}
 	if category != "" {
+		if category == "其他" {
+			category = ""
+		}
 		esQuery.SetTerm("tags.keyword", category)
 	}
 	if sellTags != "" {
