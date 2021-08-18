@@ -2,8 +2,8 @@ package payer
 
 import (
 	"dongchamao/global"
-	"github.com/iGoogle-ink/gopay"
-	"github.com/iGoogle-ink/gopay/alipay"
+	"github.com/go-pay/gopay"
+	"github.com/go-pay/gopay/alipay"
 )
 
 //alipay web

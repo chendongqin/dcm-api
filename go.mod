@@ -16,11 +16,11 @@ require (
 	github.com/dgrijalva/jwt-go v3.2.0+incompatible
 	github.com/elastic/go-elasticsearch/v8 v8.0.0-20210608143047-aa1301e7ba9d
 	github.com/fortytw2/leaktest v1.3.0 // indirect
+	github.com/go-pay/gopay v1.5.55
 	github.com/go-sql-driver/mysql v1.6.0
 	github.com/go-xorm/xorm v0.7.9
 	github.com/gogo/protobuf v1.3.1
 	github.com/gomodule/redigo v2.0.0+incompatible
-	github.com/iGoogle-ink/gopay v1.5.7
 	github.com/json-iterator/go v1.1.11
 	github.com/mailru/easyjson v0.7.7 // indirect
 	github.com/nilorg/go-opentaobao v1.0.0

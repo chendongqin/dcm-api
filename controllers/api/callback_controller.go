@@ -7,7 +7,7 @@ import (
 	"dongchamao/models/dcm"
 	"dongchamao/services/payer"
 	"github.com/astaxie/beego/logs"
-	"github.com/iGoogle-ink/gopay/alipay"
+	"github.com/go-pay/gopay/alipay"
 	"net/http"
 	"time"
 )
