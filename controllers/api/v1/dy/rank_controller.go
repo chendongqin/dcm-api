@@ -8,6 +8,7 @@ import (
 	"dongchamao/hbase"
 	"dongchamao/models/entity"
 	"dongchamao/services/dyimg"
+	"math"
 	"time"
 )
 
@@ -175,15 +176,15 @@ func (receiver *RankController) DyLiveShareWeekRank() {
 	list := make([]entity.DyLiveShareWeekData, 0)
 	for _, v := range data.Data {
 		var gmv float64 = 0
-		var sales int64 = 0
+		var sales float64 = 0
 		var totalUser int64 = 0
 		for _, r := range v.Rooms {
-			if r.RealSales != 0{
+			if r.RealSales > 0 {
 				gmv += r.RealGmv
-				sales += r.RealSales
-			}else {
+				sales += math.Floor(r.RealSales)
+			} else {
 				gmv += r.PredictGmv
-				sales += r.PredictSales
+				sales += math.Floor(r.PredictSales)
 			}
 			totalUser += r.TotalUser
 		}
