@@ -16,6 +16,7 @@ func NewEsAuthorBusiness() *EsAuthorBusiness {
 	return new(EsAuthorBusiness)
 }
 
+//达人库查询
 func (receiver *EsAuthorBusiness) BaseSearch(
 	authorId, keyword, category, secondCategory, sellTags, province, city, fanProvince, fanCity string,
 	minFollower, maxFollower, minWatch, maxWatch, minDigg, maxDigg,
