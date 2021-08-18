@@ -16,6 +16,7 @@ type VipOrderDetail struct {
 	BuyDays      int    `json:"buy_days"`
 	Title        string `json:"title"`
 	Amount       string `json:"amount"`
+	Channel      int    `json:"channel"`
 	TicketAmount string `json:"ticket_amount"`
 	Status       int    `json:"status"`
 	PayStatus    int    `json:"pay_status"`

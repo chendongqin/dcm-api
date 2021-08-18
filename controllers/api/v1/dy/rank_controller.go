@@ -186,6 +186,7 @@ func (receiver *RankController) DyLiveShareWeekRank() {
 		if uniqueId == "" || uniqueId == "0" {
 			uniqueId = v.ShortId
 		}
+		roomNum := len(v.Rooms)
 		list = append(list, entity.DyLiveShareWeekData{
 			AuthorId:   business.IdEncrypt(utils.ToString(v.AuthorId)),
 			Avatar:     dyimg.Avatar(v.Avatar),
@@ -197,8 +198,8 @@ func (receiver *RankController) DyLiveShareWeekRank() {
 			UniqueId:   uniqueId,
 			Gmv:        gmv,
 			Sales:      sales,
-			TotalUser:  totalUser,
-			RoomNum:    len(v.Rooms),
+			TotalUser:  totalUser / int64(roomNum),
+			RoomNum:    roomNum,
 		})
 	}
 	receiver.SuccReturn(map[string]interface{}{
