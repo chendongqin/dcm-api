@@ -33,7 +33,7 @@ type DyLiveShareWeekData struct {
 	Score      int64   `json:"score"`
 	UniqueId   string  `json:"unique_id"`
 	Gmv        float64 `json:"gmv"`
-	Sales      int64   `json:"sales"`
+	Sales      float64 `json:"sales"`
 	TotalUser  int64   `json:"total_user"`
 	RoomNum    int     `json:"room_num"`
 }
@@ -43,7 +43,7 @@ type DyLiveShareRoom struct {
 	CreateTime   int64   `json:"create_time"`
 	TotalUser    int64   `json:"total_user"`
 	PredictGmv   float64 `json:"predict_gmv"`
-	PredictSales int64   `json:"predict_sales"`
+	PredictSales float64 `json:"predict_sales"`
 	RealGmv      float64 `json:"real_gmv"`
-	RealSales    int64   `json:"real_sales"`
+	RealSales    float64 `json:"real_sales"`
 }
