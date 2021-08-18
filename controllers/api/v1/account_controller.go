@@ -172,6 +172,7 @@ func (receiver *AccountController) ResetPwd() {
 	return
 }
 
+//info
 func (receiver *AccountController) Info() {
 	username := receiver.UserInfo.Username
 	isWechat := 0
