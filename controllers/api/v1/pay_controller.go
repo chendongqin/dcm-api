@@ -348,12 +348,27 @@ func (receiver *PayController) OrderDel() {
 //订单列表
 func (receiver *PayController) OrderList() {
 	platform := receiver.Ctx.Input.Param(":platform")
+	selectStatus, _ := receiver.GetInt("select_status", 0)
+	invoiceStatus, _ := receiver.GetInt("invoice_status", 0)
 	page := receiver.GetPage("page")
 	pageSize := receiver.GetPageSize("page_size", 10, 30)
 	vipOrderList := make([]dcm.DcVipOrder, 0)
 	start := (page - 1) * pageSize
+	sql := fmt.Sprintf("user_id=%d AND platform='%s'", receiver.UserId, platform)
+	if selectStatus == 0 {
+		sql += " AND status >= 0 "
+	} else if selectStatus == 1 {
+		sql += " AND pay_status = 1 "
+	} else {
+		sql += " AND pay_status = 0 AND expiration_time > '" + time.Now().Format("2021-01-02 15:04:05") + "'"
+	}
+	if invoiceStatus == 1 {
+		sql += " AND invoice_id = 0"
+	} else if invoiceStatus == 2 {
+		sql += " AND invoice_id > 0"
+	}
 	total, _ := dcm.GetSlaveDbSession().
-		Where("user_id=? AND platform=? AND status > 0", receiver.UserId, platform).
+		Where(sql).
 		Limit(pageSize, start).
 		Desc("create_time").
 		FindAndCount(&vipOrderList)
