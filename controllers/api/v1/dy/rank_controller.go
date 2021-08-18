@@ -178,8 +178,13 @@ func (receiver *RankController) DyLiveShareWeekRank() {
 		var sales int64 = 0
 		var totalUser int64 = 0
 		for _, r := range v.Rooms {
-			gmv += r.PredictGmv
-			sales += r.PredictSales
+			if r.RealSales != 0{
+				gmv += r.RealGmv
+				sales += r.RealSales
+			}else {
+				gmv += r.PredictGmv
+				sales += r.PredictSales
+			}
 			totalUser += r.TotalUser
 		}
 		uniqueId := v.UniqueId
