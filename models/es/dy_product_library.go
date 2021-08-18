@@ -20,6 +20,7 @@ type DyProduct struct {
 	RelateRoom        int     `json:"relate_room"`
 	RelateAuthor      int     `json:"relate_author"`
 	IsYesterday       int     `json:"is_yesterday"`
+	DcmLevelFirst     string  `json:"dcm_level_first"`
 	FirstCname        string  `json:"first_cname"`
 	SecondCname       string  `json:"second_cname"`
 	ThirdCname        string  `json:"third_cname"`

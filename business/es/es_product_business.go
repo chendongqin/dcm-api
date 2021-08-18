@@ -47,13 +47,13 @@ func (i *EsProductBusiness) BaseSearch(productId, keyword, category, secondCateg
 		esQuery.SetTerm("product_id", productId)
 	}
 	if category != "" {
-		esQuery.SetTerm("first_cname.keyword", category)
+		esQuery.SetTerm("dcm_level_first.keyword", category)
 	}
 	if secondCategory != "" {
-		esQuery.SetTerm("second_cname.keyword", secondCategory)
+		esQuery.SetTerm("first_cname.keyword", secondCategory)
 	}
 	if thirdCategory != "" {
-		esQuery.SetTerm("third_cname.keyword", thirdCategory)
+		esQuery.SetTerm("second_cname.keyword", thirdCategory)
 	}
 	if platform != "" {
 		esQuery.SetTerm("platform_label.keyword", platform)
