@@ -177,6 +177,7 @@ func (receiver *EsAuthorBusiness) BaseSearch(
 	return
 }
 
+//商品达人分析
 func (receiver *EsAuthorBusiness) AuthorProductAnalysis(authorId, keyword string, startTime, endTime time.Time) (startRow es.EsDyAuthorProductAnalysis, endRow es.EsDyAuthorProductAnalysis, comErr global.CommonError) {
 	esTable := GetESTableByTime(es.DyAuthorProductAnalysisTable, startTime, endTime)
 	esQuery, esMultiQuery := elasticsearch.NewElasticQueryGroup()
