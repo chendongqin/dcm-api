@@ -17,7 +17,7 @@ func NewEsProductBusiness() *EsProductBusiness {
 }
 
 func (i *EsProductBusiness) BaseSearch(productId, keyword, category, secondCategory, thirdCategory, platform string,
-	minCommissionRate, minPrice, maxPrice float64, commerceType, isCoupon, isStar, notStar, page, pageSize int,
+	minCommissionRate, minPrice, maxPrice float64, commerceType, isCoupon, relateRoom, relateAweme, isStar, notStar, page, pageSize int,
 	sortStr, orderBy string) (list []es.DyProduct, total int, comErr global.CommonError) {
 	list = []es.DyProduct{}
 	if sortStr == "" {
@@ -66,6 +66,12 @@ func (i *EsProductBusiness) BaseSearch(productId, keyword, category, secondCateg
 	}
 	if isCoupon == 1 {
 		esQuery.SetTerm("is_coupon", 1)
+	}
+	if relateRoom == 1 {
+		esQuery.SetRange("relate_room", map[string]interface{}{"gt": 0})
+	}
+	if relateAweme == 1 {
+		esQuery.SetRange("relate_aweme", map[string]interface{}{"gt": 0})
 	}
 	if commerceType != 0 {
 		esQuery.SetTerm("commerce_type", commerceType)

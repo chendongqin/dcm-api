@@ -49,11 +49,13 @@ func (receiver *ProductController) Search() {
 	isCoupon, _ := receiver.GetInt("is_coupon", 0)
 	isStar, _ := receiver.GetInt("is_star", 0)
 	notStar, _ := receiver.GetInt("not_star", 0)
+	relateRoom, _ := receiver.GetInt("relate_room", 0)
+	relateAweme, _ := receiver.GetInt("relate_aweme", 0)
 	page := receiver.GetPage("page")
 	pageSize := receiver.GetPageSize("page_size", 10, 100)
 	if !hasAuth {
 		if category != "" || secondCategory != "" || thirdCategory != "" || platform != "" || minCommissionRate > 0 || minPrice > 0 || maxPrice > 0 || commerceType > 0 ||
-			isCoupon > 0 || isStar > 0 || notStar > 0 || page != 1 {
+			isCoupon > 0 || isStar > 0 || notStar > 0 || page != 1 || relateRoom > 0 || relateAweme > 0 {
 			if !hasLogin {
 				receiver.FailReturn(global.NewError(4001))
 				return
@@ -96,7 +98,7 @@ func (receiver *ProductController) Search() {
 	}
 	esProductBusiness := es.NewEsProductBusiness()
 	list, total, comErr := esProductBusiness.BaseSearch(productId, keyword, category, secondCategory, thirdCategory, platform,
-		minCommissionRate, minPrice, maxPrice, commerceType, isCoupon, isStar, notStar, page, pageSize, sortStr, orderBy)
+		minCommissionRate, minPrice, maxPrice, commerceType, isCoupon, relateRoom, relateAweme, isStar, notStar, page, pageSize, sortStr, orderBy)
 	if comErr != nil {
 		receiver.FailReturn(comErr)
 		return
