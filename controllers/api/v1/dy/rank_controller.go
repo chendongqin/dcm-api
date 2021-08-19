@@ -261,6 +261,14 @@ func (receiver *RankController) DyAuthorTakeGoodsRank() {
 	date := receiver.GetString("date", "*")
 	tags := receiver.GetString("tags", "综合")
 	list, _ := es.NewEsAuthorBusiness().AuthorTakeGoodsRank(date, tags)
+	for k, v := range list {
+		list[k].AuthorId = business.IdEncrypt(v.AuthorId)
+		if v.UniqueId == "" || v.UniqueId == "0" {
+			list[k].UniqueId = v.ShortId
+		}
+		list[k].AuthorCover = dyimg.Avatar(v.AuthorCover)
+		list[k].RoomCover = dyimg.Avatar(v.RoomCover)
+	}
 	receiver.SuccReturn(map[string]interface{}{
 		"list": list,
 	})
