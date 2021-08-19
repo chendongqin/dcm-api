@@ -206,3 +206,17 @@ func (receiver *EsAuthorBusiness) AuthorProductAnalysis(authorId, keyword string
 	utils.MapToStruct(result2, &endRow)
 	return
 }
+
+//达人带货榜
+func (receiver *EsAuthorBusiness) AuthorTakeGoodsRank(date, tags string) (list []es.DyAuthorTakeGoods, comErr global.CommonError) {
+	esTable := "dy_author_take_goods_top_" + date
+	esQuery, esMultiQuery := elasticsearch.NewElasticQueryGroup()
+	esQuery.SetTerm("tags.keyword", tags)
+	results := esMultiQuery.
+		SetTable(esTable).
+		AddMust(esQuery.Condition).
+		SetMultiQuery().
+		Query()
+	utils.MapToStruct(results, &list)
+	return
+}

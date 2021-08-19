@@ -2,6 +2,7 @@ package dy
 
 import (
 	"dongchamao/business"
+	"dongchamao/business/es"
 	controllers "dongchamao/controllers/api"
 	"dongchamao/global"
 	"dongchamao/global/utils"
@@ -252,5 +253,16 @@ func (receiver *RankController) DyAwemeShareRank() {
 		"update_time": data.CrawlTime,
 	})
 	receiver.SuccReturn(data)
+	return
+}
+
+//达人带货榜
+func (receiver *RankController) DyAuthorTakeGoodsRank() {
+	date := receiver.GetString("date", "*")
+	tags := receiver.GetString("tags", "综合")
+	list, _ := es.NewEsAuthorBusiness().AuthorTakeGoodsRank(date, tags)
+	receiver.SuccReturn(map[string]interface{}{
+		"list": list,
+	})
 	return
 }
