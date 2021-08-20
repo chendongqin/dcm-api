@@ -129,12 +129,12 @@ func (receiver *AccountController) ResetPwd() {
 	if receiver.UserInfo.SetPassword == 1 {
 		oldPwd := InputData.GetString("old_pwd", "")
 		if oldPwd == "" {
-			receiver.FailReturn(global.NewError(4207))
+			receiver.FailReturn(global.NewError(4214))
 			return
 		}
 		oldPwd = utils.Base64Decode(oldPwd)
 		if utils.Md5_encode(oldPwd+receiver.UserInfo.Salt) != receiver.UserInfo.Password {
-			receiver.FailReturn(global.NewError(4207))
+			receiver.FailReturn(global.NewError(4214))
 			return
 		}
 	}

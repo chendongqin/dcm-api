@@ -37,6 +37,8 @@ type DyAuthor struct {
 	AwemeList        []DyAuthorAweme `json:"aweme_list"`
 	RoomList         []DyAuthorRoom  `json:"room_list"`
 	RoomCount        int64           `json:"room_count"`
+	RoomId           string          `json:"room_id"`
+	RoomStatus       int             `json:"room_status"`
 	LiveDuration     string          `json:"live_duration"`
 	AgeLiveDuration  int64           `json:"avg_live_duration"`
 	MedWatchCnt      int64           `json:"med_watch_cnt"`
