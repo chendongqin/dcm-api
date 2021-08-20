@@ -9,6 +9,7 @@ import (
 	"dongchamao/global/utils"
 	"dongchamao/models/dcm"
 	"dongchamao/services/ali_sms"
+	"encoding/json"
 	"strings"
 )
 
@@ -105,5 +106,22 @@ func (receiver *CommonController) IdEncryptDecrypt() {
 }
 
 func (receiver *CommonController) Test() {
+	return
+}
+
+func (receiver *CommonController) GetConfig() {
+	var configJson dcm.DcConfigJson
+	keyName := receiver.GetString(":key_name")
+	_, err := dcm.GetDbSession().Where("key_name=?", keyName).Get(&configJson)
+	if err != nil {
+		receiver.FailReturn(global.NewError(5000))
+		return
+	}
+	var data []interface{}
+	if err := json.Unmarshal([]byte(configJson.Value), &data); err != nil {
+		receiver.FailReturn(global.NewError(5000))
+		return
+	}
+	receiver.SuccReturn(data)
 	return
 }
