@@ -382,6 +382,7 @@ func (receiver *UserBusiness) CancelDyCollect(id int) (comErr global.CommonError
 	return
 }
 
+//关键词统计
 func (receiver *UserBusiness) KeywordsRecord(keyword string) (comErr global.CommonError) {
 	var record dcm.DcUserKeywordsRecord
 	db := dcm.GetDbSession().Table(dcm.DcUserKeywordsRecord{})
@@ -397,6 +398,62 @@ func (receiver *UserBusiness) KeywordsRecord(keyword string) (comErr global.Comm
 		}
 	} else if _, err := db.Insert(record); err != nil {
 		comErr = global.NewError(5000)
+	}
+	return
+}
+
+//获取分组列表
+func (receiver *UserBusiness) GetDyCollectTags(userId int) (tags []dcm.DcUserDyCollectTag, comErr global.CommonError) {
+	db := dcm.GetDbSession().Table(dcm.DcUserDyCollectTag{})
+	if _, err := db.Where("user_id=? and delete_time is NULL", userId).Get(&tags); err != nil {
+		comErr = global.NewError(5000)
+		return
+	}
+	return
+}
+
+//创建分组
+func (receiver *UserBusiness) AddDyCollectTag(name string, userId int) (comErr global.CommonError) {
+	db := dcm.GetDbSession().Table(dcm.DcUserDyCollectTag{})
+	tag := dcm.DcUserDyCollectTag{
+		Name:       name,
+		UserId:     userId,
+		CreateTime: time.Now(),
+		UpdateTime: time.Now(),
+	}
+	if _, err := db.Insert(tag); err != nil {
+		comErr = global.NewError(5000)
+		return
+	}
+	return
+}
+
+//编辑分组
+func (receiver *UserBusiness) UpdDyCollectTag(name string, id int) (comErr global.CommonError) {
+	db := dcm.GetDbSession().Table(dcm.DcUserDyCollectTag{})
+	var tag dcm.DcUserDyCollectTag
+	if _, err := db.Where("id=?", id).Get(&tag); err != nil {
+		return
+	}
+	tag.Name = name
+	if _, err := db.Update(tag); err != nil {
+		comErr = global.NewError(5000)
+		return
+	}
+	return
+}
+
+//删除分组
+func (receiver *UserBusiness) DelDyCollectTag(id int) (comErr global.CommonError) {
+	db := dcm.GetDbSession().Table(dcm.DcUserDyCollectTag{})
+	var tag dcm.DcUserDyCollectTag
+	if _, err := db.Where("id=?", id).Get(&tag); err != nil {
+		return
+	}
+	tag.DeleteTime = time.Now()
+	if _, err := db.Update(tag); err != nil {
+		comErr = global.NewError(5000)
+		return
 	}
 	return
 }
