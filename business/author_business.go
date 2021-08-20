@@ -131,6 +131,8 @@ func (a *AuthorBusiness) HbaseGetAuthor(authorId string) (data entity.DyAuthor, 
 		return
 	}
 	data.Data.Age = GetAge(data.Data.Birthday)
+	//数据做同步
+	data.Data.RoomID = data.RoomId
 	data.Data.Avatar = dyimg.Fix(data.Data.Avatar)
 	data.Data.ShareUrl = ShareUrlPrefix + data.Data.ID
 	if data.Data.UniqueID == "" {
