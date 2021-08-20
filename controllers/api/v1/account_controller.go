@@ -323,3 +323,34 @@ func (receiver *AccountController) DyUserSearchList() {
 	})
 	return
 }
+
+func (receiver *AccountController) AddDyCollect() {
+	collectId := receiver.GetString("collect_id")
+	collectType, err := receiver.GetInt("collect_type", 1)
+	if err != nil {
+		receiver.FailReturn(global.NewError(5000))
+		return
+	}
+	comErr := business.NewUserBusiness().AddDyCollect(collectId, collectType, receiver.UserInfo.Id)
+	if comErr != nil {
+		receiver.FailReturn(comErr)
+		return
+	}
+	receiver.SuccReturn("success")
+	return
+}
+
+func (receiver *AccountController) DelDyCollect() {
+	id, err := receiver.GetInt(":id")
+	if err != nil {
+		receiver.FailReturn(global.NewError(5000))
+		return
+	}
+	comErr := business.NewUserBusiness().CancelDyCollect(id)
+	if comErr != nil {
+		receiver.FailReturn(comErr)
+		return
+	}
+	receiver.SuccReturn("success")
+	return
+}

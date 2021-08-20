@@ -4,6 +4,7 @@ import (
 	"dongchamao/global"
 	"dongchamao/global/cache"
 	"dongchamao/global/utils"
+	"dongchamao/hbase"
 	"dongchamao/models/dcm"
 	"dongchamao/services/mutex"
 	"github.com/dgrijalva/jwt-go"
@@ -169,45 +170,6 @@ func (receiver *UserBusiness) SmsLogin(mobile, code string, appId int) (user dcm
 	return
 }
 
-//收藏达人
-func (receiver *UserBusiness) CollectAuthor(userId, authorId string, platform int) (comErr global.CommonError) {
-	dbSession := dcm.GetDbSession()
-	collect := dcm.DcUserCollect{}
-	exist, err := dbSession.Where("user_id=? AND platform=? AND author_id=?", userId, platform, authorId).Get(&collect)
-	if err != nil {
-		comErr = global.NewError(5000)
-		return
-	}
-	if exist || collect.Status == 1 {
-		comErr = global.NewMsgError("您已收藏该达人，请刷新重试")
-		return
-	}
-	//达人查询写入
-
-	return
-}
-
-//取消收藏
-func (receiver *UserBusiness) CancelCollectAuthor(userId, authorId string, platform int) (comErr global.CommonError) {
-	dbSession := dcm.GetDbSession()
-	collect := dcm.DcUserCollect{}
-	exist, err := dbSession.Where("user_id=? AND platform=? AND author_id=?", userId, platform, authorId).Get(&collect)
-	if err != nil {
-		comErr = global.NewError(5000)
-		return
-	}
-	if !exist || collect.Status == 0 {
-		comErr = global.NewMsgError("您未收藏了该达人，请刷新重试")
-		return
-	}
-	affect, err := dcm.UpdateInfo(dbSession, collect.Id, map[string]interface{}{"status": 0}, new(dcm.DcUserCollect))
-	if err != nil || affect == 0 {
-		comErr = global.NewError(5000)
-		return
-	}
-	return
-}
-
 func (receiver *UserBusiness) DeleteUserInfoCache(userid int) bool {
 	memberKey := cache.GetCacheKey(cache.UserInfo, userid)
 	err := global.Cache.Delete(memberKey)
@@ -313,4 +275,67 @@ func (receiver *UserBusiness) GetCacheUserLevel(userId, levelType int, enableCac
 	vipLevel := vipBusiness.GetVipLevel(userId, levelType)
 	_ = global.Cache.Set(memberKey, utils.ToString(vipLevel.Level), 1800)
 	return vipLevel.Level
+}
+
+//收藏达人
+func (receiver *UserBusiness) AddDyCollect(collectId string, collectType, userId int) (comErr global.CommonError) {
+	collect := dcm.DcUserDyCollect{}
+	dbCollect := dcm.GetDbSession().Table(collect)
+	defer dbCollect.Close()
+	exist, err := dbCollect.Where("user_id=? AND collect_type=? AND collect_id=?", userId, collectType, collectId).Get(&collect)
+	if err != nil {
+		comErr = global.NewError(5000)
+		return
+	}
+	if collect.Status == 1 {
+		comErr = global.NewMsgError("您已收藏该达人，请刷新重试")
+		return comErr
+	}
+	collect.Status = 1
+	collect.CollectId = collectId
+	collect.UpdateTime = time.Now()
+	switch collectType {
+	case 1:
+		author, comErr := hbase.GetAuthor(collectId)
+		if comErr != nil {
+			return comErr
+		}
+		collect.Label = author.Tags
+	}
+	if exist {
+		if _, err := dbCollect.Update(collect); err != nil {
+			comErr = global.NewError(5000)
+			return
+		}
+	} else {
+		collect.CreateTime = time.Now()
+		collect.UserId = userId
+		collect.CollectType = collectType
+		if _, err := dbCollect.Insert(collect); err != nil {
+			comErr = global.NewError(5000)
+			return
+		}
+	}
+	return
+}
+
+//取消收藏
+func (receiver *UserBusiness) CancelDyCollect(id int) (comErr global.CommonError) {
+	dbCollect := dcm.GetDbSession().Table(dcm.DcUserDyCollect{})
+	defer dbCollect.Close()
+	exist, err := dbCollect.Where("id=? and status=?", id, 1).Exist()
+	if err != nil {
+		comErr = global.NewError(5000)
+		return
+	}
+	if !exist {
+		comErr = global.NewMsgError("您未收藏该达人，请刷新重试")
+		return
+	}
+	affect, err := dcm.UpdateInfo(dbCollect, id, map[string]interface{}{"status": 0, "update_time": time.Now()}, new(dcm.DcUserDyCollect))
+	if err != nil || affect == 0 {
+		comErr = global.NewError(5000)
+		return
+	}
+	return
 }
