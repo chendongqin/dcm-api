@@ -247,21 +247,22 @@ func (receiver *AuthorController) AuthorViewData() {
 			Sales30Chart:          []dy2.DyAuthorBaseProductPriceChart{},
 		},
 	}
-	firstLiveTimestamp := authorBase.FirstLiveTime
-	firstVideoTimestamp := authorBase.FirstAwemeTime
+	firstLiveTimestamp := authorBase.FirstLiveTime - (authorBase.FirstLiveTime % 86400)
+	firstVideoTimestamp := authorBase.FirstAwemeTime - (authorBase.FirstAwemeTime % 86400)
 	if firstLiveTimestamp > 0 {
 		firstLiveTime := time.Unix(firstLiveTimestamp, 0)
 		tmpWeek := int(firstLiveTime.Weekday())
 		if tmpWeek == 0 {
 			tmpWeek = 7
 		}
-		days := todayTime.AddDate(0, 0, 7-nowWeek).Day() - firstLiveTime.AddDate(0, 0, -(tmpWeek-1)).Day()
+		days := (todayTime.AddDate(0, 0, 7-nowWeek).Unix() - firstLiveTime.AddDate(0, 0, -(tmpWeek-1)).Unix()) / 86400
 		days += 1
 		weekNum := utils.ToInt64(days / 7)
 		if weekNum > 0 {
 			data.LiveCount.AvgWeekRoomCount = authorBase.RoomCount / weekNum
 		}
-		month := time.Now().Month() - firstLiveTime.Month()
+		month := int64(time.Now().Month() - firstLiveTime.Month())
+		month += 1
 		if month > 0 {
 			data.LiveCount.AvgMonthRoomCount = authorBase.RoomCount / utils.ToInt64(month)
 		}
@@ -272,15 +273,16 @@ func (receiver *AuthorController) AuthorViewData() {
 		if tmpWeek == 0 {
 			tmpWeek = 7
 		}
-		days := todayTime.AddDate(0, 0, 7-nowWeek).Day() - firstVideoTime.AddDate(0, 0, -(tmpWeek-1)).Day()
+		days := (todayTime.AddDate(0, 0, 7-nowWeek).Unix() - firstVideoTime.AddDate(0, 0, -(tmpWeek-1)).Unix()) / 86400
 		days += 1
 		weekNum := utils.ToInt64(days / 7)
 		if weekNum > 0 {
 			data.VideoCount.WeekVideoCount = authorBase.AwemeCount / weekNum
 		}
-		month := time.Now().Month() - firstVideoTime.Month()
+		month := int64(time.Now().Month() - firstVideoTime.Month())
+		month += 1
 		if month > 0 {
-			data.VideoCount.MonthVideoCount = authorBase.AwemeCount / utils.ToInt64(month)
+			data.VideoCount.MonthVideoCount = authorBase.AwemeCount / month
 		}
 	}
 	receiver.SuccReturn(data)
