@@ -258,9 +258,25 @@ func (receiver *RankController) DyAwemeShareRank() {
 
 //达人带货榜
 func (receiver *RankController) DyAuthorTakeGoodsRank() {
-	date := receiver.GetString("date", "*")
-	tags := receiver.GetString("tags", "综合")
-	list, _ := es.NewEsAuthorBusiness().AuthorTakeGoodsRank(date, tags)
+	date := receiver.GetString("date")
+	dateType, _ := receiver.GetInt("date_type", 1)
+	startDate, err := time.ParseInLocation("2006-01-02", date, time.Local)
+	if err != nil {
+		receiver.FailReturn(global.NewError(4000))
+		return
+	}
+	endDate := startDate.AddDate(0, 0, 1).Add(-1)
+	switch dateType {
+	case 2:
+		endDate = startDate.AddDate(0, 0, 7).Add(-1)
+	case 3:
+		endDate = startDate.AddDate(0, 1, 0).Add(-1)
+	}
+	tags := receiver.GetString("tags")
+	verification := receiver.GetString("verification")
+	sortStr := receiver.GetString("sort", "desc")
+	orderBy := receiver.GetString("order_by", "predict_gmv")
+	list, _ := es.NewEsAuthorBusiness().AuthorTakeGoodsRank(startDate, endDate, tags, verification, sortStr, orderBy)
 	for k, v := range list {
 		list[k].AuthorId = business.IdEncrypt(v.AuthorId)
 		if v.UniqueId == "" || v.UniqueId == "0" {

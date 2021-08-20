@@ -208,13 +208,19 @@ func (receiver *EsAuthorBusiness) AuthorProductAnalysis(authorId, keyword string
 }
 
 //达人带货榜
-func (receiver *EsAuthorBusiness) AuthorTakeGoodsRank(date, tags string) (list []es.DyAuthorTakeGoods, comErr global.CommonError) {
-	esTable := "dy_author_take_goods_top_" + date
+func (receiver *EsAuthorBusiness) AuthorTakeGoodsRank(startTime, endTime time.Time, tags, verification, sortStr, orderBy string) (list []es.DyAuthorTakeGoods, comErr global.CommonError) {
 	esQuery, esMultiQuery := elasticsearch.NewElasticQueryGroup()
-	esQuery.SetTerm("tags.keyword", tags)
+	if tags != "" {
+		esQuery.SetTerm("tags.keyword", tags)
+	}
+	if verification != "" {
+		esQuery.SetTerm("verification_type.keyword", verification)
+	}
+	esTable := GetESTableByDayTime(es.DyProductAuthorAnalysisTable, startTime, endTime)
 	results := esMultiQuery.
 		SetTable(esTable).
 		AddMust(esQuery.Condition).
+		SetOrderBy(elasticsearch.NewElasticOrder().Add(orderBy, sortStr).Order).
 		SetMultiQuery().
 		Query()
 	utils.MapToStruct(results, &list)
