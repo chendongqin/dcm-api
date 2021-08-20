@@ -381,3 +381,22 @@ func (receiver *UserBusiness) CancelDyCollect(id int) (comErr global.CommonError
 	}
 	return
 }
+
+func (receiver *UserBusiness) KeywordsRecord(keyword string) (comErr global.CommonError) {
+	var record dcm.DcUserKeywordsRecord
+	db := dcm.GetDbSession().Table(dcm.DcUserKeywordsRecord{})
+	exist, err := db.Where("keyword=?", keyword).Get(&record)
+	if err != nil {
+		comErr = global.NewError(5000)
+		return
+	}
+	record.Count++
+	if exist {
+		if _, err := db.Update(record); err != nil {
+			comErr = global.NewError(5000)
+		}
+	} else if _, err := db.Insert(record); err != nil {
+		comErr = global.NewError(5000)
+	}
+	return
+}
