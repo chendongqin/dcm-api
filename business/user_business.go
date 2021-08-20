@@ -28,6 +28,10 @@ type TokenData struct {
 	ExpireTime int64 `json:"expire_time"`
 }
 
+//APPID:10000:pc端,10001:h5,10002:微信小程序,10003、10004：app,10005:Wap
+//用户来源0:PC,1:小程序,2:APP,3:wap
+var AppIdMap = map[int]int{10000: 0, 10001: 0, 10002: 1, 10003: 2, 10004: 2, 10005: 3}
+
 func (receiver *UserBusiness) AddOrUpdateUniqueToken(userId int, appId int, token string) error {
 	platFormId := GetAppPlatFormIdWithAppId(appId)
 	t := utils.GetNowTimeStamp()
@@ -150,6 +154,8 @@ func (receiver *UserBusiness) SmsLogin(mobile, code string, appId int) (user dcm
 		user.Status = 1
 		user.CreateTime = time.Now()
 		user.UpdateTime = time.Now()
+		//来源
+		user.Entrance = AppIdMap[appId]
 		affect, err := dcm.Insert(nil, &user)
 		if affect == 0 || err != nil {
 			comErr = global.NewError(5000)

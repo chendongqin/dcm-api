@@ -57,6 +57,9 @@ func (receiver *AccountController) Login() {
 		"login_time": utils.GetNowTimeStamp(),
 		"login_ip":   receiver.Ip,
 	}
+	if business.AppIdMap[appId] == 2 {
+		updateData["is_install_app"] = 1
+	}
 	_, _ = userBusiness.UpdateUserAndClearCache(nil, user.Id, updateData)
 	receiver.RegisterLogin(authToken, expTime)
 	receiver.SuccReturn(map[string]interface{}{
