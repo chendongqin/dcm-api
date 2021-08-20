@@ -324,14 +324,24 @@ func (receiver *AccountController) DyUserSearchList() {
 	return
 }
 
-func (receiver *AccountController) AddDyCollect() {
+func (receiver *AccountController) AddCollect() {
+	//platform：1抖音
+	platform, err := receiver.GetInt("platform")
+	if err != nil {
+		receiver.FailReturn(global.NewError(4000))
+		return
+	}
 	collectId := receiver.GetString("collect_id")
 	collectType, err := receiver.GetInt("collect_type", 1)
 	if err != nil {
 		receiver.FailReturn(global.NewError(5000))
 		return
 	}
-	comErr := business.NewUserBusiness().AddDyCollect(collectId, collectType, receiver.UserInfo.Id)
+	var comErr global.CommonError
+	switch platform {
+	case 1:
+		comErr = business.NewUserBusiness().AddDyCollect(collectId, collectType, receiver.UserInfo.Id)
+	}
 	if comErr != nil {
 		receiver.FailReturn(comErr)
 		return
@@ -340,7 +350,7 @@ func (receiver *AccountController) AddDyCollect() {
 	return
 }
 
-func (receiver *AccountController) DelDyCollect() {
+func (receiver *AccountController) DelCollect() {
 	id, err := receiver.GetInt(":id")
 	if err != nil {
 		receiver.FailReturn(global.NewError(5000))
@@ -352,5 +362,34 @@ func (receiver *AccountController) DelDyCollect() {
 		return
 	}
 	receiver.SuccReturn("success")
+	return
+}
+
+func (receiver *AccountController) GetCollect() {
+	platform, err := receiver.GetInt("platform", 1)
+	if err != nil {
+		receiver.FailReturn(global.NewError(5000))
+		return
+	}
+	collectType, err := receiver.GetInt("collect_type", 1)
+	if err != nil {
+		receiver.FailReturn(global.NewError(5000))
+		return
+	}
+	tagId, err := receiver.GetInt("tag_id", 0)
+	if err != nil {
+		receiver.FailReturn(global.NewError(5000))
+		return
+	}
+	keywords := receiver.GetString("keywords")
+	switch platform {
+	case 1:
+		data, comErr := business.NewUserBusiness().GetDyCollect(tagId, collectType, keywords)
+		if comErr != nil {
+			receiver.FailReturn(comErr)
+			return
+		}
+		receiver.SuccReturn(data)
+	}
 	return
 }

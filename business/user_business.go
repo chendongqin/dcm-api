@@ -7,6 +7,7 @@ import (
 	"dongchamao/hbase"
 	"dongchamao/models/dcm"
 	"dongchamao/services/mutex"
+	"fmt"
 	"github.com/dgrijalva/jwt-go"
 	"github.com/go-xorm/xorm"
 	"github.com/gomodule/redigo/redis"
@@ -277,6 +278,39 @@ func (receiver *UserBusiness) GetCacheUserLevel(userId, levelType int, enableCac
 	return vipLevel.Level
 }
 
+type CollectRet struct {
+	dcm.DcUserDyCollect
+	FollowerCount      int64
+	FollowerIncreCount int64
+	Predict7Gmv        float64
+	Predict7Digg       float64
+}
+
+func (receiver *UserBusiness) GetDyCollect(tagId, collectType int, keywords string) (data []CollectRet, comErr global.CommonError) {
+	var collects []dcm.DcUserDyCollect
+	dbCollect := dcm.GetDbSession().Table(dcm.DcUserDyCollect{})
+	defer dbCollect.Close()
+	var query string
+	query = fmt.Sprintf("tag_id=%v AND collect_type=%v", tagId, collectType)
+	if keywords != "" {
+		query += " AND (unique_id LIKE '%" + keywords + "%' or nickname LIKE '%" + keywords + "%')"
+	}
+	err := dbCollect.Where(query).Find(&collects)
+	if err != nil {
+		comErr = global.NewError(5000)
+		return
+	}
+	data = make([]CollectRet, len(collects))
+	for k, v := range collects {
+		data[k].DcUserDyCollect = v
+		dyAuthor, _ := hbase.GetAuthor(v.CollectId)
+		basic, _ := hbase.GetAuthorBasic(v.CollectId, "")
+		data[k].FollowerCount = dyAuthor.Data.Fans.Douyin.Count
+		data[k].FollowerIncreCount = basic.FollowerCount - basic.FollowerCountBefore
+	}
+	return
+}
+
 //收藏达人
 func (receiver *UserBusiness) AddDyCollect(collectId string, collectType, userId int) (comErr global.CommonError) {
 	collect := dcm.DcUserDyCollect{}
@@ -301,6 +335,8 @@ func (receiver *UserBusiness) AddDyCollect(collectId string, collectType, userId
 			return comErr
 		}
 		collect.Label = author.Tags
+		collect.UniqueId = author.Data.UniqueID
+		collect.Nickname = author.Data.Nickname
 	}
 	if exist {
 		if _, err := dbCollect.Update(collect); err != nil {
