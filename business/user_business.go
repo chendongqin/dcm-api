@@ -385,18 +385,27 @@ func (receiver *UserBusiness) CancelDyCollect(id int) (comErr global.CommonError
 //关键词统计
 func (receiver *UserBusiness) KeywordsRecord(keyword string) (comErr global.CommonError) {
 	var record dcm.DcUserKeywordsRecord
-	db := dcm.GetDbSession().Table(dcm.DcUserKeywordsRecord{})
+	db := dcm.GetDbSession()
+	defer db.Close()
 	exist, err := db.Where("keyword=?", keyword).Get(&record)
 	if err != nil {
 		comErr = global.NewError(5000)
 		return
 	}
-	record.Count++
 	if exist {
-		if _, err := db.Update(record); err != nil {
+		if _, err := db.Table(new(dcm.DcUserKeywordsRecord)).Where("id=?", record.Id).Incr("count", 1).Update(map[string]interface{}{
+			"update_time": time.Now().Format("2006-01-02 15:04:05"),
+		}); err != nil {
 			comErr = global.NewError(5000)
 		}
-	} else if _, err := db.Insert(record); err != nil {
+		return
+	}
+	record.Keyword = keyword
+	record.CreateTime = time.Now()
+	record.UpdateTime = time.Now()
+	record.Count = 1
+	_, err = dcm.Insert(db, &record)
+	if err != nil {
 		comErr = global.NewError(5000)
 	}
 	return
