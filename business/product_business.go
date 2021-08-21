@@ -123,6 +123,9 @@ func (receiver *ProductBusiness) ProductAuthorAnalysis(productId, keyword, tag s
 	if comErr != nil {
 		return
 	}
+	if startRow.ProductId == "" || stopRow.ProductId == "" {
+		return
+	}
 	startRowKey := startRow.ProductId + "_" + startRow.CreateSdf + "_" + startRow.AuthorId
 	stopRowKey := stopRow.ProductId + "_" + stopRow.CreateSdf + "_" + stopRow.AuthorId
 	cacheKey := cache.GetCacheKey(cache.ProductAuthorAllList, startRowKey, stopRowKey)
@@ -258,6 +261,9 @@ func (receiver *ProductBusiness) ProductAuthorAnalysisCount(productId, keyword s
 	}
 	esProductBusiness := es.NewEsProductBusiness()
 	startRow, stopRow, _, comErr := esProductBusiness.SearchRangeDateRowKey(productId, keyword, startTime, endTime)
+	if startRow.ProductId == "" || stopRow.ProductId == "" {
+		return
+	}
 	if comErr != nil {
 		return
 	}

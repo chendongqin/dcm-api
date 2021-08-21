@@ -541,6 +541,9 @@ func (a *AuthorBusiness) GetAuthorProductAnalyse(authorId, keyword, firstCate, s
 	}
 	startRowKey := startRow.AuthorDateProduct
 	stopRowKey := stopRow.AuthorDateProduct
+	if startRowKey == "" || stopRowKey == "" {
+		return
+	}
 	cacheKey := cache.GetCacheKey(cache.AuthorProductAllList, startRowKey, stopRowKey)
 	cacheStr := global.Cache.Get(cacheKey)
 	if cacheStr != "" {
