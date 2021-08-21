@@ -15,6 +15,9 @@ func init() {
 			beego.NSRouter("/dy/search/:type", &v1.AccountController{}, "put:DyUserSearchSave"),
 			beego.NSRouter("/dy/search/:id", &v1.AccountController{}, "delete:DyUserSearchDel"),
 			beego.NSRouter("/dy/search/:type", &v1.AccountController{}, "get:DyUserSearchList"),
+			beego.NSRouter("/collect/list", &v1.AccountController{}, "get:GetCollect"),
+			beego.NSRouter("/collect/add", &v1.AccountController{}, "get:AddCollect"),
+			beego.NSRouter("/collect/del/:id", &v1.AccountController{}, "delete:DelCollect"),
 		),
 	)
 	// 注册路由组

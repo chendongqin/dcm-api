@@ -57,6 +57,9 @@ func (receiver *AccountController) Login() {
 		"login_time": utils.GetNowTimeStamp(),
 		"login_ip":   receiver.Ip,
 	}
+	if business.AppIdMap[appId] == 2 {
+		updateData["is_install_app"] = 1
+	}
 	_, _ = userBusiness.UpdateUserAndClearCache(nil, user.Id, updateData)
 	receiver.RegisterLogin(authToken, expTime)
 	receiver.SuccReturn(map[string]interface{}{
@@ -321,5 +324,75 @@ func (receiver *AccountController) DyUserSearchList() {
 		"list":  repostList,
 		"total": total,
 	})
+	return
+}
+
+func (receiver *AccountController) AddCollect() {
+	//platform：1抖音
+	platform, err := receiver.GetInt("platform")
+	if err != nil {
+		receiver.FailReturn(global.NewError(4000))
+		return
+	}
+	collectId := receiver.GetString("collect_id")
+	collectType, err := receiver.GetInt("collect_type", 1)
+	if err != nil {
+		receiver.FailReturn(global.NewError(5000))
+		return
+	}
+	var comErr global.CommonError
+	switch platform {
+	case 1:
+		comErr = business.NewUserBusiness().AddDyCollect(collectId, collectType, receiver.UserInfo.Id)
+	}
+	if comErr != nil {
+		receiver.FailReturn(comErr)
+		return
+	}
+	receiver.SuccReturn("success")
+	return
+}
+
+func (receiver *AccountController) DelCollect() {
+	id, err := receiver.GetInt(":id")
+	if err != nil {
+		receiver.FailReturn(global.NewError(5000))
+		return
+	}
+	comErr := business.NewUserBusiness().CancelDyCollect(id)
+	if comErr != nil {
+		receiver.FailReturn(comErr)
+		return
+	}
+	receiver.SuccReturn("success")
+	return
+}
+
+func (receiver *AccountController) GetCollect() {
+	platform, err := receiver.GetInt("platform", 1)
+	if err != nil {
+		receiver.FailReturn(global.NewError(5000))
+		return
+	}
+	collectType, err := receiver.GetInt("collect_type", 1)
+	if err != nil {
+		receiver.FailReturn(global.NewError(5000))
+		return
+	}
+	tagId, err := receiver.GetInt("tag_id", 0)
+	if err != nil {
+		receiver.FailReturn(global.NewError(5000))
+		return
+	}
+	keywords := receiver.GetString("keywords")
+	switch platform {
+	case 1:
+		data, comErr := business.NewUserBusiness().GetDyCollect(tagId, collectType, keywords)
+		if comErr != nil {
+			receiver.FailReturn(comErr)
+			return
+		}
+		receiver.SuccReturn(data)
+	}
 	return
 }
