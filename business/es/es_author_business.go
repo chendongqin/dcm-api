@@ -226,3 +226,80 @@ func (receiver *EsAuthorBusiness) AuthorTakeGoodsRank(startTime, endTime time.Ti
 	utils.MapToStruct(results, &list)
 	return
 }
+
+//带货达人榜聚合统计
+func (receiver *EsAuthorBusiness) SaleAuthorRankCount(esTable, sortStr, orderBy string, page, pageSize int) ([]interface{}, global.CommonError) {
+	if pageSize > 100 {
+		return nil, global.NewError(4004)
+	}
+	if sortStr == "" {
+		sortStr = "sum_gmv"
+	}
+	if orderBy == "" {
+		orderBy = "desc"
+	}
+	if !utils.InArrayString(sortStr, []string{"sum_gmv", "sum_sale", "avg_price"}) {
+		return nil, global.NewError(4004)
+	}
+	if !utils.InArrayString(orderBy, []string{"desc", "asc"}) {
+		return nil, global.NewError(4004)
+	}
+	countResult := elasticsearch.NewElasticMultiQuery().SetTable(esTable).RawQuery(map[string]interface{}{
+		"size": 0,
+		"aggs": map[string]interface{}{
+			"authors": map[string]interface{}{
+				"composite": map[string]interface{}{
+					"size": pageSize,
+					"sources": map[string]map[string]interface{}{
+						"author_id": {
+							"terms": map[string]string{
+								"field": "author_id.keyword",
+							},
+						}},
+				},
+				"aggs": map[string]interface{}{
+					"sum_gmv": map[string]interface{}{
+						"sum": map[string]interface{}{
+							"field": "predict_gmv",
+						},
+					},
+					"sum_sales": map[string]interface{}{
+						"sum": map[string]interface{}{
+							"field": "predict_sales",
+						},
+					},
+					"hit": map[string]interface{}{
+						"top_hits": map[string]interface{}{
+							"size": 100,
+						},
+					},
+					"avg_price": map[string]interface{}{
+						"bucket_script": map[string]interface{}{
+							"buckets_path": map[string]interface{}{
+								"all_gmv":   "sum_gmv",
+								"all_sales": "sum_sales",
+							},
+							"script": map[string]interface{}{
+								"source": "params.all_gmv / params.all_sales",
+								"lang":   "painless",
+							},
+						},
+					},
+					"r_bucket_sort": map[string]interface{}{
+						"bucket_sort": map[string]interface{}{
+							"sort": map[string]interface{}{
+								sortStr: map[string]interface{}{
+									"order": orderBy,
+								},
+							},
+							"from": (page - 1) * pageSize,
+							"size": pageSize,
+						},
+					},
+				},
+			},
+		},
+	})
+	res := elasticsearch.GetBuckets(countResult, "authors")
+	return res, nil
+}
