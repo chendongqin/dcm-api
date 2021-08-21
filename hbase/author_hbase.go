@@ -297,3 +297,42 @@ func GetAuthorLiveTags() (data []entity.DyAuthorLiveTags, comErr global.CommonEr
 	}
 	return
 }
+
+//达人带货商品
+func GetAuthorDateProduct(rowKey string) (data entity.DyAuthorDateProductData, comErr global.CommonError) {
+	query := hbasehelper.NewQuery()
+	result, err := query.SetTable(hbaseService.HbaseDyAuthorProductDateMapping).GetByRowKey([]byte(rowKey))
+	if err != nil {
+		comErr = global.NewMsgError(err.Error())
+		return
+	}
+	if result.Row == nil {
+		comErr = global.NewError(4040)
+		return
+	}
+	infoMap := hbaseService.HbaseFormat(result, entity.DyAuthorProductDateMappingMap)
+	utils.MapToStruct(infoMap, &data)
+	return
+}
+
+//达人带货商品
+func GetAuthorProductRangeDate(authorId string, startTime, stopTime time.Time) (data []entity.DyAuthorDateProductData, comErr global.CommonError) {
+	query := hbasehelper.NewQuery()
+	startKey := authorId + "_" + startTime.Format("20060102")
+	stopKey := authorId + "_" + stopTime.Format("20060102")
+	results, err := query.
+		SetStartRow([]byte(startKey)).
+		SetStopRow([]byte(stopKey)).
+		SetTable(hbaseService.HbaseDyAuthorProductDateMapping).
+		Scan(1000)
+	if err != nil {
+		return
+	}
+	for _, v := range results {
+		infoMap := hbaseService.HbaseFormat(v, entity.DyAuthorProductDateMappingMap)
+		detail := entity.DyAuthorDateProductData{}
+		utils.MapToStruct(infoMap, &detail)
+		data = append(data, detail)
+	}
+	return
+}

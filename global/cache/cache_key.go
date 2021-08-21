@@ -28,6 +28,7 @@ const (
 	LiveRoomProductCount KeyName = "dcm:live:room:product:count:%s"
 	ProductAuthorCount   KeyName = "dcm:product:author:%s:%s:%s"
 	//商品达人数据缓存
-	ProductAuthorAllList KeyName = "dcm:product:author:row:%s:%s"
-	AuthorProductAllList KeyName = "dcm:author:product:row:%s:%s"
+	ProductAuthorAllList     KeyName = "dcm:product:author:row:%s:%s"
+	AuthorProductAllList     KeyName = "dcm:author:product:row:%s:%s"
+	AuthorViewProductAllList KeyName = "dcm:author:view:product:%s:%s"
 )

@@ -25,6 +25,8 @@ var DyAuthorMap = HbaseEntity{
 	"other_med_digg":           {Long, "med_digg"},
 	"other_first_live_time":    {Long, "first_live_time"},
 	"other_first_aweme_time":   {Long, "first_aweme_time"},
+	"other_product_count":      {Int, "product_count"},
+	"other_first_product_time": {Long, "first_product_time"},
 }
 
 type DyAuthor struct {
@@ -52,8 +54,10 @@ type DyAuthor struct {
 	DiggFollowerRate float64         `json:"digg_follower_rate"`
 	Duration         int64           `json:"duration"`
 	MedDigg          int64           `json:"med_digg"`
+	ProductCount     int             `json:"product_count"`
 	FirstLiveTime    int64           `json:"first_live_time"`
 	FirstAwemeTime   int64           `json:"first_aweme_time"`
+	FirstProductTime int64           `json:"first_product_time"`
 }
 
 type DyAuthorRoom struct {

@@ -3,14 +3,15 @@ package hbaseService
 const (
 	TableFamily = "r"
 
-	HbaseDyLiveInfo            = "dy_live_info"              //直播间信息
-	HbaseDyLiveReputation      = "dy_live_reputation"        //直播间带货口碑信息
-	HbaseDyAuthorLiveSalesData = "dy_author_live_sales_data" //直播间带货数据
-	HbaseDyLivePmt             = "dy_live_pmt"               //直播pmt(直播商品列表)
-	HbaseDyLiveCurProduct      = "dy_live_cur_product"
-	HbaseDyRoomProduct         = "dy_room_product"    //直播间商品全网销量
-	HbaseDyLiveRankTrend       = "dy_live_rank_trend" //直播间榜单排名数据
-	HbaseDyReputation          = "dy_reputation"      //带货口碑
+	HbaseDyLiveInfo                 = "dy_live_info"              //直播间信息
+	HbaseDyLiveReputation           = "dy_live_reputation"        //直播间带货口碑信息
+	HbaseDyAuthorLiveSalesData      = "dy_author_live_sales_data" //直播间带货数据
+	HbaseDyLivePmt                  = "dy_live_pmt"               //直播pmt(直播商品列表)
+	HbaseDyLiveCurProduct           = "dy_live_cur_product"
+	HbaseDyRoomProduct              = "dy_room_product"                //直播间商品全网销量
+	HbaseDyLiveRankTrend            = "dy_live_rank_trend"             //直播间榜单排名数据
+	HbaseDyReputation               = "dy_reputation"                  //带货口碑
+	HbaseDyAuthorProductDateMapping = "dy_author_product_date_mapping" //达人带货
 
 	HbaseDyAweme                        = "dy_aweme"                            //抖音视频
 	HbaseDyAuthorAwemeAgg               = "dy_author_aweme_agg"                 //达人抖音视频

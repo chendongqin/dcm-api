@@ -443,7 +443,7 @@ func (receiver *EsLiveBusiness) SearchLiveRooms(keyword, category, firstName, se
 		comErr = global.NewError(4000)
 		return
 	}
-	if size > 50 {
+	if size > 100 {
 		comErr = global.NewError(4000)
 		return
 	}

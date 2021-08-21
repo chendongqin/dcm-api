@@ -118,11 +118,19 @@ func (receiver *RankController) DyLiveHourSellRank() {
 		if v.LiveInfo.User.DisplayId == "" {
 			data.Ranks[k].LiveInfo.User.DisplayId = v.LiveInfo.User.ShortId
 		}
-		data.Ranks[k].ShareUrl = business.LiveShareUrl + v.RoomId
-		if v.RealGmv > 0 {
-			data.Ranks[k].PredictGmv = v.RealGmv
-			data.Ranks[k].PredictSales = v.RealSales
+		shopTags := make([]string, 0)
+		for _, s := range v.ShopTags {
+			if s == "" {
+				continue
+			}
+			shopTags = append(shopTags, s)
 		}
+		data.Ranks[k].ShopTags = shopTags
+		data.Ranks[k].ShareUrl = business.LiveShareUrl + v.RoomId
+		//if v.RealGmv > 0 {
+		//	data.Ranks[k].PredictGmv = v.RealGmv
+		//	data.Ranks[k].PredictSales = v.RealSales
+		//}
 	}
 	receiver.SuccReturn(map[string]interface{}{
 		"list":        data.Ranks,
@@ -180,13 +188,13 @@ func (receiver *RankController) DyLiveShareWeekRank() {
 		var sales float64 = 0
 		var totalUser int64 = 0
 		for _, r := range v.Rooms {
-			if r.RealSales > 0 {
-				gmv += r.RealGmv
-				sales += math.Floor(r.RealSales)
-			} else {
-				gmv += r.PredictGmv
-				sales += math.Floor(r.PredictSales)
-			}
+			//if r.RealSales > 0 {
+			//	gmv += r.RealGmv
+			//	sales += math.Floor(r.RealSales)
+			//} else {
+			gmv += r.PredictGmv
+			sales += math.Floor(r.PredictSales)
+			//}
 			totalUser += r.TotalUser
 		}
 		uniqueId := v.UniqueId
