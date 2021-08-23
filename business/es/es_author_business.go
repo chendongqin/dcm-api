@@ -6,6 +6,7 @@ import (
 	"dongchamao/global/utils"
 	"dongchamao/models/es"
 	"dongchamao/services/elasticsearch"
+	"fmt"
 	"time"
 )
 
@@ -248,28 +249,8 @@ func (receiver *EsAuthorBusiness) AuthorProductAnalysis(authorId, keyword string
 	return
 }
 
-//达人带货榜
-func (receiver *EsAuthorBusiness) AuthorTakeGoodsRank(startTime, endTime time.Time, tags, verification, sortStr, orderBy string) (list []es.DyAuthorTakeGoods, comErr global.CommonError) {
-	esQuery, esMultiQuery := elasticsearch.NewElasticQueryGroup()
-	if tags != "" {
-		esQuery.SetTerm("tags.keyword", tags)
-	}
-	if verification != "" {
-		esQuery.SetTerm("verification_type.keyword", verification)
-	}
-	esTable := GetESTableByDayTime(es.DyProductAuthorAnalysisTable, startTime, endTime)
-	results := esMultiQuery.
-		SetTable(esTable).
-		AddMust(esQuery.Condition).
-		SetOrderBy(elasticsearch.NewElasticOrder().Add(orderBy, sortStr).Order).
-		SetMultiQuery().
-		Query()
-	utils.MapToStruct(results, &list)
-	return
-}
-
 //带货达人榜聚合统计
-func (receiver *EsAuthorBusiness) SaleAuthorRankCount(esTable, tags, sortStr, orderBy string, verification, page, pageSize int) ([]interface{}, global.CommonError) {
+func (receiver *EsAuthorBusiness) SaleAuthorRankCount(startTime time.Time, dateType int, tags, sortStr, orderBy string, verified, page, pageSize int) ([]interface{}, global.CommonError) {
 	if pageSize > 100 {
 		return nil, global.NewError(4004)
 	}
@@ -289,8 +270,19 @@ func (receiver *EsAuthorBusiness) SaleAuthorRankCount(esTable, tags, sortStr, or
 	if tags != "" {
 		esQuery.SetTerm("tags.keyword", tags)
 	}
-	if verification == 1 {
+	if verified == 1 {
 		esQuery.SetTerm("verification_type", 1)
+	}
+	var esTable string
+	switch dateType {
+	case 1:
+		endDate := startTime.AddDate(0, 0, 1).Add(-1)
+		esTable = GetESTableByDayTime(es.DyAuthorTakeGoodsTopTable, startTime, endDate)
+	case 2:
+		endDate := startTime.AddDate(0, 0, 7).Add(-1)
+		esTable = GetESTableByDayTime(es.DyAuthorTakeGoodsTopTable, startTime, endDate)
+	case 3:
+		esTable = fmt.Sprintf(es.DyAuthorTakeGoodsTopTable+"*", startTime.Format("200601"))
 	}
 	countResult := elasticsearch.NewElasticMultiQuery().SetTable(esTable).RawQuery(map[string]interface{}{
 		"query": map[string]interface{}{

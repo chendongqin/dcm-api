@@ -8,6 +8,7 @@ import (
 	"dongchamao/global/utils"
 	"dongchamao/hbase"
 	"dongchamao/models/entity"
+	es2 "dongchamao/models/es"
 	"dongchamao/services/dyimg"
 	"math"
 	"time"
@@ -264,37 +265,52 @@ func (receiver *RankController) DyAwemeShareRank() {
 	return
 }
 
+type TakeGoodsRankRet struct {
+	Rank        int
+	Nickname    string
+	AuthorCover string
+	SumGmv      float64
+	SumSales    float64
+	AvgPrice    float64
+	AuthorId    string
+	Tags        string
+	RoomCount   int
+}
+
 //达人带货榜
 func (receiver *RankController) DyAuthorTakeGoodsRank() {
 	date := receiver.GetString("date")
-	dateType, _ := receiver.GetInt("date_type", 1)
 	startDate, err := time.ParseInLocation("2006-01-02", date, time.Local)
 	if err != nil {
 		receiver.FailReturn(global.NewError(4000))
 		return
 	}
-	endDate := startDate.AddDate(0, 0, 1).Add(-1)
-	switch dateType {
-	case 2:
-		endDate = startDate.AddDate(0, 0, 7).Add(-1)
-	case 3:
-		endDate = startDate.AddDate(0, 1, 0).Add(-1)
-	}
+	dateType, _ := receiver.GetInt("date_type", 1)
 	tags := receiver.GetString("tags")
-	verification := receiver.GetString("verification")
-	sortStr := receiver.GetString("sort", "desc")
-	orderBy := receiver.GetString("order_by", "predict_gmv")
-	list, _ := es.NewEsAuthorBusiness().AuthorTakeGoodsRank(startDate, endDate, tags, verification, sortStr, orderBy)
-	for k, v := range list {
-		list[k].AuthorId = business.IdEncrypt(v.AuthorId)
-		if v.UniqueId == "" || v.UniqueId == "0" {
-			list[k].UniqueId = v.ShortId
+	verified, _ := receiver.GetInt("verified")
+	sortStr := receiver.GetString("sort", "sum_gmv")
+	orderBy := receiver.GetString("order_by", "desc")
+	page := receiver.GetPage("page")
+	pageSize := receiver.GetPage("page_size")
+	list, _ := es.NewEsAuthorBusiness().SaleAuthorRankCount(startDate, dateType, tags, sortStr, orderBy, verified, page, pageSize)
+	var structData []es2.DyAuthorTakeGoodsCount
+	utils.MapToStruct(list, &structData)
+	ret := make([]TakeGoodsRankRet, len(structData))
+	for k, v := range structData {
+		ret[k] = TakeGoodsRankRet{
+			Rank:        k + 1,
+			Nickname:    v.Hit.Hits.Hits[0].Source.Nickname,
+			AuthorCover: dyimg.Avatar(v.Hit.Hits.Hits[0].Source.AuthorCover),
+			SumGmv:      v.SumGmv.Value,
+			SumSales:    v.SumSales.Value,
+			AvgPrice:    v.AvgPrice.Value,
+			AuthorId:    business.IdEncrypt(utils.ToString(v.Key.AuthorID)),
+			RoomCount:   len(v.Hit.Hits.Hits),
+			Tags:        v.Hit.Hits.Hits[0].Source.Tags,
 		}
-		list[k].AuthorCover = dyimg.Avatar(v.AuthorCover)
-		list[k].RoomCover = dyimg.Avatar(v.RoomCover)
 	}
 	receiver.SuccReturn(map[string]interface{}{
-		"list": list,
+		"list": ret,
 	})
 	return
 }
