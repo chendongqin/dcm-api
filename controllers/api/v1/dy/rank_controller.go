@@ -308,11 +308,12 @@ func (receiver *RankController) DyAuthorTakeGoodsRank() {
 		}
 		var roomList = make([]map[string]interface{}, 0, len(hits))
 		for _, v := range hits {
+			dateTime, _ := time.Parse("2006-01-02 15:04:05", v.Source.DateTime)
 			roomList = append(roomList, map[string]interface{}{
 				"room_cover":     dyimg.Fix(v.Source.RoomCover),
 				"room_id":        business.IdEncrypt(v.Source.RoomID),
 				"room_title":     v.Source.RoomTitle,
-				"date_time":      v.Source.DateTime,
+				"date_time":      dateTime.Unix(),
 				"max_user_count": v.Source.MaxUserCount,
 				"real_gmv":       v.Source.RealGmv,
 				"real_sales":     v.Source.RealSales,
@@ -341,7 +342,7 @@ func (receiver *RankController) DyAuthorTakeGoodsRank() {
 	return
 }
 
-//达人带货榜
+//达人涨粉榜
 func (receiver *RankController) DyAuthorFollowerRank() {
 	date := receiver.GetString("date")
 	tags := receiver.GetString("tags")
