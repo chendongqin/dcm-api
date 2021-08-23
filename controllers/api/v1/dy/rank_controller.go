@@ -266,17 +266,19 @@ func (receiver *RankController) DyAwemeShareRank() {
 }
 
 type TakeGoodsRankRet struct {
-	Rank        int                      `json:"rank,omitempty"`
-	Nickname    string                   `json:"nickname,omitempty"`
-	AuthorCover string                   `json:"author_cover,omitempty"`
-	SumGmv      float64                  `json:"sum_gmv,omitempty"`
-	SumSales    float64                  `json:"sum_sales,omitempty"`
-	AvgPrice    float64                  `json:"avg_price,omitempty"`
-	AuthorId    string                   `json:"author_id,omitempty"`
-	UniqueId    string                   `json:"unique_id,omitempty"`
-	Tags        string                   `json:"tags,omitempty"`
-	RoomCount   int                      `json:"room_count,omitempty"`
-	RoomList    []map[string]interface{} `json:"room_list"`
+	Rank             int                      `json:"rank,omitempty"`
+	Nickname         string                   `json:"nickname,omitempty"`
+	AuthorCover      string                   `json:"author_cover,omitempty"`
+	SumGmv           float64                  `json:"sum_gmv,omitempty"`
+	SumSales         float64                  `json:"sum_sales,omitempty"`
+	AvgPrice         float64                  `json:"avg_price,omitempty"`
+	AuthorId         string                   `json:"author_id,omitempty"`
+	UniqueId         string                   `json:"unique_id,omitempty"`
+	Tags             string                   `json:"tags,omitempty"`
+	VerificationType int                      `json:"verification_type,omitempty"`
+	VerifyName       string                   `json:"verify_name,omitempty"`
+	RoomCount        int                      `json:"room_count,omitempty"`
+	RoomList         []map[string]interface{} `json:"room_list"`
 }
 
 //达人带货榜
@@ -317,17 +319,19 @@ func (receiver *RankController) DyAuthorTakeGoodsRank() {
 			})
 		}
 		ret[k] = TakeGoodsRankRet{
-			Rank:        (page-1)*pageSize + k + 1,
-			Nickname:    hits[0].Source.Nickname,
-			AuthorCover: dyimg.Avatar(hits[0].Source.AuthorCover),
-			SumGmv:      v.SumGmv.Value,
-			SumSales:    v.SumSales.Value,
-			AvgPrice:    v.AvgPrice.Value,
-			AuthorId:    business.IdEncrypt(utils.ToString(v.Key.AuthorID)),
-			RoomCount:   len(hits),
-			Tags:        hits[0].Source.Tags,
-			UniqueId:    business.IdEncrypt(utils.ToString(uniqueId)),
-			RoomList:    roomList,
+			Rank:             (page-1)*pageSize + k + 1,
+			Nickname:         hits[0].Source.Nickname,
+			VerificationType: hits[0].Source.VerificationType,
+			VerifyName:       hits[0].Source.VerifyName,
+			AuthorCover:      dyimg.Avatar(hits[0].Source.AuthorCover),
+			SumGmv:           v.SumGmv.Value,
+			SumSales:         v.SumSales.Value,
+			AvgPrice:         v.AvgPrice.Value,
+			AuthorId:         business.IdEncrypt(utils.ToString(v.Key.AuthorID)),
+			RoomCount:        len(hits),
+			Tags:             hits[0].Source.Tags,
+			UniqueId:         business.IdEncrypt(utils.ToString(uniqueId)),
+			RoomList:         roomList,
 		}
 	}
 	receiver.SuccReturn(map[string]interface{}{
