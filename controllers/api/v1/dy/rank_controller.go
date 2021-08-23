@@ -10,7 +10,6 @@ import (
 	"dongchamao/models/entity"
 	es2 "dongchamao/models/es"
 	"dongchamao/services/dyimg"
-	"encoding/json"
 	"math"
 	"time"
 )
@@ -281,12 +280,12 @@ type TakeGoodsRankRet struct {
 //达人带货榜
 func (receiver *RankController) DyAuthorTakeGoodsRank() {
 	date := receiver.GetString("date")
-	dateType, _ := receiver.GetInt("date_type", 1)
 	startDate, err := time.ParseInLocation("2006-01-02", date, time.Local)
 	if err != nil {
 		receiver.FailReturn(global.NewError(4000))
 		return
 	}
+	dateType, _ := receiver.GetInt("date_type", 1)
 	tags := receiver.GetString("tags")
 	verified, _ := receiver.GetInt("verified")
 	sortStr := receiver.GetString("sort", "sum_gmv")
@@ -294,12 +293,8 @@ func (receiver *RankController) DyAuthorTakeGoodsRank() {
 	page := receiver.GetPage("page")
 	pageSize := receiver.GetPage("page_size")
 	list, _ := es.NewEsAuthorBusiness().SaleAuthorRankCount(startDate, dateType, tags, sortStr, orderBy, verified, page, pageSize)
-	byteStr, _ := json.Marshal(list)
 	var structData []es2.DyAuthorTakeGoodsCount
-	if err := json.Unmarshal(byteStr, &structData); err != nil {
-		receiver.FailReturn(global.NewError(5000))
-		return
-	}
+	utils.MapToStruct(list, &structData)
 	ret := make([]TakeGoodsRankRet, len(structData))
 	for k, v := range structData {
 		ret[k] = TakeGoodsRankRet{

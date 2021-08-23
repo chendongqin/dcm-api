@@ -304,7 +304,6 @@ func (receiver *EsAuthorBusiness) SaleAuthorRankCount(startTime time.Time, dateT
 			},
 		},
 	})
-	fmt.Printf("countResult：%+v\n", countResult)
 	res := elasticsearch.GetBuckets(countResult, "authors")
 	return res, nil
 }
