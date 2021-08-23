@@ -94,7 +94,13 @@ func (receiver *AccountAuthBusiness) CheckAppIdSign(appId string, ctx *context.C
 	if sign != utils.Md5_encode(tmpStr) {
 		return global.NewError(4041)
 	}
-	return global.NewError(4041)
+	nowTime := time.Now().Unix() - 60
+	nowTime2 := time.Now().Unix() + 60
+	timestampInt64 := utils.ToInt64(timestamp)
+	if timestampInt64 < nowTime || timestampInt64 > nowTime2 {
+		return global.NewError(4041)
+	}
+	return nil
 }
 
 func (receiver *AccountAuthBusiness) GetAppSecret(appId string, enableCache bool) (string, bool) {
