@@ -178,6 +178,47 @@ func (receiver *EsAuthorBusiness) BaseSearch(
 	return
 }
 
+//达人库查询
+func (receiver *EsAuthorBusiness) SimpleSearch(
+	nickname, keyword, tags, secondTags string,
+	page, pageSize int) (list []es.DyAuthor, total int, comErr global.CommonError) {
+	list = []es.DyAuthor{}
+	sortStr := "follower_count"
+	orderBy := "desc"
+	if pageSize > 100 {
+		comErr = global.NewError(4000)
+		return
+	}
+	esTable := es.DyAuthorTable
+	esQuery, esMultiQuery := elasticsearch.NewElasticQueryGroup()
+	esQuery.SetTerm("exist", 1)
+	if tags != "" {
+		if tags == "其他" {
+			tags = ""
+		}
+		esQuery.SetTerm("tags.keyword", tags)
+	}
+	if secondTags != "" {
+		esQuery.SetTerm("tags_level_two.keyword", secondTags)
+	}
+	if nickname != "" {
+		esQuery.SetMatchPhrase("nickname", nickname)
+	}
+	if keyword != "" {
+		esQuery.SetMultiMatch([]string{"unique_id", "short_id", "author_id"}, keyword)
+	}
+	results := esMultiQuery.
+		SetTable(esTable).
+		AddMust(esQuery.Condition).
+		SetLimit((page-1)*pageSize, pageSize).
+		SetOrderBy(elasticsearch.NewElasticOrder().Add(sortStr, orderBy).Order).
+		SetMultiQuery().
+		Query()
+	utils.MapToStruct(results, &list)
+	total = esMultiQuery.Count
+	return
+}
+
 //商品达人分析
 func (receiver *EsAuthorBusiness) AuthorProductAnalysis(authorId, keyword string, startTime, endTime time.Time) (startRow es.EsDyAuthorProductAnalysis, endRow es.EsDyAuthorProductAnalysis, comErr global.CommonError) {
 	esTable := GetESTableByTime(es.DyAuthorProductAnalysisTable, startTime, endTime)
