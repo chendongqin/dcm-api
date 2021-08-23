@@ -228,7 +228,7 @@ func (receiver *EsAuthorBusiness) AuthorTakeGoodsRank(startTime, endTime time.Ti
 }
 
 //带货达人榜聚合统计
-func (receiver *EsAuthorBusiness) SaleAuthorRankCount(esTable, sortStr, orderBy string, page, pageSize int) ([]interface{}, global.CommonError) {
+func (receiver *EsAuthorBusiness) SaleAuthorRankCount(esTable, tags, sortStr, orderBy string, verification, page, pageSize int) ([]interface{}, global.CommonError) {
 	if pageSize > 100 {
 		return nil, global.NewError(4004)
 	}
@@ -244,7 +244,19 @@ func (receiver *EsAuthorBusiness) SaleAuthorRankCount(esTable, sortStr, orderBy 
 	if !utils.InArrayString(orderBy, []string{"desc", "asc"}) {
 		return nil, global.NewError(4004)
 	}
+	esQuery, _ := elasticsearch.NewElasticQueryGroup()
+	if tags != "" {
+		esQuery.SetTerm("tags.keyword", tags)
+	}
+	if verification == 1 {
+		esQuery.SetTerm("verification_type", 1)
+	}
 	countResult := elasticsearch.NewElasticMultiQuery().SetTable(esTable).RawQuery(map[string]interface{}{
+		"query": map[string]interface{}{
+			"bool": map[string]interface{}{
+				"must": esQuery.Condition,
+			},
+		},
 		"size": 0,
 		"aggs": map[string]interface{}{
 			"authors": map[string]interface{}{
