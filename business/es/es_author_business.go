@@ -294,7 +294,6 @@ func (receiver *EsAuthorBusiness) SaleAuthorRankCount(startTime time.Time, dateT
 		"aggs": map[string]interface{}{
 			"authors": map[string]interface{}{
 				"composite": map[string]interface{}{
-					"size": pageSize,
 					"sources": map[string]map[string]interface{}{
 						"author_id": {
 							"terms": map[string]string{

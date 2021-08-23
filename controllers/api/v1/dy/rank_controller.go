@@ -266,15 +266,15 @@ func (receiver *RankController) DyAwemeShareRank() {
 }
 
 type TakeGoodsRankRet struct {
-	Rank        int
-	Nickname    string
-	AuthorCover string
-	SumGmv      float64
-	SumSales    float64
-	AvgPrice    float64
-	AuthorId    string
-	Tags        string
-	RoomCount   int
+	Rank        int     `json:"rank,omitempty"`
+	Nickname    string  `json:"nickname,omitempty"`
+	AuthorCover string  `json:"author_cover,omitempty"`
+	SumGmv      float64 `json:"sum_gmv,omitempty"`
+	SumSales    float64 `json:"sum_sales,omitempty"`
+	AvgPrice    float64 `json:"avg_price,omitempty"`
+	AuthorId    string  `json:"author_id,omitempty"`
+	Tags        string  `json:"tags,omitempty"`
+	RoomCount   int     `json:"room_count,omitempty"`
 }
 
 //达人带货榜
@@ -298,7 +298,7 @@ func (receiver *RankController) DyAuthorTakeGoodsRank() {
 	ret := make([]TakeGoodsRankRet, len(structData))
 	for k, v := range structData {
 		ret[k] = TakeGoodsRankRet{
-			Rank:        k + 1,
+			Rank:        (page-1)*pageSize + k + 1,
 			Nickname:    v.Hit.Hits.Hits[0].Source.Nickname,
 			AuthorCover: dyimg.Avatar(v.Hit.Hits.Hits[0].Source.AuthorCover),
 			SumGmv:      v.SumGmv.Value,
