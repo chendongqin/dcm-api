@@ -314,3 +314,23 @@ func (receiver *RankController) DyAuthorTakeGoodsRank() {
 	})
 	return
 }
+
+//达人带货榜
+func (receiver *RankController) DyAuthorFollowerRank() {
+	date := receiver.GetString("date")
+	tags := receiver.GetString("tags")
+	dateTime, err := time.ParseInLocation("2006-01-02", date, time.Local)
+	if err != nil {
+		receiver.FailReturn(global.NewError(4000))
+		return
+	}
+	ret, comErr := es.NewEsAuthorBusiness().DyAuthorFollowerIncRank(dateTime.Format("20060102"), tags)
+	if comErr != nil {
+		receiver.FailReturn(global.NewError(4000))
+		return
+	}
+	receiver.SuccReturn(map[string]interface{}{
+		"list": ret,
+	})
+	return
+}

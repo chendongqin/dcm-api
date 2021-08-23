@@ -347,3 +347,18 @@ func (receiver *EsAuthorBusiness) SaleAuthorRankCount(startTime time.Time, dateT
 	res := elasticsearch.GetBuckets(countResult, "authors")
 	return res, nil
 }
+
+//达人涨粉榜
+func (receiver *EsAuthorBusiness) DyAuthorFollowerIncRank(date, tags string) (list []interface{}, err global.CommonError) {
+	esQuery, esMultiQuery := elasticsearch.NewElasticQueryGroup()
+	esQuery.SetTerm("tags.keyword", tags)
+	esTable := fmt.Sprintf(es.DyAuthorFollowerTable, date)
+	results := esMultiQuery.
+		SetTable(esTable).
+		AddMust(esQuery.Condition).
+		SetOrderBy(elasticsearch.NewElasticOrder().Add("inc_follower_count", "desc").Order).
+		SetMultiQuery().
+		Query()
+	utils.MapToStruct(results, &list)
+	return
+}
