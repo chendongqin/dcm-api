@@ -250,9 +250,9 @@ func (receiver *EsAuthorBusiness) AuthorProductAnalysis(authorId, keyword string
 }
 
 //带货达人榜聚合统计
-func (receiver *EsAuthorBusiness) SaleAuthorRankCount(startTime time.Time, dateType int, tags, sortStr, orderBy string, verified, page, pageSize int) ([]interface{}, global.CommonError) {
+func (receiver *EsAuthorBusiness) SaleAuthorRankCount(startTime time.Time, dateType int, tags, sortStr, orderBy string, verified, page, pageSize int) ([]interface{}, int, global.CommonError) {
 	if pageSize > 100 {
-		return nil, global.NewError(4004)
+		return nil, 0, global.NewError(4004)
 	}
 	if sortStr == "" {
 		sortStr = "sum_gmv"
@@ -261,10 +261,10 @@ func (receiver *EsAuthorBusiness) SaleAuthorRankCount(startTime time.Time, dateT
 		orderBy = "desc"
 	}
 	if !utils.InArrayString(sortStr, []string{"sum_gmv", "sum_sale", "avg_price"}) {
-		return nil, global.NewError(4004)
+		return nil, 0, global.NewError(4004)
 	}
 	if !utils.InArrayString(orderBy, []string{"desc", "asc"}) {
-		return nil, global.NewError(4004)
+		return nil, 0, global.NewError(4004)
 	}
 	esQuery, _ := elasticsearch.NewElasticQueryGroup()
 	if tags != "" {
@@ -344,8 +344,9 @@ func (receiver *EsAuthorBusiness) SaleAuthorRankCount(startTime time.Time, dateT
 			},
 		},
 	})
+	fmt.Printf("%+v\n")
 	res := elasticsearch.GetBuckets(countResult, "authors")
-	return res, nil
+	return res, int(countResult["hits"].(map[string]interface{})["total"].(float64)), nil
 }
 
 //达人涨粉榜
