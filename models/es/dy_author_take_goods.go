@@ -31,9 +31,9 @@ type DyAuthorTakeGoodsCount struct {
 	Hit      struct {
 		Hits struct {
 			Hits []struct {
-				ID     string `json:"_id"`
-				Index  string `json:"_index"`
-				Score  int    `json:"_score"`
+				ID     string  `json:"_id"`
+				Index  string  `json:"_index"`
+				Score  float64 `json:"_score"`
 				Source struct {
 					AuthorCover      string  `json:"author_cover"`
 					AuthorID         string  `json:"author_id"`
@@ -58,8 +58,8 @@ type DyAuthorTakeGoodsCount struct {
 				} `json:"_source"`
 				Type string `json:"_type"`
 			} `json:"hits"`
-			MaxScore int `json:"max_score"`
-			Total    int `json:"total"`
+			MaxScore float64 `json:"max_score"`
+			Total    int     `json:"total"`
 		} `json:"hits"`
 	} `json:"hit"`
 	Key struct {
