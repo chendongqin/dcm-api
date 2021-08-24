@@ -543,3 +543,69 @@ func (receiver *LiveController) LiveFansTrends() {
 	})
 	return
 }
+
+//数据大屏基础数据
+func (receiver *LiveController) LivingBaseData() {
+	roomId := business.IdDecrypt(receiver.Ctx.Input.Param(":room_id"))
+	liveInfo, comErr := hbase.GetLiveInfo(roomId)
+	if comErr != nil {
+		receiver.FailReturn(comErr)
+		return
+	}
+	liveingInfo := dy2.LivingInfo{
+		RoomId:         business.IdDecrypt(liveInfo.RoomID),
+		AuthorId:       business.IdDecrypt(liveInfo.User.ID),
+		Title:          liveInfo.Title,
+		Cover:          dyimg.Fix(liveInfo.Cover),
+		CreateTime:     liveInfo.CreateTime,
+		Gmv:            liveInfo.PredictGmv,
+		UserCount:      liveInfo.UserCount,
+		TotalUserCount: liveInfo.TotalUser,
+		RoomStatus:     liveInfo.RoomStatus,
+		FinishTime:     liveInfo.FinishTime,
+	}
+	if liveInfo.FinishTime > 0 {
+		liveingInfo.LiveTime = liveInfo.FinishTime - liveInfo.CreateTime
+	} else {
+		liveingInfo.LiveTime = time.Now().Unix() - liveInfo.CreateTime
+	}
+	if liveInfo.TotalUser > 0 {
+		liveingInfo.Uv = liveInfo.PredictGmv / float64(liveInfo.BarrageCount)
+		liveingInfo.BarrageRate = float64(liveInfo.BarrageCount) / float64(liveInfo.BarrageCount)
+	}
+	liveingInfo.AvgOnlineTime = business.NewLiveBusiness().CountAvgOnlineTime(liveInfo.OnlineTrends, liveInfo.CreateTime, liveInfo.TotalUser)
+	receiver.SuccReturn(liveingInfo)
+	return
+}
+
+//数据大屏观看趋势数据
+func (receiver *LiveController) LivingWatchChart() {
+	roomId := business.IdDecrypt(receiver.Ctx.Input.Param(":room_id"))
+	liveInfo, comErr := hbase.GetLiveInfo(roomId)
+	if comErr != nil {
+		receiver.FailReturn(comErr)
+		return
+	}
+	incOnlineTrends, _, _ := business.NewLiveBusiness().DealOnlineTrends(liveInfo)
+	receiver.SuccReturn(map[string]interface{}{
+		"room_id": business.IdEncrypt(roomId),
+		"trends":  incOnlineTrends,
+	})
+	return
+}
+
+//数据大屏商品数据
+func (receiver *LiveController) LivingProduct() {
+	roomId := business.IdDecrypt(receiver.Ctx.Input.Param(":room_id"))
+	liveInfo, comErr := hbase.GetLiveInfo(roomId)
+	if comErr != nil {
+		receiver.FailReturn(comErr)
+		return
+	}
+	gmv, total := es.NewEsLiveBusiness().SumRoomProductByRoomId(liveInfo)
+	receiver.SuccReturn(map[string]interface{}{
+		"gmv":   gmv,
+		"total": total,
+	})
+	return
+}

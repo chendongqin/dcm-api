@@ -230,6 +230,48 @@ func (receiver *EsLiveBusiness) RoomProductByRoomId(roomInfo entity.DyLiveInfo, 
 	return
 }
 
+func (receiver *EsLiveBusiness) SumRoomProductByRoomId(roomInfo entity.DyLiveInfo) (float64, int) {
+	date := time.Unix(roomInfo.DiscoverTime, 0).Format("20060102")
+	esTable := fmt.Sprintf(es.DyRoomProductRecordsTable, date)
+	countResult := elasticsearch.NewElasticMultiQuery().SetTable(esTable).RawQuery(map[string]interface{}{
+		"query": map[string]interface{}{
+			"bool": map[string]interface{}{
+				"must": map[string]interface{}{
+					"term": map[string]interface{}{
+						"room_id": roomInfo.RoomID,
+					},
+				},
+			},
+		},
+		"size": 0,
+		"aggs": map[string]interface{}{
+			"sum_gmv": map[string]interface{}{
+				"sum": map[string]interface{}{
+					"field": "predict_gmv",
+				},
+			},
+		},
+	})
+	var total = 0
+	var sumGmv float64 = 0
+	if v, ok := countResult["aggregations"]; ok {
+		sumGmvMap, _ := utils.ToMapStringInterface(v)
+		if s, ok1 := sumGmvMap["sum_gmv"]; ok1 {
+			valueMap, _ := utils.ToMapStringInterface(s)
+			if g, ok2 := valueMap["value"]; ok2 {
+				sumGmv = utils.ToFloat64(g)
+			}
+		}
+	}
+	if v, ok := countResult["hits"]; ok {
+		hitsMap, _ := utils.ToMapStringInterface(v)
+		if t, ok1 := hitsMap["total"]; ok1 {
+			total = utils.ToInt(t)
+		}
+	}
+	return sumGmv, total
+}
+
 //直播间商品分类统计
 func (receiver *EsLiveBusiness) AllRoomProductCateByRoomId(roomInfo entity.DyLiveInfo) (productCount dy.LiveProductCateCount) {
 	cKey := cache.GetCacheKey(cache.LiveRoomProductCount, roomInfo.RoomID)
