@@ -226,6 +226,9 @@ func ParseDyShortUrl(url string) string {
 
 //id加密
 func IdEncrypt(id string) string {
+	if global.IsDev() {
+		return id
+	}
 	if id == "" || id == "0" {
 		return ""
 	}
@@ -241,6 +244,9 @@ func IdEncrypt(id string) string {
 
 //id解密
 func IdDecrypt(id string) string {
+	if global.IsDev() {
+		return id
+	}
 	if id == "" {
 		return ""
 	}
