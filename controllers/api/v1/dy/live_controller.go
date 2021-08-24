@@ -553,8 +553,8 @@ func (receiver *LiveController) LivingBaseData() {
 		return
 	}
 	var gmv = liveInfo.PredictGmv
+	liveSaleData, _ := hbase.GetLiveSalesData(roomId)
 	if liveInfo.RoomStatus == 4 {
-		liveSaleData, _ := hbase.GetLiveSalesData(roomId)
 		if liveSaleData.Gmv > 0 {
 			gmv = liveSaleData.Gmv
 		}
@@ -577,7 +577,7 @@ func (receiver *LiveController) LivingBaseData() {
 		liveingInfo.LiveTime = time.Now().Unix() - liveInfo.CreateTime
 	}
 	if liveInfo.TotalUser > 0 {
-		liveingInfo.Uv = liveInfo.PredictGmv / float64(liveInfo.TotalUser)
+		liveingInfo.Uv = (gmv + float64(liveSaleData.TicketCount)/10) / float64(liveInfo.TotalUser)
 		liveingInfo.BarrageRate = float64(liveInfo.BarrageCount) / float64(liveInfo.TotalUser)
 	}
 	liveingInfo.AvgOnlineTime = business.NewLiveBusiness().CountAvgOnlineTime(liveInfo.OnlineTrends, liveInfo.CreateTime, liveInfo.TotalUser)
