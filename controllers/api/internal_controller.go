@@ -59,6 +59,24 @@ func (receiver *InternalController) ChangeAuthorCate() {
 	return
 }
 
+//获取商品列表
+func (receiver *InternalController) ProductSearch() {
+	productId := receiver.GetString("product_id")
+	title := receiver.GetString("title")
+	page := receiver.GetPage("page")
+	pageSize := receiver.GetPageSize("page_size", 10, 100)
+	list, total, comErr := es.NewEsProductBusiness().InternalSearch(productId, title, page, pageSize)
+	if comErr != nil {
+		receiver.FailReturn(comErr)
+		return
+	}
+	receiver.SuccReturn(map[string]interface{}{
+		"list":  list,
+		"total": total,
+	})
+	return
+}
+
 //修改商品分类
 func (receiver *InternalController) ChangeProductCate() {
 	productId := receiver.Ctx.Input.Param(":product_id")

@@ -174,3 +174,23 @@ func (i *EsProductBusiness) SearchRangeDateRowKey(productId, keyword string, sta
 	total = esMultiQuery.Count
 	return
 }
+
+func (i *EsProductBusiness) InternalSearch(productId, title string, page, pageSize int) (list []es.DyProduct, total int, comErr global.CommonError) {
+	esTable := es.DyProductTable
+	esQuery, esMultiQuery := elasticsearch.NewElasticQueryGroup()
+	if productId != "" {
+		esQuery.SetTerm("product_id", productId)
+	}
+	if title != "" {
+		esQuery.SetMatchPhrase("title", title)
+	}
+	results := esMultiQuery.
+		SetTable(esTable).
+		AddMust(esQuery.Condition).
+		SetLimit((page-1)*pageSize, pageSize).
+		SetMultiQuery().
+		Query()
+	utils.MapToStruct(results, &list)
+	total = esMultiQuery.Count
+	return
+}

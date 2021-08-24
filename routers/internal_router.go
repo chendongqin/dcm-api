@@ -10,6 +10,7 @@ func init() {
 	ns := beego.NewNamespace("/internal",
 		beego.NSNamespace("/author",
 			beego.NSRouter("/cate/:author_id", &controllers.InternalController{}, "post:ChangeAuthorCate"),
+			beego.NSRouter("/product", &controllers.InternalController{}, "get:ProductSearch"),
 			beego.NSRouter("/search", &controllers.InternalController{}, "get:AuthorSearch"),
 		),
 		beego.NSNamespace("/product",
