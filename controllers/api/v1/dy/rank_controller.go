@@ -346,12 +346,22 @@ func (receiver *RankController) DyAuthorTakeGoodsRank() {
 func (receiver *RankController) DyAuthorFollowerRank() {
 	date := receiver.GetString("date")
 	tags := receiver.GetString("tags")
+	province := receiver.GetString("province")
 	dateTime, err := time.ParseInLocation("2006-01-02", date, time.Local)
 	if err != nil {
 		receiver.FailReturn(global.NewError(4000))
 		return
 	}
-	ret, comErr := es.NewEsAuthorBusiness().DyAuthorFollowerIncRank(dateTime.Format("20060102"), tags)
+	ret, comErr := es.NewEsAuthorBusiness().DyAuthorFollowerIncRank(dateTime.Format("20060102"), tags, province)
+	var structData []es2.DyAuthorFollowerTop
+	utils.MapToStruct(ret, &structData)
+	for k := range structData {
+		if structData[k].UniqueID == "" {
+			structData[k].UniqueID = structData[k].ShortID
+		}
+		structData[k].AuthorID = business.IdEncrypt(structData[k].AuthorID)
+		structData[k].AuthorCover = dyimg.Fix(structData[k].AuthorCover)
+	}
 	if comErr != nil {
 		receiver.FailReturn(global.NewError(4000))
 		return
