@@ -5,6 +5,8 @@ go 1.16
 require (
 	github.com/360EntSecGroup-Skylar/excelize v1.4.1
 	github.com/Shopify/sarama v1.19.0
+	github.com/alibabacloud-go/afs-20180112 v0.1.0
+	github.com/alibabacloud-go/tea-rpc v1.1.9
 	github.com/aliyun/alibaba-cloud-sdk-go v1.61.1162
 	github.com/aliyun/aliyun-log-go-sdk v0.1.21
 	github.com/aliyun/aliyun-oss-go-sdk v2.1.8+incompatible
