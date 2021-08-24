@@ -296,7 +296,7 @@ func (receiver *RankController) DyAuthorTakeGoodsRank() {
 	orderBy := receiver.GetString("order_by", "desc")
 	page := receiver.GetPage("page")
 	pageSize := receiver.GetPage("page_size")
-	list, total, _ := es.NewEsAuthorBusiness().SaleAuthorRankCount(startDate, dateType, tags, sortStr, orderBy, verified, page, pageSize)
+	list, total, updateTime, _ := es.NewEsAuthorBusiness().SaleAuthorRankCount(startDate, dateType, tags, sortStr, orderBy, verified, page, pageSize)
 	var structData []es2.DyAuthorTakeGoodsCount
 	utils.MapToStruct(list, &structData)
 	ret := make([]TakeGoodsRankRet, len(structData))
@@ -308,12 +308,11 @@ func (receiver *RankController) DyAuthorTakeGoodsRank() {
 		}
 		var roomList = make([]map[string]interface{}, 0, len(hits))
 		for _, v := range hits {
-			dateTime, _ := time.Parse("2006-01-02 15:04:05", v.Source.DateTime)
 			roomList = append(roomList, map[string]interface{}{
 				"room_cover":     dyimg.Fix(v.Source.RoomCover),
 				"room_id":        business.IdEncrypt(v.Source.RoomID),
 				"room_title":     v.Source.RoomTitle,
-				"date_time":      dateTime.Unix(),
+				"date_time":      v.Source.CreateTime,
 				"max_user_count": v.Source.MaxUserCount,
 				"real_gmv":       v.Source.RealGmv,
 				"real_sales":     v.Source.RealSales,
@@ -336,8 +335,9 @@ func (receiver *RankController) DyAuthorTakeGoodsRank() {
 		}
 	}
 	receiver.SuccReturn(map[string]interface{}{
-		"list":  ret,
-		"total": total,
+		"list":        ret,
+		"total":       total,
+		"update_time": updateTime,
 	})
 	return
 }

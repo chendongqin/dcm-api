@@ -250,9 +250,9 @@ func (receiver *EsAuthorBusiness) AuthorProductAnalysis(authorId, keyword string
 }
 
 //带货达人榜聚合统计
-func (receiver *EsAuthorBusiness) SaleAuthorRankCount(startTime time.Time, dateType int, tags, sortStr, orderBy string, verified, page, pageSize int) ([]interface{}, int, global.CommonError) {
+func (receiver *EsAuthorBusiness) SaleAuthorRankCount(startTime time.Time, dateType int, tags, sortStr, orderBy string, verified, page, pageSize int) ([]interface{}, int, int64, global.CommonError) {
 	if pageSize > 100 {
-		return nil, 0, global.NewError(4004)
+		return nil, 0, 0, global.NewError(4004)
 	}
 	if sortStr == "" {
 		sortStr = "sum_gmv"
@@ -261,12 +261,12 @@ func (receiver *EsAuthorBusiness) SaleAuthorRankCount(startTime time.Time, dateT
 		orderBy = "desc"
 	}
 	if !utils.InArrayString(sortStr, []string{"sum_gmv", "sum_sale", "avg_price"}) {
-		return nil, 0, global.NewError(4004)
+		return nil, 0, 0, global.NewError(4004)
 	}
 	if !utils.InArrayString(orderBy, []string{"desc", "asc"}) {
-		return nil, 0, global.NewError(4004)
+		return nil, 0, 0, global.NewError(4004)
 	}
-	esQuery, _ := elasticsearch.NewElasticQueryGroup()
+	esQuery, esMultiQuery := elasticsearch.NewElasticQueryGroup()
 	if tags != "" {
 		esQuery.SetTerm("tags.keyword", tags)
 	}
@@ -345,12 +345,25 @@ func (receiver *EsAuthorBusiness) SaleAuthorRankCount(startTime time.Time, dateT
 		},
 	})
 	res := elasticsearch.GetBuckets(countResult, "authors")
+	results := esMultiQuery.
+		SetTable(esTable).
+		AddMust(esQuery.Condition).
+		SetLimit(0, 1).
+		SetOrderBy(elasticsearch.NewElasticOrder().Add("discover_time", "desc").Order).
+		SetMultiQuery().
+		Query()
+	var top []es.DyAuthorTakeGoods
+	utils.MapToStruct(results, &top)
+	var updateTime int64
+	if len(top) > 0 {
+		updateTime = top[0].CreateTime
+	}
 	//todo total bug
 	var total int
 	if countResult["hits"] != nil && countResult["hits"].(map[string]interface{})["total"] != nil {
 		total = int(countResult["hits"].(map[string]interface{})["total"].(float64))
 	}
-	return res, total, nil
+	return res, total, updateTime, nil
 }
 
 //达人涨粉榜
