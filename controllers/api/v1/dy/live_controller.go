@@ -20,11 +20,15 @@ type LiveController struct {
 
 func (receiver *LiveController) SearchRoom() {
 	hasAuth := false
+	hasLogin := false
 	if receiver.DyLevel == 3 {
 		hasAuth = true
 	}
-	startDay := receiver.Ctx.Input.Param("start")
-	endDay := receiver.Ctx.Input.Param("end")
+	if receiver.UserId > 0 {
+		hasLogin = true
+	}
+	startDay := receiver.GetString("start", "")
+	endDay := receiver.GetString("end", "")
 	if startDay == "" {
 		startDay = time.Now().AddDate(0, 0, -7).Format("2006-01-02")
 	}
@@ -63,17 +67,28 @@ func (receiver *LiveController) SearchRoom() {
 	isBrand, _ := receiver.GetInt("is_brand", 0)
 	keywordType, _ := receiver.GetInt("keyword_type", 0)
 	page := receiver.GetPage("page")
-	pageSize := receiver.GetPageSize("page_size", 10, 50)
+	pageSize := receiver.GetPageSize("page_size", 10, 100)
 	if !hasAuth {
 		today := time.Now().Format("20060102")
 		lastDay := time.Now().AddDate(0, 0, -7).Format("20060102")
 		start := startTime.Format("20060102")
 		end := endTime.Format("20060102")
 		if lastDay != start || today != end || keyword != "" || category != "" || sortStr != "" || orderBy != "" || minAmount > 0 || maxAmount > 0 || minUv > 0 || maxUv > 0 || minAvgUserCount > 0 || maxAvgUserCount > 0 || hasProduct == 1 || isBrand == 1 || page != 1 {
+			if !hasLogin {
+				receiver.FailReturn(global.NewError(4001))
+				return
+			}
 			receiver.FailReturn(global.NewError(4004))
 			return
 		}
-		pageSize = 10
+		if pageSize > 10 {
+			pageSize = 10
+		}
+	}
+	formNum := (page - 1) * pageSize
+	if formNum > business.DyJewelBaseShowNum {
+		receiver.FailReturn(global.NewError(4004))
+		return
 	}
 	esLiveBusiness := es.NewEsLiveBusiness()
 	list, total, comErr := esLiveBusiness.SearchLiveRooms(keyword, category, firstName, secondName, thirdName, minAmount, maxAmount, minAvgUserCount, maxAvgUserCount, minUv, maxUv, hasProduct, isBrand, keywordType, sortStr, orderBy, page, pageSize, startTime, endTime)
@@ -81,17 +96,33 @@ func (receiver *LiveController) SearchRoom() {
 		receiver.FailReturn(comErr)
 		return
 	}
+	for k, v := range list {
+		list[k].AuthorId = business.IdEncrypt(v.AuthorId)
+		list[k].RoomId = business.IdEncrypt(v.RoomId)
+	}
+	totalPage := math.Ceil(float64(total) / float64(pageSize))
+	maxPage := math.Ceil(float64(business.DyJewelBaseShowNum) / float64(pageSize))
+	if totalPage > maxPage {
+		totalPage = maxPage
+	}
+	maxTotal := business.DyJewelBaseShowNum
+	if maxTotal > total {
+		maxTotal = total
+	}
 	receiver.SuccReturn(map[string]interface{}{
-		"list":     list,
-		"total":    total,
-		"has_auth": hasAuth,
+		"list":       list,
+		"total":      total,
+		"total_page": totalPage,
+		"max_num":    maxTotal,
+		"has_auth":   hasAuth,
+		"has_login":  hasLogin,
 	})
 	return
 }
 
 //直播详细
 func (receiver *LiveController) LiveInfoData() {
-	roomId := receiver.Ctx.Input.Param(":room_id")
+	roomId := business.IdDecrypt(receiver.Ctx.Input.Param(":room_id"))
 	if roomId == "" {
 		receiver.FailReturn(global.NewError(4000))
 		return
@@ -107,8 +138,8 @@ func (receiver *LiveController) LiveInfoData() {
 	authorInfo, _ := authorBusiness.HbaseGetAuthor(liveInfo.User.ID)
 	liveUser := dy2.DyLiveUserSimple{
 		Avatar:          liveInfo.User.Avatar,
-		FollowerCount:   authorInfo.FollowerCount,
-		ID:              liveInfo.User.ID,
+		FollowerCount:   authorInfo.Data.FollowerCount,
+		ID:              business.IdEncrypt(liveInfo.User.ID),
 		Nickname:        liveInfo.User.Nickname,
 		WithCommerce:    liveInfo.User.WithCommerce,
 		ReputationScore: reputation.AuthorReputation.Score,
@@ -143,7 +174,7 @@ func (receiver *LiveController) LiveInfoData() {
 		CreateTime:          liveInfo.CreateTime,
 		FinishTime:          liveInfo.FinishTime,
 		LikeCount:           liveInfo.LikeCount,
-		RoomID:              liveInfo.RoomID,
+		RoomID:              business.IdEncrypt(liveInfo.RoomID),
 		RoomStatus:          liveInfo.RoomStatus,
 		Title:               liveInfo.Title,
 		TotalUser:           liveInfo.TotalUser,
@@ -203,7 +234,7 @@ func (receiver *LiveController) LiveInfoData() {
 
 //直播商品明细
 func (receiver *LiveController) LivePromotions() {
-	roomId := receiver.Ctx.Input.Param(":room_id")
+	roomId := business.IdDecrypt(receiver.Ctx.Input.Param(":room_id"))
 	if roomId == "" {
 		receiver.FailReturn(global.NewError(4000))
 		return
@@ -239,7 +270,7 @@ func (receiver *LiveController) LivePromotions() {
 				saleNum = s + 1
 			}
 			item = append(item, dy2.DyLivePromotion{
-				ProductID: v1.ProductID,
+				ProductID: business.IdEncrypt(v1.ProductID),
 				ForSale:   v1.ForSale,
 				StartTime: v1.StartTime,
 				StopTime:  v1.StopTime,
@@ -267,7 +298,7 @@ func (receiver *LiveController) LivePromotions() {
 
 //直播榜单排名趋势
 func (receiver *LiveController) LiveRankTrends() {
-	roomId := receiver.Ctx.Input.Param(":room_id")
+	roomId := business.IdDecrypt(receiver.Ctx.Input.Param(":room_id"))
 	if roomId == "" {
 		receiver.FailReturn(global.NewError(4000))
 		return
@@ -315,7 +346,7 @@ func (receiver *LiveController) LiveRankTrends() {
 
 //直播间商品
 func (receiver *LiveController) LiveProductList() {
-	roomId := receiver.Ctx.Input.Param(":room_id")
+	roomId := business.IdDecrypt(receiver.Ctx.Input.Param(":room_id"))
 	if roomId == "" {
 		receiver.FailReturn(global.NewError(4000))
 		return
@@ -375,6 +406,10 @@ func (receiver *LiveController) LiveProductList() {
 					CurList: []dy2.LiveCurProduct{},
 				}
 			}
+			item.ProductInfo.AuthorID = business.IdEncrypt(item.ProductInfo.AuthorID)
+			item.ProductInfo.AuthorRoomID = business.IdEncrypt(item.ProductInfo.AuthorRoomID)
+			item.ProductInfo.RoomID = business.IdEncrypt(item.ProductInfo.RoomID)
+			item.ProductInfo.ProductID = business.IdEncrypt(item.ProductInfo.ProductID)
 			countList = append(countList, item)
 		}
 	}
@@ -388,7 +423,7 @@ func (receiver *LiveController) LiveProductList() {
 
 //直播间商品分类
 func (receiver *LiveController) LiveProductCateList() {
-	roomId := receiver.Ctx.Input.Param(":room_id")
+	roomId := business.IdDecrypt(receiver.Ctx.Input.Param(":room_id"))
 	if roomId == "" {
 		receiver.FailReturn(global.NewError(4000))
 		return
@@ -404,12 +439,12 @@ func (receiver *LiveController) LiveProductCateList() {
 
 //全网销量趋势图
 func (receiver *LiveController) LiveProductSaleChart() {
-	roomId := receiver.Ctx.Input.Param(":room_id")
+	roomId := business.IdDecrypt(receiver.Ctx.Input.Param(":room_id"))
 	if roomId == "" {
 		receiver.FailReturn(global.NewError(4000))
 		return
 	}
-	productId := receiver.Ctx.Input.Param(":product_id")
+	productId := business.IdDecrypt(receiver.Ctx.Input.Param(":product_id"))
 	if productId == "" {
 		receiver.FailReturn(global.NewError(4000))
 		return
@@ -431,7 +466,7 @@ func (receiver *LiveController) LiveProductSaleChart() {
 
 //直播间粉丝趋势
 func (receiver *LiveController) LiveFansTrends() {
-	roomId := receiver.Ctx.Input.Param(":room_id")
+	roomId := business.IdDecrypt(receiver.Ctx.Input.Param(":room_id"))
 	if roomId == "" {
 		receiver.FailReturn(global.NewError(4000))
 		return
@@ -505,6 +540,86 @@ func (receiver *LiveController) LiveFansTrends() {
 		"inc_fans":      info.FollowCount,
 		"inc_club":      clubInc,
 		"inc_fans_rate": incFansRate,
+	})
+	return
+}
+
+//数据大屏基础数据
+func (receiver *LiveController) LivingBaseData() {
+	roomId := business.IdDecrypt(receiver.Ctx.Input.Param(":room_id"))
+	liveInfo, comErr := hbase.GetLiveInfo(roomId)
+	if comErr != nil {
+		receiver.FailReturn(comErr)
+		return
+	}
+	var gmv = liveInfo.PredictGmv
+	liveSaleData, _ := hbase.GetLiveSalesData(roomId)
+	if liveInfo.RoomStatus == 4 {
+		if liveSaleData.Gmv > 0 {
+			gmv = liveSaleData.Gmv
+		}
+	}
+	liveingInfo := dy2.LivingInfo{
+		RoomId:         business.IdDecrypt(liveInfo.RoomID),
+		AuthorId:       business.IdDecrypt(liveInfo.User.ID),
+		Title:          liveInfo.Title,
+		Cover:          dyimg.Fix(liveInfo.Cover),
+		CreateTime:     liveInfo.CreateTime,
+		Gmv:            gmv,
+		UserCount:      liveInfo.UserCount,
+		TotalUserCount: liveInfo.TotalUser,
+		RoomStatus:     liveInfo.RoomStatus,
+		FinishTime:     liveInfo.FinishTime,
+	}
+	if liveInfo.FinishTime > 0 {
+		liveingInfo.LiveTime = liveInfo.FinishTime - liveInfo.CreateTime
+	} else {
+		liveingInfo.LiveTime = time.Now().Unix() - liveInfo.CreateTime
+	}
+	if liveInfo.TotalUser > 0 {
+		liveingInfo.Uv = (gmv + float64(liveSaleData.TicketCount)/10) / float64(liveInfo.TotalUser)
+		liveingInfo.BarrageRate = float64(liveInfo.BarrageCount) / float64(liveInfo.TotalUser)
+	}
+	liveingInfo.AvgOnlineTime = business.NewLiveBusiness().CountAvgOnlineTime(liveInfo.OnlineTrends, liveInfo.CreateTime, liveInfo.TotalUser)
+	receiver.SuccReturn(liveingInfo)
+	return
+}
+
+//数据大屏观看趋势数据
+func (receiver *LiveController) LivingWatchChart() {
+	roomId := business.IdDecrypt(receiver.Ctx.Input.Param(":room_id"))
+	liveInfo, comErr := hbase.GetLiveInfo(roomId)
+	if comErr != nil {
+		receiver.FailReturn(comErr)
+		return
+	}
+	incOnlineTrends, _, _ := business.NewLiveBusiness().DealOnlineTrends(liveInfo)
+	receiver.SuccReturn(map[string]interface{}{
+		"room_id": business.IdEncrypt(roomId),
+		"trends":  incOnlineTrends,
+	})
+	return
+}
+
+//数据大屏商品数据
+func (receiver *LiveController) LivingProduct() {
+	roomId := business.IdDecrypt(receiver.Ctx.Input.Param(":room_id"))
+	sortStr := receiver.GetString("sort", "")
+	orderBy := receiver.GetString("order_by", "")
+	page := receiver.GetPage("page")
+	pageSize := receiver.GetPageSize("page_size", 10, 100)
+	liveInfo, comErr := hbase.GetLiveInfo(roomId)
+	if comErr != nil {
+		receiver.FailReturn(comErr)
+		return
+	}
+	esLiveBusiness := es.NewEsLiveBusiness()
+	sales, total := esLiveBusiness.SumRoomProductByRoomId(liveInfo)
+	list, total, comErr := esLiveBusiness.LivingProductList(liveInfo, sortStr, orderBy, page, pageSize)
+	receiver.SuccReturn(map[string]interface{}{
+		"list":  list,
+		"sales": sales,
+		"total": total,
 	})
 	return
 }

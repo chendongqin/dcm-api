@@ -9,6 +9,7 @@ import (
 	"dongchamao/models/dcm"
 	"dongchamao/models/entity"
 	"dongchamao/models/repost/dy"
+	"dongchamao/services"
 	"dongchamao/services/dyimg"
 	jsoniter "github.com/json-iterator/go"
 	"math"
@@ -28,13 +29,17 @@ func NewAuthorBusiness() *AuthorBusiness {
 }
 
 func (a *AuthorBusiness) GetCacheAuthorLiveTags(enableCache bool) []string {
-	memberKey := cache.GetCacheKey(cache.ConfigKeyCache, "author_live_tags")
+	cacheKey := cache.GetCacheKey(cache.LongTimeConfigKeyCache)
+	redisService := services.NewRedisService()
 	tags := make([]string, 0)
 	if enableCache == true {
-		jsonStr := global.Cache.Get(memberKey)
+		jsonStr := redisService.Hget(cacheKey, "author_live_tags")
 		if jsonStr != "" {
-			_ = jsoniter.Unmarshal([]byte(jsonStr), &tags)
-			return tags
+			jsonStr = utils.DeserializeData(jsonStr)
+			if jsonStr != "" {
+				_ = jsoniter.Unmarshal([]byte(jsonStr), &tags)
+				return tags
+			}
 		}
 	}
 	list := make([]dcm.DyAuthorLiveTags, 0)
@@ -43,8 +48,7 @@ func (a *AuthorBusiness) GetCacheAuthorLiveTags(enableCache bool) []string {
 		tags = append(tags, v.Name)
 	}
 	if len(tags) > 0 {
-		tagsByte, _ := jsoniter.Marshal(tags)
-		_ = global.Cache.Set(memberKey, string(tagsByte), 1800)
+		_ = redisService.Hset(cacheKey, "author_live_tags", utils.SerializeData(tags))
 	}
 	return tags
 }
@@ -121,16 +125,18 @@ func (a *AuthorBusiness) HbaseGetFansRangDate(authorId, startDate, endDate strin
 }
 
 //达人数据
-func (a *AuthorBusiness) HbaseGetAuthor(authorId string) (data entity.DyAuthorData, comErr global.CommonError) {
+func (a *AuthorBusiness) HbaseGetAuthor(authorId string) (data entity.DyAuthor, comErr global.CommonError) {
 	data, comErr = hbase.GetAuthor(authorId)
 	if comErr != nil {
 		return
 	}
-	data.Age = GetAge(data.Birthday)
-	data.Avatar = dyimg.Fix(data.Avatar)
-	data.ShareUrl = ShareUrlPrefix + data.ID
-	if data.UniqueID == "" {
-		data.UniqueID = data.ShortID
+	data.Data.Age = GetAge(data.Data.Birthday)
+	//数据做同步
+	data.Data.RoomID = data.RoomId
+	data.Data.Avatar = dyimg.Fix(data.Data.Avatar)
+	data.Data.ShareUrl = ShareUrlPrefix + data.Data.ID
+	if data.Data.UniqueID == "" {
+		data.Data.UniqueID = data.Data.ShortID
 	}
 	return
 }
@@ -231,7 +237,7 @@ func (a *AuthorBusiness) HbaseGetAuthorBasicRangeDate(authorId string, startTime
 }
 
 //达人（带货）口碑
-func (a *AuthorBusiness) HbaseGetAuthorReputation(authorId string) (data *entity.DyReputation, comErr global.CommonError) {
+func (a *AuthorBusiness) HbaseGetAuthorReputation(authorId string) (data entity.DyReputation, comErr global.CommonError) {
 	data, comErr = hbase.GetAuthorReputation(authorId)
 	if len(data.ScoreList) == 0 {
 		data.ScoreList = make([]entity.DyReputationMonthScoreList, 0)
@@ -287,7 +293,27 @@ func (a *AuthorBusiness) GetDyAuthorScore(liveScore entity.XtAuthorLiveScore, vi
 
 //直播分析
 func (a *AuthorBusiness) CountLiveRoomAnalyse(authorId string, startTime, endTime time.Time) (data dy.SumDyLiveRoom) {
-	data = dy.SumDyLiveRoom{}
+	data = dy.SumDyLiveRoom{
+		UserTotalChart: dy.DyUserTotalChart{
+			Date:       []string{},
+			CountValue: []int64{},
+			Rooms:      [][]dy.DyLiveRoomChart{},
+		},
+		OnlineTimeChart: dy.DateCountFChart{
+			Date:       []string{},
+			CountValue: []float64{},
+		},
+		UvChart: dy.DateCountFChart{
+			Date:       []string{},
+			CountValue: []float64{},
+		},
+		AmountChart: dy.DateCountFChart{
+			Date:       []string{},
+			CountValue: []float64{},
+		},
+		LiveLongTimeChart:  []dy.NameValueChart{},
+		LiveStartHourChart: []dy.NameValueChart{},
+	}
 	roomsMap, _ := hbase.GetAuthorRoomsRangDate(authorId, startTime, endTime)
 	liveDataList := make([]dy.DyLiveRoomAnalyse, 0)
 	roomNum := 0
@@ -324,6 +350,7 @@ func (a *AuthorBusiness) CountLiveRoomAnalyse(authorId string, startTime, endTim
 	sumData := map[string]dy.DyLiveRoomAnalyse{}
 	sumLongTime := map[string]int{}
 	sumHourTime := map[string]int{}
+	dateRoomMap := map[string][]dy.DyLiveRoomChart{}
 	for _, v := range liveDataList {
 		date := time.Unix(v.DiscoverTime, 0).Format("01/02")
 		longStr := ""
@@ -349,12 +376,22 @@ func (a *AuthorBusiness) CountLiveRoomAnalyse(authorId string, startTime, endTim
 		} else {
 			sumLongTime[longStr] = 1
 		}
+		if _, ok := dateRoomMap[date]; !ok {
+			dateRoomMap[date] = []dy.DyLiveRoomChart{}
+		}
+		dateRoomMap[date] = append(dateRoomMap[date], dy.DyLiveRoomChart{
+			RoomId:    v.RoomId,
+			Title:     v.Title,
+			UserTotal: v.TotalUserCount,
+		})
 		if d, ex := sumData[date]; ex {
 			d.TotalUserCount += v.TotalUserCount
 			d.IncFans += v.IncFans
-			d.IncFansRate = float64(d.IncFans) / float64(d.TotalUserCount)
+			if d.TotalUserCount > 0 {
+				d.IncFansRate = float64(d.IncFans) / float64(d.TotalUserCount)
+				d.InteractRate = float64(d.BarrageCount) / float64(d.TotalUserCount)
+			}
 			d.BarrageCount += v.BarrageCount
-			d.InteractRate = float64(d.BarrageCount) / float64(d.TotalUserCount)
 			avgUserCount := (d.AvgUserCount + v.AvgUserCount) / 2
 			d.AvgUserCount = avgUserCount
 			d.Volume += v.Volume
@@ -399,6 +436,7 @@ func (a *AuthorBusiness) CountLiveRoomAnalyse(authorId string, startTime, endTim
 	dateChart := make([]string, 0)
 	userTotalChart := make([]int64, 0)
 	onlineUserChart := make([]float64, 0)
+	roomChart := make([][]dy.DyLiveRoomChart, 0)
 	uvChart := make([]float64, 0)
 	amountChart := make([]float64, 0)
 	for _, date := range keys {
@@ -421,6 +459,11 @@ func (a *AuthorBusiness) CountLiveRoomAnalyse(authorId string, startTime, endTim
 		if v.PromotionNum > 0 {
 			data.UserData.PromotionLiveNum += 1
 		}
+		if rv, ok := dateRoomMap[date]; ok {
+			roomChart = append(roomChart, rv)
+		} else {
+			roomChart = append(roomChart, []dy.DyLiveRoomChart{})
+		}
 	}
 	if data.UserData.LiveNum > 0 {
 		data.UserData.AvgUserTotal /= int64(data.UserData.LiveNum)
@@ -439,9 +482,10 @@ func (a *AuthorBusiness) CountLiveRoomAnalyse(authorId string, startTime, endTim
 	}
 	esLiveBusiness := es.NewEsLiveBusiness()
 	data.SaleData.PromotionNum = esLiveBusiness.CountRoomProductByAuthorId(authorId, startTime, endTime)
-	data.UserTotalChart = dy.DateCountChart{
+	data.UserTotalChart = dy.DyUserTotalChart{
 		Date:       dateChart,
 		CountValue: userTotalChart,
+		Rooms:      roomChart,
 	}
 	data.OnlineTimeChart = dy.DateCountFChart{
 		Date:       dateChart,
@@ -497,9 +541,20 @@ func (a *AuthorBusiness) GetAuthorProductAnalyse(authorId, keyword, firstCate, s
 	}
 	startRowKey := startRow.AuthorDateProduct
 	stopRowKey := stopRow.AuthorDateProduct
-	hbaseDataList, _ = hbase.GetAuthorProductAnalysisRange(startRowKey, stopRowKey)
-	hbaseData, _ := hbase.GetAuthorProductAnalysis(stopRowKey)
-	hbaseDataList = append(hbaseDataList, hbaseData)
+	if startRowKey == "" || stopRowKey == "" {
+		return
+	}
+	cacheKey := cache.GetCacheKey(cache.AuthorProductAllList, startRowKey, stopRowKey)
+	cacheStr := global.Cache.Get(cacheKey)
+	if cacheStr != "" {
+		cacheStr = utils.DeserializeData(cacheStr)
+		_ = jsoniter.Unmarshal([]byte(cacheStr), &hbaseDataList)
+	} else {
+		hbaseDataList, _ = hbase.GetAuthorProductAnalysisRange(startRowKey, stopRowKey)
+		hbaseData, _ := hbase.GetAuthorProductAnalysis(stopRowKey)
+		hbaseDataList = append(hbaseDataList, hbaseData)
+		_ = global.Cache.Set(cacheKey, utils.SerializeData(hbaseDataList), 300)
+	}
 	//var wg sync.WaitGroup
 	//wg.Add(len(searchList))
 	//hbaseDataChan := make(chan entity.DyAuthorProductAnalysis, resLen)
@@ -540,11 +595,11 @@ func (a *AuthorBusiness) GetAuthorProductAnalyse(authorId, keyword, firstCate, s
 			continue
 		}
 		if brandName == "其他" {
-			if brandName != v.BrandName || v.BrandName != "" {
+			if brandName != v.BrandName && v.BrandName != "" {
 				continue
 			}
 		} else {
-			if brandName != "" && brandName != v.BrandName {
+			if brandName != v.BrandName {
 				continue
 			}
 		}
@@ -651,6 +706,7 @@ func (a *AuthorBusiness) GetAuthorProductAnalyse(authorId, keyword, firstCate, s
 	}
 	newList := make([]entity.DyAuthorProductAnalysis, 0)
 	for _, v := range productMapList {
+
 		newList = append(newList, v)
 	}
 	//排序
@@ -690,6 +746,8 @@ func (a *AuthorBusiness) GetAuthorProductAnalyse(authorId, keyword, firstCate, s
 			v.Avatar = productInfo.Image
 		}
 		list[k].Avatar = dyimg.Product(v.Avatar)
+		list[k].AuthorId = IdEncrypt(v.AuthorId)
+		list[k].ProductId = IdEncrypt(v.ProductId)
 		list[k].ProductStatus = productInfo.Status
 	}
 	analysisCount.ProductNum = total
@@ -723,7 +781,7 @@ func (a *AuthorBusiness) GetAuthorProductRooms(authorId, productId string, start
 			//}
 		}
 		list = append(list, dy.DyAuthorProductRoom{
-			RoomId:       roomId,
+			RoomId:       IdEncrypt(roomId),
 			Cover:        dyimg.Fix(liveInfo.Cover),
 			CreateTime:   liveInfo.CreateTime,
 			Title:        liveInfo.Title,
@@ -733,4 +791,35 @@ func (a *AuthorBusiness) GetAuthorProductRooms(authorId, productId string, start
 		})
 	}
 	return
+}
+
+//channel控制go协程获取达人信息
+func (a *AuthorBusiness) GetAuthorByIdsLimitGo(authorIds []string, maxNum int) map[string]entity.DyAuthorData {
+	var wg sync.WaitGroup
+	authorLen := len(authorIds)
+	if authorLen < maxNum {
+		maxNum = authorLen
+	}
+	authorChan := make(chan string, maxNum)
+	authors := make([]entity.DyAuthorData, 0)
+	authorMap := map[string]entity.DyAuthorData{}
+	for _, v := range authorIds {
+		authorChan <- v
+		wg.Add(1)
+		go func(aCh chan string, wg *sync.WaitGroup) {
+			defer wg.Done()
+			authorId, ok := <-aCh
+			if ok {
+				authorData, comErr := hbase.GetAuthor(authorId)
+				if comErr == nil {
+					authors = append(authors, authorData.Data)
+				}
+			}
+		}(authorChan, &wg)
+	}
+	wg.Wait()
+	for _, v := range authors {
+		authorMap[v.ID] = v
+	}
+	return authorMap
 }

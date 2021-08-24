@@ -6,6 +6,7 @@ import (
 	"dongchamao/hbase"
 	"dongchamao/models/entity"
 	"dongchamao/models/repost/dy"
+	"dongchamao/services/dyimg"
 	"math"
 	"time"
 )
@@ -156,8 +157,12 @@ func (l *LiveBusiness) DealOnlineTrends(liveInfo entity.DyLiveInfo) (entity.DyLi
 
 //直播间分析
 func (l *LiveBusiness) LiveRoomAnalyse(roomId string) (data dy.DyLiveRoomAnalyse, comErr global.CommonError) {
-	data = dy.DyLiveRoomAnalyse{}
 	liveInfo, comErr := hbase.GetLiveInfo(roomId)
+	data = dy.DyLiveRoomAnalyse{
+		RoomId: liveInfo.RoomID,
+		Title:  liveInfo.Title,
+		Cover:  dyimg.Fix(liveInfo.Cover),
+	}
 	if comErr != nil {
 		return
 	}
@@ -203,8 +208,8 @@ func (l *LiveBusiness) LiveRoomAnalyse(roomId string) (data dy.DyLiveRoomAnalyse
 func (l *LiveBusiness) CountAvgOnlineTime(onlineTrends []entity.DyLiveOnlineTrends, startTime, totalUser int64) float64 {
 	lenNum := len(onlineTrends)
 	var avgOnlineTime float64 = 0
-	if lenNum == 0 {
-		return avgOnlineTime
+	if lenNum == 0 || totalUser == 0 {
+		return 0
 	} else if lenNum == 1 {
 		onlineTrend := onlineTrends[0]
 		avgOnlineTime = float64(onlineTrend.CrawlTime-startTime) * (float64(onlineTrend.UserCount) / 2) / float64(totalUser)

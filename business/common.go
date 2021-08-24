@@ -1,10 +1,17 @@
 package business
 
 import (
+	"dongchamao/global"
+	"dongchamao/global/cache"
+	"dongchamao/global/utils"
 	"dongchamao/hbase"
 	"dongchamao/models/dcm"
 	"dongchamao/models/repost/dy"
+	"dongchamao/services"
+	"encoding/base64"
 	jsoniter "github.com/json-iterator/go"
+	"net/http"
+	"regexp"
 	"strings"
 	"time"
 )
@@ -15,6 +22,10 @@ const (
 	VoUserUniqueTokenPlatformWxMiniProgram = 3
 	VoUserUniqueTokenPlatformApp           = 4
 	VoUserUniqueTokenPlatformWap           = 5
+)
+
+const (
+	DyJewelBaseShowNum = 500
 )
 
 type AuthorCate struct {
@@ -171,4 +182,87 @@ func DealAuthorLiveTags() {
 		dcm.Insert(nil, &tagM)
 	}
 	return
+}
+
+func UserActionLock(active string, lockTime time.Duration) bool {
+	memberKey := cache.GetCacheKey(cache.UserActionLock, active)
+	if global.Cache.Get(memberKey) != "" {
+		return false
+	}
+	_ = global.Cache.Set(memberKey, "1", lockTime)
+	return true
+}
+
+//短url还原解析
+func ParseDyShortUrl(url string) string {
+	filterUrl := utils.ParseDyVideoShare(url)
+	if filterUrl != "" && filterUrl != url {
+		url = filterUrl
+	}
+	url = strings.TrimSpace(url)
+	//判断是否短网址,之后加入缓存
+	pattern := `^(http|https):\/\/v\.douyin\.com\/.*?`
+	reg := regexp.MustCompile(pattern)
+	returl := ""
+	if reg.MatchString(url) == true {
+		redisService := services.NewRedisService()
+		returl = redisService.Hget("douyin:shorturl:hashmap", url)
+		if returl == "" {
+			client := &http.Client{}
+			request, _ := http.NewRequest("GET", url, nil)
+			response, err := client.Do(request)
+			if err != nil {
+				return ""
+			}
+			defer response.Body.Close()
+			returl = response.Request.URL.String()
+			redisService.Hset("douyin:shorturl:hashmap", url, returl)
+		}
+		return returl
+	} else {
+		return url
+	}
+}
+
+//id加密
+func IdEncrypt(id string) string {
+	if global.IsDev() {
+		return id
+	}
+	if id == "" || id == "0" {
+		return ""
+	}
+	key := []byte("dwVRjLVUN4RMGAKSEvuvPV696PKrEuRT")
+	idByte := []byte(id)
+	str, err := utils.AesEncrypt(idByte, key)
+	if err != nil {
+		return ""
+	}
+	//restful路由避免错误
+	return strings.ReplaceAll(base64.StdEncoding.EncodeToString(str), "/", "*")
+}
+
+//id解密
+func IdDecrypt(id string) string {
+	if global.IsDev() {
+		return id
+	}
+	if id == "" {
+		return ""
+	}
+	if strings.Index(id, "=") < 0 {
+		return ""
+	}
+	key := []byte("dwVRjLVUN4RMGAKSEvuvPV696PKrEuRT")
+	//restful路由避免错误
+	id = strings.ReplaceAll(id, "*", "/")
+	s, err := base64.StdEncoding.DecodeString(id)
+	if err != nil {
+		return ""
+	}
+	str, err := utils.AesDecrypt(s, key)
+	if err != nil {
+		return ""
+	}
+	return string(str)
 }

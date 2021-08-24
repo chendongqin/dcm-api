@@ -60,6 +60,9 @@ type DyLivePromotionChart struct {
 }
 
 type DyLiveRoomAnalyse struct {
+	RoomId         string  `json:"room_id"`
+	Title          string  `json:"title"`
+	Cover          string  `json:"cover"`
 	DiscoverTime   int64   `json:"discover_time"`
 	TotalUserCount int64   `json:"total_user_count"`
 	IncFans        int64   `json:"inc_fans"`
@@ -78,6 +81,12 @@ type DyLiveRoomAnalyse struct {
 	AvgOnlineTime  float64 `json:"avg_online_time"`
 }
 
+type DyLiveRoomChart struct {
+	RoomId    string `json:"room_id"`
+	Title     string `json:"title"`
+	UserTotal int64  `json:"user_total"`
+}
+
 type DyLiveRoomSaleData struct {
 	Volume       int64   `json:"volume"`
 	Amount       float64 `json:"amount"`
@@ -90,12 +99,18 @@ type DyLiveRoomSaleData struct {
 type SumDyLiveRoom struct {
 	UserData           SumDyLiveRoomUserData `json:"user_data"`
 	SaleData           SumDyLiveRoomSaleData `json:"sale_data"`
-	UserTotalChart     DateCountChart        `json:"user_total_chart"`
+	UserTotalChart     DyUserTotalChart      `json:"user_total_chart"`
 	OnlineTimeChart    DateCountFChart       `json:"online_time_chart"`
 	UvChart            DateCountFChart       `json:"uv_chart"`
 	AmountChart        DateCountFChart       `json:"amount_chart"`
 	LiveLongTimeChart  []NameValueChart      `json:"live_long_time_chart"`
 	LiveStartHourChart []NameValueChart      `json:"live_start_hour_chart"`
+}
+
+type DyUserTotalChart struct {
+	Date       []string            `json:"date"`
+	CountValue []int64             `json:"count_value"`
+	Rooms      [][]DyLiveRoomChart `json:"rooms"`
 }
 
 type SumDyLiveRoomUserData struct {

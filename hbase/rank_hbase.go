@@ -135,3 +135,35 @@ func GetDyLiveHourPopularityRank(hour string) (data entity.DyLiveHourPopularityR
 	utils.MapToStruct(detailMap, &data)
 	return
 }
+
+func GetLiveShareWeekRank(rowKey string) (data entity.DyLiveShareTops, comErr global.CommonError) {
+	query := hbasehelper.NewQuery()
+	result, err := query.SetTable(hbaseService.HbaseDyLiveShareWeekRank).GetByRowKey([]byte(rowKey))
+	if err != nil {
+		comErr = global.NewMsgError(err.Error())
+		return
+	}
+	if result.Row == nil {
+		comErr = global.NewError(4040)
+		return
+	}
+	detailMap := hbaseService.HbaseFormat(result, entity.DyLiveShareTopMap)
+	utils.MapToStruct(detailMap, &data)
+	return
+}
+
+func GetAwemeShareRank(rowKey string) (data entity.DyAwemeShareTops, comErr global.CommonError) {
+	query := hbasehelper.NewQuery()
+	result, err := query.SetTable(hbaseService.HbaseDyAwemeShareRank).GetByRowKey([]byte(rowKey))
+	if err != nil {
+		comErr = global.NewMsgError(err.Error())
+		return
+	}
+	if result.Row == nil {
+		comErr = global.NewError(4040)
+		return
+	}
+	detailMap := hbaseService.HbaseFormat(result, entity.DyAwemeShareTopMap)
+	utils.MapToStruct(detailMap, &data)
+	return
+}

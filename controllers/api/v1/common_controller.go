@@ -1,12 +1,16 @@
 package v1
 
 import (
+	"dongchamao/business"
 	"dongchamao/controllers/api"
 	"dongchamao/global"
 	"dongchamao/global/cache"
+	"dongchamao/global/logger"
 	"dongchamao/global/utils"
 	"dongchamao/models/dcm"
 	"dongchamao/services/ali_sms"
+	"encoding/json"
+	"strings"
 )
 
 type CommonController struct {
@@ -48,12 +52,12 @@ func (receiver *CommonController) Sms() {
 	cacheKey := cache.GetCacheKey(cache.SmsCodeVerify, grantType, mobile)
 	code := utils.GetRandomInt(6)
 	err := global.Cache.Set(cacheKey, code, 300)
-	if err != nil {
+	if logger.CheckError(err) != nil {
 		receiver.FailReturn(global.NewError(5000))
 		return
 	}
 	res, smsErr := aliSms.SmsCode(mobile, code)
-	if !res || smsErr != nil {
+	if !res || logger.CheckError(smsErr) != nil {
 		receiver.FailReturn(global.NewError(6000))
 		return
 	}
@@ -86,7 +90,38 @@ func (receiver *CommonController) CheckSmsCode() {
 	return
 }
 
+func (receiver *CommonController) IdEncryptDecrypt() {
+	id := receiver.Ctx.Input.Param(":id")
+	id1 := ""
+	if strings.Index(id, "=") < 0 {
+		id1 = business.IdEncrypt(id)
+	}
+	id2 := business.IdDecrypt(id)
+	receiver.SuccReturn(map[string]string{
+		"id":      id,
+		"encrypt": id1,
+		"decrypt": id2,
+	})
+	return
+}
+
 func (receiver *CommonController) Test() {
-	receiver.SuccReturn(nil)
+	return
+}
+
+func (receiver *CommonController) GetConfig() {
+	var configJson dcm.DcConfigJson
+	keyName := receiver.GetString(":key_name")
+	_, err := dcm.GetDbSession().Where("key_name=?", keyName).Get(&configJson)
+	if err != nil {
+		receiver.FailReturn(global.NewError(5000))
+		return
+	}
+	var data map[string]interface{}
+	if err := json.Unmarshal([]byte(configJson.Value), &data); err != nil {
+		receiver.FailReturn(global.NewError(5000))
+		return
+	}
+	receiver.SuccReturn(data)
 	return
 }

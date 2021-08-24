@@ -21,16 +21,37 @@ func NewAccountAuthBusiness() *AccountAuthBusiness {
 
 //无参数路由不需登陆白名单
 var LoginWitheUri = []string{
+	"/v1/id",
 	"/v1/user/login",
 	"/v1/user/findpwd",
 	"/v1/sms/code",
 	"/v1/sms/verify",
-	"/v1/author/cate",
+	"/v1/dy/author/live/tags",
+	"/v1/dy/author/cate",
+	"/v1/dy/product/cate",
+	"/v1/dy/author/search",
+	"/v1/dy/live/search",
+	"/v1/pay/notify/wechat",
+	"/v1/pay/notify/alipay",
+}
+
+var SignWitheUri = []string{
+	"/v1/id",
+	"/v1/pay/notify/wechat",
+	"/v1/pay/notify/alipay",
 }
 
 //登陆白名单校验
 func (receiver *AccountAuthBusiness) AuthLoginWhiteUri(uri string) bool {
 	if utils.InArrayString(uri, LoginWitheUri) {
+		return true
+	}
+	return false
+}
+
+//签名白名单校验
+func (receiver *AccountAuthBusiness) AuthSignWhiteUri(uri string) bool {
+	if utils.InArrayString(uri, SignWitheUri) {
 		return true
 	}
 	return false
@@ -75,7 +96,13 @@ func (receiver *AccountAuthBusiness) CheckAppIdSign(appId string, ctx *context.C
 	if sign != utils.Md5_encode(tmpStr) {
 		return global.NewError(4041)
 	}
-	return global.NewError(4041)
+	nowTime := time.Now().Unix() - 60
+	nowTime2 := time.Now().Unix() + 60
+	timestampInt64 := utils.ToInt64(timestamp)
+	if timestampInt64 < nowTime || timestampInt64 > nowTime2 {
+		return global.NewError(4041)
+	}
+	return nil
 }
 
 func (receiver *AccountAuthBusiness) GetAppSecret(appId string, enableCache bool) (string, bool) {

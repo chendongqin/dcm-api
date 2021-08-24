@@ -14,7 +14,7 @@ type AwemeController struct {
 }
 
 func (receiver *AwemeController) AwemeBaseData() {
-	awemeId := receiver.Ctx.Input.Param(":aweme_id")
+	awemeId := business.IdDecrypt(receiver.Ctx.Input.Param(":aweme_id"))
 	if awemeId == "" {
 		receiver.FailReturn(global.NewError(4000))
 		return
@@ -47,7 +47,7 @@ func (receiver *AwemeController) AwemeBaseData() {
 }
 
 func (receiver *AwemeController) AwemeChart() {
-	awemeId := receiver.Ctx.Input.Param(":aweme_id")
+	awemeId := business.IdEncrypt(receiver.Ctx.Input.Param(":aweme_id"))
 	if awemeId == "" {
 		receiver.FailReturn(global.NewError(4000))
 		return

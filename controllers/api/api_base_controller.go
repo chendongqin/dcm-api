@@ -147,7 +147,6 @@ func (this *ApiBaseController) InitUserToken() (commonErr global.CommonError) {
 	}
 	userBusiness := business.NewUserBusiness()
 	if claims, ok := token.Claims.(jwt.MapClaims); ok && token.Valid {
-		json.Marshal(claims)
 		jsonstr, err0 := json.Marshal(claims)
 		tokenStruct := &business.TokenData{}
 		err0 = json.Unmarshal(jsonstr, tokenStruct)
@@ -175,7 +174,7 @@ func (this *ApiBaseController) InitUserToken() (commonErr global.CommonError) {
 			return global.NewError(4212)
 		}
 		//除bindphone外的接口 没有phone不让访问
-		if utils.InArray(this.GetUri(), NeedUsernameRoute) && this.UserInfo.Username == "" {
+		if this.UserInfo.Username == "" {
 			return global.NewError(4005)
 		}
 
@@ -217,9 +216,15 @@ func (this *ApiBaseController) InitUserToken() (commonErr global.CommonError) {
 func (this *ApiBaseController) CheckSign() {
 	authBusiness := business.NewAccountAuthBusiness()
 	appId := this.Ctx.Input.Header("APPID")
+	if appId == "" {
+		appId = "10000"
+	}
 	this.AppId = utils.ToInt(appId)
-	if utils.InArrayString(appId, []string{"10000", "10001", "10002", "10003", "10004", "10005", ""}) {
+	if utils.InArrayString(appId, []string{"10000", "10001", "10002", "10003", "10004", "10005"}) {
 		if this.Ctx.Input.IP() == "127.0.0.1" {
+			return
+		}
+		if authBusiness.AuthSignWhiteUri(this.TrueUri) {
 			return
 		}
 		timestamp := this.Ctx.Input.Header("TIMESTAMP")
@@ -230,23 +235,36 @@ func (this *ApiBaseController) CheckSign() {
 			this.FailReturn(err)
 			return
 		}
+
 	} else {
+		if strings.Index(this.TrueUri, "/internal") == 0 && appId != "20000" {
+			this.FailReturn(global.NewError(4004))
+			return
+		}
 		err := authBusiness.CheckAppIdSign(appId, this.Ctx)
 		if err != nil {
 			this.FailReturn(err)
 			return
 		}
+		//赋予权限
+		this.UserId = 1
+		this.DyLevel = 3
+		this.XhsLevel = 3
+		this.TbLevel = 3
 	}
 }
 
 //校验token
 func (this *ApiBaseController) CheckToken() {
-	authBusiness := business.NewAccountAuthBusiness()
-	if authBusiness.AuthLoginWhiteUri(this.TrueUri) {
+	if !utils.InArrayInt(this.AppId, []int{10000, 10001, 10002, 10003, 10004, 10005}) {
 		return
 	}
 	err := this.InitUserToken()
 	if err != nil {
+		authBusiness := business.NewAccountAuthBusiness()
+		if authBusiness.AuthLoginWhiteUri(this.TrueUri) {
+			return
+		}
 		this.FailReturn(err)
 		return
 	}
@@ -431,9 +449,9 @@ func (this *ApiBaseController) AsfCheck() {
 	} else {
 		verifyIp := global.Cache.Get(cache.GetCacheKey(cache.SecurityVerifyCodeIp, this.Ip))
 		if verifyIp == "verify" || verifyUser == "verify" {
-			if this.Ip == "47.103.153.227" {
-				return
-			}
+			//if this.Ip == "47.103.153.227" {
+			//	return
+			//}
 			this.FailReturn(global.NewError(80000))
 			return
 		}

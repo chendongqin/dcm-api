@@ -3,6 +3,7 @@ package alioss
 import (
 	"crypto/hmac"
 	"crypto/sha1"
+	"dongchamao/global/logger"
 	"encoding/base64"
 	"encoding/json"
 	"fmt"
@@ -63,7 +64,6 @@ type CallbackParam struct {
 	CallbackBodyType string `json:"callbackBodyType"`
 }
 
-
 func GetUserAvatarPolicyToken(uploadDir, tmpKey, upType string, uid int64) *PolicyToken {
 	callBackBody := fmt.Sprintf("filename=${object}&size=${size}&mimeType=${mimeType}&height=${imageInfo.height}&width=${imageInfo.width}&tmp_key=%s&up_type=%s&uid=%d", tmpKey, upType, uid)
 	avatarCallBackUrl := beego.AppConfig.String("oss_callback_url")
@@ -115,16 +115,16 @@ func commUploadPolicyToken(uploadDir, callBackBody, callBackUrlstring string) *P
 
 func UploadLocalFile(localFile, uploadUrl string) error {
 	client, err := oss.New("https://oss-cn-hangzhou.aliyuncs.com", accessKeyId, accessKeySecret)
-	if err != nil {
+	if logger.CheckError(err) != nil {
 		return err
 	}
 	bucketName := beego.AppConfig.String("bucketName")
 	bucket, err := client.Bucket(bucketName)
-	if err != nil {
+	if logger.CheckError(err) != nil {
 		return err
 	}
 	err = bucket.PutObjectFromFile(uploadUrl, localFile)
-	if err != nil {
+	if logger.CheckError(err) != nil {
 		return err
 	}
 	return nil

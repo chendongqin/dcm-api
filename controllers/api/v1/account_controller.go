@@ -7,8 +7,11 @@ import (
 	"dongchamao/global/cache"
 	"dongchamao/global/utils"
 	"dongchamao/models/dcm"
+	"dongchamao/models/repost"
 	"dongchamao/models/repost/dy"
+	jsoniter "github.com/json-iterator/go"
 	"strings"
+	"time"
 )
 
 type AccountController struct {
@@ -53,6 +56,9 @@ func (receiver *AccountController) Login() {
 	updateData := map[string]interface{}{
 		"login_time": utils.GetNowTimeStamp(),
 		"login_ip":   receiver.Ip,
+	}
+	if business.AppIdMap[appId] == 2 {
+		updateData["is_install_app"] = 1
 	}
 	_, _ = userBusiness.UpdateUserAndClearCache(nil, user.Id, updateData)
 	receiver.RegisterLogin(authToken, expTime)
@@ -126,12 +132,12 @@ func (receiver *AccountController) ResetPwd() {
 	if receiver.UserInfo.SetPassword == 1 {
 		oldPwd := InputData.GetString("old_pwd", "")
 		if oldPwd == "" {
-			receiver.FailReturn(global.NewError(4207))
+			receiver.FailReturn(global.NewError(4214))
 			return
 		}
 		oldPwd = utils.Base64Decode(oldPwd)
 		if utils.Md5_encode(oldPwd+receiver.UserInfo.Salt) != receiver.UserInfo.Password {
-			receiver.FailReturn(global.NewError(4207))
+			receiver.FailReturn(global.NewError(4214))
 			return
 		}
 	}
@@ -169,29 +175,48 @@ func (receiver *AccountController) ResetPwd() {
 	return
 }
 
+//info
 func (receiver *AccountController) Info() {
 	username := receiver.UserInfo.Username
+	isWechat := 0
+	if receiver.UserInfo.Unionid != "" {
+
+	}
 	account := dy.RepostAccountData{
 		UserId:      receiver.UserInfo.Id,
 		Username:    username[:3] + "****" + username[7:],
 		Nickname:    receiver.UserInfo.Nickname,
 		Avatar:      receiver.UserInfo.Avatar,
 		PasswordSet: receiver.UserInfo.SetPassword,
+		Wechat:      isWechat,
 	}
 	vipBusiness := business.NewVipBusiness()
-	vipLevelsMap := vipBusiness.GetVipLevels(receiver.UserInfo.Id)
-	for k, v := range vipLevelsMap {
-		if k == business.VipPlatformDouYin {
-			account.DyLevel.Level = v
-		} else if k == business.VipPlatformXiaoHongShu {
-			account.XhsLevel.Level = v
-		} else if k == business.VipPlatformTaoBao {
-			account.TbLevel.Level = v
+	vipLevels := vipBusiness.GetVipLevels(receiver.UserInfo.Id)
+	for _, v := range vipLevels {
+		expiration := "-"
+		subExpiration := "-"
+		if v.ExpirationTime.After(time.Now()) {
+			expiration = v.ExpirationTime.Format("2006-01-02 15:04:05")
+		}
+		if v.SubExpirationTime.After(time.Now()) {
+			subExpiration = v.SubExpirationTime.Format("2006-01-02 15:04:05")
+		}
+		vipLevel := dy.RepostAccountVipLevel{
+			Level:             v.Level,
+			LevelName:         vipBusiness.GetUserLevel(v.Level),
+			ExpirationTime:    expiration,
+			SubNum:            v.SubNum,
+			IsSub:             v.IsSub,
+			SubExpirationTime: subExpiration,
+		}
+		if v.PlatForm == business.VipPlatformDouYin {
+			account.DyLevel = vipLevel
+		} else if v.PlatForm == business.VipPlatformXiaoHongShu {
+			account.XhsLevel = vipLevel
+		} else if v.PlatForm == business.VipPlatformTaoBao {
+			account.TbLevel = vipLevel
 		}
 	}
-	account.DyLevel.LevelName = vipBusiness.GetUserLevel(account.DyLevel.Level)
-	account.XhsLevel.LevelName = vipBusiness.GetUserLevel(account.XhsLevel.Level)
-	account.TbLevel.LevelName = vipBusiness.GetUserLevel(account.TbLevel.Level)
 	receiver.SuccReturn(map[string]interface{}{
 		"info": account,
 	})
@@ -211,4 +236,163 @@ func (receiver *AccountController) Logout() {
 	receiver.SuccReturn("success")
 	return
 
+}
+
+func (receiver *AccountController) DyUserSearchSave() {
+	searchType := receiver.GetString(":type")
+	data := receiver.ApiDatas
+	dataMap, _ := utils.ToMapStringInterface(data)
+	searchData := map[string]interface{}{}
+	note := ""
+	for k, v := range dataMap {
+		if k == "note" {
+			note = utils.ToString(v)
+			continue
+		}
+		searchData[k] = v
+	}
+	if note == "" {
+		receiver.FailReturn(global.NewMsgError("请输入筛选器昵称"))
+		return
+	}
+	total, _ := dcm.GetSlaveDbSession().
+		Table(new(dcm.DcUserSearch)).
+		Where("user_id =? AND search_type = ?", receiver.UserId, searchType).
+		Count()
+	if total >= 10 {
+		receiver.FailReturn(global.NewMsgError("最多保存10条常用筛选器"))
+		return
+	}
+	contentByte, _ := jsoniter.Marshal(searchData)
+	searchM := dcm.DcUserSearch{
+		UserId:     receiver.UserId,
+		SearchType: searchType,
+		Note:       note,
+		Content:    string(contentByte),
+		CreateTime: time.Now(),
+		UpdateTime: time.Now(),
+	}
+	affect, err := dcm.Insert(nil, &searchM)
+	if affect == 0 || err != nil {
+		receiver.FailReturn(global.NewError(5000))
+		return
+	}
+	receiver.SuccReturn(nil)
+	return
+}
+
+func (receiver *AccountController) DyUserSearchDel() {
+	id := receiver.GetString(":id")
+	dbSession := dcm.GetDbSession()
+	searchM := dcm.DcUserSearch{}
+	affect, err := dbSession.Where("id = ? AND user_id = ?", id, receiver.UserId).Delete(&searchM)
+	if affect == 0 || err != nil {
+		receiver.FailReturn(global.NewError(5000))
+		return
+	}
+	receiver.SuccReturn(nil)
+	return
+}
+
+func (receiver *AccountController) DyUserSearchList() {
+	page := receiver.GetPage("page")
+	pageSize := receiver.GetPageSize("page_size", 10, 50)
+	searchType := receiver.GetString(":type")
+	list := make([]dcm.DcUserSearch, 0)
+	dbSession := dcm.GetSlaveDbSession()
+	start := (page - 1) * pageSize
+	total, err := dbSession.
+		Where("user_id =? AND search_type = ?", receiver.UserId, searchType).
+		Limit(pageSize, start).
+		FindAndCount(&list)
+	if err != nil {
+		receiver.FailReturn(global.NewError(5000))
+		return
+	}
+	repostList := make([]repost.SearchData, 0)
+	for _, v := range list {
+		content := map[string]interface{}{}
+		_ = jsoniter.Unmarshal([]byte(v.Content), &content)
+		repostList = append(repostList, repost.SearchData{
+			Id:         v.Id,
+			SearchType: v.SearchType,
+			Note:       v.Note,
+			Content:    content,
+		})
+	}
+	receiver.SuccReturn(map[string]interface{}{
+		"list":  repostList,
+		"total": total,
+	})
+	return
+}
+
+func (receiver *AccountController) AddCollect() {
+	//platform：1抖音
+	platform, err := receiver.GetInt("platform")
+	if err != nil {
+		receiver.FailReturn(global.NewError(4000))
+		return
+	}
+	collectId := receiver.GetString("collect_id")
+	collectType, err := receiver.GetInt("collect_type", 1)
+	if err != nil {
+		receiver.FailReturn(global.NewError(5000))
+		return
+	}
+	var comErr global.CommonError
+	switch platform {
+	case 1:
+		comErr = business.NewUserBusiness().AddDyCollect(collectId, collectType, receiver.UserInfo.Id)
+	}
+	if comErr != nil {
+		receiver.FailReturn(comErr)
+		return
+	}
+	receiver.SuccReturn("success")
+	return
+}
+
+func (receiver *AccountController) DelCollect() {
+	id, err := receiver.GetInt(":id")
+	if err != nil {
+		receiver.FailReturn(global.NewError(5000))
+		return
+	}
+	comErr := business.NewUserBusiness().CancelDyCollect(id)
+	if comErr != nil {
+		receiver.FailReturn(comErr)
+		return
+	}
+	receiver.SuccReturn("success")
+	return
+}
+
+func (receiver *AccountController) GetCollect() {
+	platform, err := receiver.GetInt("platform", 1)
+	if err != nil {
+		receiver.FailReturn(global.NewError(5000))
+		return
+	}
+	collectType, err := receiver.GetInt("collect_type", 1)
+	if err != nil {
+		receiver.FailReturn(global.NewError(5000))
+		return
+	}
+	tagId, err := receiver.GetInt("tag_id", 0)
+	if err != nil {
+		receiver.FailReturn(global.NewError(5000))
+		return
+	}
+	keywords := receiver.GetString("keywords")
+	switch platform {
+	case 1:
+		data, comErr := business.NewUserBusiness().GetDyCollect(tagId, collectType, keywords)
+		if comErr != nil {
+			receiver.FailReturn(comErr)
+			return
+		}
+		receiver.SuccReturn(data)
+	}
+	return
 }

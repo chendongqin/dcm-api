@@ -10,6 +10,8 @@ import (
 	"dongchamao/models/entity"
 	dy2 "dongchamao/models/repost/dy"
 	"dongchamao/services/dyimg"
+	"math"
+	"sort"
 	"time"
 )
 
@@ -24,9 +26,110 @@ func (receiver *ProductController) GetCacheProductCate() {
 	return
 }
 
+func (receiver *ProductController) Search() {
+	hasAuth := false
+	hasLogin := false
+	if receiver.DyLevel == 3 {
+		hasAuth = true
+	}
+	if receiver.UserId > 0 {
+		hasLogin = true
+	}
+	keyword := receiver.GetString("keyword", "")
+	category := receiver.GetString("category", "")
+	secondCategory := receiver.GetString("second_category", "")
+	thirdCategory := receiver.GetString("third_category", "")
+	platform := receiver.GetString("platform", "")
+	sortStr := receiver.GetString("sort", "")
+	orderBy := receiver.GetString("order_by", "")
+	minCommissionRate, _ := receiver.GetFloat("min_commission_rate", 0)
+	minPrice, _ := receiver.GetFloat("min_price", 0)
+	maxPrice, _ := receiver.GetFloat("max_price", 0)
+	commerceType, _ := receiver.GetInt("commerce_type", 0)
+	isCoupon, _ := receiver.GetInt("is_coupon", 0)
+	isStar, _ := receiver.GetInt("is_star", 0)
+	notStar, _ := receiver.GetInt("not_star", 0)
+	relateRoom, _ := receiver.GetInt("relate_room", 0)
+	relateAweme, _ := receiver.GetInt("relate_aweme", 0)
+	page := receiver.GetPage("page")
+	pageSize := receiver.GetPageSize("page_size", 10, 100)
+	if !hasAuth {
+		if category != "" || secondCategory != "" || thirdCategory != "" || platform != "" || minCommissionRate > 0 || minPrice > 0 || maxPrice > 0 || commerceType > 0 ||
+			isCoupon > 0 || isStar > 0 || notStar > 0 || page != 1 || relateRoom > 0 || relateAweme > 0 {
+			if !hasLogin {
+				receiver.FailReturn(global.NewError(4001))
+				return
+			}
+			receiver.FailReturn(global.NewError(4004))
+			return
+		}
+		if pageSize > 10 {
+			pageSize = 10
+		}
+	}
+	formNum := (page - 1) * pageSize
+	if formNum > business.DyJewelBaseShowNum {
+		receiver.FailReturn(global.NewError(4004))
+		return
+	}
+	productId := ""
+	productBusiness := business.NewProductBusiness()
+	if keyword != "" {
+		itemId := productBusiness.UrlExplain(keyword)
+		if itemId != "" {
+			if itemId != "" {
+				productId = itemId
+				keyword = ""
+			}
+		} else {
+			tbShortUrl := utils.ParseTaobaoShare(keyword)
+			if tbShortUrl != "" {
+				url := productBusiness.ExplainTaobaoShortUrl(tbShortUrl)
+				id := productBusiness.UrlExplain(url)
+				if id != "" {
+					productId = id
+					keyword = ""
+				} else {
+					page = 0
+					pageSize = 0
+				}
+			}
+		}
+	}
+	esProductBusiness := es.NewEsProductBusiness()
+	list, total, comErr := esProductBusiness.BaseSearch(productId, keyword, category, secondCategory, thirdCategory, platform,
+		minCommissionRate, minPrice, maxPrice, commerceType, isCoupon, relateRoom, relateAweme, isStar, notStar, page, pageSize, sortStr, orderBy)
+	if comErr != nil {
+		receiver.FailReturn(comErr)
+		return
+	}
+	for k, v := range list {
+		list[k].Image = dyimg.Fix(v.Image)
+		list[k].ProductId = business.IdEncrypt(v.ProductId)
+	}
+	totalPage := math.Ceil(float64(total) / float64(pageSize))
+	maxPage := math.Ceil(float64(business.DyJewelBaseShowNum) / float64(pageSize))
+	if totalPage > maxPage {
+		totalPage = maxPage
+	}
+	maxTotal := business.DyJewelBaseShowNum
+	if maxTotal > total {
+		maxTotal = total
+	}
+	receiver.SuccReturn(map[string]interface{}{
+		"list":       list,
+		"total":      total,
+		"total_page": totalPage,
+		"max_num":    maxTotal,
+		"has_auth":   hasAuth,
+		"has_login":  hasLogin,
+	})
+	return
+}
+
 //商品分析
 func (receiver *ProductController) ProductBaseAnalysis() {
-	productId := receiver.GetString(":product_id", "")
+	productId := business.IdDecrypt(receiver.GetString(":product_id", ""))
 	if productId == "" {
 		receiver.FailReturn(global.NewError(4000))
 		return
@@ -58,6 +161,9 @@ func (receiver *ProductController) ProductBaseAnalysis() {
 	orderList := make([]dy2.ProductOrderDaily, 0)
 	countData := dy2.ProductOrderDaily{}
 	beginTime := startTime
+	authorMap := map[string]string{}
+	roomMap := map[string]string{}
+	videoMap := map[string]string{}
 	for {
 		if beginTime.After(endTime) {
 			break
@@ -78,10 +184,18 @@ func (receiver *ProductController) ProductBaseAnalysis() {
 			for _, a := range v.AwemeAuthorList {
 				awemeAuthorNum++
 				authors[a.AuthorId] = a.AuthorId
+				authorMap[a.AuthorId] = a.AuthorId
 			}
 			for _, a := range v.LiveAuthorList {
 				liveAuthorNum++
 				authors[a.AuthorId] = a.AuthorId
+				authorMap[a.AuthorId] = a.AuthorId
+			}
+			for _, aw := range v.AwemeList {
+				videoMap[aw.AwemeId] = aw.AwemeId
+			}
+			for _, r := range v.LiveList {
+				roomMap[r.RoomId] = r.RoomId
 			}
 			authorNum = len(authors)
 			awemeNum = len(v.AwemeList)
@@ -104,9 +218,6 @@ func (receiver *ProductController) ProductBaseAnalysis() {
 		rateChart = append(rateChart, rate)
 		countData.OrderCount += order
 		countData.PvCount += pv
-		countData.AwemeNum += awemeNum
-		countData.RoomNum += roomNum
-		countData.AuthorNum += authorNum
 		orderList = append(orderList, dy2.ProductOrderDaily{
 			Date:       dateStr,
 			OrderCount: order,
@@ -118,9 +229,15 @@ func (receiver *ProductController) ProductBaseAnalysis() {
 		})
 		beginTime = beginTime.AddDate(0, 0, 1)
 	}
+	countData.AwemeNum = len(videoMap)
+	countData.RoomNum = len(roomMap)
+	countData.AuthorNum = len(authorMap)
 	if countData.PvCount > 0 {
 		countData.Rate = float64(countData.OrderCount) / float64(countData.PvCount)
 	}
+	sort.Slice(orderList, func(i, j int) bool {
+		return orderList[i].Date > orderList[j].Date
+	})
 	receiver.SuccReturn(map[string]interface{}{
 		"author_chart": dy2.ProductAuthorChart{
 			Date:             dateChart,
@@ -147,7 +264,7 @@ func (receiver *ProductController) ProductBaseAnalysis() {
 
 //商品基础数据
 func (receiver *ProductController) ProductBase() {
-	productId := receiver.GetString(":product_id", "")
+	productId := business.IdDecrypt(receiver.GetString(":product_id", ""))
 	if productId == "" {
 		receiver.FailReturn(global.NewError(4000))
 		return
@@ -166,10 +283,16 @@ func (receiver *ProductController) ProductBase() {
 	relatedInfo, _ := hbase.GetProductDailyRangDate(productId, startTime, yesterdayTime)
 	var roomNum int
 	var awemeNum int
+	roomMap := map[string]string{}
+	awemeMap := map[string]string{}
 	authorMap := map[string]string{}
 	for _, v := range relatedInfo {
-		awemeNum += len(v.AwemeList)
-		roomNum += len(v.LiveList)
+		for _, aw := range v.AwemeList {
+			awemeMap[aw.AwemeId] = aw.AwemeId
+		}
+		for _, r := range v.LiveList {
+			roomMap[r.RoomId] = r.RoomId
+		}
 		for _, a := range v.AwemeAuthorList {
 			authorMap[a.AuthorId] = a.AuthorId
 		}
@@ -177,6 +300,8 @@ func (receiver *ProductController) ProductBase() {
 			authorMap[a.AuthorId] = a.AuthorId
 		}
 	}
+	roomNum = len(roomMap)
+	awemeNum = len(awemeMap)
 	var rate30 float64 = 0
 	if monthData.PvCount > 0 {
 		rate30 = float64(monthData.OrderCount) / float64(monthData.PvCount)
@@ -193,7 +318,7 @@ func (receiver *ProductController) ProductBase() {
 		label = "其他"
 	}
 	simpleInfo := dy2.SimpleDyProduct{
-		ProductID:     productInfo.ProductID,
+		ProductID:     business.IdEncrypt(productInfo.ProductID),
 		Title:         productInfo.Title,
 		MarketPrice:   productInfo.MarketPrice,
 		Price:         productInfo.Price,
@@ -220,9 +345,9 @@ func (receiver *ProductController) ProductBase() {
 	priceChart30 := make([]float64, 0)
 	cosPriceChart30 := make([]float64, 0)
 	today := utils.ToInt64(time.Now().Format("20060102"))
-	last30Day := utils.ToInt64(time.Now().AddDate(0, 0, -30).Format("20060102"))
-	last15Day := utils.ToInt64(time.Now().AddDate(0, 0, -16).Format("20060102"))
-	last7Day := utils.ToInt64(time.Now().AddDate(0, 0, -8).Format("20060102"))
+	last30Day := utils.ToInt64(time.Now().AddDate(0, 0, -29).Format("20060102"))
+	last15Day := utils.ToInt64(time.Now().AddDate(0, 0, -15).Format("20060102"))
+	last7Day := utils.ToInt64(time.Now().AddDate(0, 0, -7).Format("20060102"))
 	priceTrends := business.ProductPriceTrendsListOrderByTime(productInfo.PriceTrends)
 	priceMap := map[int64]entity.DyProductPriceTrend{}
 	for _, v := range priceTrends {
@@ -231,7 +356,7 @@ func (receiver *ProductController) ProductBase() {
 		}
 		priceMap[v.StartTime] = v
 	}
-	begin, _ := time.ParseInLocation("20060102", time.Now().AddDate(0, 0, -30).Format("20060102"), time.Local)
+	begin, _ := time.ParseInLocation("20060102", time.Now().AddDate(0, 0, -29).Format("20060102"), time.Local)
 	beforeData := entity.DyProductPriceTrend{}
 	for {
 		if begin.After(time.Now()) {
@@ -288,7 +413,7 @@ func (receiver *ProductController) ProductBase() {
 
 //商品销量趋势
 func (receiver *ProductController) ProductLiveChart() {
-	productId := receiver.GetString(":product_id", "")
+	productId := business.IdDecrypt(receiver.GetString(":product_id", ""))
 	if productId == "" {
 		receiver.FailReturn(global.NewError(4000))
 		return
@@ -333,10 +458,10 @@ func (receiver *ProductController) ProductLiveChart() {
 
 //商品直播间列表
 func (receiver *ProductController) ProductLiveRoomList() {
-	productId := receiver.Ctx.Input.Param(":product_id")
+	productId := business.IdDecrypt(receiver.Ctx.Input.Param(":product_id"))
 	InputData := receiver.InputFormat()
 	keyword := InputData.GetString("keyword", "")
-	sortStr := InputData.GetString("sort", "predict_gmv")
+	sortStr := InputData.GetString("sort", "shelf_time")
 	orderBy := InputData.GetString("order_by", "desc")
 	page := InputData.GetInt("page", 1)
 	size := InputData.GetInt("page_size", 10)
@@ -379,7 +504,7 @@ func (receiver *ProductController) ProductLiveRoomList() {
 				if p, ok := pmtMapTmp[productId]; ok {
 					roomProductPmtMap[roomId] = p
 				}
-				authorMapTmp[authorId] = authorData
+				authorMapTmp[authorId] = authorData.Data
 				curCh <- roomProductCurMap
 				pmtCh <- roomProductPmtMap
 				authorChan <- authorMapTmp
@@ -450,6 +575,10 @@ func (receiver *ProductController) ProductLiveRoomList() {
 					CurList: []dy2.LiveCurProduct{},
 				}
 			}
+			item.ProductInfo.AuthorID = business.IdEncrypt(item.ProductInfo.AuthorID)
+			item.ProductInfo.ProductID = business.IdEncrypt(item.ProductInfo.ProductID)
+			item.ProductInfo.AuthorRoomID = business.IdEncrypt(item.ProductInfo.AuthorRoomID)
+			item.ProductInfo.RoomID = business.IdEncrypt(item.ProductInfo.RoomID)
 			countList = append(countList, item)
 		}
 	}
@@ -460,8 +589,8 @@ func (receiver *ProductController) ProductLiveRoomList() {
 	return
 }
 
-func (receiver *ProductController) ProductAuthorAnalysis() {
-	productId := receiver.GetString(":product_id")
+func (receiver *ProductController) ProductLiveAuthorAnalysis() {
+	productId := business.IdDecrypt(receiver.Ctx.Input.Param(":product_id"))
 	startTime, endTime, comErr := receiver.GetRangeDate()
 	if comErr != nil {
 		receiver.FailReturn(comErr)
@@ -482,17 +611,12 @@ func (receiver *ProductController) ProductAuthorAnalysis() {
 	}
 	for k, v := range list {
 		authorInfo, _ := hbase.GetAuthor(v.AuthorId)
-		list[k].Avatar = dyimg.Fix(authorInfo.Avatar)
-		list[k].NickName = authorInfo.Nickname
+		list[k].Avatar = dyimg.Fix(authorInfo.Data.Avatar)
+		list[k].AuthorId = business.IdEncrypt(v.AuthorId)
+		list[k].ProductId = business.IdEncrypt(v.ProductId)
+		list[k].Nickname = authorInfo.Data.Nickname
 		list[k].RoomNum = len(v.RelatedRooms)
-		for k1, l := range v.RelatedRooms {
-			list[k].RelatedRooms[k1].Cover = dyimg.Fix(l.Cover)
-			if l.EndTs >= 0 {
-				list[k].RelatedRooms[k1].LiveSecond = l.EndTs - l.StartTs
-			} else {
-				list[k].RelatedRooms[k1].LiveSecond = time.Now().Unix() - l.StartTs
-			}
-		}
+		list[k].RelatedRooms = []entity.DyProductAuthorRelatedRoom{}
 	}
 	receiver.SuccReturn(map[string]interface{}{
 		"list":  list,
@@ -501,8 +625,8 @@ func (receiver *ProductController) ProductAuthorAnalysis() {
 	return
 }
 
-func (receiver *ProductController) ProductAuthorAnalysisCount() {
-	productId := receiver.GetString(":product_id")
+func (receiver *ProductController) ProductLiveAuthorAnalysisCount() {
+	productId := business.IdDecrypt(receiver.Ctx.Input.Param(":product_id"))
 	startTime, endTime, comErr := receiver.GetRangeDate()
 	if comErr != nil {
 		receiver.FailReturn(comErr)
@@ -519,4 +643,32 @@ func (receiver *ProductController) ProductAuthorAnalysisCount() {
 		"list": countList,
 	})
 	return
+}
+
+func (receiver *ProductController) ProductAuthorLiveRooms() {
+	productId := business.IdDecrypt(receiver.Ctx.Input.Param(":product_id"))
+	authorId := business.IdDecrypt(receiver.Ctx.Input.Param(":author_id"))
+	startTime, endTime, comErr := receiver.GetRangeDate()
+	if comErr != nil {
+		receiver.FailReturn(comErr)
+		return
+	}
+	page := receiver.GetPage("page")
+	pageSize := receiver.GetPageSize("page_size", 5, 10)
+	sortStr := receiver.GetString("sort", "start_ts")
+	orderBy := receiver.GetString("order_by", "desc")
+	list, total := business.NewProductBusiness().ProductAuthorLiveRooms(productId, authorId, startTime, endTime, sortStr, orderBy, page, pageSize)
+	for k, v := range list {
+		list[k].Cover = dyimg.Fix(v.Cover)
+		list[k].RoomId = business.IdEncrypt(v.RoomId)
+		endLiveTime := v.EndTs
+		if endLiveTime == 0 {
+			endLiveTime = time.Now().Unix()
+		}
+		list[k].LiveSecond = endLiveTime - v.StartTs
+	}
+	receiver.SuccReturn(map[string]interface{}{
+		"list":  list,
+		"total": total,
+	})
 }

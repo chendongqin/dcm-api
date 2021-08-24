@@ -4,8 +4,10 @@ import (
 	"dongchamao/global"
 	"dongchamao/global/cache"
 	"dongchamao/global/utils"
+	"dongchamao/hbase"
 	"dongchamao/models/dcm"
 	"dongchamao/services/mutex"
+	"fmt"
 	"github.com/dgrijalva/jwt-go"
 	"github.com/go-xorm/xorm"
 	"github.com/gomodule/redigo/redis"
@@ -25,6 +27,10 @@ type TokenData struct {
 	Id         int   `json:"id"`
 	ExpireTime int64 `json:"expire_time"`
 }
+
+//APPID:10000:pc端,10001:h5,10002:微信小程序,10003、10004：app,10005:Wap
+//用户来源0:PC,1:小程序,2:APP,3:wap
+var AppIdMap = map[int]int{10000: 0, 10001: 0, 10002: 1, 10003: 2, 10004: 2, 10005: 3}
 
 func (receiver *UserBusiness) AddOrUpdateUniqueToken(userId int, appId int, token string) error {
 	platFormId := GetAppPlatFormIdWithAppId(appId)
@@ -148,6 +154,8 @@ func (receiver *UserBusiness) SmsLogin(mobile, code string, appId int) (user dcm
 		user.Status = 1
 		user.CreateTime = time.Now()
 		user.UpdateTime = time.Now()
+		//来源
+		user.Entrance = AppIdMap[appId]
 		affect, err := dcm.Insert(nil, &user)
 		if affect == 0 || err != nil {
 			comErr = global.NewError(5000)
@@ -166,45 +174,6 @@ func (receiver *UserBusiness) SmsLogin(mobile, code string, appId int) (user dcm
 		return
 	}
 	_ = global.Cache.Delete(codeKey)
-	return
-}
-
-//收藏达人
-func (receiver *UserBusiness) CollectAuthor(userId, authorId string, platform int) (comErr global.CommonError) {
-	dbSession := dcm.GetDbSession()
-	collect := dcm.DcUserCollect{}
-	exist, err := dbSession.Where("user_id=? AND platform=? AND author_id=?", userId, platform, authorId).Get(&collect)
-	if err != nil {
-		comErr = global.NewError(5000)
-		return
-	}
-	if exist || collect.Status == 1 {
-		comErr = global.NewMsgError("您已收藏该达人，请刷新重试")
-		return
-	}
-	//达人查询写入
-
-	return
-}
-
-//取消收藏
-func (receiver *UserBusiness) CancelCollectAuthor(userId, authorId string, platform int) (comErr global.CommonError) {
-	dbSession := dcm.GetDbSession()
-	collect := dcm.DcUserCollect{}
-	exist, err := dbSession.Where("user_id=? AND platform=? AND author_id=?", userId, platform, authorId).Get(&collect)
-	if err != nil {
-		comErr = global.NewError(5000)
-		return
-	}
-	if !exist || collect.Status == 0 {
-		comErr = global.NewMsgError("您未收藏了该达人，请刷新重试")
-		return
-	}
-	affect, err := dcm.UpdateInfo(dbSession, collect.Id, map[string]interface{}{"status": 0}, new(dcm.DcUserCollect))
-	if err != nil || affect == 0 {
-		comErr = global.NewError(5000)
-		return
-	}
 	return
 }
 
@@ -310,7 +279,190 @@ func (receiver *UserBusiness) GetCacheUserLevel(userId, levelType int, enableCac
 		}
 	}
 	vipBusiness := NewVipBusiness()
-	level := vipBusiness.GetVipLevel(userId, levelType)
-	_ = global.Cache.Set(memberKey, utils.ToString(level), 1800)
-	return level
+	vipLevel := vipBusiness.GetVipLevel(userId, levelType)
+	_ = global.Cache.Set(memberKey, utils.ToString(vipLevel.Level), 1800)
+	return vipLevel.Level
+}
+
+type CollectRet struct {
+	dcm.DcUserDyCollect
+	FollowerCount      int64
+	FollowerIncreCount int64
+	Predict7Gmv        float64
+	Predict7Digg       float64
+}
+
+func (receiver *UserBusiness) GetDyCollect(tagId, collectType int, keywords string) (data []CollectRet, comErr global.CommonError) {
+	var collects []dcm.DcUserDyCollect
+	dbCollect := dcm.GetDbSession().Table(dcm.DcUserDyCollect{})
+	defer dbCollect.Close()
+	var query string
+	query = fmt.Sprintf("tag_id=%v AND collect_type=%v", tagId, collectType)
+	if keywords != "" {
+		query += " AND (unique_id LIKE '%" + keywords + "%' or nickname LIKE '%" + keywords + "%')"
+	}
+	err := dbCollect.Where(query).Find(&collects)
+	if err != nil {
+		comErr = global.NewError(5000)
+		return
+	}
+	data = make([]CollectRet, len(collects))
+	for k, v := range collects {
+		data[k].DcUserDyCollect = v
+		dyAuthor, _ := hbase.GetAuthor(v.CollectId)
+		basic, _ := hbase.GetAuthorBasic(v.CollectId, "")
+		data[k].FollowerCount = dyAuthor.Data.Fans.Douyin.Count
+		data[k].FollowerIncreCount = basic.FollowerCount - basic.FollowerCountBefore
+	}
+	return
+}
+
+//收藏达人
+func (receiver *UserBusiness) AddDyCollect(collectId string, collectType, userId int) (comErr global.CommonError) {
+	collect := dcm.DcUserDyCollect{}
+	dbCollect := dcm.GetDbSession().Table(collect)
+	defer dbCollect.Close()
+	exist, err := dbCollect.Where("user_id=? AND collect_type=? AND collect_id=?", userId, collectType, collectId).Get(&collect)
+	if err != nil {
+		comErr = global.NewError(5000)
+		return
+	}
+	if collect.Status == 1 {
+		comErr = global.NewMsgError("您已收藏该达人，请刷新重试")
+		return comErr
+	}
+	collect.Status = 1
+	collect.CollectId = collectId
+	collect.UpdateTime = time.Now()
+	switch collectType {
+	case 1:
+		author, comErr := hbase.GetAuthor(collectId)
+		if comErr != nil {
+			return comErr
+		}
+		collect.Label = author.Tags
+		collect.UniqueId = author.Data.UniqueID
+		collect.Nickname = author.Data.Nickname
+	}
+	if exist {
+		if _, err := dbCollect.Update(collect); err != nil {
+			comErr = global.NewError(5000)
+			return
+		}
+	} else {
+		collect.CreateTime = time.Now()
+		collect.UserId = userId
+		collect.CollectType = collectType
+		if _, err := dbCollect.Insert(collect); err != nil {
+			comErr = global.NewError(5000)
+			return
+		}
+	}
+	return
+}
+
+//取消收藏
+func (receiver *UserBusiness) CancelDyCollect(id int) (comErr global.CommonError) {
+	dbCollect := dcm.GetDbSession().Table(dcm.DcUserDyCollect{})
+	defer dbCollect.Close()
+	exist, err := dbCollect.Where("id=? and status=?", id, 1).Exist()
+	if err != nil {
+		comErr = global.NewError(5000)
+		return
+	}
+	if !exist {
+		comErr = global.NewMsgError("您未收藏该达人，请刷新重试")
+		return
+	}
+	affect, err := dcm.UpdateInfo(dbCollect, id, map[string]interface{}{"status": 0, "update_time": time.Now()}, new(dcm.DcUserDyCollect))
+	if err != nil || affect == 0 {
+		comErr = global.NewError(5000)
+		return
+	}
+	return
+}
+
+//关键词统计
+func (receiver *UserBusiness) KeywordsRecord(keyword string) (comErr global.CommonError) {
+	var record dcm.DcUserKeywordsRecord
+	db := dcm.GetDbSession()
+	defer db.Close()
+	exist, err := db.Where("keyword=?", keyword).Get(&record)
+	if err != nil {
+		comErr = global.NewError(5000)
+		return
+	}
+	if exist {
+		if _, err := db.Table(new(dcm.DcUserKeywordsRecord)).Where("id=?", record.Id).Incr("count", 1).Update(map[string]interface{}{
+			"update_time": time.Now().Format("2006-01-02 15:04:05"),
+		}); err != nil {
+			comErr = global.NewError(5000)
+		}
+		return
+	}
+	record.Keyword = keyword
+	record.CreateTime = time.Now()
+	record.UpdateTime = time.Now()
+	record.Count = 1
+	_, err = dcm.Insert(db, &record)
+	if err != nil {
+		comErr = global.NewError(5000)
+	}
+	return
+}
+
+//获取分组列表
+func (receiver *UserBusiness) GetDyCollectTags(userId int) (tags []dcm.DcUserDyCollectTag, comErr global.CommonError) {
+	db := dcm.GetDbSession().Table(dcm.DcUserDyCollectTag{})
+	if _, err := db.Where("user_id=? and delete_time is NULL", userId).Get(&tags); err != nil {
+		comErr = global.NewError(5000)
+		return
+	}
+	return
+}
+
+//创建分组
+func (receiver *UserBusiness) AddDyCollectTag(name string, userId int) (comErr global.CommonError) {
+	db := dcm.GetDbSession().Table(dcm.DcUserDyCollectTag{})
+	tag := dcm.DcUserDyCollectTag{
+		Name:       name,
+		UserId:     userId,
+		CreateTime: time.Now(),
+		UpdateTime: time.Now(),
+	}
+	if _, err := db.Insert(tag); err != nil {
+		comErr = global.NewError(5000)
+		return
+	}
+	return
+}
+
+//编辑分组
+func (receiver *UserBusiness) UpdDyCollectTag(name string, id int) (comErr global.CommonError) {
+	db := dcm.GetDbSession().Table(dcm.DcUserDyCollectTag{})
+	var tag dcm.DcUserDyCollectTag
+	if _, err := db.Where("id=?", id).Get(&tag); err != nil {
+		return
+	}
+	tag.Name = name
+	if _, err := db.Update(tag); err != nil {
+		comErr = global.NewError(5000)
+		return
+	}
+	return
+}
+
+//删除分组
+func (receiver *UserBusiness) DelDyCollectTag(id int) (comErr global.CommonError) {
+	db := dcm.GetDbSession().Table(dcm.DcUserDyCollectTag{})
+	var tag dcm.DcUserDyCollectTag
+	if _, err := db.Where("id=?", id).Get(&tag); err != nil {
+		return
+	}
+	tag.DeleteTime = time.Now()
+	if _, err := db.Update(tag); err != nil {
+		comErr = global.NewError(5000)
+		return
+	}
+	return
 }

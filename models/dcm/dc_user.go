@@ -23,4 +23,6 @@ type DcUser struct {
 	CreateTime       time.Time `xorm:"comment('创建时间') TIMESTAMP"`
 	UpdateTime       time.Time `xorm:"comment('更新时间') TIMESTAMP"`
 	SetPassword      int       `xorm:"not null default 0 comment('是否设置了登陆密码') TINYINT(1)"`
+	Entrance         int       `xorm:"not null comment('用户来源0:PC,1:小程序,2:APP,3:wap') TINYINT(1)"`
+	IsInstallApp     int       `xorm:"not null comment('是否安装app') TINYINT(1)"`
 }

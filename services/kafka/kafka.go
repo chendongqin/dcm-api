@@ -1,11 +1,9 @@
 package kafka
 
 import (
-	"dongchamao/global/alias"
 	"fmt"
 	"github.com/Shopify/sarama"
 	"github.com/astaxie/beego/logs"
-	jsoniter "github.com/json-iterator/go"
 	"time"
 )
 
@@ -44,154 +42,24 @@ func Init(hosts []string) {
 	}()
 }
 
-func NewTalentMsg(authorId string) *sarama.ProducerMessage {
-	msg := &sarama.ProducerMessage{}
-	msg.Topic = `dy-talent`
-	msg.Value = sarama.StringEncoder("{\"author_id\": \"" + authorId + "\"}")
-	return msg
-}
-
-func SendMessage(message *sarama.ProducerMessage) {
-	defer func() {
-		if err := recover(); err != nil {
-			logs.Critical(fmt.Sprintf("err: %s", err))
-		}
-	}()
-	producer.Input() <- message
-}
-
-func SendTalent(authorId string) {
-	SendMessage(NewTalentMsg(authorId))
-}
-
-func NewLiveFansFeatureMsg(authorId, roomId string) *sarama.ProducerMessage {
-	msg := &sarama.ProducerMessage{
-		Topic: "dy-api-message",
-		Value: sarama.StringEncoder(pack(alias.M{
-			"author_id": authorId,
-			"room_id":   roomId,
-			"type":      "liveImage",
-			"time":      time.Now().Format("2006-01-02 15:04:05"),
-		})),
-	}
-	return msg
-}
-
-func NewLiveWordCloudMsg(authorId, roomId string) *sarama.ProducerMessage {
-	msg := &sarama.ProducerMessage{
-		Topic: "dy-api-message",
-		Value: sarama.StringEncoder(pack(alias.M{
-			"author_id": authorId,
-			"room_id":   roomId,
-			"type":      "liveWordCloud",
-			"time":      time.Now().Format("2006-01-02 15:04:05"),
-		})),
-	}
-	return msg
-}
-
-func NewAuthorFansFeatureMsg(authorId string) *sarama.ProducerMessage {
-	msg := &sarama.ProducerMessage{
-		Topic: "dy-api-message",
-		Value: sarama.StringEncoder(pack(alias.M{
-			"author_id": authorId,
-			"type":      "authorImage",
-		})),
-	}
-	return msg
-}
-
-func SendLiveFansFeature(authorId string, roomId string) {
-	SendMessage(NewLiveFansFeatureMsg(authorId, roomId))
-}
-
-func SendLiveWordCloud(authorId string, roomId string) {
-	SendMessage(NewLiveWordCloudMsg(authorId, roomId))
-}
-
-func SendAuthorFansFeature(authorId string) {
-	SendMessage(NewAuthorFansFeatureMsg(authorId))
-}
-
-func NewHighLevelIntentionImageMsg(roomId string) *sarama.ProducerMessage {
-	msg := &sarama.ProducerMessage{
-		Topic: "dy-api-message-high-level",
-		Value: sarama.StringEncoder(pack(alias.M{
-			"room_id": roomId,
-			"type":    "intentionImage",
-		})),
-	}
-	return msg
-}
-
-func NewHighLevelFansPurchaseMsg(roomId string) *sarama.ProducerMessage {
-	msg := &sarama.ProducerMessage{
-		Topic: "dy-api-message-high-level",
-		Value: sarama.StringEncoder(pack(alias.M{
-			"room_id": roomId,
-			"type":    "fansPurchase",
-		})),
-	}
-	return msg
-}
-
-func NewHighLevelFansFlowMsg(roomIds []string) *sarama.ProducerMessage {
-	msg := &sarama.ProducerMessage{
-		Topic: "dy-api-message-high-level",
-		Value: sarama.StringEncoder(pack(alias.M{
-			"room_id_list": roomIds,
-			"type":         "fansFlow",
-		})),
-	}
-	return msg
-}
-
-func SendHighLevelIntentionImage(roomId string) {
-	SendMessage(NewHighLevelIntentionImageMsg(roomId))
-}
-
-func SendHighLevelFansPurchaseImage(roomId string) {
-	SendMessage(NewHighLevelFansPurchaseMsg(roomId))
-}
-
-func SendHighLevelFansFlowImage(roomIds []string) {
-	SendMessage(NewHighLevelFansFlowMsg(roomIds))
-}
-
-func pack(m alias.M) string {
-	str, _ := jsoniter.MarshalToString(m)
-	return str
-}
-
-//我的抖音号数据 推送kafka
-func SendAuthorMineData(dataType string, data string) {
-
-	if dataType == "DyCreatorApiAuthorInfo" || dataType == "DyCreatorApiFansPortrait" {
-		dataMap := make(map[string]interface{}, 0)
-		_ = jsoniter.Unmarshal([]byte(data), &dataMap)
-		msg := &sarama.ProducerMessage{
-			Topic: "my-douyin-data",
-			Value: sarama.StringEncoder(pack(alias.M{
-				"data": dataMap,
-				"type": dataType,
-				"time": time.Now().Format("2006-01-02 15:04:05"),
-			})),
-		}
-		SendMessage(msg)
-	}
-
-	if dataType == "DyCreatorApiAwemeList" || dataType == "DyCreatorApiLiveRoomList" {
-		dataList := make([]interface{}, 0)
-		_ = jsoniter.Unmarshal([]byte(data), &dataList)
-		msg := &sarama.ProducerMessage{
-			Topic: "my-douyin-data",
-			Value: sarama.StringEncoder(pack(alias.M{
-				"data": dataList,
-				"type": dataType,
-				"time": time.Now().Format("2006-01-02 15:04:05"),
-			})),
-		}
-		SendMessage(msg)
-	}
-
-}
+//func Consumer() error {
+//	kafkaHotsConf := global.Cfg.String("kafka_hosts")
+//	if kafkaHotsConf == "" {
+//		logs.Error("kafka fail :( kafka_hosts is empty")
+//		return errors.New("kafka_hosts is empty")
+//	}
+//	c, err := kafka.NewConsumer(&kafka.ConfigMap{
+//		"bootstrap.servers":               kafkaHotsConf,
+//		"group.id":                        "",
+//		"socket.timeout.ms":               10000,
+//		"session.timeout.ms":              10000,
+//		"broker.address.family":           "v4",
+//		"go.events.channel.enable":        true,
+//		"go.application.rebalance.enable": true,
+//	})
+//	if err  != nil {
+//		return err
+//	}
+//	defer c.Close()
+//	err = c.SubscribeTopics([]string{"dy-live-chat-message"}, nil)
+//}

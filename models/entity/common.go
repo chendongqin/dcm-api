@@ -22,3 +22,11 @@ type HbaseField struct {
 }
 
 type HbaseEntity map[string]HbaseField
+
+var TestMap = HbaseEntity{
+	"other_digg_count":         {Long, "digg_count"},
+	"other_duration":           {Long, "duration"},
+	"other_med_digg":           {Long, "med_digg"},
+	"other_digg_follower_rate": {Double, "digg_follower_rate"},
+	"other_artificial_data":    {Json, "artificial_data"},
+}

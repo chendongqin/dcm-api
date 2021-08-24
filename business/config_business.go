@@ -1,10 +1,10 @@
 package business
 
 import (
-	"dongchamao/global"
 	"dongchamao/global/cache"
 	"dongchamao/global/utils"
 	"dongchamao/models/dcm"
+	"dongchamao/services"
 )
 
 type ConfigBusiness struct {
@@ -15,9 +15,10 @@ func NewConfigBusiness() *ConfigBusiness {
 }
 
 func (c *ConfigBusiness) GetConfigJson(keyName string, enableCache bool) string {
-	memberKey := cache.GetCacheKey(cache.ConfigKeyCache, keyName)
+	cacheKey := cache.GetCacheKey(cache.LongTimeConfigKeyCache)
+	redisService := services.NewRedisService()
 	if enableCache == true {
-		config := global.Cache.Get(memberKey)
+		config := redisService.Hget(cacheKey, "author_cate")
 		if config != "" {
 			return utils.DeserializeData(config)
 		}
@@ -26,7 +27,7 @@ func (c *ConfigBusiness) GetConfigJson(keyName string, enableCache bool) string 
 	exist, _ := dcm.GetBy("key_name", keyName, &configM)
 	if exist {
 		jsonData := utils.SerializeData(configM.Value)
-		_ = global.Cache.Set(memberKey, jsonData, 3600)
+		_ = redisService.Hset(cacheKey, "author_cate", jsonData)
 	}
 	return configM.Value
 }
