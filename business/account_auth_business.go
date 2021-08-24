@@ -33,12 +33,14 @@ var LoginWitheUri = []string{
 	"/v1/dy/live/search",
 	"/v1/pay/notify/wechat",
 	"/v1/pay/notify/alipay",
+	"/v1/callback/wechat",
 }
 
 var SignWitheUri = []string{
 	"/v1/id",
 	"/v1/pay/notify/wechat",
 	"/v1/pay/notify/alipay",
+	"/v1/callback/wechat",
 }
 
 //登陆白名单校验
