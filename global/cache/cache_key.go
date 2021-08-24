@@ -31,4 +31,15 @@ const (
 	ProductAuthorAllList     KeyName = "dcm:product:author:row:%s:%s"
 	AuthorProductAllList     KeyName = "dcm:author:product:row:%s:%s"
 	AuthorViewProductAllList KeyName = "dcm:author:view:product:%s:%s"
+	//榜单数据缓存
+	DyAuthorTakeGoodsRank    KeyName = "dcm:rank:author:goods:%s:%s:%s:%s:%s:%s:%s:%s"
+	DyAuthorFollowerRank     KeyName = "dcm:rank:author:follower:%s:%s:%s"
+	DyAwemeShareRank         KeyName = "dcm:rank:awemer:share:%s"
+	DyLiveShareWeekRank      KeyName = "dcm:rank:live:week:share:%s"
+	DyLiveHourPopularityRank KeyName = "dcm:rank:live:hour:popularity:%s"
+	DyLiveHourSellRank       KeyName = "dcm:rank:live:hour:sell:%s"
+	DyLiveTopRank            KeyName = "dcm:rank:live:top:%s"
+	DyLiveHourRank           KeyName = "dcm:rank:live:hour%s"
+	DyStartAuthorLiveRank    KeyName = "dcm:rank:star:author:live:%s"
+	DyStartAuthorVideoRank   KeyName = "dcm:rank:star:author:video:%s"
 )

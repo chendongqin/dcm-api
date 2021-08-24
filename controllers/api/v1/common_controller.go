@@ -117,7 +117,7 @@ func (receiver *CommonController) GetConfig() {
 		receiver.FailReturn(global.NewError(5000))
 		return
 	}
-	var data []interface{}
+	var data map[string]interface{}
 	if err := json.Unmarshal([]byte(configJson.Value), &data); err != nil {
 		receiver.FailReturn(global.NewError(5000))
 		return
