@@ -2,6 +2,7 @@ package business
 
 import (
 	"dongchamao/global"
+	hbase2 "dongchamao/hbase"
 	"dongchamao/models/entity"
 	"dongchamao/services/hbaseService"
 	"dongchamao/services/hbaseService/hbase"
@@ -17,6 +18,14 @@ func NewDirtyBusiness() *DirtyBusiness {
 
 //修改达人分类
 func (receiver *DirtyBusiness) ChangeAuthorCate(authorId, tags, tagsTow string) global.CommonError {
+	_, comErr := hbase2.GetAuthor(authorId)
+	if comErr != nil {
+		return comErr
+	}
+	//测试环境不处理
+	if global.IsDev() {
+		return nil
+	}
 	hbaseBusiness := NewHbaseBusiness()
 	artificialData := map[string]interface{}{
 		"tags":           tags,
@@ -33,6 +42,14 @@ func (receiver *DirtyBusiness) ChangeAuthorCate(authorId, tags, tagsTow string) 
 
 //修改商品分类
 func (receiver *DirtyBusiness) ChangeProductCate(productId, dcmLevelFirst, firstCate, secondCate, thirdCate string) global.CommonError {
+	_, comErr := hbase2.GetDyProductBrand(productId)
+	if comErr != nil {
+		return comErr
+	}
+	//测试环境不处理
+	if global.IsDev() {
+		return nil
+	}
 	hbaseBusiness := NewHbaseBusiness()
 	artificialData := map[string]interface{}{
 		"dcm_level_first": dcmLevelFirst,
