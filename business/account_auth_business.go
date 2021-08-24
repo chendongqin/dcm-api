@@ -26,6 +26,7 @@ var LoginWitheUri = []string{
 	"/v1/user/findpwd",
 	"/v1/sms/code",
 	"/v1/sms/verify",
+	"/v1/dy/author/live/tags",
 	"/v1/dy/author/cate",
 	"/v1/dy/product/cate",
 	"/v1/dy/author/search",
