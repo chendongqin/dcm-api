@@ -250,9 +250,9 @@ func (receiver *EsAuthorBusiness) AuthorProductAnalysis(authorId, keyword string
 }
 
 //带货达人榜聚合统计
-func (receiver *EsAuthorBusiness) SaleAuthorRankCount(startTime time.Time, dateType int, tags, sortStr, orderBy string, verified, page, pageSize int) ([]interface{}, global.CommonError) {
+func (receiver *EsAuthorBusiness) SaleAuthorRankCount(startTime time.Time, dateType int, tags, sortStr, orderBy string, verified, page, pageSize int) ([]interface{}, int, global.CommonError) {
 	if pageSize > 100 {
-		return nil, global.NewError(4004)
+		return nil, 0, global.NewError(4004)
 	}
 	if sortStr == "" {
 		sortStr = "sum_gmv"
@@ -261,10 +261,10 @@ func (receiver *EsAuthorBusiness) SaleAuthorRankCount(startTime time.Time, dateT
 		orderBy = "desc"
 	}
 	if !utils.InArrayString(sortStr, []string{"sum_gmv", "sum_sale", "avg_price"}) {
-		return nil, global.NewError(4004)
+		return nil, 0, global.NewError(4004)
 	}
 	if !utils.InArrayString(orderBy, []string{"desc", "asc"}) {
-		return nil, global.NewError(4004)
+		return nil, 0, global.NewError(4004)
 	}
 	esQuery, _ := elasticsearch.NewElasticQueryGroup()
 	if tags != "" {
@@ -345,5 +345,25 @@ func (receiver *EsAuthorBusiness) SaleAuthorRankCount(startTime time.Time, dateT
 		},
 	})
 	res := elasticsearch.GetBuckets(countResult, "authors")
-	return res, nil
+	//todo total bug
+	var total int
+	if countResult["hits"] != nil && countResult["hits"].(map[string]interface{})["total"] != nil {
+		total = int(countResult["hits"].(map[string]interface{})["total"].(float64))
+	}
+	return res, total, nil
+}
+
+//达人涨粉榜
+func (receiver *EsAuthorBusiness) DyAuthorFollowerIncRank(date, tags string) (list []interface{}, err global.CommonError) {
+	esQuery, esMultiQuery := elasticsearch.NewElasticQueryGroup()
+	esQuery.SetTerm("tags.keyword", tags)
+	esTable := fmt.Sprintf(es.DyAuthorFollowerTable, date)
+	results := esMultiQuery.
+		SetTable(esTable).
+		AddMust(esQuery.Condition).
+		SetOrderBy(elasticsearch.NewElasticOrder().Add("inc_follower_count", "desc").Order).
+		SetMultiQuery().
+		Query()
+	utils.MapToStruct(results, &list)
+	return
 }

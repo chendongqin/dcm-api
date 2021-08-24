@@ -9,4 +9,5 @@ const (
 	DyAuthorTable                = "dy_author_base"
 	DyProductTable               = "dy_product_library"
 	DyAuthorTakeGoodsTopTable    = "dy_author_take_goods_top_%s"
+	DyAuthorFollowerTable        = "dy_author_follower_top_%s"
 )

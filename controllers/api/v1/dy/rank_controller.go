@@ -266,15 +266,19 @@ func (receiver *RankController) DyAwemeShareRank() {
 }
 
 type TakeGoodsRankRet struct {
-	Rank        int     `json:"rank,omitempty"`
-	Nickname    string  `json:"nickname,omitempty"`
-	AuthorCover string  `json:"author_cover,omitempty"`
-	SumGmv      float64 `json:"sum_gmv,omitempty"`
-	SumSales    float64 `json:"sum_sales,omitempty"`
-	AvgPrice    float64 `json:"avg_price,omitempty"`
-	AuthorId    string  `json:"author_id,omitempty"`
-	Tags        string  `json:"tags,omitempty"`
-	RoomCount   int     `json:"room_count,omitempty"`
+	Rank             int                      `json:"rank,omitempty"`
+	Nickname         string                   `json:"nickname,omitempty"`
+	AuthorCover      string                   `json:"author_cover,omitempty"`
+	SumGmv           float64                  `json:"sum_gmv,omitempty"`
+	SumSales         float64                  `json:"sum_sales,omitempty"`
+	AvgPrice         float64                  `json:"avg_price,omitempty"`
+	AuthorId         string                   `json:"author_id,omitempty"`
+	UniqueId         string                   `json:"unique_id,omitempty"`
+	Tags             string                   `json:"tags,omitempty"`
+	VerificationType int                      `json:"verification_type,omitempty"`
+	VerifyName       string                   `json:"verify_name,omitempty"`
+	RoomCount        int                      `json:"room_count,omitempty"`
+	RoomList         []map[string]interface{} `json:"room_list"`
 }
 
 //达人带货榜
@@ -292,22 +296,65 @@ func (receiver *RankController) DyAuthorTakeGoodsRank() {
 	orderBy := receiver.GetString("order_by", "desc")
 	page := receiver.GetPage("page")
 	pageSize := receiver.GetPage("page_size")
-	list, _ := es.NewEsAuthorBusiness().SaleAuthorRankCount(startDate, dateType, tags, sortStr, orderBy, verified, page, pageSize)
+	list, total, _ := es.NewEsAuthorBusiness().SaleAuthorRankCount(startDate, dateType, tags, sortStr, orderBy, verified, page, pageSize)
 	var structData []es2.DyAuthorTakeGoodsCount
 	utils.MapToStruct(list, &structData)
 	ret := make([]TakeGoodsRankRet, len(structData))
 	for k, v := range structData {
-		ret[k] = TakeGoodsRankRet{
-			Rank:        (page-1)*pageSize + k + 1,
-			Nickname:    v.Hit.Hits.Hits[0].Source.Nickname,
-			AuthorCover: dyimg.Avatar(v.Hit.Hits.Hits[0].Source.AuthorCover),
-			SumGmv:      v.SumGmv.Value,
-			SumSales:    v.SumSales.Value,
-			AvgPrice:    v.AvgPrice.Value,
-			AuthorId:    business.IdEncrypt(utils.ToString(v.Key.AuthorID)),
-			RoomCount:   len(v.Hit.Hits.Hits),
-			Tags:        v.Hit.Hits.Hits[0].Source.Tags,
+		hits := v.Hit.Hits.Hits
+		uniqueId := hits[0].Source.UniqueID
+		if uniqueId == "" {
+			uniqueId = hits[0].Source.ShortID
 		}
+		var roomList = make([]map[string]interface{}, 0, len(hits))
+		for _, v := range hits {
+			dateTime, _ := time.Parse("2006-01-02 15:04:05", v.Source.DateTime)
+			roomList = append(roomList, map[string]interface{}{
+				"room_cover":     dyimg.Fix(v.Source.RoomCover),
+				"room_id":        business.IdEncrypt(v.Source.RoomID),
+				"room_title":     v.Source.RoomTitle,
+				"date_time":      dateTime.Unix(),
+				"max_user_count": v.Source.MaxUserCount,
+				"real_gmv":       v.Source.RealGmv,
+				"real_sales":     v.Source.RealSales,
+			})
+		}
+		ret[k] = TakeGoodsRankRet{
+			Rank:             (page-1)*pageSize + k + 1,
+			Nickname:         hits[0].Source.Nickname,
+			VerificationType: hits[0].Source.VerificationType,
+			VerifyName:       hits[0].Source.VerifyName,
+			AuthorCover:      dyimg.Avatar(hits[0].Source.AuthorCover),
+			SumGmv:           v.SumGmv.Value,
+			SumSales:         v.SumSales.Value,
+			AvgPrice:         v.AvgPrice.Value,
+			AuthorId:         business.IdEncrypt(utils.ToString(v.Key.AuthorID)),
+			RoomCount:        len(hits),
+			Tags:             hits[0].Source.Tags,
+			UniqueId:         business.IdEncrypt(utils.ToString(uniqueId)),
+			RoomList:         roomList,
+		}
+	}
+	receiver.SuccReturn(map[string]interface{}{
+		"list":  ret,
+		"total": total,
+	})
+	return
+}
+
+//达人涨粉榜
+func (receiver *RankController) DyAuthorFollowerRank() {
+	date := receiver.GetString("date")
+	tags := receiver.GetString("tags")
+	dateTime, err := time.ParseInLocation("2006-01-02", date, time.Local)
+	if err != nil {
+		receiver.FailReturn(global.NewError(4000))
+		return
+	}
+	ret, comErr := es.NewEsAuthorBusiness().DyAuthorFollowerIncRank(dateTime.Format("20060102"), tags)
+	if comErr != nil {
+		receiver.FailReturn(global.NewError(4000))
+		return
 	}
 	receiver.SuccReturn(map[string]interface{}{
 		"list": ret,
