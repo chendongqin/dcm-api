@@ -230,6 +230,7 @@ func (receiver *EsLiveBusiness) RoomProductByRoomId(roomInfo entity.DyLiveInfo, 
 	return
 }
 
+//直播统计
 func (receiver *EsLiveBusiness) SumRoomProductByRoomId(roomInfo entity.DyLiveInfo) (float64, int) {
 	date := time.Unix(roomInfo.DiscoverTime, 0).Format("20060102")
 	esTable := fmt.Sprintf(es.DyRoomProductRecordsTable, date)
@@ -245,9 +246,9 @@ func (receiver *EsLiveBusiness) SumRoomProductByRoomId(roomInfo entity.DyLiveInf
 		},
 		"size": 0,
 		"aggs": map[string]interface{}{
-			"sum_gmv": map[string]interface{}{
+			"sum_sale": map[string]interface{}{
 				"sum": map[string]interface{}{
-					"field": "predict_gmv",
+					"field": "predict_sales",
 				},
 			},
 		},
@@ -255,11 +256,11 @@ func (receiver *EsLiveBusiness) SumRoomProductByRoomId(roomInfo entity.DyLiveInf
 	var total = 0
 	var sumGmv float64 = 0
 	if v, ok := countResult["aggregations"]; ok {
-		sumGmvMap, _ := utils.ToMapStringInterface(v)
-		if s, ok1 := sumGmvMap["sum_gmv"]; ok1 {
+		sumSalesMap, _ := utils.ToMapStringInterface(v)
+		if s, ok1 := sumSalesMap["sum_sale"]; ok1 {
 			valueMap, _ := utils.ToMapStringInterface(s)
 			if g, ok2 := valueMap["value"]; ok2 {
-				sumGmv = utils.ToFloat64(g)
+				sumGmv = math.Floor(utils.ToFloat64(g))
 			}
 		}
 	}
@@ -270,6 +271,45 @@ func (receiver *EsLiveBusiness) SumRoomProductByRoomId(roomInfo entity.DyLiveInf
 		}
 	}
 	return sumGmv, total
+}
+
+//直播中的商品数据列表
+func (receiver *EsLiveBusiness) LivingProductList(roomInfo entity.DyLiveInfo, sortStr, orderBy string, page, pageSize int) (list []es.EsAuthorLiveProduct, total int, comErr global.CommonError) {
+	if sortStr == "" {
+		sortStr = "shelf_time"
+	}
+	if orderBy == "" {
+		orderBy = "desc"
+	}
+	if !utils.InArrayString(sortStr, []string{"shelf_time", "predict_gmv"}) {
+		comErr = global.NewError(4000)
+		return
+	}
+	date := time.Unix(roomInfo.DiscoverTime, 0).Format("20060102")
+	esTable := fmt.Sprintf(es.DyRoomProductRecordsTable, date)
+	esQuery, esMultiQuery := elasticsearch.NewElasticQueryGroup()
+	esQuery.SetTerm("room_id", roomInfo.RoomID)
+	orderEs := elasticsearch.NewElasticOrder().Add(sortStr, orderBy).Order
+	results := esMultiQuery.
+		SetTable(esTable).
+		AddMust(esQuery.Condition).
+		SetLimit((page-1)*pageSize, pageSize).
+		SetOrderBy(orderEs).
+		SetMultiQuery().
+		Query()
+	utils.MapToStruct(results, &list)
+	for k, v := range list {
+		if v.IsReturn == 1 && v.StartTime == v.ShelfTime {
+			list[k].IsReturn = 0
+		}
+		list[k].Cover = dyimg.Product(v.Cover)
+		list[k].PredictSales = math.Floor(v.PredictSales)
+		if v.Pv > 0 {
+			list[k].BuyRate = v.PredictSales / float64(v.Pv)
+		}
+	}
+	total = esMultiQuery.Count
+	return
 }
 
 //直播间商品分类统计
