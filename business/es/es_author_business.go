@@ -344,9 +344,13 @@ func (receiver *EsAuthorBusiness) SaleAuthorRankCount(startTime time.Time, dateT
 			},
 		},
 	})
-	fmt.Printf("%+v\n")
 	res := elasticsearch.GetBuckets(countResult, "authors")
-	return res, int(countResult["hits"].(map[string]interface{})["total"].(float64)), nil
+	//todo total bug
+	var total int
+	if countResult["hits"] != nil && countResult["hits"].(map[string]interface{})["total"] != nil {
+		total = int(countResult["hits"].(map[string]interface{})["total"].(float64))
+	}
+	return res, total, nil
 }
 
 //达人涨粉榜
