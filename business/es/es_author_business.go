@@ -260,7 +260,7 @@ func (receiver *EsAuthorBusiness) SaleAuthorRankCount(startTime time.Time, dateT
 	if orderBy == "" {
 		orderBy = "desc"
 	}
-	if !utils.InArrayString(sortStr, []string{"sum_gmv", "sum_sale", "avg_price"}) {
+	if !utils.InArrayString(sortStr, []string{"sum_gmv", "sum_sales", "avg_price"}) {
 		return nil, 0, 0, global.NewError(4004)
 	}
 	if !utils.InArrayString(orderBy, []string{"desc", "asc"}) {
