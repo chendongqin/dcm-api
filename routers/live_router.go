@@ -18,6 +18,11 @@ func init() {
 			beego.NSRouter("/rank/chart/:room_id", &v1dy.LiveController{}, "get:LiveRankTrends"),
 			beego.NSRouter("/fans/chart/:room_id", &v1dy.LiveController{}, "get:LiveFansTrends"),
 		),
+		beego.NSNamespace("/living",
+			beego.NSRouter("/base/:room_id", &v1dy.LiveController{}, "get:LivingBaseData"),
+			beego.NSRouter("/watch/chart/:room_id", &v1dy.LiveController{}, "get:LivingWatchChart"),
+			beego.NSRouter("/product/:room_id", &v1dy.LiveController{}, "get:LivingProduct"),
+		),
 	)
 	// 注册路由组
 	beego.AddNamespace(ns)

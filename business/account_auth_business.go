@@ -26,7 +26,8 @@ var LoginWitheUri = []string{
 	"/v1/user/findpwd",
 	"/v1/sms/code",
 	"/v1/sms/verify",
-	"/v1/author/cate",
+	"/v1/dy/author/cate",
+	"/v1/dy/product/cate",
 	"/v1/dy/author/search",
 	"/v1/dy/live/search",
 	"/v1/pay/notify/wechat",
@@ -47,7 +48,7 @@ func (receiver *AccountAuthBusiness) AuthLoginWhiteUri(uri string) bool {
 	return false
 }
 
-//登陆白名单校验
+//签名白名单校验
 func (receiver *AccountAuthBusiness) AuthSignWhiteUri(uri string) bool {
 	if utils.InArrayString(uri, SignWitheUri) {
 		return true
