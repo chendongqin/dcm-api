@@ -53,7 +53,8 @@ func (receiver *AuthorController) AuthorCate() {
 		for _, vv := range cateSecond {
 			if vv.ParentId == v.Id {
 				cate.SonCate = append(cate.SonCate, dy2.DyCate{
-					Name: vv.Name,
+					Name:    vv.Name,
+					SonCate: []dy2.DyCate{},
 				})
 			}
 		}
