@@ -552,13 +552,20 @@ func (receiver *LiveController) LivingBaseData() {
 		receiver.FailReturn(comErr)
 		return
 	}
+	var gmv = liveInfo.PredictGmv
+	if liveInfo.RoomStatus == 4 {
+		liveSaleData, _ := hbase.GetLiveSalesData(roomId)
+		if liveSaleData.Gmv > 0 {
+			gmv = liveSaleData.Gmv
+		}
+	}
 	liveingInfo := dy2.LivingInfo{
 		RoomId:         business.IdDecrypt(liveInfo.RoomID),
 		AuthorId:       business.IdDecrypt(liveInfo.User.ID),
 		Title:          liveInfo.Title,
 		Cover:          dyimg.Fix(liveInfo.Cover),
 		CreateTime:     liveInfo.CreateTime,
-		Gmv:            liveInfo.PredictGmv,
+		Gmv:            gmv,
 		UserCount:      liveInfo.UserCount,
 		TotalUserCount: liveInfo.TotalUser,
 		RoomStatus:     liveInfo.RoomStatus,
@@ -570,8 +577,8 @@ func (receiver *LiveController) LivingBaseData() {
 		liveingInfo.LiveTime = time.Now().Unix() - liveInfo.CreateTime
 	}
 	if liveInfo.TotalUser > 0 {
-		liveingInfo.Uv = liveInfo.PredictGmv / float64(liveInfo.BarrageCount)
-		liveingInfo.BarrageRate = float64(liveInfo.BarrageCount) / float64(liveInfo.BarrageCount)
+		liveingInfo.Uv = liveInfo.PredictGmv / float64(liveInfo.TotalUser)
+		liveingInfo.BarrageRate = float64(liveInfo.BarrageCount) / float64(liveInfo.TotalUser)
 	}
 	liveingInfo.AvgOnlineTime = business.NewLiveBusiness().CountAvgOnlineTime(liveInfo.OnlineTrends, liveInfo.CreateTime, liveInfo.TotalUser)
 	receiver.SuccReturn(liveingInfo)
@@ -597,14 +604,21 @@ func (receiver *LiveController) LivingWatchChart() {
 //数据大屏商品数据
 func (receiver *LiveController) LivingProduct() {
 	roomId := business.IdDecrypt(receiver.Ctx.Input.Param(":room_id"))
+	sortStr := receiver.GetString("sort", "")
+	orderBy := receiver.GetString("order_by", "")
+	page := receiver.GetPage("page")
+	pageSize := receiver.GetPageSize("page_size", 10, 100)
 	liveInfo, comErr := hbase.GetLiveInfo(roomId)
 	if comErr != nil {
 		receiver.FailReturn(comErr)
 		return
 	}
-	gmv, total := es.NewEsLiveBusiness().SumRoomProductByRoomId(liveInfo)
+	esLiveBusiness := es.NewEsLiveBusiness()
+	sales, total := esLiveBusiness.SumRoomProductByRoomId(liveInfo)
+	list, total, comErr := esLiveBusiness.LivingProductList(liveInfo, sortStr, orderBy, page, pageSize)
 	receiver.SuccReturn(map[string]interface{}{
-		"gmv":   gmv,
+		"list":  list,
+		"sales": sales,
 		"total": total,
 	})
 	return
