@@ -8,6 +8,7 @@ import (
 	"dongchamao/global/cache"
 	"dongchamao/global/utils"
 	"dongchamao/hbase"
+	"dongchamao/models/dcm"
 	"dongchamao/models/entity"
 	dy2 "dongchamao/models/repost/dy"
 	"dongchamao/services/dyimg"
@@ -22,11 +23,45 @@ type AuthorController struct {
 }
 
 //达人分类
-func (receiver *AuthorController) AuthorCate() {
+func (receiver *AuthorController) AuthorCate1() {
 	configBusiness := business.NewConfigBusiness()
 	cateJson := configBusiness.GetConfigJson("author_cate", true)
 	cate := business.DealAuthorCateJson(cateJson)
 	receiver.SuccReturn(cate)
+	return
+}
+
+//达人分类
+func (receiver *AuthorController) AuthorCate() {
+	var cateList []dy2.DyCate
+	var cateFirst []dcm.DcAuthorCate
+	var cateSecond []dcm.DcAuthorCate
+	db := dcm.GetDbSession().Table(dcm.DcAuthorCate{})
+	if err := db.Where("level=?", 1).Find(&cateFirst); err != nil {
+		panic(err)
+		return
+	}
+	if err := db.Where("level=?", 2).Find(&cateSecond); err != nil {
+		panic(err)
+		return
+	}
+	for _, v := range cateFirst {
+		var cate = dy2.DyCate{
+			Name:    v.Name,
+			Num:     v.Id,
+			SonCate: []dy2.DyCate{},
+		}
+		for _, vv := range cateSecond {
+			if vv.ParentId == v.Id {
+				cate.SonCate = append(cate.SonCate, dy2.DyCate{
+					Name: vv.Name,
+					Num:  vv.Id,
+				})
+			}
+		}
+		cateList = append(cateList, cate)
+	}
+	receiver.SuccReturn(cateList)
 	return
 }
 
