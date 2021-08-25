@@ -370,12 +370,12 @@ func (receiver *EsAuthorBusiness) SaleAuthorRankCount(startTime time.Time, dateT
 func (receiver *EsAuthorBusiness) DyAuthorFollowerIncRank(date, tags, province, sortStr, orderBy string, page, pageSize int) (list []es.DyAuthorFollowerTop, total int, comErr global.CommonError) {
 	esQuery, esMultiQuery := elasticsearch.NewElasticQueryGroup()
 	if sortStr == "" {
-		sortStr = "follower_incre_count"
+		sortStr = "inc_follower_count"
 	}
 	if orderBy == "" {
 		orderBy = "desc"
 	}
-	if !utils.InArrayString(sortStr, []string{"live_inc_follower_count", "follower_incre_count", "aweme_inc_follower_count","follower_count"}) {
+	if !utils.InArrayString(sortStr, []string{"live_inc_follower_count", "inc_follower_count", "aweme_inc_follower_count","follower_count"}) {
 		comErr = global.NewError(4000)
 		return
 	}
