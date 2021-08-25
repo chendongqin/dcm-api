@@ -456,14 +456,14 @@ func (receiver *RankController) DyAuthorFollowerRank() {
 		_ = jsoniter.Unmarshal([]byte(cacheStr), &ret)
 	} else {
 		data, total, comErr := es.NewEsAuthorBusiness().DyAuthorFollowerIncRank(dateTime.Format("20060102"), tags, province, sortStr, orderBy, page, pageSize)
-		var structData []es2.DyAuthorFollowerTop
-		utils.MapToStruct(data, &structData)
-		for k := range structData {
-			if structData[k].UniqueID == "" {
-				structData[k].UniqueID = structData[k].ShortID
+		form := (page - 1) * pageSize
+		for k,v := range data {
+			data[k].Rank = k + form + 1
+			if data[k].UniqueID == "" {
+				data[k].UniqueID = v.ShortID
 			}
-			structData[k].AuthorID = business.IdEncrypt(structData[k].AuthorID)
-			structData[k].AuthorCover = dyimg.Fix(structData[k].AuthorCover)
+			data[k].AuthorID = business.IdEncrypt(v.AuthorID)
+			data[k].AuthorCover = dyimg.Fix(v.AuthorCover)
 		}
 		if comErr != nil {
 			receiver.FailReturn(global.NewError(4000))
