@@ -387,7 +387,7 @@ func (receiver *RankController) DyAuthorTakeGoodsRank() {
 	sortStr := receiver.GetString("sort", "sum_gmv")
 	orderBy := receiver.GetString("order_by", "desc")
 	page := receiver.GetPage("page")
-	pageSize := receiver.GetPage("page_size")
+	pageSize := receiver.GetPageSize("page_size", 10, 100)
 	var ret map[string]interface{}
 	cacheKey := cache.GetCacheKey(cache.DyRankCache, "author_take_goods", utils.Md5_encode(fmt.Sprintf("%s%d%s%s%s%d%d%d", startDate, dateType, tags, sortStr, orderBy, verified, page, pageSize)))
 	cacheStr := global.Cache.Get(cacheKey)
@@ -395,7 +395,7 @@ func (receiver *RankController) DyAuthorTakeGoodsRank() {
 		cacheStr = utils.DeserializeData(cacheStr)
 		_ = jsoniter.Unmarshal([]byte(cacheStr), &ret)
 	} else {
-		list, total, updateTime, _ := es.NewEsAuthorBusiness().SaleAuthorRankCount(startDate, dateType, tags, sortStr, orderBy, verified, page, pageSize)
+		list, total, _ := es.NewEsAuthorBusiness().SaleAuthorRankCount(startDate, dateType, tags, sortStr, orderBy, verified, page, pageSize)
 		var structData []es2.DyAuthorTakeGoodsCount
 		utils.MapToStruct(list, &structData)
 		data := make([]TakeGoodsRankRet, len(structData))
@@ -434,9 +434,8 @@ func (receiver *RankController) DyAuthorTakeGoodsRank() {
 			}
 		}
 		ret = map[string]interface{}{
-			"list":        data,
-			"total":       total,
-			"update_time": updateTime,
+			"list":  data,
+			"total": total,
 		}
 		if startDate.Format("20060102") != time.Now().Format("20060102") {
 			_ = global.Cache.Set(cacheKey, utils.SerializeData(ret), 86400)

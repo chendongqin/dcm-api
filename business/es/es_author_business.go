@@ -250,10 +250,7 @@ func (receiver *EsAuthorBusiness) AuthorProductAnalysis(authorId, keyword string
 }
 
 //带货达人榜聚合统计
-func (receiver *EsAuthorBusiness) SaleAuthorRankCount(startTime time.Time, dateType int, tags, sortStr, orderBy string, verified, page, pageSize int) ([]interface{}, int, int64, global.CommonError) {
-	if pageSize > 100 {
-		return nil, 0, 0, global.NewError(4004)
-	}
+func (receiver *EsAuthorBusiness) SaleAuthorRankCount(startTime time.Time, dateType int, tags, sortStr, orderBy string, verified, page, pageSize int) ([]interface{}, int, global.CommonError) {
 	if sortStr == "" {
 		sortStr = "sum_gmv"
 	}
@@ -261,12 +258,12 @@ func (receiver *EsAuthorBusiness) SaleAuthorRankCount(startTime time.Time, dateT
 		orderBy = "desc"
 	}
 	if !utils.InArrayString(sortStr, []string{"sum_gmv", "sum_sales", "avg_price"}) {
-		return nil, 0, 0, global.NewError(4004)
+		return nil, 0, global.NewError(4004)
 	}
 	if !utils.InArrayString(orderBy, []string{"desc", "asc"}) {
-		return nil, 0, 0, global.NewError(4004)
+		return nil, 0, global.NewError(4004)
 	}
-	esQuery, esMultiQuery := elasticsearch.NewElasticQueryGroup()
+	esQuery, _ := elasticsearch.NewElasticQueryGroup()
 	if tags != "" {
 		esQuery.SetTerm("tags.keyword", tags)
 	}
@@ -290,17 +287,9 @@ func (receiver *EsAuthorBusiness) SaleAuthorRankCount(startTime time.Time, dateT
 				"must": esQuery.Condition,
 			},
 		},
-		"size": 0,
+		"size": 1500,
 		"aggs": map[string]interface{}{
 			"authors": map[string]interface{}{
-				"composite": map[string]interface{}{
-					"sources": map[string]map[string]interface{}{
-						"author_id": {
-							"terms": map[string]string{
-								"field": "author_id.keyword",
-							},
-						}},
-				},
 				"aggs": map[string]interface{}{
 					"sum_gmv": map[string]interface{}{
 						"sum": map[string]interface{}{
@@ -332,8 +321,8 @@ func (receiver *EsAuthorBusiness) SaleAuthorRankCount(startTime time.Time, dateT
 					"r_bucket_sort": map[string]interface{}{
 						"bucket_sort": map[string]interface{}{
 							"sort": map[string]interface{}{
-								sortStr: map[string]interface{}{
-									"order": orderBy,
+								"sum_gmv": map[string]interface{}{
+									"order": "desc",
 								},
 							},
 							"from": (page - 1) * pageSize,
@@ -341,29 +330,28 @@ func (receiver *EsAuthorBusiness) SaleAuthorRankCount(startTime time.Time, dateT
 						},
 					},
 				},
+				"composite": map[string]interface{}{
+					"size": 1500,
+					"sources": map[string]interface{}{
+						"author_id": map[string]interface{}{
+							"terms": map[string]interface{}{
+								"field": "author_id.keyword",
+							},
+						},
+					},
+				},
 			},
 		},
 	})
 	res := elasticsearch.GetBuckets(countResult, "authors")
-	results := esMultiQuery.
-		SetTable(esTable).
-		AddMust(esQuery.Condition).
-		SetLimit(0, 1).
-		SetOrderBy(elasticsearch.NewElasticOrder().Add("discover_time", "desc").Order).
-		SetMultiQuery().
-		Query()
-	var top []es.DyAuthorTakeGoods
-	utils.MapToStruct(results, &top)
-	var updateTime int64
-	if len(top) > 0 {
-		updateTime = top[0].CreateTime
-	}
-	//todo total bug
 	var total int
 	if countResult["hits"] != nil && countResult["hits"].(map[string]interface{})["total"] != nil {
 		total = int(countResult["hits"].(map[string]interface{})["total"].(float64))
+		if total > 1500 {
+			total = 1500
+		}
 	}
-	return res, total, updateTime, nil
+	return res, total, nil
 }
 
 //达人涨粉榜
