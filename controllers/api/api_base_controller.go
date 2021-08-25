@@ -219,7 +219,7 @@ func (this *ApiBaseController) CheckSign() {
 	}
 	this.AppId = utils.ToInt(appId)
 	if utils.InArrayString(appId, []string{"10000", "10001", "10002", "10003", "10004", "10005"}) {
-		if this.Ctx.Input.IP() == "127.0.0.1" {
+		if global.IsDev() {
 			return
 		}
 		if authBusiness.AuthSignWhiteUri(this.TrueUri) {
@@ -233,7 +233,6 @@ func (this *ApiBaseController) CheckSign() {
 			this.FailReturn(err)
 			return
 		}
-
 	} else {
 		if strings.Index(this.TrueUri, "/internal") == 0 && appId != "20000" {
 			this.FailReturn(global.NewError(4004))
