@@ -19,6 +19,7 @@ type PayController struct {
 }
 
 func (receiver *PayController) Prepare() {
+	receiver.InitApiController()
 	receiver.CheckToken()
 }
 
