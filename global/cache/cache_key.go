@@ -32,6 +32,7 @@ const (
 	AuthorProductAllList     KeyName = "dcm:author:product:row:%s:%s"
 	AuthorViewProductAllList KeyName = "dcm:author:view:product:%s:%s"
 	//榜单数据缓存
+	DyRankCache              KeyName = "dcm:rank:%s:%s"
 	DyAuthorTakeGoodsRank    KeyName = "dcm:rank:author:goods:%s:%s:%s:%s:%s:%s:%s:%s"
 	DyAuthorFollowerRank     KeyName = "dcm:rank:author:follower:%s:%s:%s"
 	DyAwemeShareRank         KeyName = "dcm:rank:awemer:share:%s"

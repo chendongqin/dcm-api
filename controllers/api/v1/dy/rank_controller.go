@@ -11,6 +11,7 @@ import (
 	"dongchamao/models/entity"
 	es2 "dongchamao/models/es"
 	"dongchamao/services/dyimg"
+	"fmt"
 	jsoniter "github.com/json-iterator/go"
 	"math"
 	"time"
@@ -435,22 +436,26 @@ func (receiver *RankController) DyAuthorTakeGoodsRank() {
 
 //达人涨粉榜
 func (receiver *RankController) DyAuthorFollowerRank() {
-	date := receiver.GetString("date")
-	tags := receiver.GetString("tags")
-	province := receiver.GetString("province")
+	date := receiver.Ctx.Input.Param(":date")
+	tags := receiver.GetString("tags", "")
+	province := receiver.GetString("province", "")
+	sortStr := receiver.GetString("sort", "")
+	orderBy := receiver.GetString("order_by", "")
+	page := receiver.GetPage("page")
+	pageSize := receiver.GetPageSize("page_size", 10, 100)
 	dateTime, err := time.ParseInLocation("2006-01-02", date, time.Local)
 	if err != nil {
 		receiver.FailReturn(global.NewError(4000))
 		return
 	}
-	var ret map[string]interface{}
-	cacheKey := cache.GetCacheKey(cache.DyAuthorFollowerRank, dateTime.Format("20060102"), tags, province)
+	ret := map[string]interface{}{}
+	cacheKey := cache.GetCacheKey(cache.DyRankCache, "author_follower_inc", utils.Md5_encode(fmt.Sprintf("%s%s%s%s%s%d%d", dateTime.Format("20060102"), tags, province, sortStr, orderBy, page, pageSize)))
 	cacheStr := global.Cache.Get(cacheKey)
 	if cacheStr != "" {
 		cacheStr = utils.DeserializeData(cacheStr)
 		_ = jsoniter.Unmarshal([]byte(cacheStr), &ret)
 	} else {
-		data, comErr := es.NewEsAuthorBusiness().DyAuthorFollowerIncRank(dateTime.Format("20060102"), tags, province)
+		data, total, comErr := es.NewEsAuthorBusiness().DyAuthorFollowerIncRank(dateTime.Format("20060102"), tags, province, sortStr, orderBy, page, pageSize)
 		var structData []es2.DyAuthorFollowerTop
 		utils.MapToStruct(data, &structData)
 		for k := range structData {
@@ -465,9 +470,12 @@ func (receiver *RankController) DyAuthorFollowerRank() {
 			return
 		}
 		ret = map[string]interface{}{
-			"list": data,
+			"list":  data,
+			"total": total,
 		}
-		_ = global.Cache.Set(cacheKey, utils.SerializeData(ret), 86400)
+		if dateTime.Format("20060102") != time.Now().Format("20060102") {
+			_ = global.Cache.Set(cacheKey, utils.SerializeData(ret), 86400)
+		}
 	}
 	receiver.SuccReturn(ret)
 	return

@@ -43,6 +43,19 @@ var SignWitheUri = []string{
 	"/v1/callback/wechat",
 }
 
+var AuthDyWitheUriMap = []string{}
+
+//登陆白名单校验
+func (receiver *AccountAuthBusiness) AuthDyWhiteUri(uri string, level int) bool {
+	if level > 0 {
+		return true
+	}
+	if utils.InArrayString(uri, LoginWitheUri) || utils.InArrayString(uri, AuthDyWitheUriMap) {
+		return true
+	}
+	return false
+}
+
 //登陆白名单校验
 func (receiver *AccountAuthBusiness) AuthLoginWhiteUri(uri string) bool {
 	if utils.InArrayString(uri, LoginWitheUri) {

@@ -15,7 +15,7 @@ func (receiver *InternalController) AuthorSearch() {
 	nickname := receiver.GetString("nickname", "")
 	keyword := receiver.GetString("keyword", "")
 	tags := receiver.GetString("tags", "")
-	secondTags := receiver.GetString("tags", "")
+	secondTags := receiver.GetString("second_tags", "")
 	page := receiver.GetPage("page")
 	pageSize := receiver.GetPageSize("page_size", 10, 100)
 	list, total, comErr := es.NewEsAuthorBusiness().SimpleSearch(nickname, keyword, tags, secondTags, page, pageSize)
