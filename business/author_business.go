@@ -523,6 +523,9 @@ func (a *AuthorBusiness) GetAuthorProductAnalyse(authorId, keyword, firstCate, s
 		authorReputation, _ := a.HbaseGetAuthorReputation(authorId)
 		shopId = authorReputation.EncryptShopID
 	}
+	if shopType == 1 && shopId == "" {
+		return
+	}
 	firstCateCountMap := map[string]int{}
 	brandNameCountMap := map[string]int{}
 	firstCateMap := map[string]map[string]bool{}
@@ -594,13 +597,15 @@ func (a *AuthorBusiness) GetAuthorProductAnalyse(authorId, keyword, firstCate, s
 		if thirdCate != "" && thirdCate != v.SecondCname {
 			continue
 		}
-		if brandName == "其他" {
-			if brandName != v.BrandName && v.BrandName != "" {
-				continue
-			}
-		} else {
-			if brandName != v.BrandName {
-				continue
+		if brandName != "" {
+			if brandName == "其他" {
+				if brandName != v.BrandName && v.BrandName != "" {
+					continue
+				}
+			} else {
+				if brandName != v.BrandName {
+					continue
+				}
 			}
 		}
 		if (shopType == 1 && v.ShopId != shopId) || (shopType == 2 && v.ShopId != "") {
