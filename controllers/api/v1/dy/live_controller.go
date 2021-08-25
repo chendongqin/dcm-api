@@ -69,7 +69,7 @@ func (receiver *LiveController) SearchRoom() {
 	pageSize := receiver.GetPageSize("page_size", 10, 100)
 	if !receiver.HasAuth {
 		today := time.Now().Format("20060102")
-		lastDay := time.Now().AddDate(0, 0, -7).Format("20060102")
+		lastDay := time.Now().AddDate(0, 0, -6).Format("20060102")
 		start := startTime.Format("20060102")
 		end := endTime.Format("20060102")
 		if lastDay != start || today != end || keyword != "" || category != "" || sortStr != "predict_gmv" || orderBy != "desc" || minAmount > 0 || maxAmount > 0 || minUv > 0 || maxUv > 0 || minAvgUserCount > 0 || maxAvgUserCount > 0 || hasProduct == 1 || isBrand == 1 || page != 1 {
