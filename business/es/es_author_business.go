@@ -363,7 +363,7 @@ func (receiver *EsAuthorBusiness) DyAuthorFollowerIncRank(date, tags, province, 
 	if orderBy == "" {
 		orderBy = "desc"
 	}
-	if !utils.InArrayString(sortStr, []string{"live_inc_follower_count", "inc_follower_count", "aweme_inc_follower_count","follower_count"}) {
+	if !utils.InArrayString(sortStr, []string{"live_inc_follower_count", "inc_follower_count", "aweme_inc_follower_count", "follower_count"}) {
 		comErr = global.NewError(4000)
 		return
 	}
@@ -390,5 +390,8 @@ func (receiver *EsAuthorBusiness) DyAuthorFollowerIncRank(date, tags, province, 
 		Query()
 	utils.MapToStruct(results, &list)
 	total = esMultiQuery.Count
+	if total > 1500 {
+		total = 1500
+	}
 	return
 }
