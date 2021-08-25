@@ -5,14 +5,12 @@ import (
 	"dongchamao/business/es"
 	controllers "dongchamao/controllers/api"
 	"dongchamao/global"
-	"dongchamao/global/cache"
 	"dongchamao/global/utils"
 	"dongchamao/hbase"
 	"dongchamao/models/dcm"
 	"dongchamao/models/entity"
 	dy2 "dongchamao/models/repost/dy"
 	"dongchamao/services/dyimg"
-	jsoniter "github.com/json-iterator/go"
 	"math"
 	"sort"
 	"time"
@@ -258,162 +256,162 @@ func (receiver *AuthorController) AuthorViewData() {
 	}
 	productCount := dy2.DyAuthorBaseProductCount{}
 	startTime := time.Now().AddDate(0, 0, -31)
-	yesterday := time.Now().AddDate(0, 0, -1)
-	cacheKey := cache.GetCacheKey(cache.AuthorViewProductAllList, startTime.Format("20060102"), yesterday.Format("20060102"))
-	cacheStr := global.Cache.Get(cacheKey)
-	if cacheStr != "" {
-		cacheStr = utils.DeserializeData(cacheStr)
-		_ = jsoniter.Unmarshal([]byte(cacheStr), &productCount)
-	} else {
-		listData, _ := hbase.GetAuthorProductRangeDate(authorId, startTime, time.Now())
-		productMap := map[string]entity.DyAuthorDateProductList{}
-		productIds := make([]string, 0)
-		for _, v := range listData {
-			for _, l := range v.ProductList {
-				if p, ok := productMap[l.ProductId]; ok {
-					p.PredictSales += math.Floor(l.PredictSales)
-					p.PredictGmv += l.PredictGmv
-					productMap[l.ProductId] = p
-				} else {
-					productIds = append(productIds, l.ProductId)
-					l.PredictSales = math.Floor(l.PredictSales)
-					productMap[l.ProductId] = l
-				}
-			}
-		}
-		productBrandMap := business.NewProductBusiness().GetProductByIdsLimitGo(productIds, 300)
-		brandSaleMap := map[string]float64{}
-		brandNumMap := map[string]int{}
-		priceNumMap := map[string]int{}
-		priceSaleMap := map[string]float64{}
-		var totalGmv float64
-		var totalSales float64
-		for productId, v := range productMap {
-			totalGmv += v.PredictGmv
-			totalSales += v.PredictSales
-			category := "其他"
-			if b, ok := productBrandMap[productId]; ok {
-				category = b.DcmLevelFirst
-			}
-			var priceStr string
-			if v.Price > 500 {
-				priceStr = "500-"
-			} else if v.Price > 300 {
-				priceStr = "300-500"
-			} else if v.Price > 100 {
-				priceStr = "100-300"
-			} else if v.Price > 50 {
-				priceStr = "50-100"
+	//yesterday := time.Now().AddDate(0, 0, -1)
+	//cacheKey := cache.GetCacheKey(cache.AuthorViewProductAllList, startTime.Format("20060102"), yesterday.Format("20060102"))
+	//cacheStr := global.Cache.Get(cacheKey)
+	//if cacheStr != "" {
+	//	cacheStr = utils.DeserializeData(cacheStr)
+	//	_ = jsoniter.Unmarshal([]byte(cacheStr), &productCount)
+	//} else {
+	listData, _ := hbase.GetAuthorProductRangeDate(authorId, startTime, time.Now())
+	productMap := map[string]entity.DyAuthorDateProductList{}
+	productIds := make([]string, 0)
+	for _, v := range listData {
+		for _, l := range v.ProductList {
+			if p, ok := productMap[l.ProductId]; ok {
+				p.PredictSales += math.Floor(l.PredictSales)
+				p.PredictGmv += l.PredictGmv
+				productMap[l.ProductId] = p
 			} else {
-				priceStr = "0-50"
-			}
-			if _, ok := brandSaleMap[category]; !ok {
-				brandSaleMap[category] = v.PredictSales
-			} else {
-				brandSaleMap[category] += v.PredictSales
-			}
-			if _, ok := brandNumMap[category]; !ok {
-				brandNumMap[category] = 1
-			} else {
-				brandNumMap[category] += 1
-			}
-			if _, ok := priceSaleMap[priceStr]; !ok {
-				priceSaleMap[priceStr] = v.PredictSales
-			} else {
-				priceSaleMap[priceStr] += v.PredictSales
-			}
-			if _, ok := priceNumMap[priceStr]; !ok {
-				priceNumMap[priceStr] = 1
-			} else {
-				priceNumMap[priceStr] += 1
+				productIds = append(productIds, l.ProductId)
+				l.PredictSales = math.Floor(l.PredictSales)
+				productMap[l.ProductId] = l
 			}
 		}
-		brandSaleList := make([]dy2.NameValueInt64Chart, 0)
-		brandNumList := make([]dy2.NameValueChart, 0)
-		for c, v := range brandSaleMap {
-			brandSaleList = append(brandSaleList, dy2.NameValueInt64Chart{
-				Name:  c,
-				Value: utils.ToInt64(v),
-			})
-		}
-		for c, v := range brandNumMap {
-			brandNumList = append(brandNumList, dy2.NameValueChart{
-				Name:  c,
-				Value: v,
-			})
-		}
-		sort.Slice(brandSaleList, func(i, j int) bool {
-			return brandSaleList[i].Value < brandSaleList[j].Value
-		})
-		sort.Slice(brandNumList, func(i, j int) bool {
-			return brandNumList[i].Value < brandNumList[j].Value
-		})
-		listLen := len(brandSaleList)
-		topBrandSaleList := make([]dy2.NameValueInt64Chart, 0)
-		topBrandNumList := make([]dy2.NameValueChart, 0)
-		topSaleCates := make([]string, 0)
-		topNumCates := make([]string, 0)
-		if listLen > 0 {
-			if listLen >= 3 {
-				topBrandSaleList = brandSaleList[0:3]
-				topBrandNumList = brandNumList[0:3]
-				otherBrandSaleList := brandSaleList[3:]
-				otherBrandNumList := brandNumList[3:]
-				var sale int64
-				var num int
-				for _, i := range otherBrandSaleList {
-					sale += i.Value
-				}
-				for _, i := range topBrandSaleList {
-					topSaleCates = append(topSaleCates, i.Name)
-				}
-				for _, i := range topBrandNumList {
-					topNumCates = append(topNumCates, i.Name)
-				}
-				topBrandSaleList = append(topBrandSaleList, dy2.NameValueInt64Chart{
-					Name:  "其他",
-					Value: sale,
-				})
-				for _, i := range otherBrandNumList {
-					num += i.Value
-				}
-				topBrandNumList = append(topBrandNumList, dy2.NameValueChart{
-					Name:  "其他",
-					Value: num,
-				})
-			} else {
-				topBrandSaleList = brandSaleList[0:listLen]
-				topBrandNumList = brandNumList[0:listLen]
-				for _, i := range topBrandSaleList {
-					topSaleCates = append(topSaleCates, i.Name)
-				}
-				for _, i := range topBrandNumList {
-					topNumCates = append(topNumCates, i.Name)
-				}
-			}
-		}
-		productCount = dy2.DyAuthorBaseProductCount{
-			ProductNum:            authorBase.ProductCount,
-			Sales30Top3:           topSaleCates,
-			ProductNum30Top3:      topNumCates,
-			Sales30Top3Chart:      topBrandSaleList,
-			ProductNum30Top3Chart: topBrandNumList,
-			Predict30Sales:        totalSales,
-			Predict30Gmv:          totalGmv,
-		}
-		for p, v := range priceSaleMap {
-			num := priceNumMap[p]
-			productCount.Sales30Chart = append(productCount.Sales30Chart, dy2.DyAuthorBaseProductPriceChart{
-				Name:       p,
-				Sales:      utils.ToInt64(v),
-				ProductNum: num,
-			})
-		}
-		_ = global.Cache.Set(cacheKey, utils.SerializeData(productCount), 86400)
 	}
+	productBrandMap := business.NewProductBusiness().GetProductByIdsLimitGo(productIds, 40)
+	brandSaleMap := map[string]float64{}
+	brandNumMap := map[string]int{}
+	priceNumMap := map[string]int{}
+	priceSaleMap := map[string]float64{}
+	var totalGmv float64
+	var totalSales float64
+	for productId, v := range productMap {
+		totalGmv += v.PredictGmv
+		totalSales += v.PredictSales
+		category := "其他"
+		if b, ok := productBrandMap[productId]; ok {
+			category = b.DcmLevelFirst
+		}
+		var priceStr string
+		if v.Price > 500 {
+			priceStr = "500-"
+		} else if v.Price > 300 {
+			priceStr = "300-500"
+		} else if v.Price > 100 {
+			priceStr = "100-300"
+		} else if v.Price > 50 {
+			priceStr = "50-100"
+		} else {
+			priceStr = "0-50"
+		}
+		if _, ok := brandSaleMap[category]; !ok {
+			brandSaleMap[category] = v.PredictSales
+		} else {
+			brandSaleMap[category] += v.PredictSales
+		}
+		if _, ok := brandNumMap[category]; !ok {
+			brandNumMap[category] = 1
+		} else {
+			brandNumMap[category] += 1
+		}
+		if _, ok := priceSaleMap[priceStr]; !ok {
+			priceSaleMap[priceStr] = v.PredictSales
+		} else {
+			priceSaleMap[priceStr] += v.PredictSales
+		}
+		if _, ok := priceNumMap[priceStr]; !ok {
+			priceNumMap[priceStr] = 1
+		} else {
+			priceNumMap[priceStr] += 1
+		}
+	}
+	brandSaleList := make([]dy2.NameValueInt64Chart, 0)
+	brandNumList := make([]dy2.NameValueChart, 0)
+	for c, v := range brandSaleMap {
+		brandSaleList = append(brandSaleList, dy2.NameValueInt64Chart{
+			Name:  c,
+			Value: utils.ToInt64(v),
+		})
+	}
+	for c, v := range brandNumMap {
+		brandNumList = append(brandNumList, dy2.NameValueChart{
+			Name:  c,
+			Value: v,
+		})
+	}
+	sort.Slice(brandSaleList, func(i, j int) bool {
+		return brandSaleList[i].Value < brandSaleList[j].Value
+	})
+	sort.Slice(brandNumList, func(i, j int) bool {
+		return brandNumList[i].Value < brandNumList[j].Value
+	})
+	listLen := len(brandSaleList)
+	topBrandSaleList := make([]dy2.NameValueInt64Chart, 0)
+	topBrandNumList := make([]dy2.NameValueChart, 0)
+	topSaleCates := make([]string, 0)
+	topNumCates := make([]string, 0)
+	if listLen > 0 {
+		if listLen >= 3 {
+			topBrandSaleList = brandSaleList[0:3]
+			topBrandNumList = brandNumList[0:3]
+			otherBrandSaleList := brandSaleList[3:]
+			otherBrandNumList := brandNumList[3:]
+			var sale int64
+			var num int
+			for _, i := range otherBrandSaleList {
+				sale += i.Value
+			}
+			for _, i := range topBrandSaleList {
+				topSaleCates = append(topSaleCates, i.Name)
+			}
+			for _, i := range topBrandNumList {
+				topNumCates = append(topNumCates, i.Name)
+			}
+			topBrandSaleList = append(topBrandSaleList, dy2.NameValueInt64Chart{
+				Name:  "其他",
+				Value: sale,
+			})
+			for _, i := range otherBrandNumList {
+				num += i.Value
+			}
+			topBrandNumList = append(topBrandNumList, dy2.NameValueChart{
+				Name:  "其他",
+				Value: num,
+			})
+		} else {
+			topBrandSaleList = brandSaleList[0:listLen]
+			topBrandNumList = brandNumList[0:listLen]
+			for _, i := range topBrandSaleList {
+				topSaleCates = append(topSaleCates, i.Name)
+			}
+			for _, i := range topBrandNumList {
+				topNumCates = append(topNumCates, i.Name)
+			}
+		}
+	}
+	productCount = dy2.DyAuthorBaseProductCount{
+		ProductNum:            authorBase.ProductCount,
+		Sales30Top3:           topSaleCates,
+		ProductNum30Top3:      topNumCates,
+		Sales30Top3Chart:      topBrandSaleList,
+		ProductNum30Top3Chart: topBrandNumList,
+		Predict30Sales:        totalSales,
+		Predict30Gmv:          totalGmv,
+	}
+	for p, v := range priceSaleMap {
+		num := priceNumMap[p]
+		productCount.Sales30Chart = append(productCount.Sales30Chart, dy2.DyAuthorBaseProductPriceChart{
+			Name:       p,
+			Sales:      utils.ToInt64(v),
+			ProductNum: num,
+		})
+	}
+	//	_ = global.Cache.Set(cacheKey, utils.SerializeData(productCount), 600)
+	//}
 	data := dy2.DyAuthorBaseCount{
 		LiveCount: dy2.DyAuthorBaseLiveCount{
-			RoomCount:      authorBase.RoomCount,
+			RoomCount:      int64(authorBase.RoomCount),
 			Room30Count:    room30Count,
 			Predict30Sales: math.Floor(authorBase.Predict30Sales),
 			Predict30Gmv:   utils.FriendlyFloat64(authorBase.Predict30Gmv),
@@ -422,7 +420,7 @@ func (receiver *AuthorController) AuthorViewData() {
 			MonthRoomCount: monthRoom,
 		},
 		VideoCount: dy2.DyAuthorBaseVideoCount{
-			VideoCount:       authorBase.AwemeCount,
+			VideoCount:       int64(authorBase.AwemeCount),
 			AvgDigg:          authorBase.DiggCount,
 			DiggFollowerRate: authorBase.DiggFollowerRate,
 			Predict30Sales:   0,
@@ -443,12 +441,12 @@ func (receiver *AuthorController) AuthorViewData() {
 		days += 1
 		weekNum := utils.ToInt64(days / 7)
 		if weekNum > 0 {
-			data.LiveCount.AvgWeekRoomCount = authorBase.RoomCount / weekNum
+			data.LiveCount.AvgWeekRoomCount = int64(authorBase.RoomCount) / weekNum
 		}
 		month := int64(time.Now().Month() - firstLiveTime.Month())
 		month += 1
 		if month > 0 {
-			data.LiveCount.AvgMonthRoomCount = authorBase.RoomCount / utils.ToInt64(month)
+			data.LiveCount.AvgMonthRoomCount = int64(authorBase.RoomCount) / utils.ToInt64(month)
 		}
 	}
 	if firstVideoTimestamp > 0 {
@@ -461,12 +459,12 @@ func (receiver *AuthorController) AuthorViewData() {
 		days += 1
 		weekNum := utils.ToInt64(days / 7)
 		if weekNum > 0 {
-			data.VideoCount.WeekVideoCount = authorBase.AwemeCount / weekNum
+			data.VideoCount.WeekVideoCount = int64(authorBase.AwemeCount) / weekNum
 		}
 		month := int64(time.Now().Month() - firstVideoTime.Month())
 		month += 1
 		if month > 0 {
-			data.VideoCount.MonthVideoCount = authorBase.AwemeCount / month
+			data.VideoCount.MonthVideoCount = int64(authorBase.AwemeCount) / month
 		}
 	}
 	receiver.SuccReturn(data)
