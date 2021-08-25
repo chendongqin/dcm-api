@@ -413,7 +413,7 @@ func (receiver *AuthorController) AuthorViewData() {
 	}
 	data := dy2.DyAuthorBaseCount{
 		LiveCount: dy2.DyAuthorBaseLiveCount{
-			RoomCount:      authorBase.RoomCount,
+			RoomCount:      int64(authorBase.RoomCount),
 			Room30Count:    room30Count,
 			Predict30Sales: math.Floor(authorBase.Predict30Sales),
 			Predict30Gmv:   utils.FriendlyFloat64(authorBase.Predict30Gmv),
@@ -422,7 +422,7 @@ func (receiver *AuthorController) AuthorViewData() {
 			MonthRoomCount: monthRoom,
 		},
 		VideoCount: dy2.DyAuthorBaseVideoCount{
-			VideoCount:       authorBase.AwemeCount,
+			VideoCount:       int64(authorBase.AwemeCount),
 			AvgDigg:          authorBase.DiggCount,
 			DiggFollowerRate: authorBase.DiggFollowerRate,
 			Predict30Sales:   0,
@@ -443,12 +443,12 @@ func (receiver *AuthorController) AuthorViewData() {
 		days += 1
 		weekNum := utils.ToInt64(days / 7)
 		if weekNum > 0 {
-			data.LiveCount.AvgWeekRoomCount = authorBase.RoomCount / weekNum
+			data.LiveCount.AvgWeekRoomCount = int64(authorBase.RoomCount) / weekNum
 		}
 		month := int64(time.Now().Month() - firstLiveTime.Month())
 		month += 1
 		if month > 0 {
-			data.LiveCount.AvgMonthRoomCount = authorBase.RoomCount / utils.ToInt64(month)
+			data.LiveCount.AvgMonthRoomCount = int64(authorBase.RoomCount) / utils.ToInt64(month)
 		}
 	}
 	if firstVideoTimestamp > 0 {
@@ -461,12 +461,12 @@ func (receiver *AuthorController) AuthorViewData() {
 		days += 1
 		weekNum := utils.ToInt64(days / 7)
 		if weekNum > 0 {
-			data.VideoCount.WeekVideoCount = authorBase.AwemeCount / weekNum
+			data.VideoCount.WeekVideoCount = int64(authorBase.AwemeCount) / weekNum
 		}
 		month := int64(time.Now().Month() - firstVideoTime.Month())
 		month += 1
 		if month > 0 {
-			data.VideoCount.MonthVideoCount = authorBase.AwemeCount / month
+			data.VideoCount.MonthVideoCount = int64(authorBase.AwemeCount) / month
 		}
 	}
 	receiver.SuccReturn(data)
