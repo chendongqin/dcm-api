@@ -31,6 +31,7 @@ require (
 	github.com/prometheus/common v0.10.0
 	github.com/satori/go.uuid v1.2.0 // indirect
 	github.com/silenceper/pool v1.0.0
+	github.com/silenceper/wechat v1.2.6
 	github.com/stretchr/testify v1.7.0
 	github.com/urfave/cli v1.22.5
 	github.com/vmihailenco/msgpack/v4 v4.3.12

@@ -9,6 +9,7 @@ import (
 	"dongchamao/services/elastichelper"
 	"dongchamao/services/kafka"
 	"dongchamao/services/pools"
+	"encoding/json"
 	"fmt"
 	"github.com/astaxie/beego"
 	beegoCache "github.com/astaxie/beego/cache"
@@ -16,6 +17,9 @@ import (
 	"github.com/astaxie/beego/validation"
 	"github.com/elastic/go-elasticsearch/v8"
 	_ "github.com/go-sql-driver/mysql"
+	"github.com/silenceper/wechat"
+	"github.com/silenceper/wechat/context"
+	"github.com/silenceper/wechat/util"
 	"gopkg.in/mgo.v2"
 	"net"
 	"net/http"
@@ -45,7 +49,7 @@ func InitEnv() {
 	_initBConfig()
 	_initLogs()
 	_initCache()
-	//_initWechatService()
+	_initWechatService()
 	_initEs()
 	_initHbaseThriftPool()
 	_initDataBase()
@@ -289,6 +293,55 @@ func _initValidate() {
 	}
 
 	validation.SetDefaultMessage(MessageTmpls)
+}
+
+//初始化微信
+
+var WechatInstance *wechat.Wechat
+
+func _initWechatService() {
+	wechatAppId := Cfg.String("wx_app_id")
+	wechatAppSecret := Cfg.String("wx_app_secret")
+	wechatToken := Cfg.String("wx_app_token")
+	wechatEncodedAESKey := Cfg.String("wx_encoded_aes_key")
+
+	config := &wechat.Config{
+		AppID:          wechatAppId,
+		AppSecret:      wechatAppSecret,
+		Token:          wechatToken,
+		EncodingAESKey: wechatEncodedAESKey,
+	}
+	WechatInstance = wechat.NewWechat(config)
+	//自定义获取access_token方法
+	WechatInstance.Context.SetGetAccessTokenFunc(func(ctx *context.Context) (accessToken string, err error) {
+		accessTokenCacheKey := fmt.Sprintf("wechat_access_token_%s", ctx.AppID)
+		accessToken = Cache.Get(accessTokenCacheKey)
+		if accessToken != "" {
+			return
+		}
+		//从微信服务器获取
+		url := fmt.Sprintf("%s?grant_type=client_credential&appid=%s&secret=%s", context.AccessTokenURL, ctx.AppID, ctx.AppSecret)
+		var body []byte
+		body, err = util.HTTPGet(url)
+		if err != nil {
+			return
+		}
+		var resAccessToken context.ResAccessToken
+		err = json.Unmarshal(body, &resAccessToken)
+		if err != nil {
+			return
+		}
+		if resAccessToken.ErrMsg != "" {
+			err = fmt.Errorf("get access_token error : errcode=%v , errormsg=%v", resAccessToken.ErrCode, resAccessToken.ErrMsg)
+			return
+		}
+		err = Cache.Set(accessTokenCacheKey, resAccessToken.AccessToken, 3600)
+		if err != nil {
+			return
+		}
+		accessToken = resAccessToken.AccessToken
+		return
+	})
 }
 
 func IsDev() bool {
