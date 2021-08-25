@@ -305,8 +305,8 @@ func (receiver *AccountController) GetDyCollectTags() {
 }
 
 func (receiver *AccountController) UpdDyCollectTag() {
-	id := receiver.GetString(":id")
-	name := receiver.GetString(":name")
+	id, _ := receiver.GetInt(":id")
+	name := receiver.GetString("name")
 	comErr := business.NewUserBusiness().UpdDyCollectTag(id, name)
 	if comErr != nil {
 		receiver.FailReturn(comErr)
