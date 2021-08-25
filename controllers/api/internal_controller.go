@@ -43,8 +43,8 @@ func (receiver *InternalController) ChangeAuthorCate() {
 		receiver.FailReturn(global.NewError(4000))
 		return
 	}
-	tags := receiver.GetString("tags", "")
-	tagsTow := receiver.GetString("tags_tow", "")
+	tags := receiver.InputFormat().GetString("tags", "")
+	tagsTow := receiver.InputFormat().GetString("tags_two", "")
 	if tags == "" {
 		receiver.FailReturn(global.NewError(4000))
 		return
@@ -88,10 +88,10 @@ func (receiver *InternalController) ChangeProductCate() {
 		receiver.FailReturn(global.NewError(4000))
 		return
 	}
-	dcmLevelFirst := receiver.GetString("dcm_level_first", "")
-	firstCate := receiver.GetString("first_cate", "")
-	secondCate := receiver.GetString("second_cate", "")
-	thirdCate := receiver.GetString("third_cate", "")
+	dcmLevelFirst := receiver.InputFormat().GetString("dcm_level_first", "")
+	firstCate := receiver.InputFormat().GetString("first_cate", "")
+	secondCate := receiver.InputFormat().GetString("second_cate", "")
+	thirdCate := receiver.InputFormat().GetString("third_cate", "")
 	if dcmLevelFirst == "" {
 		receiver.FailReturn(global.NewError(4000))
 		return
