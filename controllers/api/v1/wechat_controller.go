@@ -41,14 +41,11 @@ func (receiver *WechatController) QrCode() {
 
 func (receiver *WechatController) Receive() {
 	//wxBusiness := business.NewWechatBusiness()
-	wxInstance := global.WechatInstance
-
 	InputData := receiver.InputFormat()
 	log.Info("微信回调数据:", InputData)
-
-	server := wxInstance.GetServer(receiver.Ctx.Request, receiver.Ctx.ResponseWriter)
+	server := global.WxOfficial.GetServer(receiver.Ctx.Request, receiver.Ctx.ResponseWriter)
 	if beego.BConfig.RunMode == beego.DEV { //测试环境默认通过
-		server.SetDebug(true)
+		server.SkipValidate(true)
 	}
 	//处理消息接收以及回复
 	err := server.Serve()
