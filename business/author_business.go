@@ -558,25 +558,6 @@ func (a *AuthorBusiness) GetAuthorProductAnalyse(authorId, keyword, firstCate, s
 		hbaseDataList = append(hbaseDataList, hbaseData)
 		_ = global.Cache.Set(cacheKey, utils.SerializeData(hbaseDataList), 300)
 	}
-	//var wg sync.WaitGroup
-	//wg.Add(len(searchList))
-	//hbaseDataChan := make(chan entity.DyAuthorProductAnalysis, resLen)
-	//for _, l := range searchList {
-	//	go func(rowKey string, wg *sync.WaitGroup) {
-	//		defer global.RecoverPanic()
-	//		defer wg.Done()
-	//		d, _ := hbase.GetAuthorProductAnalysis(rowKey)
-	//		hbaseDataChan <- d
-	//	}(l.AuthorDateProduct, &wg)
-	//}
-	//wg.Wait()
-	//for i := 0; i < resLen; i++ {
-	//	v, ok := <-hbaseDataChan
-	//	if !ok {
-	//		break
-	//	}
-	//	hbaseDataList = append(hbaseDataList, v)
-	//}
 	for _, v := range hbaseDataList {
 		//数据过滤
 		if keyword != "" && strings.Index(v.Title, keyword) < 0 {
@@ -608,7 +589,9 @@ func (a *AuthorBusiness) GetAuthorProductAnalyse(authorId, keyword, firstCate, s
 				}
 			}
 		}
-		if (shopType == 1 && v.ShopId != shopId) || (shopType == 2 && v.ShopId != "") {
+		if shopType == 1 && v.ShopId != shopId {
+			continue
+		} else if shopType == 2 && v.ShopId == shopId {
 			continue
 		}
 		//数据累加
