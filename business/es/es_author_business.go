@@ -74,9 +74,34 @@ func (receiver *EsAuthorBusiness) BaseSearch(
 	}
 	if category != "" {
 		if category == "其他" {
-			category = ""
+			esQuery.AddCondition(map[string]interface{}{
+				"bool": map[string]interface{}{
+					"should": []map[string]interface{}{
+						{
+							"match_phrase": map[string]interface{}{
+								"tags": map[string]interface{}{
+									"query": "",
+								},
+							},
+						},
+						{
+							"match_phrase": map[string]interface{}{
+								"tags": map[string]interface{}{
+									"query": "0",
+								},
+							},
+						},
+						{
+							"term": map[string]interface{}{
+								"tags": category,
+							},
+						},
+					},
+				},
+			})
+		} else {
+			esQuery.SetTerm("tags.keyword", category)
 		}
-		esQuery.SetTerm("tags.keyword", category)
 	}
 	if sellTags != "" {
 		esQuery.SetTerm("rank_sell_tags.keyword", sellTags)
@@ -194,9 +219,34 @@ func (receiver *EsAuthorBusiness) SimpleSearch(
 	esQuery.SetTerm("exist", 1)
 	if tags != "" {
 		if tags == "其他" {
-			tags = ""
+			esQuery.AddCondition(map[string]interface{}{
+				"bool": map[string]interface{}{
+					"should": []map[string]interface{}{
+						{
+							"match_phrase": map[string]interface{}{
+								"tags": map[string]interface{}{
+									"query": "",
+								},
+							},
+						},
+						{
+							"match_phrase": map[string]interface{}{
+								"tags": map[string]interface{}{
+									"query": "0",
+								},
+							},
+						},
+						{
+							"term": map[string]interface{}{
+								"tags": tags,
+							},
+						},
+					},
+				},
+			})
+		} else {
+			esQuery.SetTerm("tags.keyword", tags)
 		}
-		esQuery.SetTerm("tags.keyword", tags)
 	}
 	if secondTags != "" {
 		esQuery.SetTerm("tags_level_two.keyword", secondTags)
