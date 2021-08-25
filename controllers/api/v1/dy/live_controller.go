@@ -632,8 +632,8 @@ func (receiver *LiveController) LivingProduct() {
 				list[k].StartPmtSales = startPmt.StartSales
 				list[k].EndPmtSales = stopPmt.FinalSales
 			}
-			list[k].CurList = curCount.CurList
 			if len(curCount.CurList) > 0 {
+				list[k].CurList = curCount.CurList
 				cur := curCount.CurList[len(curCount.CurList)-1]
 				list[k].StartCurTime = cur.StartTime
 				list[k].EndCurTime = cur.EndTime
