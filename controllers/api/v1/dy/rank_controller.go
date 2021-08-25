@@ -56,7 +56,11 @@ func (receiver *RankController) DyStartAuthorLiveRank() {
 	for k, v := range data {
 		data[k].CoreUserId = business.IdEncrypt(v.CoreUserId)
 	}
+	if !receiver.HasAuth {
+		data = data[0:receiver.MaxTotal]
+	}
 	ret = map[string]interface{}{
+		"has_auth":    receiver.HasAuth,
 		"list":        data,
 		"update_time": updateTime,
 	}
