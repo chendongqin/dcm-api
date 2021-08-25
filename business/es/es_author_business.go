@@ -405,7 +405,7 @@ func (receiver *EsAuthorBusiness) SaleAuthorRankCount(startTime time.Time, dateT
 }
 
 //达人涨粉榜
-func (receiver *EsAuthorBusiness) DyAuthorFollowerIncRank(date, tags, province, sortStr, orderBy string, isDelivery, page, pageSize int) (list []es.DyAuthorFollowerTop, total int, comErr global.CommonError) {
+func (receiver *EsAuthorBusiness) DyAuthorFollowerIncRank(date, tags, province, city, sortStr, orderBy string, isDelivery, page, pageSize int) (list []es.DyAuthorFollowerTop, total int, comErr global.CommonError) {
 	esQuery, esMultiQuery := elasticsearch.NewElasticQueryGroup()
 	if sortStr == "" {
 		sortStr = "inc_follower_count"
@@ -429,6 +429,9 @@ func (receiver *EsAuthorBusiness) DyAuthorFollowerIncRank(date, tags, province, 
 	}
 	if province != "" {
 		esQuery.SetTerm("province.keyword", province)
+	}
+	if city != "" {
+		esQuery.SetTerm("city.keyword", city)
 	}
 	esTable := fmt.Sprintf(es.DyAuthorFollowerTable, date)
 	results := esMultiQuery.
