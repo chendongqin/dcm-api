@@ -27,6 +27,14 @@ func (receiver *RankController) Prepare() {
 	receiver.CheckDyUserGroupRight(business.DyRankMinShowNum, business.DyJewelRankShowNum)
 }
 
+func (receiver *RankController) lockAction() {
+	ip := receiver.Ctx.Input.IP()
+	if business.UserActionLock("rank", ip, 1) {
+		receiver.FailReturn(global.NewError(4211))
+		return
+	}
+}
+
 //抖音视频达人热榜
 func (receiver *RankController) DyStartAuthorVideoRank() {
 	rankType := receiver.GetString("rank_type", "达人指数榜")
