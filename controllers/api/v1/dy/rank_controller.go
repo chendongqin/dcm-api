@@ -444,6 +444,7 @@ func (receiver *RankController) DyAuthorFollowerRank() {
 	date := receiver.Ctx.Input.Param(":date")
 	tags := receiver.GetString("tags", "")
 	province := receiver.GetString("province", "")
+	city := receiver.GetString("city", "")
 	sortStr := receiver.GetString("sort", "")
 	orderBy := receiver.GetString("order_by", "")
 	isDelivery, _ := receiver.GetInt("is_delivery", 0)
@@ -455,15 +456,16 @@ func (receiver *RankController) DyAuthorFollowerRank() {
 		return
 	}
 	ret := map[string]interface{}{}
-	cacheKey := cache.GetCacheKey(cache.DyRankCache, "author_follower_inc", utils.Md5_encode(fmt.Sprintf("%s%s%s%s%s%d%d%d", dateTime.Format("20060102"), tags, province, sortStr, orderBy, isDelivery, page, pageSize)))
+	cacheKey := cache.GetCacheKey(cache.DyRankCache, "author_follower_inc", utils.Md5_encode(fmt.Sprintf("%s%s%s%s%s%d%d%d", dateTime.Format("20060102"), tags, province, city, sortStr, orderBy, isDelivery, page, pageSize)))
 	cacheStr := global.Cache.Get(cacheKey)
 	if cacheStr != "" {
 		cacheStr = utils.DeserializeData(cacheStr)
 		_ = jsoniter.Unmarshal([]byte(cacheStr), &ret)
 	} else {
-		data, total, comErr := es.NewEsAuthorBusiness().DyAuthorFollowerIncRank(dateTime.Format("20060102"), tags, province, sortStr, orderBy, isDelivery, page, pageSize)
+		data, total, comErr := es.NewEsAuthorBusiness().DyAuthorFollowerIncRank(dateTime.Format("20060102"), tags, province, city, sortStr, orderBy, isDelivery, page, pageSize)
 		form := (page - 1) * pageSize
 		for k, v := range data {
+
 			data[k].Rank = k + form + 1
 			if data[k].UniqueID == "" {
 				data[k].UniqueID = v.ShortID
