@@ -38,7 +38,7 @@ func (receiver *ProductController) Search() {
 	secondCategory := receiver.GetString("second_category", "")
 	thirdCategory := receiver.GetString("third_category", "")
 	platform := receiver.GetString("platform", "")
-	sortStr := receiver.GetString("sort", "predict_gmv")
+	sortStr := receiver.GetString("sort", "order_account")
 	orderBy := receiver.GetString("order_by", "desc")
 	minCommissionRate, _ := receiver.GetFloat("min_commission_rate", 0)
 	minPrice, _ := receiver.GetFloat("min_price", 0)
@@ -52,7 +52,7 @@ func (receiver *ProductController) Search() {
 	page := receiver.GetPage("page")
 	pageSize := receiver.GetPageSize("page_size", 10, 100)
 	if !receiver.HasAuth {
-		if category != "" || sortStr != "predict_gmv" || orderBy != "desc" || secondCategory != "" || thirdCategory != "" || platform != "" || minCommissionRate > 0 || minPrice > 0 || maxPrice > 0 || commerceType > 0 ||
+		if category != "" || sortStr != "order_account" || orderBy != "desc" || secondCategory != "" || thirdCategory != "" || platform != "" || minCommissionRate > 0 || minPrice > 0 || maxPrice > 0 || commerceType > 0 ||
 			isCoupon > 0 || isStar > 0 || notStar > 0 || page != 1 || relateRoom > 0 || relateAweme > 0 {
 			if !receiver.HasLogin {
 				receiver.FailReturn(global.NewError(4001))
