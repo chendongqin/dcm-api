@@ -112,9 +112,13 @@ func (receiver *CommonController) Test() {
 func (receiver *CommonController) GetConfig() {
 	var configJson dcm.DcConfigJson
 	keyName := receiver.GetString(":key_name")
-	_, err := dcm.GetDbSession().Where("key_name=?", keyName).Get(&configJson)
-	if err != nil {
+	exist, err := dcm.GetBy("key_name", keyName, &configJson)
+	if !exist || err != nil {
 		receiver.FailReturn(global.NewError(5000))
+		return
+	}
+	if configJson.Auth == 0 {
+		receiver.FailReturn(global.NewError(4000))
 		return
 	}
 	var data map[string]interface{}

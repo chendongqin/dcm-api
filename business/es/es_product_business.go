@@ -175,7 +175,7 @@ func (i *EsProductBusiness) SearchRangeDateRowKey(productId, keyword string, sta
 	return
 }
 
-func (i *EsProductBusiness) InternalSearch(productId, title string, page, pageSize int) (list []es.DyProduct, total int, comErr global.CommonError) {
+func (i *EsProductBusiness) InternalSearch(productId, title, dcmLevelFirst, firstCname, secondCname, thirdCname string, page, pageSize int) (list []es.DyProduct, total int, comErr global.CommonError) {
 	esTable := es.DyProductTable
 	esQuery, esMultiQuery := elasticsearch.NewElasticQueryGroup()
 	if productId != "" {
@@ -183,6 +183,18 @@ func (i *EsProductBusiness) InternalSearch(productId, title string, page, pageSi
 	}
 	if title != "" {
 		esQuery.SetMatchPhrase("title", title)
+	}
+	if dcmLevelFirst != "" {
+		esQuery.SetMatchPhrase("dcm_level_first", dcmLevelFirst)
+	}
+	if firstCname != "" {
+		esQuery.SetMatchPhrase("first_cname", firstCname)
+	}
+	if secondCname != "" {
+		esQuery.SetMatchPhrase("second_cname", secondCname)
+	}
+	if thirdCname != "" {
+		esQuery.SetMatchPhrase("third_cname", thirdCname)
 	}
 	results := esMultiQuery.
 		SetTable(esTable).

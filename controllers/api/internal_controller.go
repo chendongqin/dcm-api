@@ -15,7 +15,7 @@ func (receiver *InternalController) AuthorSearch() {
 	nickname := receiver.GetString("nickname", "")
 	keyword := receiver.GetString("keyword", "")
 	tags := receiver.GetString("tags", "")
-	secondTags := receiver.GetString("tags", "")
+	secondTags := receiver.GetString("second_tags", "")
 	page := receiver.GetPage("page")
 	pageSize := receiver.GetPageSize("page_size", 10, 100)
 	list, total, comErr := es.NewEsAuthorBusiness().SimpleSearch(nickname, keyword, tags, secondTags, page, pageSize)
@@ -43,8 +43,8 @@ func (receiver *InternalController) ChangeAuthorCate() {
 		receiver.FailReturn(global.NewError(4000))
 		return
 	}
-	tags := receiver.GetString("tags", "")
-	tagsTow := receiver.GetString("tags_tow", "")
+	tags := receiver.InputFormat().GetString("tags", "")
+	tagsTow := receiver.InputFormat().GetString("tags_two", "")
 	if tags == "" {
 		receiver.FailReturn(global.NewError(4000))
 		return
@@ -63,9 +63,13 @@ func (receiver *InternalController) ChangeAuthorCate() {
 func (receiver *InternalController) ProductSearch() {
 	productId := receiver.GetString("product_id")
 	title := receiver.GetString("title")
+	dcmLevelFirst := receiver.GetString("dcm_level_first", "")
+	firstCname := receiver.GetString("first_cname", "")
+	secondCname := receiver.GetString("second_cname", "")
+	thirdCname := receiver.GetString("third_cname", "")
 	page := receiver.GetPage("page")
 	pageSize := receiver.GetPageSize("page_size", 10, 100)
-	list, total, comErr := es.NewEsProductBusiness().InternalSearch(productId, title, page, pageSize)
+	list, total, comErr := es.NewEsProductBusiness().InternalSearch(productId, title, dcmLevelFirst, firstCname, secondCname, thirdCname, page, pageSize)
 	if comErr != nil {
 		receiver.FailReturn(comErr)
 		return
@@ -84,10 +88,10 @@ func (receiver *InternalController) ChangeProductCate() {
 		receiver.FailReturn(global.NewError(4000))
 		return
 	}
-	dcmLevelFirst := receiver.GetString("dcm_level_first", "")
-	firstCate := receiver.GetString("first_cate", "")
-	secondCate := receiver.GetString("second_cate", "")
-	thirdCate := receiver.GetString("third_cate", "")
+	dcmLevelFirst := receiver.InputFormat().GetString("dcm_level_first", "")
+	firstCate := receiver.InputFormat().GetString("first_cate", "")
+	secondCate := receiver.InputFormat().GetString("second_cate", "")
+	thirdCate := receiver.InputFormat().GetString("third_cate", "")
 	if dcmLevelFirst == "" {
 		receiver.FailReturn(global.NewError(4000))
 		return

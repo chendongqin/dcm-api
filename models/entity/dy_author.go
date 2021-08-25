@@ -9,16 +9,16 @@ var DyAuthorMap = HbaseEntity{
 	"tags_level_two":           {String, "tags_level_two"},
 	"other_aweme_list":         {AJson, "aweme_list"},
 	"other_room_list":          {AJson, "room_list"},
-	"other_room_count":         {Long, "room_count"},
+	"other_room_count":         {Int, "room_count"},
 	"other_live_duration":      {String, "live_duration"},
 	"other_avg_live_duration":  {Long, "avg_live_duration"},
 	"other_med_watch_cnt":      {Long, "med_watch_cnt"},
 	"other_interaction_rate":   {Double, "interaction_rate"},
 	"other_predict_30_gmv":     {Double, "predict_30_gmv"},
 	"other_real_30_gmv":        {Double, "real_30_gmv"},
-	"other_predict_30_salas":   {Double, "predict_30_salas"},
-	"other_real_30_salas":      {Double, "real_30_salas"},
-	"other_aweme_count":        {Long, "aweme_count"},
+	"other_predict_30_sales":   {Double, "predict_30_sales"},
+	"other_real_30_sales":      {Double, "real_30_sales"},
+	"other_aweme_count":        {Int, "aweme_count"},
 	"other_digg_count":         {Long, "digg_count"},
 	"other_digg_follower_rate": {Double, "digg_follower_rate"},
 	"other_duration":           {Long, "duration"},
@@ -38,7 +38,7 @@ type DyAuthor struct {
 	TagsLevelTwo     string          `json:"tags_level_two"`
 	AwemeList        []DyAuthorAweme `json:"aweme_list"`
 	RoomList         []DyAuthorRoom  `json:"room_list"`
-	RoomCount        int64           `json:"room_count"`
+	RoomCount        int             `json:"room_count"`
 	RoomId           string          `json:"room_id"`
 	RoomStatus       int             `json:"room_status"`
 	LiveDuration     string          `json:"live_duration"`
@@ -49,7 +49,7 @@ type DyAuthor struct {
 	Real30Gmv        float64         `json:"real_30_gmv"`
 	Predict30Sales   float64         `json:"predict_30_sales"`
 	Real30Sales      float64         `json:"real_30_sales"`
-	AwemeCount       int64           `json:"aweme_count"`
+	AwemeCount       int             `json:"aweme_count"`
 	DiggCount        int64           `json:"digg_count"`
 	DiggFollowerRate float64         `json:"digg_follower_rate"`
 	Duration         int64           `json:"duration"`

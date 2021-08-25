@@ -12,7 +12,7 @@ const (
 	UserInfo         KeyName = "dcm:user:info:data:%d"
 	UserLevel        KeyName = "dcm:user:level:%d:%d"
 	UserPrevTimeLock KeyName = "dcm:user:prev:lock:%d"
-	UserActionLock   KeyName = "dcm:user:action:lock:%s"
+	UserActionLock   KeyName = "dcm:user:action:lock:%s:%s"
 	//短信验证码
 	SmsCodeLimitBySome KeyName = "dcm:sms:limit:%s:%s" //短信发送限制
 	SmsCodeVerify      KeyName = "dcm:sms:code:%s:%s"
@@ -32,6 +32,7 @@ const (
 	AuthorProductAllList     KeyName = "dcm:author:product:row:%s:%s"
 	AuthorViewProductAllList KeyName = "dcm:author:view:product:%s:%s"
 	//榜单数据缓存
+	DyRankCache              KeyName = "dcm:rank:%s:%s"
 	DyAuthorTakeGoodsRank    KeyName = "dcm:rank:author:goods:%s:%s:%s:%s:%s:%s:%s:%s"
 	DyAuthorFollowerRank     KeyName = "dcm:rank:author:follower:%s:%s:%s"
 	DyAwemeShareRank         KeyName = "dcm:rank:awemer:share:%s"

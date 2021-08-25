@@ -39,7 +39,6 @@ func (a *AuthorAwemeBusiness) HbaseGetVideoAggRangeDate(authorId string, startTi
 	allAwemeData := map[string]map[string]entity.DyAwemeDiggCommentForwardCount{}
 	awemeIds := make([]string, 0)
 	var wg sync.WaitGroup
-	wg.Add(len(results))
 	for _, v := range results {
 		dataMap := hbaseService.HbaseFormat(v, entity.DyAuthorAwemeAggMap)
 		hData := &entity.DyAuthorAwemeAggData{}
@@ -97,9 +96,10 @@ func (a *AuthorAwemeBusiness) HbaseGetVideoAggRangeDate(authorId string, startTi
 			}
 			//视频趋势数据处理
 			createTime := time.Unix(agg.AwemeCreateTime, 0)
-			go func(awemeId string, startT, endT time.Time, wg *sync.WaitGroup) {
+			wg.Add(1)
+			go func(awemeId string, startT, endT time.Time) {
 				defer global.RecoverPanic()
-				defer wg.Done()
+				wg.Done()
 				awemeBusiness := NewAwemeBusiness()
 				awemeData, comErr := awemeBusiness.GetAwemeChart(awemeId, startT, endT, false)
 				if comErr == nil {
@@ -107,8 +107,10 @@ func (a *AuthorAwemeBusiness) HbaseGetVideoAggRangeDate(authorId string, startTi
 						awemeId: awemeData,
 					}
 					allAwemeChan <- tmp
+				} else {
+					allAwemeChan <- nil
 				}
-			}(agg.AwemeID, createTime, endTime, &wg)
+			}(agg.AwemeID, createTime, endTime)
 		}
 	}
 	wg.Wait()
@@ -142,12 +144,14 @@ func (a *AuthorAwemeBusiness) HbaseGetVideoAggRangeDate(authorId string, startTi
 			Value: publishChartMap[hour],
 		})
 	}
-	lenNum := len(results)
 	//总增量图表
-	for i := 0; i < lenNum; i++ {
+	for i := 0; i < int(videoNum); i++ {
 		tmp, ok := <-allAwemeChan
 		if !ok {
 			break
+		}
+		if tmp == nil {
+			continue
 		}
 		for k, v := range tmp {
 			allAwemeData[k] = v

@@ -38,6 +38,9 @@ type ApiBaseController struct {
 	IsInitToken      bool               //是否初始化过token
 	LastInitTokenErr global.CommonError //记录首次初始化token的错误
 	Token            string
+	HasAuth          bool
+	HasLogin         bool
+	MaxTotal         int
 	controllers.BaseController
 }
 
@@ -47,11 +50,14 @@ type AppData struct {
 }
 
 func (this *ApiBaseController) Prepare() {
+	this.InitApiController()
+}
+
+func (this *ApiBaseController) InitApiController() {
 	this.InitApi()
 	this.AsfCheck()
 	this.CheckSign()
-	this.CheckToken()
-	this.CheckUserGroupRight()
+	this.InitUserToken()
 }
 
 func (this *ApiBaseController) IsMobileRequest() (is bool, version string) {
@@ -109,14 +115,6 @@ func (this *ApiBaseController) CheckIp() {
 	//		return
 	//	}
 	//}
-}
-
-//不需要手机号码账号就能访问的接口白名单
-var NeedUsernameRoute = []string{
-	//"/v1/discountActivity/coupon/couponAddScore",
-	//"/v1/vip/order/createAppleMonitorOrder",
-	//"/v1/vip/order/createAppleOrder",
-	//"/v1/vip/order/getOrderPrice",
 }
 
 func (this *ApiBaseController) InitUserToken() (commonErr global.CommonError) {
@@ -206,7 +204,7 @@ func (this *ApiBaseController) InitUserToken() (commonErr global.CommonError) {
 
 		//异步记录用户行为日志
 		this.LogInputOutput("Format", this.ApiDatas)
-
+		this.HasLogin = true
 	} else {
 		return global.NewError(4001)
 	}
@@ -221,7 +219,7 @@ func (this *ApiBaseController) CheckSign() {
 	}
 	this.AppId = utils.ToInt(appId)
 	if utils.InArrayString(appId, []string{"10000", "10001", "10002", "10003", "10004", "10005"}) {
-		if this.Ctx.Input.IP() == "127.0.0.1" {
+		if global.IsDev() {
 			return
 		}
 		if authBusiness.AuthSignWhiteUri(this.TrueUri) {
@@ -235,7 +233,6 @@ func (this *ApiBaseController) CheckSign() {
 			this.FailReturn(err)
 			return
 		}
-
 	} else {
 		if strings.Index(this.TrueUri, "/internal") == 0 && appId != "20000" {
 			this.FailReturn(global.NewError(4004))
@@ -256,18 +253,14 @@ func (this *ApiBaseController) CheckSign() {
 
 //校验token
 func (this *ApiBaseController) CheckToken() {
-	if !utils.InArrayInt(this.AppId, []int{10000, 10001, 10002, 10003, 10004, 10005}) {
+	if this.UserId > 0 {
 		return
 	}
-	err := this.InitUserToken()
-	if err != nil {
-		authBusiness := business.NewAccountAuthBusiness()
-		if authBusiness.AuthLoginWhiteUri(this.TrueUri) {
-			return
-		}
-		this.FailReturn(err)
+	authBusiness := business.NewAccountAuthBusiness()
+	if authBusiness.AuthLoginWhiteUri(this.TrueUri) {
 		return
 	}
+	this.FailReturn(global.NewError(4001))
 	return
 }
 
@@ -415,9 +408,14 @@ func (this *ApiBaseController) FormVerify(input interface{}) {
 	}
 }
 
-//检测用户权限
-func (this *ApiBaseController) CheckUserGroupRight() {
-
+//检测抖音用户权限
+func (this *ApiBaseController) CheckDyUserGroupRight(minAuthShow, maxAuthShow int) {
+	this.MaxTotal = minAuthShow
+	if this.DyLevel > 0 {
+		this.MaxTotal = maxAuthShow
+		this.HasAuth = true
+	}
+	return
 }
 
 //获取当前请求  最低需要的权限

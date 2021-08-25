@@ -19,6 +19,12 @@ type ProductController struct {
 	controllers.ApiBaseController
 }
 
+func (receiver *ProductController) Prepare() {
+	receiver.InitApiController()
+	receiver.CheckToken()
+	receiver.CheckDyUserGroupRight(business.DyJewelBaseMinShowNum, business.DyJewelBaseShowNum)
+}
+
 func (receiver *ProductController) GetCacheProductCate() {
 	productBusiness := business.NewProductBusiness()
 	cateList := productBusiness.GetCacheProductCate(true)
@@ -27,21 +33,13 @@ func (receiver *ProductController) GetCacheProductCate() {
 }
 
 func (receiver *ProductController) Search() {
-	hasAuth := false
-	hasLogin := false
-	if receiver.DyLevel == 3 {
-		hasAuth = true
-	}
-	if receiver.UserId > 0 {
-		hasLogin = true
-	}
 	keyword := receiver.GetString("keyword", "")
 	category := receiver.GetString("category", "")
 	secondCategory := receiver.GetString("second_category", "")
 	thirdCategory := receiver.GetString("third_category", "")
 	platform := receiver.GetString("platform", "")
-	sortStr := receiver.GetString("sort", "")
-	orderBy := receiver.GetString("order_by", "")
+	sortStr := receiver.GetString("sort", "order_account")
+	orderBy := receiver.GetString("order_by", "desc")
 	minCommissionRate, _ := receiver.GetFloat("min_commission_rate", 0)
 	minPrice, _ := receiver.GetFloat("min_price", 0)
 	maxPrice, _ := receiver.GetFloat("max_price", 0)
@@ -53,22 +51,22 @@ func (receiver *ProductController) Search() {
 	relateAweme, _ := receiver.GetInt("relate_aweme", 0)
 	page := receiver.GetPage("page")
 	pageSize := receiver.GetPageSize("page_size", 10, 100)
-	if !hasAuth {
-		if category != "" || secondCategory != "" || thirdCategory != "" || platform != "" || minCommissionRate > 0 || minPrice > 0 || maxPrice > 0 || commerceType > 0 ||
+	if !receiver.HasAuth {
+		if category != "" || sortStr != "order_account" || orderBy != "desc" || secondCategory != "" || thirdCategory != "" || platform != "" || minCommissionRate > 0 || minPrice > 0 || maxPrice > 0 || commerceType > 0 ||
 			isCoupon > 0 || isStar > 0 || notStar > 0 || page != 1 || relateRoom > 0 || relateAweme > 0 {
-			if !hasLogin {
+			if !receiver.HasLogin {
 				receiver.FailReturn(global.NewError(4001))
 				return
 			}
 			receiver.FailReturn(global.NewError(4004))
 			return
 		}
-		if pageSize > 10 {
-			pageSize = 10
+		if pageSize > receiver.MaxTotal {
+			pageSize = receiver.MaxTotal
 		}
 	}
 	formNum := (page - 1) * pageSize
-	if formNum > business.DyJewelBaseShowNum {
+	if formNum > receiver.MaxTotal {
 		receiver.FailReturn(global.NewError(4004))
 		return
 	}
@@ -108,11 +106,11 @@ func (receiver *ProductController) Search() {
 		list[k].ProductId = business.IdEncrypt(v.ProductId)
 	}
 	totalPage := math.Ceil(float64(total) / float64(pageSize))
-	maxPage := math.Ceil(float64(business.DyJewelBaseShowNum) / float64(pageSize))
+	maxPage := math.Ceil(float64(receiver.MaxTotal) / float64(pageSize))
 	if totalPage > maxPage {
 		totalPage = maxPage
 	}
-	maxTotal := business.DyJewelBaseShowNum
+	maxTotal := receiver.MaxTotal
 	if maxTotal > total {
 		maxTotal = total
 	}
@@ -121,8 +119,8 @@ func (receiver *ProductController) Search() {
 		"total":      total,
 		"total_page": totalPage,
 		"max_num":    maxTotal,
-		"has_auth":   hasAuth,
-		"has_login":  hasLogin,
+		"has_auth":   receiver.HasAuth,
+		"has_login":  receiver.HasLogin,
 	})
 	return
 }

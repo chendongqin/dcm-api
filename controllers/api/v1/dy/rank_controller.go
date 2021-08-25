@@ -10,7 +10,9 @@ import (
 	"dongchamao/hbase"
 	"dongchamao/models/entity"
 	es2 "dongchamao/models/es"
+	"dongchamao/models/repost/dy"
 	"dongchamao/services/dyimg"
+	"fmt"
 	jsoniter "github.com/json-iterator/go"
 	"math"
 	"time"
@@ -20,26 +22,36 @@ type RankController struct {
 	controllers.ApiBaseController
 }
 
+func (receiver *RankController) Prepare() {
+	receiver.InitApiController()
+	receiver.CheckDyUserGroupRight(business.DyRankMinShowNum, business.DyJewelRankShowNum)
+}
+
+func (receiver *RankController) lockAction() {
+	ip := receiver.Ctx.Input.IP()
+	if business.UserActionLock("rank", ip, 1) {
+		receiver.FailReturn(global.NewError(4211))
+		return
+	}
+}
+
 //抖音视频达人热榜
 func (receiver *RankController) DyStartAuthorVideoRank() {
 	rankType := receiver.GetString("rank_type", "达人指数榜")
 	category := receiver.GetString("category", "全部")
 	var ret map[string]interface{}
-	cacheKey := cache.GetCacheKey(cache.DyStartAuthorVideoRank, rankType)
-	cacheStr := global.Cache.Get(cacheKey)
-	if cacheStr != "" {
-		cacheStr = utils.DeserializeData(cacheStr)
-		_ = jsoniter.Unmarshal([]byte(cacheStr), &ret)
-	} else {
-		data, updateTime, _ := hbase.GetStartAuthorVideoRank(rankType, category)
-		for k, v := range data {
-			data[k].CoreUserId = business.IdEncrypt(v.CoreUserId)
-		}
-		ret = map[string]interface{}{
-			"list":        data,
-			"update_time": updateTime,
-		}
-		_ = global.Cache.Set(cacheKey, utils.SerializeData(ret), 86400)
+	data, updateTime, _ := hbase.GetStartAuthorVideoRank(rankType, category)
+	if !receiver.HasAuth {
+		data = data[0:receiver.MaxTotal]
+	}
+	for k, v := range data {
+		data[k].CoreUserId = business.IdEncrypt(v.CoreUserId)
+	}
+	ret = map[string]interface{}{
+		"has_login":   receiver.HasLogin,
+		"has_auth":    receiver.HasAuth,
+		"list":        data,
+		"update_time": updateTime,
 	}
 	receiver.SuccReturn(ret)
 	return
@@ -49,21 +61,18 @@ func (receiver *RankController) DyStartAuthorVideoRank() {
 func (receiver *RankController) DyStartAuthorLiveRank() {
 	rankType := receiver.GetString("rank_type", "达人指数榜")
 	var ret map[string]interface{}
-	cacheKey := cache.GetCacheKey(cache.DyStartAuthorLiveRank, rankType)
-	cacheStr := global.Cache.Get(cacheKey)
-	if cacheStr != "" {
-		cacheStr = utils.DeserializeData(cacheStr)
-		_ = jsoniter.Unmarshal([]byte(cacheStr), &ret)
-	} else {
-		data, updateTime, _ := hbase.GetStartAuthorLiveRank(rankType)
-		for k, v := range data {
-			data[k].CoreUserId = business.IdEncrypt(v.CoreUserId)
-		}
-		ret = map[string]interface{}{
-			"list":        data,
-			"update_time": updateTime,
-		}
-		_ = global.Cache.Set(cacheKey, utils.SerializeData(ret), 86400)
+	data, updateTime, _ := hbase.GetStartAuthorLiveRank(rankType)
+	for k, v := range data {
+		data[k].CoreUserId = business.IdEncrypt(v.CoreUserId)
+	}
+	if !receiver.HasAuth {
+		data = data[0:receiver.MaxTotal]
+	}
+	ret = map[string]interface{}{
+		"has_login":   receiver.HasLogin,
+		"has_auth":    receiver.HasAuth,
+		"list":        data,
+		"update_time": updateTime,
 	}
 	receiver.SuccReturn(ret)
 	return
@@ -79,7 +88,7 @@ func (receiver *RankController) DyLiveHourRank() {
 		return
 	}
 	var ret map[string]interface{}
-	cacheKey := cache.GetCacheKey(cache.DyLiveHourRank, dateTime.Format("2006010215"))
+	cacheKey := cache.GetCacheKey(cache.DyRankCache, "live_hour", utils.Md5_encode(fmt.Sprintf("%s", dateTime.Format("2006010215"))))
 	cacheStr := global.Cache.Get(cacheKey)
 	if cacheStr != "" {
 		cacheStr = utils.DeserializeData(cacheStr)
@@ -100,7 +109,20 @@ func (receiver *RankController) DyLiveHourRank() {
 			"list":        data.Ranks,
 			"update_time": data.CrawlTime,
 		}
-		_ = global.Cache.Set(cacheKey, utils.SerializeData(ret), 300)
+		var cacheTime time.Duration
+		if dateTime.Format("2006-01-02 15:04") == time.Now().Format("2006-01-02 15:04") {
+			cacheTime = 60
+		} else {
+			cacheTime = 86400
+		}
+		_ = global.Cache.Set(cacheKey, utils.SerializeData(ret), cacheTime)
+	}
+	if !receiver.HasAuth {
+		list := make([]entity.DyLiveHourRank, 0)
+		utils.MapToStruct(ret["list"], &list)
+		ret["list"] = list[0:receiver.MaxTotal]
+		ret["has_login"] = receiver.HasLogin
+		ret["has_auth"] = receiver.HasAuth
 	}
 	receiver.SuccReturn(ret)
 	return
@@ -116,7 +138,7 @@ func (receiver *RankController) DyLiveTopRank() {
 		return
 	}
 	var ret map[string]interface{}
-	cacheKey := cache.GetCacheKey(cache.DyLiveTopRank, dateTime.Format("2006010215"))
+	cacheKey := cache.GetCacheKey(cache.DyRankCache, "live_top", utils.Md5_encode(fmt.Sprintf("%s", dateTime.Format("2006010215"))))
 	cacheStr := global.Cache.Get(cacheKey)
 	if cacheStr != "" {
 		cacheStr = utils.DeserializeData(cacheStr)
@@ -137,7 +159,20 @@ func (receiver *RankController) DyLiveTopRank() {
 			"list":        data.Ranks,
 			"update_time": data.CrawlTime,
 		}
-		_ = global.Cache.Set(cacheKey, utils.SerializeData(ret), 86400)
+		var cacheTime time.Duration
+		if dateTime.Format("2006-01-02 15:04") == time.Now().Format("2006-01-02 15:04") {
+			cacheTime = 60
+		} else {
+			cacheTime = 86400
+		}
+		_ = global.Cache.Set(cacheKey, utils.SerializeData(ret), cacheTime)
+	}
+	if !receiver.HasAuth {
+		list := make([]interface{}, 0)
+		utils.MapToStruct(ret["list"], &list)
+		ret["list"] = list[0:receiver.MaxTotal]
+		ret["has_login"] = receiver.HasLogin
+		ret["has_auth"] = receiver.HasAuth
 	}
 	receiver.SuccReturn(ret)
 	return
@@ -153,7 +188,7 @@ func (receiver *RankController) DyLiveHourSellRank() {
 		return
 	}
 	var ret map[string]interface{}
-	cacheKey := cache.GetCacheKey(cache.DyLiveHourSellRank, dateTime.Format("2006010215"))
+	cacheKey := cache.GetCacheKey(cache.DyRankCache, "live_hour_sell", utils.Md5_encode(fmt.Sprintf("%s", dateTime.Format("2006010215"))))
 	cacheStr := global.Cache.Get(cacheKey)
 	if cacheStr != "" {
 		cacheStr = utils.DeserializeData(cacheStr)
@@ -186,7 +221,20 @@ func (receiver *RankController) DyLiveHourSellRank() {
 			"list":        data.Ranks,
 			"update_time": data.CrawlTime,
 		}
-		_ = global.Cache.Set(cacheKey, utils.SerializeData(ret), 300)
+		var cacheTime time.Duration
+		if time.Now().Format("2006-01-02 15:04") == dateTime.Format("2006-01-02 15:04") {
+			cacheTime = 60
+		} else {
+			cacheTime = 86400
+		}
+		_ = global.Cache.Set(cacheKey, utils.SerializeData(ret), cacheTime)
+	}
+	if !receiver.HasAuth {
+		list := make([]interface{}, 0)
+		utils.MapToStruct(ret["list"], &list)
+		ret["list"] = list[0:receiver.MaxTotal]
+		ret["has_login"] = receiver.HasLogin
+		ret["has_auth"] = receiver.HasAuth
 	}
 	receiver.SuccReturn(ret)
 	return
@@ -202,7 +250,7 @@ func (receiver *RankController) DyLiveHourPopularityRank() {
 		return
 	}
 	var ret map[string]interface{}
-	cacheKey := cache.GetCacheKey(cache.DyLiveHourPopularityRank, dateTime.Format("2006010215"))
+	cacheKey := cache.GetCacheKey(cache.DyRankCache, "live_hour_popularity", utils.Md5_encode(fmt.Sprintf("%s", dateTime.Format("2006010215"))))
 	cacheStr := global.Cache.Get(cacheKey)
 	if cacheStr != "" {
 		cacheStr = utils.DeserializeData(cacheStr)
@@ -223,7 +271,20 @@ func (receiver *RankController) DyLiveHourPopularityRank() {
 			"list":        data.Ranks,
 			"update_time": data.CrawlTime,
 		}
-		_ = global.Cache.Set(cacheKey, utils.SerializeData(ret), 86400)
+		var cacheTime time.Duration
+		if time.Now().Format("2006-01-02 15:04") == dateTime.Format("2006-01-02 15:04") {
+			cacheTime = 60
+		} else {
+			cacheTime = 86400
+		}
+		_ = global.Cache.Set(cacheKey, utils.SerializeData(ret), cacheTime)
+	}
+	if !receiver.HasAuth {
+		list := make([]interface{}, 0)
+		utils.MapToStruct(ret["list"], &list)
+		ret["list"] = list[0:receiver.MaxTotal]
+		ret["has_login"] = receiver.HasLogin
+		ret["has_auth"] = receiver.HasAuth
 	}
 	receiver.SuccReturn(ret)
 	return
@@ -245,7 +306,7 @@ func (receiver *RankController) DyLiveShareWeekRank() {
 		return
 	}
 	var ret map[string]interface{}
-	cacheKey := cache.GetCacheKey(cache.DyLiveShareWeekRank, start.Format("20060102")+"_"+end.Format("20060102"))
+	cacheKey := cache.GetCacheKey(cache.DyRankCache, "live_share_week", utils.Md5_encode(fmt.Sprintf("%s", start.Format("20060102")+"_"+end.Format("20060102"))))
 	cacheStr := global.Cache.Get(cacheKey)
 	if cacheStr != "" {
 		cacheStr = utils.DeserializeData(cacheStr)
@@ -293,6 +354,13 @@ func (receiver *RankController) DyLiveShareWeekRank() {
 		}
 		_ = global.Cache.Set(cacheKey, utils.SerializeData(ret), 86400)
 	}
+	if !receiver.HasAuth {
+		list := make([]interface{}, 0)
+		utils.MapToStruct(ret["list"], &list)
+		ret["list"] = list[0:receiver.MaxTotal]
+		ret["has_login"] = receiver.HasLogin
+		ret["has_auth"] = receiver.HasAuth
+	}
 	receiver.SuccReturn(ret)
 	return
 }
@@ -310,7 +378,7 @@ func (receiver *RankController) DyAwemeShareRank() {
 		return
 	}
 	var ret map[string]interface{}
-	cacheKey := cache.GetCacheKey(cache.DyAwemeShareRank, dateTime.Format("20060102"))
+	cacheKey := cache.GetCacheKey(cache.DyRankCache, "aweme_share", utils.Md5_encode(fmt.Sprintf("%s", dateTime.Format("20060102"))))
 	cacheStr := global.Cache.Get(cacheKey)
 	if cacheStr != "" {
 		cacheStr = utils.DeserializeData(cacheStr)
@@ -340,31 +408,24 @@ func (receiver *RankController) DyAwemeShareRank() {
 			"list":        list,
 			"update_time": data.CrawlTime,
 		}
-		_ = global.Cache.Set(cacheKey, utils.SerializeData(ret), 86400)
+		if dateTime.Format("20060102") != time.Now().Format("20060102") {
+			_ = global.Cache.Set(cacheKey, utils.SerializeData(ret), 86400)
+		}
+	}
+	if !receiver.HasAuth {
+		list := make([]interface{}, 0)
+		utils.MapToStruct(ret["list"], &list)
+		ret["list"] = list[0:receiver.MaxTotal]
+		ret["has_login"] = receiver.HasLogin
+		ret["has_auth"] = receiver.HasAuth
 	}
 	receiver.SuccReturn(ret)
 	return
 }
 
-type TakeGoodsRankRet struct {
-	Rank             int                      `json:"rank,omitempty"`
-	Nickname         string                   `json:"nickname,omitempty"`
-	AuthorCover      string                   `json:"author_cover,omitempty"`
-	SumGmv           float64                  `json:"sum_gmv,omitempty"`
-	SumSales         float64                  `json:"sum_sales,omitempty"`
-	AvgPrice         float64                  `json:"avg_price,omitempty"`
-	AuthorId         string                   `json:"author_id,omitempty"`
-	UniqueId         string                   `json:"unique_id,omitempty"`
-	Tags             string                   `json:"tags,omitempty"`
-	VerificationType int                      `json:"verification_type,omitempty"`
-	VerifyName       string                   `json:"verify_name,omitempty"`
-	RoomCount        int                      `json:"room_count,omitempty"`
-	RoomList         []map[string]interface{} `json:"room_list"`
-}
-
 //达人带货榜
 func (receiver *RankController) DyAuthorTakeGoodsRank() {
-	date := receiver.GetString("date")
+	date := receiver.Ctx.Input.Param(":date")
 	startDate, err := time.ParseInLocation("2006-01-02", date, time.Local)
 	if err != nil {
 		receiver.FailReturn(global.NewError(4000))
@@ -376,18 +437,18 @@ func (receiver *RankController) DyAuthorTakeGoodsRank() {
 	sortStr := receiver.GetString("sort", "sum_gmv")
 	orderBy := receiver.GetString("order_by", "desc")
 	page := receiver.GetPage("page")
-	pageSize := receiver.GetPage("page_size")
+	pageSize := receiver.GetPageSize("page_size", 10, 100)
 	var ret map[string]interface{}
-	cacheKey := cache.GetCacheKey(cache.DyAuthorTakeGoodsRank, startDate, dateType, tags, sortStr, orderBy, verified, page, pageSize)
+	cacheKey := cache.GetCacheKey(cache.DyRankCache, "author_take_goods", utils.Md5_encode(fmt.Sprintf("%s%d%s%s%s%d%d%d", startDate, dateType, tags, sortStr, orderBy, verified, page, pageSize)))
 	cacheStr := global.Cache.Get(cacheKey)
 	if cacheStr != "" {
 		cacheStr = utils.DeserializeData(cacheStr)
 		_ = jsoniter.Unmarshal([]byte(cacheStr), &ret)
 	} else {
-		list, total, updateTime, _ := es.NewEsAuthorBusiness().SaleAuthorRankCount(startDate, dateType, tags, sortStr, orderBy, verified, page, pageSize)
+		list, total, _ := es.NewEsAuthorBusiness().SaleAuthorRankCount(startDate, dateType, tags, sortStr, orderBy, verified, page, pageSize)
 		var structData []es2.DyAuthorTakeGoodsCount
 		utils.MapToStruct(list, &structData)
-		data := make([]TakeGoodsRankRet, len(structData))
+		data := make([]dy.TakeGoodsRankRet, len(structData))
 		for k, v := range structData {
 			hits := v.Hit.Hits.Hits
 			uniqueId := hits[0].Source.UniqueID
@@ -406,7 +467,7 @@ func (receiver *RankController) DyAuthorTakeGoodsRank() {
 					"real_sales":     v.Source.RealSales,
 				})
 			}
-			data[k] = TakeGoodsRankRet{
+			data[k] = dy.TakeGoodsRankRet{
 				Rank:             (page-1)*pageSize + k + 1,
 				Nickname:         hits[0].Source.Nickname,
 				VerificationType: hits[0].Source.VerificationType,
@@ -423,11 +484,22 @@ func (receiver *RankController) DyAuthorTakeGoodsRank() {
 			}
 		}
 		ret = map[string]interface{}{
-			"list":        data,
-			"total":       total,
-			"update_time": updateTime,
+			"list":  data,
+			"total": total,
 		}
-		_ = global.Cache.Set(cacheKey, utils.SerializeData(ret), 86400)
+		if startDate.Format("20060102") != time.Now().Format("20060102") {
+			_ = global.Cache.Set(cacheKey, utils.SerializeData(ret), 86400)
+		}
+	}
+	if !receiver.HasAuth {
+		list := make([]interface{}, 0)
+		utils.MapToStruct(ret["list"], &list)
+		ret["list"] = list[0:receiver.MaxTotal]
+		ret["has_login"] = receiver.HasLogin
+		ret["has_auth"] = receiver.HasAuth
+		ret["total"] = receiver.MaxTotal
+	} else if utils.ToInt(ret["total"]) > receiver.MaxTotal {
+		ret["total"] = receiver.MaxTotal
 	}
 	receiver.SuccReturn(ret)
 	return
@@ -435,39 +507,59 @@ func (receiver *RankController) DyAuthorTakeGoodsRank() {
 
 //达人涨粉榜
 func (receiver *RankController) DyAuthorFollowerRank() {
-	date := receiver.GetString("date")
-	tags := receiver.GetString("tags")
-	province := receiver.GetString("province")
+	date := receiver.Ctx.Input.Param(":date")
+	tags := receiver.GetString("tags", "")
+	province := receiver.GetString("province", "")
+	city := receiver.GetString("city", "")
+	sortStr := receiver.GetString("sort", "")
+	orderBy := receiver.GetString("order_by", "")
+	isDelivery, _ := receiver.GetInt("is_delivery", 0)
+	page := receiver.GetPage("page")
+	pageSize := receiver.GetPageSize("page_size", 10, 100)
 	dateTime, err := time.ParseInLocation("2006-01-02", date, time.Local)
 	if err != nil {
 		receiver.FailReturn(global.NewError(4000))
 		return
 	}
-	var ret map[string]interface{}
-	cacheKey := cache.GetCacheKey(cache.DyAuthorFollowerRank, dateTime.Format("20060102"), tags, province)
+	ret := map[string]interface{}{}
+	cacheKey := cache.GetCacheKey(cache.DyRankCache, "author_follower_inc", utils.Md5_encode(fmt.Sprintf("%s%s%s%s%s%d%d%d", dateTime.Format("20060102"), tags, province, city, sortStr, orderBy, isDelivery, page, pageSize)))
 	cacheStr := global.Cache.Get(cacheKey)
 	if cacheStr != "" {
 		cacheStr = utils.DeserializeData(cacheStr)
 		_ = jsoniter.Unmarshal([]byte(cacheStr), &ret)
 	} else {
-		data, comErr := es.NewEsAuthorBusiness().DyAuthorFollowerIncRank(dateTime.Format("20060102"), tags, province)
-		var structData []es2.DyAuthorFollowerTop
-		utils.MapToStruct(data, &structData)
-		for k := range structData {
-			if structData[k].UniqueID == "" {
-				structData[k].UniqueID = structData[k].ShortID
+		data, total, comErr := es.NewEsAuthorBusiness().DyAuthorFollowerIncRank(dateTime.Format("20060102"), tags, province, city, sortStr, orderBy, isDelivery, page, pageSize)
+		form := (page - 1) * pageSize
+		for k, v := range data {
+
+			data[k].Rank = k + form + 1
+			if data[k].UniqueID == "" {
+				data[k].UniqueID = v.ShortID
 			}
-			structData[k].AuthorID = business.IdEncrypt(structData[k].AuthorID)
-			structData[k].AuthorCover = dyimg.Fix(structData[k].AuthorCover)
+			data[k].AuthorID = business.IdEncrypt(v.AuthorID)
+			data[k].AuthorCover = dyimg.Fix(v.AuthorCover)
 		}
 		if comErr != nil {
 			receiver.FailReturn(global.NewError(4000))
 			return
 		}
 		ret = map[string]interface{}{
-			"list": data,
+			"list":  data,
+			"total": total,
 		}
-		_ = global.Cache.Set(cacheKey, utils.SerializeData(ret), 86400)
+		if dateTime.Format("20060102") != time.Now().Format("20060102") {
+			_ = global.Cache.Set(cacheKey, utils.SerializeData(ret), 86400)
+		}
+	}
+	if !receiver.HasAuth {
+		list := make([]interface{}, 0)
+		utils.MapToStruct(ret["list"], &list)
+		ret["list"] = list[0:receiver.MaxTotal]
+		ret["has_login"] = receiver.HasLogin
+		ret["has_auth"] = receiver.HasAuth
+		ret["total"] = receiver.MaxTotal
+	} else if utils.ToInt(ret["total"]) > receiver.MaxTotal {
+		ret["total"] = receiver.MaxTotal
 	}
 	receiver.SuccReturn(ret)
 	return

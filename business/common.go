@@ -25,7 +25,10 @@ const (
 )
 
 const (
-	DyJewelBaseShowNum = 500
+	DyJewelBaseShowNum    = 5000
+	DyJewelBaseMinShowNum = 10
+	DyJewelRankShowNum    = 1500
+	DyRankMinShowNum      = 5
 )
 
 type AuthorCate struct {
@@ -184,8 +187,8 @@ func DealAuthorLiveTags() {
 	return
 }
 
-func UserActionLock(active string, lockTime time.Duration) bool {
-	memberKey := cache.GetCacheKey(cache.UserActionLock, active)
+func UserActionLock(active string, userData string, lockTime time.Duration) bool {
+	memberKey := cache.GetCacheKey(cache.UserActionLock, active, userData)
 	if global.Cache.Get(memberKey) != "" {
 		return false
 	}

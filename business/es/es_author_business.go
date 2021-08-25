@@ -74,9 +74,34 @@ func (receiver *EsAuthorBusiness) BaseSearch(
 	}
 	if category != "" {
 		if category == "其他" {
-			category = ""
+			esQuery.AddCondition(map[string]interface{}{
+				"bool": map[string]interface{}{
+					"should": []map[string]interface{}{
+						{
+							"match_phrase": map[string]interface{}{
+								"tags": map[string]interface{}{
+									"query": "",
+								},
+							},
+						},
+						{
+							"match_phrase": map[string]interface{}{
+								"tags": map[string]interface{}{
+									"query": "0",
+								},
+							},
+						},
+						{
+							"term": map[string]interface{}{
+								"tags": category,
+							},
+						},
+					},
+				},
+			})
+		} else {
+			esQuery.SetTerm("tags.keyword", category)
 		}
-		esQuery.SetTerm("tags.keyword", category)
 	}
 	if sellTags != "" {
 		esQuery.SetTerm("rank_sell_tags.keyword", sellTags)
@@ -194,9 +219,34 @@ func (receiver *EsAuthorBusiness) SimpleSearch(
 	esQuery.SetTerm("exist", 1)
 	if tags != "" {
 		if tags == "其他" {
-			tags = ""
+			esQuery.AddCondition(map[string]interface{}{
+				"bool": map[string]interface{}{
+					"should": []map[string]interface{}{
+						{
+							"match_phrase": map[string]interface{}{
+								"tags": map[string]interface{}{
+									"query": "",
+								},
+							},
+						},
+						{
+							"match_phrase": map[string]interface{}{
+								"tags": map[string]interface{}{
+									"query": "0",
+								},
+							},
+						},
+						{
+							"term": map[string]interface{}{
+								"tags": tags,
+							},
+						},
+					},
+				},
+			})
+		} else {
+			esQuery.SetTerm("tags.keyword", tags)
 		}
-		esQuery.SetTerm("tags.keyword", tags)
 	}
 	if secondTags != "" {
 		esQuery.SetTerm("tags_level_two.keyword", secondTags)
@@ -250,10 +300,7 @@ func (receiver *EsAuthorBusiness) AuthorProductAnalysis(authorId, keyword string
 }
 
 //带货达人榜聚合统计
-func (receiver *EsAuthorBusiness) SaleAuthorRankCount(startTime time.Time, dateType int, tags, sortStr, orderBy string, verified, page, pageSize int) ([]interface{}, int, int64, global.CommonError) {
-	if pageSize > 100 {
-		return nil, 0, 0, global.NewError(4004)
-	}
+func (receiver *EsAuthorBusiness) SaleAuthorRankCount(startTime time.Time, dateType int, tags, sortStr, orderBy string, verified, page, pageSize int) ([]interface{}, int, global.CommonError) {
 	if sortStr == "" {
 		sortStr = "sum_gmv"
 	}
@@ -261,12 +308,12 @@ func (receiver *EsAuthorBusiness) SaleAuthorRankCount(startTime time.Time, dateT
 		orderBy = "desc"
 	}
 	if !utils.InArrayString(sortStr, []string{"sum_gmv", "sum_sales", "avg_price"}) {
-		return nil, 0, 0, global.NewError(4004)
+		return nil, 0, global.NewError(4004)
 	}
 	if !utils.InArrayString(orderBy, []string{"desc", "asc"}) {
-		return nil, 0, 0, global.NewError(4004)
+		return nil, 0, global.NewError(4004)
 	}
-	esQuery, esMultiQuery := elasticsearch.NewElasticQueryGroup()
+	esQuery, _ := elasticsearch.NewElasticQueryGroup()
 	if tags != "" {
 		esQuery.SetTerm("tags.keyword", tags)
 	}
@@ -290,17 +337,9 @@ func (receiver *EsAuthorBusiness) SaleAuthorRankCount(startTime time.Time, dateT
 				"must": esQuery.Condition,
 			},
 		},
-		"size": 0,
+		"size": 1500,
 		"aggs": map[string]interface{}{
 			"authors": map[string]interface{}{
-				"composite": map[string]interface{}{
-					"sources": map[string]map[string]interface{}{
-						"author_id": {
-							"terms": map[string]string{
-								"field": "author_id.keyword",
-							},
-						}},
-				},
 				"aggs": map[string]interface{}{
 					"sum_gmv": map[string]interface{}{
 						"sum": map[string]interface{}{
@@ -332,8 +371,8 @@ func (receiver *EsAuthorBusiness) SaleAuthorRankCount(startTime time.Time, dateT
 					"r_bucket_sort": map[string]interface{}{
 						"bucket_sort": map[string]interface{}{
 							"sort": map[string]interface{}{
-								sortStr: map[string]interface{}{
-									"order": orderBy,
+								"sum_gmv": map[string]interface{}{
+									"order": "desc",
 								},
 							},
 							"from": (page - 1) * pageSize,
@@ -341,48 +380,71 @@ func (receiver *EsAuthorBusiness) SaleAuthorRankCount(startTime time.Time, dateT
 						},
 					},
 				},
+				"composite": map[string]interface{}{
+					"size": 1500,
+					"sources": map[string]interface{}{
+						"author_id": map[string]interface{}{
+							"terms": map[string]interface{}{
+								"field": "author_id.keyword",
+							},
+						},
+					},
+				},
 			},
 		},
 	})
 	res := elasticsearch.GetBuckets(countResult, "authors")
-	results := esMultiQuery.
-		SetTable(esTable).
-		AddMust(esQuery.Condition).
-		SetLimit(0, 1).
-		SetOrderBy(elasticsearch.NewElasticOrder().Add("discover_time", "desc").Order).
-		SetMultiQuery().
-		Query()
-	var top []es.DyAuthorTakeGoods
-	utils.MapToStruct(results, &top)
-	var updateTime int64
-	if len(top) > 0 {
-		updateTime = top[0].CreateTime
-	}
-	//todo total bug
 	var total int
 	if countResult["hits"] != nil && countResult["hits"].(map[string]interface{})["total"] != nil {
 		total = int(countResult["hits"].(map[string]interface{})["total"].(float64))
+		if total > 1500 {
+			total = 1500
+		}
 	}
-	return res, total, updateTime, nil
+	return res, total, nil
 }
 
 //达人涨粉榜
-func (receiver *EsAuthorBusiness) DyAuthorFollowerIncRank(date, tags, province string) (list []interface{}, err global.CommonError) {
+func (receiver *EsAuthorBusiness) DyAuthorFollowerIncRank(date, tags, province, city, sortStr, orderBy string, isDelivery, page, pageSize int) (list []es.DyAuthorFollowerTop, total int, comErr global.CommonError) {
 	esQuery, esMultiQuery := elasticsearch.NewElasticQueryGroup()
+	if sortStr == "" {
+		sortStr = "inc_follower_count"
+	}
+	if orderBy == "" {
+		orderBy = "desc"
+	}
+	if !utils.InArrayString(sortStr, []string{"live_inc_follower_count", "inc_follower_count", "aweme_inc_follower_count", "follower_count"}) {
+		comErr = global.NewError(4000)
+		return
+	}
+	if !utils.InArrayString(orderBy, []string{"desc", "asc"}) {
+		comErr = global.NewError(4000)
+		return
+	}
 	if tags != "" {
 		esQuery.SetTerm("tags.keyword", tags)
 	}
+	if isDelivery != 0 {
+		esQuery.SetTerm("is_delivery", isDelivery)
+	}
 	if province != "" {
 		esQuery.SetTerm("province.keyword", province)
+	}
+	if city != "" {
+		esQuery.SetTerm("city.keyword", city)
 	}
 	esTable := fmt.Sprintf(es.DyAuthorFollowerTable, date)
 	results := esMultiQuery.
 		SetTable(esTable).
 		AddMust(esQuery.Condition).
-		SetOrderBy(elasticsearch.NewElasticOrder().Add("inc_follower_count", "desc").Order).
+		SetLimit((page-1)*pageSize, pageSize).
+		SetOrderBy(elasticsearch.NewElasticOrder().Add(sortStr, orderBy).Order).
 		SetMultiQuery().
 		Query()
 	utils.MapToStruct(results, &list)
-	esQuery, esMultiQuery = elasticsearch.NewElasticQueryGroup()
+	total = esMultiQuery.Count
+	if total > 1500 {
+		total = 1500
+	}
 	return
 }

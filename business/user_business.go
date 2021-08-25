@@ -414,7 +414,7 @@ func (receiver *UserBusiness) KeywordsRecord(keyword string) (comErr global.Comm
 //获取分组列表
 func (receiver *UserBusiness) GetDyCollectTags(userId int) (tags []dcm.DcUserDyCollectTag, comErr global.CommonError) {
 	db := dcm.GetDbSession().Table(dcm.DcUserDyCollectTag{})
-	if _, err := db.Where("user_id=? and delete_time is NULL", userId).Get(&tags); err != nil {
+	if err := db.Where("user_id=? and delete_time is NULL", userId).Find(&tags); err != nil {
 		comErr = global.NewError(5000)
 		return
 	}
@@ -422,7 +422,7 @@ func (receiver *UserBusiness) GetDyCollectTags(userId int) (tags []dcm.DcUserDyC
 }
 
 //创建分组
-func (receiver *UserBusiness) AddDyCollectTag(name string, userId int) (comErr global.CommonError) {
+func (receiver *UserBusiness) AddDyCollectTag(userId int, name string) (comErr global.CommonError) {
 	db := dcm.GetDbSession().Table(dcm.DcUserDyCollectTag{})
 	tag := dcm.DcUserDyCollectTag{
 		Name:       name,
@@ -438,14 +438,9 @@ func (receiver *UserBusiness) AddDyCollectTag(name string, userId int) (comErr g
 }
 
 //编辑分组
-func (receiver *UserBusiness) UpdDyCollectTag(name string, id int) (comErr global.CommonError) {
+func (receiver *UserBusiness) UpdDyCollectTag(id int, name string) (comErr global.CommonError) {
 	db := dcm.GetDbSession().Table(dcm.DcUserDyCollectTag{})
-	var tag dcm.DcUserDyCollectTag
-	if _, err := db.Where("id=?", id).Get(&tag); err != nil {
-		return
-	}
-	tag.Name = name
-	if _, err := db.Update(tag); err != nil {
+	if _, err := db.Where("id=?", id).Update(map[string]interface{}{"name": name}); err != nil {
 		comErr = global.NewError(5000)
 		return
 	}
@@ -455,12 +450,7 @@ func (receiver *UserBusiness) UpdDyCollectTag(name string, id int) (comErr globa
 //删除分组
 func (receiver *UserBusiness) DelDyCollectTag(id int) (comErr global.CommonError) {
 	db := dcm.GetDbSession().Table(dcm.DcUserDyCollectTag{})
-	var tag dcm.DcUserDyCollectTag
-	if _, err := db.Where("id=?", id).Get(&tag); err != nil {
-		return
-	}
-	tag.DeleteTime = time.Now()
-	if _, err := db.Update(tag); err != nil {
+	if _, err := db.Where("id=?", id).Update(map[string]interface{}{"delete_time": time.Now()}); err != nil {
 		comErr = global.NewError(5000)
 		return
 	}
