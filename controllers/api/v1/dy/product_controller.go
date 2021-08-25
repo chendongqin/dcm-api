@@ -490,17 +490,14 @@ func (receiver *ProductController) ProductLiveRoomList() {
 		authorMap := map[string]entity.DyAuthorData{}
 		for _, v := range list {
 			go func(curCh chan map[string]dy2.LiveCurProductCount, pmtCh chan map[string][]dy2.LiveRoomProductSaleStatus, authorCh chan map[string]entity.DyAuthorData, roomId, productId, authorId string) {
-				curMapTmp := liveBusiness.RoomCurProductByIds(roomId, []string{productId})
-				pmtMapTmp := liveBusiness.RoomPmtProductByIds(roomId, []string{productId})
+				curCount, pmtStatus, err1 := liveBusiness.RoomCurAndPmtProductById(roomId, productId)
 				authorData, _ := authorBusiness.HbaseGetAuthor(authorId)
 				authorMapTmp := map[string]entity.DyAuthorData{}
 				roomProductCurMap := map[string]dy2.LiveCurProductCount{}
 				roomProductPmtMap := map[string][]dy2.LiveRoomProductSaleStatus{}
-				if c, ok := curMapTmp[productId]; ok {
-					roomProductCurMap[roomId] = c
-				}
-				if p, ok := pmtMapTmp[productId]; ok {
-					roomProductPmtMap[roomId] = p
+				if err1 == nil {
+					roomProductCurMap[roomId] = curCount
+					roomProductPmtMap[roomId] = pmtStatus
 				}
 				authorMapTmp[authorId] = authorData.Data
 				curCh <- roomProductCurMap
