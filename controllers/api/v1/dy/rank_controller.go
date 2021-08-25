@@ -30,7 +30,7 @@ func (receiver *RankController) Prepare() {
 
 func (receiver *RankController) lockAction() {
 	ip := receiver.Ctx.Input.IP()
-	if business.UserActionLock("rank", ip, 1) {
+	if !business.UserActionLock("rank", ip, 1) {
 		receiver.FailReturn(global.NewError(4211))
 		return
 	}
