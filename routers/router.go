@@ -19,8 +19,8 @@ func init() {
 
 	ns := beego.NewNamespace("/v1",
 		beego.NSNamespace("/user",
-			beego.NSRouter("/login", &v1.AccountController{}, "put:Login"),
-			beego.NSRouter("/findpwd", &v1.AccountController{}, "put:FindPwd"),
+			beego.NSRouter("/login", &v1.LoginController{}, "put:Login"),
+			beego.NSRouter("/findpwd", &v1.LoginController{}, "put:FindPwd"),
 		),
 		beego.NSNamespace("/sms",
 			beego.NSRouter("/code", &v1.CommonController{}, "post:Sms"),

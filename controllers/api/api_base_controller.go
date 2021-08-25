@@ -38,6 +38,9 @@ type ApiBaseController struct {
 	IsInitToken      bool               //是否初始化过token
 	LastInitTokenErr global.CommonError //记录首次初始化token的错误
 	Token            string
+	HasAuth          bool
+	HasLogin         bool
+	MaxTotal         int
 	controllers.BaseController
 }
 
@@ -47,11 +50,14 @@ type AppData struct {
 }
 
 func (this *ApiBaseController) Prepare() {
+	this.InitApiController()
+}
+
+func (this *ApiBaseController) InitApiController() {
 	this.InitApi()
 	this.AsfCheck()
 	this.CheckSign()
-	this.CheckToken()
-	this.CheckUserGroupRight()
+	this.InitUserToken()
 }
 
 func (this *ApiBaseController) IsMobileRequest() (is bool, version string) {
@@ -198,7 +204,7 @@ func (this *ApiBaseController) InitUserToken() (commonErr global.CommonError) {
 
 		//异步记录用户行为日志
 		this.LogInputOutput("Format", this.ApiDatas)
-
+		this.HasLogin = true
 	} else {
 		return global.NewError(4001)
 	}
@@ -248,18 +254,14 @@ func (this *ApiBaseController) CheckSign() {
 
 //校验token
 func (this *ApiBaseController) CheckToken() {
-	if !utils.InArrayInt(this.AppId, []int{10000, 10001, 10002, 10003, 10004, 10005}) {
+	if this.UserId > 0 {
 		return
 	}
-	err := this.InitUserToken()
-	if err != nil {
-		authBusiness := business.NewAccountAuthBusiness()
-		if authBusiness.AuthLoginWhiteUri(this.TrueUri) {
-			return
-		}
-		this.FailReturn(err)
+	authBusiness := business.NewAccountAuthBusiness()
+	if authBusiness.AuthLoginWhiteUri(this.TrueUri) {
 		return
 	}
+	this.FailReturn(global.NewError(4001))
 	return
 }
 
@@ -407,19 +409,11 @@ func (this *ApiBaseController) FormVerify(input interface{}) {
 	}
 }
 
-//检测用户权限
-func (this *ApiBaseController) CheckUserGroupRight() {
-	authBusiness := business.NewAccountAuthBusiness()
-	if strings.Index(this.TrueUri, "/v1/dy/") == 0 {
-		if !authBusiness.AuthDyWhiteUri(this.TrueUri, this.DyLevel) {
-			this.FailReturn(global.NewError(4004))
-			return
-		}
-		return
-	} else if strings.Index(this.TrueUri, "/v1/xhs/") == 0 {
-
-	} else if strings.Index(this.TrueUri, "/v1/tb/") == 0 {
-
+//检测抖音用户权限
+func (this *ApiBaseController) CheckDyUserGroupRight(minAuthShow, maxAuthShow int) {
+	this.MaxTotal = minAuthShow
+	if this.DyLevel > 0 {
+		this.MaxTotal = maxAuthShow
 	}
 	return
 }

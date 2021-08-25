@@ -21,20 +21,11 @@ func NewAccountAuthBusiness() *AccountAuthBusiness {
 
 //无参数路由不需登陆白名单
 var LoginWitheUri = []string{
-	"/v1/id",
-	"/v1/user/login",
-	"/v1/user/findpwd",
-	"/v1/sms/code",
-	"/v1/sms/verify",
 	"/v1/dy/author/live/tags",
 	"/v1/dy/author/cate",
 	"/v1/dy/product/cate",
 	"/v1/dy/author/search",
 	"/v1/dy/live/search",
-	"/v1/pay/notify/wechat",
-	"/v1/pay/notify/alipay",
-	"/v1/callback/wechat",
-	"/v1/wechat/qrcode",
 }
 
 var SignWitheUri = []string{

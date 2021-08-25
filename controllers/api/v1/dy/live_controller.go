@@ -18,15 +18,13 @@ type LiveController struct {
 	controllers.ApiBaseController
 }
 
+func (receiver *LiveController) Prepare() {
+	receiver.InitApiController()
+	receiver.CheckToken()
+	receiver.CheckDyUserGroupRight(business.DyJewelBaseMinShowNum, business.DyJewelBaseShowNum)
+}
+
 func (receiver *LiveController) SearchRoom() {
-	hasAuth := false
-	hasLogin := false
-	if receiver.DyLevel == 3 {
-		hasAuth = true
-	}
-	if receiver.UserId > 0 {
-		hasLogin = true
-	}
 	startDay := receiver.GetString("start", "")
 	endDay := receiver.GetString("end", "")
 	if startDay == "" {
@@ -55,8 +53,8 @@ func (receiver *LiveController) SearchRoom() {
 	firstName := receiver.GetString("first_name", "")
 	secondName := receiver.GetString("second_name", "")
 	thirdName := receiver.GetString("third_name", "")
-	sortStr := receiver.GetString("sort", "")
-	orderBy := receiver.GetString("order_by", "")
+	sortStr := receiver.GetString("sort", "predict_gmv")
+	orderBy := receiver.GetString("order_by", "desc")
 	minAmount, _ := receiver.GetInt64("min_amount", 0)
 	maxAmount, _ := receiver.GetInt64("max_amount", 0)
 	minAvgUserCount, _ := receiver.GetInt64("min_avg_user_count", 0)
@@ -68,25 +66,25 @@ func (receiver *LiveController) SearchRoom() {
 	keywordType, _ := receiver.GetInt("keyword_type", 0)
 	page := receiver.GetPage("page")
 	pageSize := receiver.GetPageSize("page_size", 10, 100)
-	if !hasAuth {
+	if !receiver.HasAuth {
 		today := time.Now().Format("20060102")
 		lastDay := time.Now().AddDate(0, 0, -7).Format("20060102")
 		start := startTime.Format("20060102")
 		end := endTime.Format("20060102")
-		if lastDay != start || today != end || keyword != "" || category != "" || sortStr != "" || orderBy != "" || minAmount > 0 || maxAmount > 0 || minUv > 0 || maxUv > 0 || minAvgUserCount > 0 || maxAvgUserCount > 0 || hasProduct == 1 || isBrand == 1 || page != 1 {
-			if !hasLogin {
+		if lastDay != start || today != end || keyword != "" || category != "" || sortStr != "predict_gmv" || orderBy != "desc" || minAmount > 0 || maxAmount > 0 || minUv > 0 || maxUv > 0 || minAvgUserCount > 0 || maxAvgUserCount > 0 || hasProduct == 1 || isBrand == 1 || page != 1 {
+			if !receiver.HasLogin {
 				receiver.FailReturn(global.NewError(4001))
 				return
 			}
 			receiver.FailReturn(global.NewError(4004))
 			return
 		}
-		if pageSize > 10 {
-			pageSize = 10
+		if pageSize > receiver.MaxTotal {
+			pageSize = receiver.MaxTotal
 		}
 	}
 	formNum := (page - 1) * pageSize
-	if formNum > business.DyJewelBaseShowNum {
+	if formNum > receiver.MaxTotal {
 		receiver.FailReturn(global.NewError(4004))
 		return
 	}
@@ -101,11 +99,11 @@ func (receiver *LiveController) SearchRoom() {
 		list[k].RoomId = business.IdEncrypt(v.RoomId)
 	}
 	totalPage := math.Ceil(float64(total) / float64(pageSize))
-	maxPage := math.Ceil(float64(business.DyJewelBaseShowNum) / float64(pageSize))
+	maxPage := math.Ceil(float64(receiver.MaxTotal) / float64(pageSize))
 	if totalPage > maxPage {
 		totalPage = maxPage
 	}
-	maxTotal := business.DyJewelBaseShowNum
+	maxTotal := receiver.MaxTotal
 	if maxTotal > total {
 		maxTotal = total
 	}
@@ -114,8 +112,8 @@ func (receiver *LiveController) SearchRoom() {
 		"total":      total,
 		"total_page": totalPage,
 		"max_num":    maxTotal,
-		"has_auth":   hasAuth,
-		"has_login":  hasLogin,
+		"has_auth":   receiver.HasAuth,
+		"has_login":  receiver.HasLogin,
 	})
 	return
 }
