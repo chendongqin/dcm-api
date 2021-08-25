@@ -10,6 +10,7 @@ import (
 	"dongchamao/hbase"
 	"dongchamao/models/entity"
 	es2 "dongchamao/models/es"
+	"dongchamao/models/repost/dy"
 	"dongchamao/services/dyimg"
 	"fmt"
 	jsoniter "github.com/json-iterator/go"
@@ -357,22 +358,6 @@ func (receiver *RankController) DyAwemeShareRank() {
 	return
 }
 
-type TakeGoodsRankRet struct {
-	Rank             int                      `json:"rank,omitempty"`
-	Nickname         string                   `json:"nickname,omitempty"`
-	AuthorCover      string                   `json:"author_cover,omitempty"`
-	SumGmv           float64                  `json:"sum_gmv,omitempty"`
-	SumSales         float64                  `json:"sum_sales,omitempty"`
-	AvgPrice         float64                  `json:"avg_price,omitempty"`
-	AuthorId         string                   `json:"author_id,omitempty"`
-	UniqueId         string                   `json:"unique_id,omitempty"`
-	Tags             string                   `json:"tags,omitempty"`
-	VerificationType int                      `json:"verification_type,omitempty"`
-	VerifyName       string                   `json:"verify_name,omitempty"`
-	RoomCount        int                      `json:"room_count,omitempty"`
-	RoomList         []map[string]interface{} `json:"room_list"`
-}
-
 //达人带货榜
 func (receiver *RankController) DyAuthorTakeGoodsRank() {
 	date := receiver.Ctx.Input.Param(":date")
@@ -398,7 +383,7 @@ func (receiver *RankController) DyAuthorTakeGoodsRank() {
 		list, total, _ := es.NewEsAuthorBusiness().SaleAuthorRankCount(startDate, dateType, tags, sortStr, orderBy, verified, page, pageSize)
 		var structData []es2.DyAuthorTakeGoodsCount
 		utils.MapToStruct(list, &structData)
-		data := make([]TakeGoodsRankRet, len(structData))
+		data := make([]dy.TakeGoodsRankRet, len(structData))
 		for k, v := range structData {
 			hits := v.Hit.Hits.Hits
 			uniqueId := hits[0].Source.UniqueID
@@ -417,7 +402,7 @@ func (receiver *RankController) DyAuthorTakeGoodsRank() {
 					"real_sales":     v.Source.RealSales,
 				})
 			}
-			data[k] = TakeGoodsRankRet{
+			data[k] = dy.TakeGoodsRankRet{
 				Rank:             (page-1)*pageSize + k + 1,
 				Nickname:         hits[0].Source.Nickname,
 				VerificationType: hits[0].Source.VerificationType,
