@@ -422,7 +422,7 @@ func (receiver *UserBusiness) GetDyCollectTags(userId int) (tags []dcm.DcUserDyC
 }
 
 //创建分组
-func (receiver *UserBusiness) AddDyCollectTag(name string, userId int) (comErr global.CommonError) {
+func (receiver *UserBusiness) AddDyCollectTag(userId int, name string) (comErr global.CommonError) {
 	db := dcm.GetDbSession().Table(dcm.DcUserDyCollectTag{})
 	tag := dcm.DcUserDyCollectTag{
 		Name:       name,
@@ -438,7 +438,7 @@ func (receiver *UserBusiness) AddDyCollectTag(name string, userId int) (comErr g
 }
 
 //编辑分组
-func (receiver *UserBusiness) UpdDyCollectTag(name string, id int) (comErr global.CommonError) {
+func (receiver *UserBusiness) UpdDyCollectTag(id, name string) (comErr global.CommonError) {
 	db := dcm.GetDbSession().Table(dcm.DcUserDyCollectTag{})
 	var tag dcm.DcUserDyCollectTag
 	if _, err := db.Where("id=?", id).Get(&tag); err != nil {
