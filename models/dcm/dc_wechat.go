@@ -17,8 +17,8 @@ type DcWechat struct {
 	Language        string    `xorm:"not null default '' VARCHAR(128)"`
 	Remark          string    `xorm:"not null default '' comment('备注') VARCHAR(255)"`
 	Subscribe       int       `xorm:"not null default 0 comment('用户是否订阅该公众号标识，值为0时，代表此用户没有关注该公众号，拉取不到其余信息。') TINYINT(3)"`
-	SubscribeTime   int       `xorm:"not null default 0 comment('关注时间') INT(11)"`
-	UnsubscribeTime int       `xorm:"not null default 0 comment('取消关注时间') INT(11)"`
+	SubscribeTime   int64     `xorm:"not null default 0 comment('关注时间') INT(11)"`
+	UnsubscribeTime int64     `xorm:"not null default 0 comment('取消关注时间') INT(11)"`
 	SubscribeScene  string    `xorm:"not null default '' comment('关注场景') VARCHAR(80)"`
 	QrScene         int       `xorm:"not null default 0 comment('二维码扫码场景') INT(11)"`
 	QrSceneStr      string    `xorm:"not null default '' comment('二维码扫码场景描述') VARCHAR(128)"`

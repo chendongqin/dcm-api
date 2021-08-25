@@ -7,7 +7,6 @@ import (
 	"dongchamao/global/utils"
 	"github.com/astaxie/beego"
 	"github.com/astaxie/beego/logs"
-	"github.com/prometheus/common/log"
 	"github.com/silenceper/wechat/v2/officialaccount/message"
 )
 
@@ -40,18 +39,64 @@ func (receiver *WechatController) QrCode() {
 	})
 }
 
+//扫码微信回调成功 通知前端
+func (receiver *WechatController) CheckScan() {
+	inputData := receiver.InputFormat()
+	sessionId := inputData.GetString("session_id", "")
+	if sessionId == "" {
+		receiver.FailReturn(global.NewError(4000))
+		return
+	}
+	//从缓存中获取用户openId
+	openId := global.Cache.Get("openid:" + sessionId)
+	if openId == "" {
+		receiver.FailReturn(global.NewError(4006))
+		return
+	}
+	receiver.SuccReturn(map[string]interface{}{
+		"open_id": openId,
+	})
+	return
+}
+
 func (receiver *WechatController) Receive() {
-	//wxBusiness := business.NewWechatBusiness()
-	InputData := receiver.InputFormat()
-	log.Info("微信回调数据:", InputData)
+	inputData := receiver.InputFormat()
 	server := global.WxOfficial.GetServer(receiver.Ctx.Request, receiver.Ctx.ResponseWriter)
 	if beego.BConfig.RunMode == beego.DEV { //测试环境默认通过
 		server.SkipValidate(true)
 	}
 	server.SetMessageHandler(func(msg *message.MixMessage) *message.Reply {
-		logs.Error("微信调数据msg：", msg)
+		logs.Debug("[微信回调]=>请求参数:[%s],事件内容:[%s]", inputData, msg)
 		//回复消息：演示回复用户发送的消息
-		text := message.NewText(msg.Content)
+		userWechat, err := business.NewWechatBusiness().GetInfoByOpenId(msg.GetOpenID())
+		if err != nil {
+			logs.Error("[微信回调] 获取用户信息失败, err: %s", err)
+			return nil
+		}
+		var text *message.Text
+		if msg.MsgType == message.MsgTypeEvent {
+			switch msg.Event {
+			case message.EventSubscribe:
+				return &message.Reply{MsgType: message.MsgTypeText, MsgData: text}
+			case message.EventUnsubscribe:
+				return &message.Reply{MsgType: message.MsgTypeText, MsgData: text}
+			case message.EventScan:
+				//自定义事件key
+				err := business.NewWechatBusiness().SubscribeOfficial(userWechat)
+				if err != nil {
+					logs.Error("[扫码绑定] 数据更新失败1001，err: %s", err)
+					return nil
+				}
+				text = message.NewText("扫码登录成功！")
+				//设置 openid 缓存 前端监听
+				logs.Debug("[扫码登录微信]=>缓存key:[%s],openid:[%s]", msg.EventKey, msg.GetOpenID())
+				_ = global.Cache.Set("openid:"+msg.EventKey, msg.GetOpenID(), 1800)
+				return &message.Reply{MsgType: message.MsgTypeText, MsgData: text}
+				//default:
+				//	return &message.Reply{MsgType: message.MsgTypeText, MsgData: text}
+			}
+		}
+		//text := message.NewText(msg.Content)
 		return &message.Reply{MsgType: message.MsgTypeText, MsgData: text}
 	})
 
