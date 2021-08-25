@@ -66,12 +66,13 @@ func (receiver *WechatController) Receive() {
 		server.SkipValidate(true)
 	}
 	server.SetMessageHandler(func(msg *message.MixMessage) *message.Reply {
-		logs.Debug("微信回调=>请求参数:[%s],事件内容:[%s]", inputData, msg)
+		logs.Debug("[微信回调]=>请求参数:[%s],事件内容:[%s]", inputData, msg)
 		//回复消息：演示回复用户发送的消息
-		//userWechat, err := business.NewWechatBusiness().GetInfoByOpenId(msg.GetOpenID())
-		//if err != nil {
-		//	logs.Error("[微信回调] 获取用户信息失败, err: %s", err)
-		//}
+		userWechat, err := business.NewWechatBusiness().GetInfoByOpenId(msg.GetOpenID())
+		if err != nil {
+			logs.Error("[微信回调] 获取用户信息失败, err: %s", err)
+			return nil
+		}
 		var text *message.Text
 		if msg.MsgType == message.MsgTypeEvent {
 			switch msg.Event {
@@ -81,7 +82,15 @@ func (receiver *WechatController) Receive() {
 				return &message.Reply{MsgType: message.MsgTypeText, MsgData: text}
 			case message.EventScan:
 				//自定义事件key
-
+				err := business.NewWechatBusiness().SubscribeOfficial(userWechat)
+				if err != nil {
+					logs.Error("[扫码绑定] 数据更新失败1001，err: %s", err)
+					return nil
+				}
+				text = message.NewText("扫码登录成功！")
+				//设置 openid 缓存 前端监听
+				logs.Debug("[扫码登录微信]=>缓存key:[%s],openid:[%s]", msg.EventKey, msg.GetOpenID())
+				_ = global.Cache.Set("openid:"+msg.EventKey, msg.GetOpenID(), 1800)
 				return &message.Reply{MsgType: message.MsgTypeText, MsgData: text}
 				//default:
 				//	return &message.Reply{MsgType: message.MsgTypeText, MsgData: text}
