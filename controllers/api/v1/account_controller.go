@@ -19,7 +19,6 @@ type AccountController struct {
 }
 
 func (receiver *AccountController) Prepare() {
-	receiver.Prepare()
 	receiver.CheckToken()
 }
 
