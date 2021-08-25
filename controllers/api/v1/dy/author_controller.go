@@ -281,7 +281,7 @@ func (receiver *AuthorController) AuthorViewData() {
 				}
 			}
 		}
-		productBrandMap := business.NewProductBusiness().GetProductByIdsLimitGo(productIds, 300)
+		productBrandMap := business.NewProductBusiness().GetProductByIdsLimitGo(productIds, 40)
 		brandSaleMap := map[string]float64{}
 		brandNumMap := map[string]int{}
 		priceNumMap := map[string]int{}
@@ -409,7 +409,7 @@ func (receiver *AuthorController) AuthorViewData() {
 				ProductNum: num,
 			})
 		}
-		_ = global.Cache.Set(cacheKey, utils.SerializeData(productCount), 86400)
+		_ = global.Cache.Set(cacheKey, utils.SerializeData(productCount), 600)
 	}
 	data := dy2.DyAuthorBaseCount{
 		LiveCount: dy2.DyAuthorBaseLiveCount{
