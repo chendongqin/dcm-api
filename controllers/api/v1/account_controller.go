@@ -293,3 +293,52 @@ func (receiver *AccountController) GetCollect() {
 	}
 	return
 }
+
+func (receiver *AccountController) GetDyCollectTags() {
+	data, comErr := business.NewUserBusiness().GetDyCollectTags(receiver.UserId)
+	if comErr != nil {
+		receiver.FailReturn(comErr)
+		return
+	}
+	receiver.SuccReturn(data)
+	return
+}
+
+func (receiver *AccountController) UpdDyCollectTag() {
+	id, _ := receiver.GetInt(":id")
+	name := receiver.GetString("name")
+	comErr := business.NewUserBusiness().UpdDyCollectTag(id, name)
+	if comErr != nil {
+		receiver.FailReturn(comErr)
+		return
+	}
+	receiver.SuccReturn("success")
+	return
+}
+
+func (receiver *AccountController) AddDyCollectTag() {
+	InputData := receiver.InputFormat()
+	name := InputData.GetString("name", "")
+	comErr := business.NewUserBusiness().AddDyCollectTag(receiver.UserId, name)
+	if comErr != nil {
+		receiver.FailReturn(comErr)
+		return
+	}
+	receiver.SuccReturn("success")
+	return
+}
+
+func (receiver *AccountController) DelDyCollectTag() {
+	id, err := receiver.GetInt(":id")
+	if err != nil {
+		receiver.FailReturn(global.NewError(5000))
+		return
+	}
+	comErr := business.NewUserBusiness().DelDyCollectTag(id)
+	if comErr != nil {
+		receiver.FailReturn(comErr)
+		return
+	}
+	receiver.SuccReturn("success")
+	return
+}
