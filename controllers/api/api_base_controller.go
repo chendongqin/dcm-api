@@ -111,14 +111,6 @@ func (this *ApiBaseController) CheckIp() {
 	//}
 }
 
-//不需要手机号码账号就能访问的接口白名单
-var NeedUsernameRoute = []string{
-	//"/v1/discountActivity/coupon/couponAddScore",
-	//"/v1/vip/order/createAppleMonitorOrder",
-	//"/v1/vip/order/createAppleOrder",
-	//"/v1/vip/order/getOrderPrice",
-}
-
 func (this *ApiBaseController) InitUserToken() (commonErr global.CommonError) {
 	//如果已经完成初始化，将上一次初始化的错误直接返回
 	if this.IsInitToken {
@@ -417,7 +409,19 @@ func (this *ApiBaseController) FormVerify(input interface{}) {
 
 //检测用户权限
 func (this *ApiBaseController) CheckUserGroupRight() {
+	authBusiness := business.NewAccountAuthBusiness()
+	if strings.Index(this.TrueUri, "/v1/dy/") == 0 {
+		if !authBusiness.AuthDyWhiteUri(this.TrueUri, this.DyLevel) {
+			this.FailReturn(global.NewError(4004))
+			return
+		}
+		return
+	} else if strings.Index(this.TrueUri, "/v1/xhs/") == 0 {
 
+	} else if strings.Index(this.TrueUri, "/v1/tb/") == 0 {
+
+	}
+	return
 }
 
 //获取当前请求  最低需要的权限

@@ -367,8 +367,22 @@ func (receiver *EsAuthorBusiness) SaleAuthorRankCount(startTime time.Time, dateT
 }
 
 //达人涨粉榜
-func (receiver *EsAuthorBusiness) DyAuthorFollowerIncRank(date, tags, province string) (list []interface{}, err global.CommonError) {
+func (receiver *EsAuthorBusiness) DyAuthorFollowerIncRank(date, tags, province, sortStr, orderBy string, page, pageSize int) (list []es.DyAuthorFollowerTop, total int, comErr global.CommonError) {
 	esQuery, esMultiQuery := elasticsearch.NewElasticQueryGroup()
+	if sortStr == "" {
+		sortStr = "inc_follower_count"
+	}
+	if orderBy == "" {
+		orderBy = "desc"
+	}
+	if !utils.InArrayString(sortStr, []string{"live_inc_follower_count", "inc_follower_count", "aweme_inc_follower_count","follower_count"}) {
+		comErr = global.NewError(4000)
+		return
+	}
+	if !utils.InArrayString(orderBy, []string{"desc", "asc"}) {
+		comErr = global.NewError(4000)
+		return
+	}
 	if tags != "" {
 		esQuery.SetTerm("tags.keyword", tags)
 	}
@@ -379,10 +393,11 @@ func (receiver *EsAuthorBusiness) DyAuthorFollowerIncRank(date, tags, province s
 	results := esMultiQuery.
 		SetTable(esTable).
 		AddMust(esQuery.Condition).
-		SetOrderBy(elasticsearch.NewElasticOrder().Add("inc_follower_count", "desc").Order).
+		SetLimit((page-1)*pageSize, pageSize).
+		SetOrderBy(elasticsearch.NewElasticOrder().Add(sortStr, orderBy).Order).
 		SetMultiQuery().
 		Query()
 	utils.MapToStruct(results, &list)
-	esQuery, esMultiQuery = elasticsearch.NewElasticQueryGroup()
+	total = esMultiQuery.Count
 	return
 }

@@ -1,6 +1,7 @@
 package es
 
 type DyAuthorFollowerTop struct {
+	Rank                  int    `json:"rank"`
 	AuthorCover           string `json:"author_cover"`
 	AuthorID              string `json:"author_id"`
 	AwemeIncFollowerCount int    `json:"aweme_inc_follower_count"`
