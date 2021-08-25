@@ -24,6 +24,7 @@ func (receiver *LiveController) Prepare() {
 	receiver.CheckDyUserGroupRight(business.DyJewelBaseMinShowNum, business.DyJewelBaseShowNum)
 }
 
+//直播库
 func (receiver *LiveController) SearchRoom() {
 	startDay := receiver.GetString("start", "")
 	endDay := receiver.GetString("end", "")
