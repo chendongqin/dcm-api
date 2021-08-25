@@ -26,21 +26,13 @@ func (receiver *RankController) DyStartAuthorVideoRank() {
 	rankType := receiver.GetString("rank_type", "达人指数榜")
 	category := receiver.GetString("category", "全部")
 	var ret map[string]interface{}
-	cacheKey := cache.GetCacheKey(cache.DyStartAuthorVideoRank, rankType)
-	cacheStr := global.Cache.Get(cacheKey)
-	if cacheStr != "" {
-		cacheStr = utils.DeserializeData(cacheStr)
-		_ = jsoniter.Unmarshal([]byte(cacheStr), &ret)
-	} else {
-		data, updateTime, _ := hbase.GetStartAuthorVideoRank(rankType, category)
-		for k, v := range data {
-			data[k].CoreUserId = business.IdEncrypt(v.CoreUserId)
-		}
-		ret = map[string]interface{}{
-			"list":        data,
-			"update_time": updateTime,
-		}
-		_ = global.Cache.Set(cacheKey, utils.SerializeData(ret), 86400)
+	data, updateTime, _ := hbase.GetStartAuthorVideoRank(rankType, category)
+	for k, v := range data {
+		data[k].CoreUserId = business.IdEncrypt(v.CoreUserId)
+	}
+	ret = map[string]interface{}{
+		"list":        data,
+		"update_time": updateTime,
 	}
 	receiver.SuccReturn(ret)
 	return
@@ -50,21 +42,13 @@ func (receiver *RankController) DyStartAuthorVideoRank() {
 func (receiver *RankController) DyStartAuthorLiveRank() {
 	rankType := receiver.GetString("rank_type", "达人指数榜")
 	var ret map[string]interface{}
-	cacheKey := cache.GetCacheKey(cache.DyStartAuthorLiveRank, rankType)
-	cacheStr := global.Cache.Get(cacheKey)
-	if cacheStr != "" {
-		cacheStr = utils.DeserializeData(cacheStr)
-		_ = jsoniter.Unmarshal([]byte(cacheStr), &ret)
-	} else {
-		data, updateTime, _ := hbase.GetStartAuthorLiveRank(rankType)
-		for k, v := range data {
-			data[k].CoreUserId = business.IdEncrypt(v.CoreUserId)
-		}
-		ret = map[string]interface{}{
-			"list":        data,
-			"update_time": updateTime,
-		}
-		_ = global.Cache.Set(cacheKey, utils.SerializeData(ret), 86400)
+	data, updateTime, _ := hbase.GetStartAuthorLiveRank(rankType)
+	for k, v := range data {
+		data[k].CoreUserId = business.IdEncrypt(v.CoreUserId)
+	}
+	ret = map[string]interface{}{
+		"list":        data,
+		"update_time": updateTime,
 	}
 	receiver.SuccReturn(ret)
 	return
@@ -80,7 +64,7 @@ func (receiver *RankController) DyLiveHourRank() {
 		return
 	}
 	var ret map[string]interface{}
-	cacheKey := cache.GetCacheKey(cache.DyLiveHourRank, dateTime.Format("2006010215"))
+	cacheKey := cache.GetCacheKey(cache.DyRankCache, "live_hour", utils.Md5_encode(fmt.Sprintf("%s", dateTime.Format("2006010215"))))
 	cacheStr := global.Cache.Get(cacheKey)
 	if cacheStr != "" {
 		cacheStr = utils.DeserializeData(cacheStr)
@@ -101,7 +85,13 @@ func (receiver *RankController) DyLiveHourRank() {
 			"list":        data.Ranks,
 			"update_time": data.CrawlTime,
 		}
-		_ = global.Cache.Set(cacheKey, utils.SerializeData(ret), 300)
+		var cacheTime time.Duration
+		if dateTime.Format("2006-01-02 15:04") == time.Now().Format("2006-01-02 15:04") {
+			cacheTime = 60
+		} else {
+			cacheTime = 86400
+		}
+		_ = global.Cache.Set(cacheKey, utils.SerializeData(ret), cacheTime)
 	}
 	receiver.SuccReturn(ret)
 	return
@@ -117,7 +107,7 @@ func (receiver *RankController) DyLiveTopRank() {
 		return
 	}
 	var ret map[string]interface{}
-	cacheKey := cache.GetCacheKey(cache.DyLiveTopRank, dateTime.Format("2006010215"))
+	cacheKey := cache.GetCacheKey(cache.DyRankCache, "live_top", utils.Md5_encode(fmt.Sprintf("%s", dateTime.Format("2006010215"))))
 	cacheStr := global.Cache.Get(cacheKey)
 	if cacheStr != "" {
 		cacheStr = utils.DeserializeData(cacheStr)
@@ -138,7 +128,13 @@ func (receiver *RankController) DyLiveTopRank() {
 			"list":        data.Ranks,
 			"update_time": data.CrawlTime,
 		}
-		_ = global.Cache.Set(cacheKey, utils.SerializeData(ret), 86400)
+		var cacheTime time.Duration
+		if dateTime.Format("2006-01-02 15:04") == time.Now().Format("2006-01-02 15:04") {
+			cacheTime = 60
+		} else {
+			cacheTime = 86400
+		}
+		_ = global.Cache.Set(cacheKey, utils.SerializeData(ret), cacheTime)
 	}
 	receiver.SuccReturn(ret)
 	return
@@ -154,7 +150,7 @@ func (receiver *RankController) DyLiveHourSellRank() {
 		return
 	}
 	var ret map[string]interface{}
-	cacheKey := cache.GetCacheKey(cache.DyLiveHourSellRank, dateTime.Format("2006010215"))
+	cacheKey := cache.GetCacheKey(cache.DyRankCache, "live_hour_sell", utils.Md5_encode(fmt.Sprintf("%s", dateTime.Format("2006010215"))))
 	cacheStr := global.Cache.Get(cacheKey)
 	if cacheStr != "" {
 		cacheStr = utils.DeserializeData(cacheStr)
@@ -187,7 +183,13 @@ func (receiver *RankController) DyLiveHourSellRank() {
 			"list":        data.Ranks,
 			"update_time": data.CrawlTime,
 		}
-		_ = global.Cache.Set(cacheKey, utils.SerializeData(ret), 300)
+		var cacheTime time.Duration
+		if time.Now().Format("2006-01-02 15:04") == dateTime.Format("2006-01-02 15:04") {
+			cacheTime = 60
+		} else {
+			cacheTime = 86400
+		}
+		_ = global.Cache.Set(cacheKey, utils.SerializeData(ret), cacheTime)
 	}
 	receiver.SuccReturn(ret)
 	return
@@ -203,7 +205,7 @@ func (receiver *RankController) DyLiveHourPopularityRank() {
 		return
 	}
 	var ret map[string]interface{}
-	cacheKey := cache.GetCacheKey(cache.DyLiveHourPopularityRank, dateTime.Format("2006010215"))
+	cacheKey := cache.GetCacheKey(cache.DyRankCache, "live_hour_popularity", utils.Md5_encode(fmt.Sprintf("%s", dateTime.Format("2006010215"))))
 	cacheStr := global.Cache.Get(cacheKey)
 	if cacheStr != "" {
 		cacheStr = utils.DeserializeData(cacheStr)
@@ -224,7 +226,13 @@ func (receiver *RankController) DyLiveHourPopularityRank() {
 			"list":        data.Ranks,
 			"update_time": data.CrawlTime,
 		}
-		_ = global.Cache.Set(cacheKey, utils.SerializeData(ret), 86400)
+		var cacheTime time.Duration
+		if time.Now().Format("2006-01-02 15:04") == dateTime.Format("2006-01-02 15:04") {
+			cacheTime = 60
+		} else {
+			cacheTime = 86400
+		}
+		_ = global.Cache.Set(cacheKey, utils.SerializeData(ret), cacheTime)
 	}
 	receiver.SuccReturn(ret)
 	return
@@ -246,7 +254,7 @@ func (receiver *RankController) DyLiveShareWeekRank() {
 		return
 	}
 	var ret map[string]interface{}
-	cacheKey := cache.GetCacheKey(cache.DyLiveShareWeekRank, start.Format("20060102")+"_"+end.Format("20060102"))
+	cacheKey := cache.GetCacheKey(cache.DyRankCache, "live_share_week", utils.Md5_encode(fmt.Sprintf("%s", start.Format("20060102")+"_"+end.Format("20060102"))))
 	cacheStr := global.Cache.Get(cacheKey)
 	if cacheStr != "" {
 		cacheStr = utils.DeserializeData(cacheStr)
@@ -311,7 +319,7 @@ func (receiver *RankController) DyAwemeShareRank() {
 		return
 	}
 	var ret map[string]interface{}
-	cacheKey := cache.GetCacheKey(cache.DyAwemeShareRank, dateTime.Format("20060102"))
+	cacheKey := cache.GetCacheKey(cache.DyRankCache, "aweme_share", utils.Md5_encode(fmt.Sprintf("%s", dateTime.Format("20060102"))))
 	cacheStr := global.Cache.Get(cacheKey)
 	if cacheStr != "" {
 		cacheStr = utils.DeserializeData(cacheStr)
@@ -341,7 +349,9 @@ func (receiver *RankController) DyAwemeShareRank() {
 			"list":        list,
 			"update_time": data.CrawlTime,
 		}
-		_ = global.Cache.Set(cacheKey, utils.SerializeData(ret), 86400)
+		if dateTime.Format("20060102") != time.Now().Format("20060102") {
+			_ = global.Cache.Set(cacheKey, utils.SerializeData(ret), 86400)
+		}
 	}
 	receiver.SuccReturn(ret)
 	return
@@ -365,7 +375,7 @@ type TakeGoodsRankRet struct {
 
 //达人带货榜
 func (receiver *RankController) DyAuthorTakeGoodsRank() {
-	date := receiver.GetString("date")
+	date := receiver.Ctx.Input.Param(":date")
 	startDate, err := time.ParseInLocation("2006-01-02", date, time.Local)
 	if err != nil {
 		receiver.FailReturn(global.NewError(4000))
@@ -379,7 +389,7 @@ func (receiver *RankController) DyAuthorTakeGoodsRank() {
 	page := receiver.GetPage("page")
 	pageSize := receiver.GetPage("page_size")
 	var ret map[string]interface{}
-	cacheKey := cache.GetCacheKey(cache.DyAuthorTakeGoodsRank, startDate, dateType, tags, sortStr, orderBy, verified, page, pageSize)
+	cacheKey := cache.GetCacheKey(cache.DyRankCache, "author_take_goods", utils.Md5_encode(fmt.Sprintf("%s%d%s%s%s%d%d%d", startDate, dateType, tags, sortStr, orderBy, verified, page, pageSize)))
 	cacheStr := global.Cache.Get(cacheKey)
 	if cacheStr != "" {
 		cacheStr = utils.DeserializeData(cacheStr)
@@ -428,7 +438,9 @@ func (receiver *RankController) DyAuthorTakeGoodsRank() {
 			"total":       total,
 			"update_time": updateTime,
 		}
-		_ = global.Cache.Set(cacheKey, utils.SerializeData(ret), 86400)
+		if startDate.Format("20060102") != time.Now().Format("20060102") {
+			_ = global.Cache.Set(cacheKey, utils.SerializeData(ret), 86400)
+		}
 	}
 	receiver.SuccReturn(ret)
 	return
@@ -441,6 +453,7 @@ func (receiver *RankController) DyAuthorFollowerRank() {
 	province := receiver.GetString("province", "")
 	sortStr := receiver.GetString("sort", "")
 	orderBy := receiver.GetString("order_by", "")
+	isDelivery, _ := receiver.GetInt("is_delivery", 0)
 	page := receiver.GetPage("page")
 	pageSize := receiver.GetPageSize("page_size", 10, 100)
 	dateTime, err := time.ParseInLocation("2006-01-02", date, time.Local)
@@ -449,15 +462,15 @@ func (receiver *RankController) DyAuthorFollowerRank() {
 		return
 	}
 	ret := map[string]interface{}{}
-	cacheKey := cache.GetCacheKey(cache.DyRankCache, "author_follower_inc", utils.Md5_encode(fmt.Sprintf("%s%s%s%s%s%d%d", dateTime.Format("20060102"), tags, province, sortStr, orderBy, page, pageSize)))
+	cacheKey := cache.GetCacheKey(cache.DyRankCache, "author_follower_inc", utils.Md5_encode(fmt.Sprintf("%s%s%s%s%s%d%d%d", dateTime.Format("20060102"), tags, province, sortStr, orderBy, isDelivery, page, pageSize)))
 	cacheStr := global.Cache.Get(cacheKey)
 	if cacheStr != "" {
 		cacheStr = utils.DeserializeData(cacheStr)
 		_ = jsoniter.Unmarshal([]byte(cacheStr), &ret)
 	} else {
-		data, total, comErr := es.NewEsAuthorBusiness().DyAuthorFollowerIncRank(dateTime.Format("20060102"), tags, province, sortStr, orderBy, page, pageSize)
+		data, total, comErr := es.NewEsAuthorBusiness().DyAuthorFollowerIncRank(dateTime.Format("20060102"), tags, province, sortStr, orderBy, isDelivery, page, pageSize)
 		form := (page - 1) * pageSize
-		for k,v := range data {
+		for k, v := range data {
 			data[k].Rank = k + form + 1
 			if data[k].UniqueID == "" {
 				data[k].UniqueID = v.ShortID

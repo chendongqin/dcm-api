@@ -367,7 +367,7 @@ func (receiver *EsAuthorBusiness) SaleAuthorRankCount(startTime time.Time, dateT
 }
 
 //达人涨粉榜
-func (receiver *EsAuthorBusiness) DyAuthorFollowerIncRank(date, tags, province, sortStr, orderBy string, page, pageSize int) (list []es.DyAuthorFollowerTop, total int, comErr global.CommonError) {
+func (receiver *EsAuthorBusiness) DyAuthorFollowerIncRank(date, tags, province, sortStr, orderBy string, isDelivery, page, pageSize int) (list []es.DyAuthorFollowerTop, total int, comErr global.CommonError) {
 	esQuery, esMultiQuery := elasticsearch.NewElasticQueryGroup()
 	if sortStr == "" {
 		sortStr = "inc_follower_count"
@@ -375,7 +375,7 @@ func (receiver *EsAuthorBusiness) DyAuthorFollowerIncRank(date, tags, province, 
 	if orderBy == "" {
 		orderBy = "desc"
 	}
-	if !utils.InArrayString(sortStr, []string{"live_inc_follower_count", "inc_follower_count", "aweme_inc_follower_count","follower_count"}) {
+	if !utils.InArrayString(sortStr, []string{"live_inc_follower_count", "inc_follower_count", "aweme_inc_follower_count", "follower_count"}) {
 		comErr = global.NewError(4000)
 		return
 	}
@@ -385,6 +385,9 @@ func (receiver *EsAuthorBusiness) DyAuthorFollowerIncRank(date, tags, province, 
 	}
 	if tags != "" {
 		esQuery.SetTerm("tags.keyword", tags)
+	}
+	if isDelivery != 0 {
+		esQuery.SetTerm("is_delivery", isDelivery)
 	}
 	if province != "" {
 		esQuery.SetTerm("province.keyword", province)
