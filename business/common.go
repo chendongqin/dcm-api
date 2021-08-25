@@ -187,8 +187,8 @@ func DealAuthorLiveTags() {
 	return
 }
 
-func UserActionLock(active string, lockTime time.Duration) bool {
-	memberKey := cache.GetCacheKey(cache.UserActionLock, active)
+func UserActionLock(active string, userData string, lockTime time.Duration) bool {
+	memberKey := cache.GetCacheKey(cache.UserActionLock, active, userData)
 	if global.Cache.Get(memberKey) != "" {
 		return false
 	}

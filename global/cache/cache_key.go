@@ -12,7 +12,7 @@ const (
 	UserInfo         KeyName = "dcm:user:info:data:%d"
 	UserLevel        KeyName = "dcm:user:level:%d:%d"
 	UserPrevTimeLock KeyName = "dcm:user:prev:lock:%d"
-	UserActionLock   KeyName = "dcm:user:action:lock:%s"
+	UserActionLock   KeyName = "dcm:user:action:lock:%s:%s"
 	//短信验证码
 	SmsCodeLimitBySome KeyName = "dcm:sms:limit:%s:%s" //短信发送限制
 	SmsCodeVerify      KeyName = "dcm:sms:code:%s:%s"

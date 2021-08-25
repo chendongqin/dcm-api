@@ -19,12 +19,13 @@ type PayController struct {
 }
 
 func (receiver *PayController) Prepare() {
+	receiver.InitApiController()
 	receiver.CheckToken()
 }
 
 //创建抖音订单
 func (receiver *PayController) CreateDyOrder() {
-	if !business.UserActionLock("vip_order", 2) {
+	if !business.UserActionLock("vip_order", utils.ToString(receiver.UserId), 2) {
 		receiver.FailReturn(global.NewError(4211))
 		return
 	}

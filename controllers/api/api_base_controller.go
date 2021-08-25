@@ -414,6 +414,7 @@ func (this *ApiBaseController) CheckDyUserGroupRight(minAuthShow, maxAuthShow in
 	this.MaxTotal = minAuthShow
 	if this.DyLevel > 0 {
 		this.MaxTotal = maxAuthShow
+		this.HasAuth = true
 	}
 	return
 }
