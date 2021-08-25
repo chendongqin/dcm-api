@@ -387,6 +387,7 @@ func (receiver *AuthorController) AuthorViewData() {
 		ProductNum30Top3Chart: topBrandNumList,
 		Predict30Sales:        totalSales,
 		Predict30Gmv:          totalGmv,
+		Sales30Chart:          []dy2.DyAuthorBaseProductPriceChart{},
 	}
 	for p, v := range priceSaleMap {
 		num := priceNumMap[p]
