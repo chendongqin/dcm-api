@@ -2,8 +2,9 @@ package business
 
 import (
 	"dongchamao/global"
+	"fmt"
 	"github.com/pkg/errors"
-	"github.com/silenceper/wechat/qr"
+	"github.com/silenceper/wechat/v2/officialaccount/basic"
 	"time"
 )
 
@@ -15,13 +16,14 @@ func NewWechatBusiness() *WechatBusiness {
 }
 
 func (this *WechatBusiness) CreateTempQrCode(scene string) (string, error) {
-	req := qr.NewTmpQrRequest(1*3600*time.Second, scene)
-	tk, err := global.WechatInstance.GetQR().GetQRTicket(req)
+	tmpReq := basic.NewTmpQrRequest(1*3600*time.Second, scene)
+	tk, err := global.WxOfficial.GetBasic().GetQRTicket(tmpReq)
+	fmt.Println(global.WxOfficial.GetAccessToken())
 	if err != nil {
 		return "", err
 	}
 	if tk.Ticket == "" {
 		return "", errors.New("empty ticket")
 	}
-	return qr.ShowQRCode(tk), nil
+	return basic.ShowQRCode(tk), nil
 }

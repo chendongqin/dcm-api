@@ -8,6 +8,7 @@ import (
 	"github.com/astaxie/beego"
 	"github.com/astaxie/beego/logs"
 	"github.com/prometheus/common/log"
+	"github.com/silenceper/wechat/v2/officialaccount/message"
 )
 
 type WechatController struct {
@@ -41,15 +42,19 @@ func (receiver *WechatController) QrCode() {
 
 func (receiver *WechatController) Receive() {
 	//wxBusiness := business.NewWechatBusiness()
-	wxInstance := global.WechatInstance
-
 	InputData := receiver.InputFormat()
 	log.Info("微信回调数据:", InputData)
-
-	server := wxInstance.GetServer(receiver.Ctx.Request, receiver.Ctx.ResponseWriter)
+	server := global.WxOfficial.GetServer(receiver.Ctx.Request, receiver.Ctx.ResponseWriter)
 	if beego.BConfig.RunMode == beego.DEV { //测试环境默认通过
-		server.SetDebug(true)
+		server.SkipValidate(true)
 	}
+	server.SetMessageHandler(func(msg *message.MixMessage) *message.Reply {
+		logs.Error("微信调数据msg：", msg)
+		//回复消息：演示回复用户发送的消息
+		text := message.NewText(msg.Content)
+		return &message.Reply{MsgType: message.MsgTypeText, MsgData: text}
+	})
+
 	//处理消息接收以及回复
 	err := server.Serve()
 	if err != nil {
