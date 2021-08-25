@@ -6,6 +6,7 @@ type EsAuthorLiveProduct struct {
 	RoomTitle      string  `json:"room_title"`
 	RoomCover      string  `json:"room_cover"`
 	Title          string  `json:"title"`
+	ElasticTitle   string  `json:"elastic_title"`
 	Nickname       string  `json:"nickname"`
 	Avatar         string  `json:"avatar"`
 	Cover          string  `json:"cover"`

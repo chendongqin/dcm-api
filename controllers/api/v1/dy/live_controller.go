@@ -623,6 +623,7 @@ func (receiver *LiveController) LivingProduct() {
 		if v.Pv > 0 {
 			list[k].BuyRate = v.PredictSales / float64(v.Pv)
 		}
+		list[k].CurList = []dy2.LiveCurProduct{}
 		curCount, pmtStatus, err := liveBusiness.RoomCurAndPmtProductById(roomId, v.ProductID)
 		if err == nil {
 			pmtStatusLen := len(pmtStatus)
