@@ -348,10 +348,9 @@ func (receiver *EsAuthorBusiness) SaleAuthorRankCount(startTime time.Time, dateT
 	results := esMultiQuery.
 		SetTable(esTable).
 		AddMust(esQuery.Condition).
-		SetLimit(0, 1).
 		SetOrderBy(elasticsearch.NewElasticOrder().Add("discover_time", "desc").Order).
 		SetMultiQuery().
-		Query()
+		QueryOne()
 	var top []es.DyAuthorTakeGoods
 	utils.MapToStruct(results, &top)
 	var updateTime int64
@@ -375,7 +374,7 @@ func (receiver *EsAuthorBusiness) DyAuthorFollowerIncRank(date, tags, province, 
 	if orderBy == "" {
 		orderBy = "desc"
 	}
-	if !utils.InArrayString(sortStr, []string{"live_inc_follower_count", "inc_follower_count", "aweme_inc_follower_count","follower_count"}) {
+	if !utils.InArrayString(sortStr, []string{"live_inc_follower_count", "inc_follower_count", "aweme_inc_follower_count", "follower_count"}) {
 		comErr = global.NewError(4000)
 		return
 	}

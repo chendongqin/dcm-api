@@ -39,7 +39,6 @@ func (a *AuthorAwemeBusiness) HbaseGetVideoAggRangeDate(authorId string, startTi
 	allAwemeData := map[string]map[string]entity.DyAwemeDiggCommentForwardCount{}
 	awemeIds := make([]string, 0)
 	var wg sync.WaitGroup
-	wg.Add(len(results))
 	for _, v := range results {
 		dataMap := hbaseService.HbaseFormat(v, entity.DyAuthorAwemeAggMap)
 		hData := &entity.DyAuthorAwemeAggData{}
@@ -97,6 +96,7 @@ func (a *AuthorAwemeBusiness) HbaseGetVideoAggRangeDate(authorId string, startTi
 			}
 			//视频趋势数据处理
 			createTime := time.Unix(agg.AwemeCreateTime, 0)
+			wg.Add(1)
 			go func(awemeId string, startT, endT time.Time, wg *sync.WaitGroup) {
 				defer global.RecoverPanic()
 				defer wg.Done()
