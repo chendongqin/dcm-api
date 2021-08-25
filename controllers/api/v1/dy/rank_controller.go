@@ -22,16 +22,25 @@ type RankController struct {
 	controllers.ApiBaseController
 }
 
+func (receiver *RankController) Prepare() {
+	receiver.InitApiController()
+	receiver.CheckDyUserGroupRight(business.DyRankMinShowNum, business.DyJewelRankShowNum)
+}
+
 //抖音视频达人热榜
 func (receiver *RankController) DyStartAuthorVideoRank() {
 	rankType := receiver.GetString("rank_type", "达人指数榜")
 	category := receiver.GetString("category", "全部")
 	var ret map[string]interface{}
 	data, updateTime, _ := hbase.GetStartAuthorVideoRank(rankType, category)
+	if !receiver.HasAuth {
+		data = data[0:receiver.MaxTotal]
+	}
 	for k, v := range data {
 		data[k].CoreUserId = business.IdEncrypt(v.CoreUserId)
 	}
 	ret = map[string]interface{}{
+		"has_auth":    receiver.HasAuth,
 		"list":        data,
 		"update_time": updateTime,
 	}

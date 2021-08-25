@@ -20,13 +20,10 @@ type AuthorController struct {
 	controllers.ApiBaseController
 }
 
-//达人分类
-func (receiver *AuthorController) AuthorCate1() {
-	configBusiness := business.NewConfigBusiness()
-	cateJson := configBusiness.GetConfigJson("author_cate", true)
-	cate := business.DealAuthorCateJson(cateJson)
-	receiver.SuccReturn(cate)
-	return
+func (receiver *AuthorController) Prepare() {
+	receiver.InitApiController()
+	receiver.CheckToken()
+	receiver.CheckDyUserGroupRight(business.DyJewelBaseMinShowNum, business.DyJewelBaseShowNum)
 }
 
 //达人分类
@@ -74,14 +71,6 @@ func (receiver *AuthorController) GetCacheAuthorLiveTags() {
 
 //达人库
 func (receiver *AuthorController) BaseSearch() {
-	hasAuth := false
-	hasLogin := false
-	if receiver.DyLevel == 3 {
-		hasAuth = true
-	}
-	if receiver.UserId > 0 {
-		hasLogin = true
-	}
 	keyword := receiver.GetString("keyword", "")
 	category := receiver.GetString("category", "")
 	secondCategory := receiver.GetString("second_category", "")
@@ -90,8 +79,8 @@ func (receiver *AuthorController) BaseSearch() {
 	city := receiver.GetString("city", "")
 	fanProvince := receiver.GetString("fan_province", "")
 	fanCity := receiver.GetString("fan_city", "")
-	sortStr := receiver.GetString("sort", "")
-	orderBy := receiver.GetString("order_by", "")
+	sortStr := receiver.GetString("sort", "follower_incre_count")
+	orderBy := receiver.GetString("order_by", "desc")
 	minFollower, _ := receiver.GetInt64("min_follower", 0)
 	maxFollower, _ := receiver.GetInt64("max_follower", 0)
 	minWatch, _ := receiver.GetInt64("min_watch", 0)
@@ -113,28 +102,28 @@ func (receiver *AuthorController) BaseSearch() {
 	superSeller, _ := receiver.GetInt("super_seller", 0)
 	page := receiver.GetPage("page")
 	pageSize := receiver.GetPageSize("page_size", 10, 100)
-	if !hasLogin && keyword != "" {
+	if !receiver.HasLogin && keyword != "" {
 		receiver.FailReturn(global.NewError(4001))
 		return
 	}
-	if !hasAuth {
-		if category != "" || secondCategory != "" || sellTags != "" || province != "" || city != "" || fanProvince != "" || fanCity != "" || sortStr != "" || orderBy != "" ||
+	if !receiver.HasAuth {
+		if category != "" || secondCategory != "" || sellTags != "" || province != "" || city != "" || fanProvince != "" || fanCity != "" || sortStr != "follower_incre_count" || orderBy != "desc" ||
 			minFollower > 0 || maxFollower > 0 || minWatch > 0 || maxWatch > 0 || minDigg > 0 || maxDigg > 0 || minGmv > 0 || maxGmv > 0 ||
 			gender > 0 || minAge > 0 || maxAge > 0 || minFanAge > 0 || maxFanAge > 0 || verification > 0 || level > 0 || fanGender > 0 ||
 			superSeller == 1 || isDelivery > 0 || isBrand == 1 || page != 1 {
-			if !hasLogin {
+			if !receiver.HasLogin {
 				receiver.FailReturn(global.NewError(4001))
 				return
 			}
 			receiver.FailReturn(global.NewError(4004))
 			return
 		}
-		if pageSize > 10 {
-			pageSize = 10
+		if pageSize > receiver.MaxTotal {
+			pageSize = receiver.MaxTotal
 		}
 	}
 	formNum := (page - 1) * pageSize
-	if formNum > business.DyJewelBaseShowNum {
+	if formNum > receiver.MaxTotal {
 		receiver.FailReturn(global.NewError(4004))
 		return
 	}
@@ -163,11 +152,11 @@ func (receiver *AuthorController) BaseSearch() {
 		list[k].AuthorId = business.IdEncrypt(v.AuthorId)
 	}
 	totalPage := math.Ceil(float64(total) / float64(pageSize))
-	maxPage := math.Ceil(float64(business.DyJewelBaseShowNum) / float64(pageSize))
+	maxPage := math.Ceil(float64(receiver.MaxTotal) / float64(pageSize))
 	if totalPage > maxPage {
 		totalPage = maxPage
 	}
-	maxTotal := business.DyJewelBaseShowNum
+	maxTotal := receiver.MaxTotal
 	if maxTotal > total {
 		maxTotal = total
 	}
@@ -176,8 +165,8 @@ func (receiver *AuthorController) BaseSearch() {
 		"total":      total,
 		"total_page": totalPage,
 		"max_num":    maxTotal,
-		"has_auth":   hasAuth,
-		"has_login":  hasLogin,
+		"has_auth":   receiver.HasAuth,
+		"has_login":  receiver.HasLogin,
 	})
 	return
 }

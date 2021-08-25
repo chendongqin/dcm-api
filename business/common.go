@@ -25,7 +25,10 @@ const (
 )
 
 const (
-	DyJewelBaseShowNum = 500
+	DyJewelBaseShowNum    = 5000
+	DyJewelBaseMinShowNum = 10
+	DyJewelRankShowNum    = 1500
+	DyRankMinShowNum      = 5
 )
 
 type AuthorCate struct {

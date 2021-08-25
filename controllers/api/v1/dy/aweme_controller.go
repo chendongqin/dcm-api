@@ -13,6 +13,12 @@ type AwemeController struct {
 	controllers.ApiBaseController
 }
 
+func (receiver *AwemeController) Prepare() {
+	receiver.InitApiController()
+	receiver.CheckToken()
+	receiver.CheckDyUserGroupRight(business.DyJewelBaseMinShowNum, business.DyJewelBaseShowNum)
+}
+
 func (receiver *AwemeController) AwemeBaseData() {
 	awemeId := business.IdDecrypt(receiver.Ctx.Input.Param(":aweme_id"))
 	if awemeId == "" {

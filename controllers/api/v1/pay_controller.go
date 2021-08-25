@@ -18,6 +18,10 @@ type PayController struct {
 	controllers.ApiBaseController
 }
 
+func (receiver *PayController) Prepare() {
+	receiver.CheckToken()
+}
+
 //创建抖音订单
 func (receiver *PayController) CreateDyOrder() {
 	if !business.UserActionLock("vip_order", 2) {
