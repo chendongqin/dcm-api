@@ -63,9 +63,13 @@ func (receiver *InternalController) ChangeAuthorCate() {
 func (receiver *InternalController) ProductSearch() {
 	productId := receiver.GetString("product_id")
 	title := receiver.GetString("title")
+	dcmLevelFirst := receiver.GetString("dcm_level_first", "")
+	firstCname := receiver.GetString("first_cname", "")
+	secondCname := receiver.GetString("second_cname", "")
+	thirdCname := receiver.GetString("third_cname", "")
 	page := receiver.GetPage("page")
 	pageSize := receiver.GetPageSize("page_size", 10, 100)
-	list, total, comErr := es.NewEsProductBusiness().InternalSearch(productId, title, page, pageSize)
+	list, total, comErr := es.NewEsProductBusiness().InternalSearch(productId, title, dcmLevelFirst, firstCname, secondCname, thirdCname, page, pageSize)
 	if comErr != nil {
 		receiver.FailReturn(comErr)
 		return
