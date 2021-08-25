@@ -8,6 +8,7 @@ import (
 	"github.com/astaxie/beego"
 	"github.com/astaxie/beego/logs"
 	"github.com/prometheus/common/log"
+	"github.com/silenceper/wechat/v2/officialaccount/message"
 )
 
 type WechatController struct {
@@ -47,6 +48,13 @@ func (receiver *WechatController) Receive() {
 	if beego.BConfig.RunMode == beego.DEV { //测试环境默认通过
 		server.SkipValidate(true)
 	}
+	server.SetMessageHandler(func(msg *message.MixMessage) *message.Reply {
+		logs.Error("微信调数据msg：", msg)
+		//回复消息：演示回复用户发送的消息
+		text := message.NewText(msg.Content)
+		return &message.Reply{MsgType: message.MsgTypeText, MsgData: text}
+	})
+
 	//处理消息接收以及回复
 	err := server.Serve()
 	if err != nil {

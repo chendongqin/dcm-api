@@ -301,11 +301,11 @@ var WxOfficial *officialaccount.OfficialAccount
 
 func _initWxOfficialAccount() {
 	wc := wechat.NewWechat()
-	wechatAppId := Cfg.String("wx_app_id")
-	wechatAppSecret := Cfg.String("wx_app_secret")
-	wechatToken := Cfg.String("wx_app_token")
-	wechatEncodedAESKey := Cfg.String("wx_encoded_aes_key")
-	memory := wxCache.NewMemory()
+	wechatAppId := Cfg.String("wx_office_app_id")
+	wechatAppSecret := Cfg.String("wx_office_app_secret")
+	wechatToken := Cfg.String("wx_office_app_token")
+	wechatEncodedAESKey := Cfg.String("wx_office_encoded_aes_key")
+	memory := wxCache.NewMemory() //TODO 建议改成 REDIS
 	cfg := &config.Config{
 		AppID:          wechatAppId,
 		AppSecret:      wechatAppSecret,
