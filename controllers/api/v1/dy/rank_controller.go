@@ -497,6 +497,9 @@ func (receiver *RankController) DyAuthorTakeGoodsRank() {
 		ret["list"] = list[0:receiver.MaxTotal]
 		ret["has_login"] = receiver.HasLogin
 		ret["has_auth"] = receiver.HasAuth
+		ret["total"] = receiver.MaxTotal
+	} else if utils.ToInt(ret["total"]) > receiver.MaxTotal {
+		ret["total"] = receiver.MaxTotal
 	}
 	receiver.SuccReturn(ret)
 	return
@@ -554,6 +557,9 @@ func (receiver *RankController) DyAuthorFollowerRank() {
 		ret["list"] = list[0:receiver.MaxTotal]
 		ret["has_login"] = receiver.HasLogin
 		ret["has_auth"] = receiver.HasAuth
+		ret["total"] = receiver.MaxTotal
+	} else if utils.ToInt(ret["total"]) > receiver.MaxTotal {
+		ret["total"] = receiver.MaxTotal
 	}
 	receiver.SuccReturn(ret)
 	return
