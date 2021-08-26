@@ -645,5 +645,5 @@ func (this *ElasticMultiQuery) Get() map[string]interface{} {
 func (this *ElasticMultiQuery) _cacheKey(tableName, str string) string {
 	h := md5.New()
 	h.Write([]byte(tableName + str))
-	return hex.EncodeToString(h.Sum(nil))
+	return "es_cache:" + hex.EncodeToString(h.Sum(nil))
 }
