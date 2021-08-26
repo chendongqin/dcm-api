@@ -90,7 +90,12 @@ func (receiver *EsLiveBusiness) CountRoomProductByRoomId(roomInfo entity.DyLiveI
 	esTable := fmt.Sprintf(es.DyRoomProductRecordsTable, date)
 	esQuery, esMultiQuery := elasticsearch.NewElasticQueryGroup()
 	esQuery.SetTerm("room_id", roomInfo.RoomID)
+	var cacheTime time.Duration = 60
+	if date != time.Now().Format("20060102") {
+		cacheTime = 600
+	}
 	total, _ := esMultiQuery.
+		SetCache(cacheTime).
 		SetTable(esTable).
 		AddMust(esQuery.Condition).
 		SetMultiQuery().
