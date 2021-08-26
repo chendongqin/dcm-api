@@ -21,7 +21,7 @@ func NewLiveBusiness() *LiveBusiness {
 }
 
 func (l *LiveBusiness) RoomCurAndPmtProductById(roomId, productId string) (curProductCount dy.LiveCurProductCount, ptmSales []dy.LiveRoomProductSaleStatus, comErr global.CommonError) {
-	roomProduct, comErr := hbase.GetRoomProductInfo(roomId, productId)
+	roomProduct, comErr := hbase.GetRoomProductInfo(roomId + "_" + productId)
 	if comErr != nil {
 		return
 	}
