@@ -589,9 +589,16 @@ func (receiver *LiveController) LivingBaseData() {
 			gmv = liveSaleData.Gmv
 		}
 	}
-	liveingInfo := dy2.LivingInfo{
-		RoomId:         business.IdDecrypt(liveInfo.RoomID),
-		AuthorId:       business.IdDecrypt(liveInfo.User.ID),
+	authorData, _ := hbase.GetAuthor(liveInfo.User.ID)
+	livingInfo := dy2.LivingInfo{
+		RoomId:   business.IdDecrypt(liveInfo.RoomID),
+		AuthorId: business.IdDecrypt(liveInfo.User.ID),
+		Author: dy2.LivingAuthorInfo{
+			Avatar:        dyimg.Fix(authorData.Data.Avatar),
+			Nickname:      authorData.Data.Nickname,
+			FollowerCount: authorData.Data.FollowerCount,
+			RoomId:        business.IdDecrypt(authorData.RoomId),
+		},
 		Title:          liveInfo.Title,
 		Cover:          dyimg.Fix(liveInfo.Cover),
 		CreateTime:     liveInfo.CreateTime,
@@ -600,18 +607,19 @@ func (receiver *LiveController) LivingBaseData() {
 		TotalUserCount: liveInfo.TotalUser,
 		RoomStatus:     liveInfo.RoomStatus,
 		FinishTime:     liveInfo.FinishTime,
+		RoomShareUrl:   business.LiveShareUrl + roomId,
 	}
 	if liveInfo.FinishTime > 0 {
-		liveingInfo.LiveTime = liveInfo.FinishTime - liveInfo.CreateTime
+		livingInfo.LiveTime = liveInfo.FinishTime - liveInfo.CreateTime
 	} else {
-		liveingInfo.LiveTime = time.Now().Unix() - liveInfo.CreateTime
+		livingInfo.LiveTime = time.Now().Unix() - liveInfo.CreateTime
 	}
 	if liveInfo.TotalUser > 0 {
-		liveingInfo.Uv = (gmv + float64(liveSaleData.TicketCount)/10) / float64(liveInfo.TotalUser)
-		liveingInfo.BarrageRate = float64(liveInfo.BarrageCount) / float64(liveInfo.TotalUser)
+		livingInfo.Uv = (gmv + float64(liveSaleData.TicketCount)/10) / float64(liveInfo.TotalUser)
+		livingInfo.BarrageRate = float64(liveInfo.BarrageCount) / float64(liveInfo.TotalUser)
 	}
-	liveingInfo.AvgOnlineTime = business.NewLiveBusiness().CountAvgOnlineTime(liveInfo.OnlineTrends, liveInfo.CreateTime, liveInfo.TotalUser)
-	receiver.SuccReturn(liveingInfo)
+	livingInfo.AvgOnlineTime = business.NewLiveBusiness().CountAvgOnlineTime(liveInfo.OnlineTrends, liveInfo.CreateTime, liveInfo.TotalUser)
+	receiver.SuccReturn(livingInfo)
 	return
 }
 
@@ -626,6 +634,7 @@ func (receiver *LiveController) LivingWatchChart() {
 	incOnlineTrends, _, _ := business.NewLiveBusiness().DealOnlineTrends(liveInfo)
 	receiver.SuccReturn(map[string]interface{}{
 		"room_id": business.IdEncrypt(roomId),
+		"gmv":     liveInfo.PredictGmv,
 		"trends":  incOnlineTrends,
 	})
 	return

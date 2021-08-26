@@ -30,4 +30,5 @@ type DyAuthor struct {
 	Brand              int     `json:"brand"`
 	IsDelivery         int     `json:"is_delivery"`
 	UniqueId           string  `json:"unique_id"`
+	RoomId             string  `json:"room_id"`
 }

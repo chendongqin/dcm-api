@@ -50,8 +50,8 @@ func (receiver *WechatController) CheckScan() {
 		return
 	}
 	//从缓存中获取用户openId
-	cacheKey := "openid:" + consistent.WECHAT_QR_LOGIN
-	openId := global.Cache.Get(cacheKey + sessionId)
+	cacheKey := "openid:" + sessionId
+	openId := global.Cache.Get(cacheKey)
 	if openId == "" {
 		receiver.FailReturn(global.NewError(4006))
 		return
