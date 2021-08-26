@@ -6,6 +6,7 @@ import (
 	"dongchamao/global/utils"
 	"dongchamao/hbase"
 	"dongchamao/models/dcm"
+	"dongchamao/models/repost"
 	"dongchamao/services/mutex"
 	"fmt"
 	"github.com/dgrijalva/jwt-go"
@@ -177,6 +178,61 @@ func (receiver *UserBusiness) SmsLogin(mobile, code string, appId int) (user dcm
 	return
 }
 
+//微信扫码登录
+func (receiver *UserBusiness) QrLogin(openid string, appId int) (user dcm.DcUser, tokenString string, expire int64, isNew int, comErr global.CommonError) {
+	if openid == "" {
+		comErr = global.NewError(4301)
+		return
+	}
+	//判断 dc_wechat 是否有openid信息
+	wechatModel := dcm.DcWechat{}
+	if exist, _ := dcm.GetSlaveDbSession().Where("openid = ?", openid).Get(&wechatModel); !exist {
+		comErr = global.NewError(4300)
+		return
+	}
+	nowTime := time.Now()
+	isNew = 0
+	//查询是否绑定用户
+	userModel := dcm.DcUser{}
+	isExistUser := false
+	if exist, _ := dcm.GetSlaveDbSession().Where("openid = ?", openid).Get(&userModel); !exist {
+		//如果没有用户微信尝试unionid 在次获取用户信息
+		if exist, _ := dcm.GetSlaveDbSession().Where("unionid = ?", wechatModel.Unionid).Get(&userModel); !exist {
+			isExistUser = false
+		}
+	}
+	if !isExistUser {
+		userModel.Openid = wechatModel.Openid
+		userModel.Unionid = wechatModel.Unionid
+		userModel.Nickname = wechatModel.NickName
+		userModel.Avatar = wechatModel.Avatar
+		userModel.Entrance = AppIdMap[appId]
+		userModel.Status = 1
+		userModel.Salt = utils.GetRandomString(4)
+		userModel.Password = utils.Md5_encode(utils.GetRandomString(16) + userModel.Salt)
+		userModel.CreateTime = nowTime
+		userModel.UpdateTime = nowTime
+		affect, err := dcm.Insert(nil, &userModel)
+		if affect == 0 || err != nil {
+			comErr = global.NewError(5000)
+			return
+		}
+		isNew = 1
+	}
+	if userModel.Status != 1 {
+		comErr = global.NewError(4212)
+		return
+	}
+
+	tokenString, expire, err := receiver.CreateToken(appId, userModel.Id, 604800)
+	if err != nil {
+		comErr = global.NewError(5000)
+		return
+	}
+
+	return userModel, tokenString, expire, isNew, nil
+}
+
 func (receiver *UserBusiness) DeleteUserInfoCache(userid int) bool {
 	memberKey := cache.GetCacheKey(cache.UserInfo, userid)
 	err := global.Cache.Delete(memberKey)
@@ -243,6 +299,17 @@ func (receiver *UserBusiness) UpdateVisitedTimes(userAccount dcm.DcUser) bool {
 }
 
 //更新用户数据
+func (receiver *UserBusiness) MobileExist(mobile string) (bool, global.CommonError) {
+	//新手机重复校验
+	var exist dcm.DcUser
+	dbSession := dcm.GetDbSession()
+	if _, err := dbSession.Where("username=?", mobile).Get(&exist); err != nil {
+		return false, global.NewError(4000)
+	}
+	return exist.Id != 0, nil
+}
+
+//更新用户数据
 func (receiver *UserBusiness) UpdateUserAndClearCache(dbSession *xorm.Session, userId int, updateData map[string]interface{}) (int64, error) {
 	affect, err := dcm.UpdateInfo(dbSession, userId, updateData, new(dcm.DcUser))
 	if affect != 0 && err == nil {
@@ -284,15 +351,7 @@ func (receiver *UserBusiness) GetCacheUserLevel(userId, levelType int, enableCac
 	return vipLevel.Level
 }
 
-type CollectRet struct {
-	dcm.DcUserDyCollect
-	FollowerCount      int64
-	FollowerIncreCount int64
-	Predict7Gmv        float64
-	Predict7Digg       float64
-}
-
-func (receiver *UserBusiness) GetDyCollect(tagId, collectType int, keywords string) (data []CollectRet, comErr global.CommonError) {
+func (receiver *UserBusiness) GetDyCollect(tagId, collectType int, keywords string) (data []repost.CollectRet, comErr global.CommonError) {
 	var collects []dcm.DcUserDyCollect
 	dbCollect := dcm.GetDbSession().Table(dcm.DcUserDyCollect{})
 	defer dbCollect.Close()
@@ -306,7 +365,7 @@ func (receiver *UserBusiness) GetDyCollect(tagId, collectType int, keywords stri
 		comErr = global.NewError(5000)
 		return
 	}
-	data = make([]CollectRet, len(collects))
+	data = make([]repost.CollectRet, len(collects))
 	for k, v := range collects {
 		data[k].DcUserDyCollect = v
 		dyAuthor, _ := hbase.GetAuthor(v.CollectId)
@@ -318,7 +377,7 @@ func (receiver *UserBusiness) GetDyCollect(tagId, collectType int, keywords stri
 }
 
 //收藏达人
-func (receiver *UserBusiness) AddDyCollect(collectId string, collectType, userId int) (comErr global.CommonError) {
+func (receiver *UserBusiness) AddDyCollect(collectId string, collectType, tagId, userId int) (comErr global.CommonError) {
 	collect := dcm.DcUserDyCollect{}
 	dbCollect := dcm.GetDbSession().Table(collect)
 	defer dbCollect.Close()
@@ -332,6 +391,7 @@ func (receiver *UserBusiness) AddDyCollect(collectId string, collectType, userId
 		return comErr
 	}
 	collect.Status = 1
+	collect.TagId = tagId
 	collect.CollectId = collectId
 	collect.UpdateTime = time.Now()
 	switch collectType {
