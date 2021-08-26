@@ -591,7 +591,7 @@ func (a *AuthorBusiness) GetAuthorProductAnalyse(authorId, keyword, firstCate, s
 		}
 		if shopType == 1 && v.ShopId != shopId {
 			continue
-		} else if shopType == 2 && v.ShopId == shopId {
+		} else if shopType == 2 && v.ShopId == shopId && shopId != "" {
 			continue
 		}
 		//数据累加

@@ -247,13 +247,13 @@ func IdEncrypt(id string) string {
 
 //id解密
 func IdDecrypt(id string) string {
-	if global.IsDev() {
-		return id
-	}
 	if id == "" {
 		return ""
 	}
 	if strings.Index(id, "=") < 0 {
+		if global.IsDev() {
+			return id
+		}
 		return ""
 	}
 	key := []byte("dwVRjLVUN4RMGAKSEvuvPV696PKrEuRT")

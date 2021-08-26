@@ -239,57 +239,88 @@ func (receiver *LiveController) LivePromotions() {
 		receiver.FailReturn(global.NewError(4000))
 		return
 	}
-	livePmt, _ := hbase.GetLivePmt(roomId)
-	livePromotionsMap := map[int]entity.DyLivePromotion{}
-	for _, v := range livePmt.Promotions {
-		livePromotionsMap[v.Index] = v
-	}
-	var keys []int
-	for k := range livePromotionsMap {
-		keys = append(keys, k)
-	}
-	sort.Ints(keys)
-	promotionsMap := map[string][]entity.DyLivePromotion{}
-	for _, k := range keys {
-		if v, ok := livePromotionsMap[k]; ok {
-			startFormat := time.Unix(v.StartTime, 0).Format("2006-01-02 15:04:05")
-			if _, ok1 := promotionsMap[startFormat]; !ok1 {
-				promotionsMap[startFormat] = make([]entity.DyLivePromotion, 0)
-			}
-			promotionsMap[startFormat] = append(promotionsMap[startFormat], v)
-		}
-	}
-	dates := make([]string, 0)
-	dyLivePromotions := make([][]dy2.DyLivePromotion, 0)
-	promotionSales := map[string]int{}
-	for k, v := range promotionsMap {
-		item := make([]dy2.DyLivePromotion, 0)
-		for _, v1 := range v {
-			saleNum := 1
-			if s, ok := promotionSales[v1.ProductID]; ok {
-				saleNum = s + 1
-			}
-			item = append(item, dy2.DyLivePromotion{
-				ProductID: business.IdEncrypt(v1.ProductID),
-				ForSale:   v1.ForSale,
-				StartTime: v1.StartTime,
-				StopTime:  v1.StopTime,
-				Price:     v1.Price,
-				Sales:     v1.Sales,
-				NowSales:  0,
-				GmvSales:  0,
-				Title:     v1.Title,
-				Cover:     dyimg.Product(v1.Cover),
-				Index:     v1.Index,
-				SaleNum:   saleNum,
-			})
-		}
-		dyLivePromotions = append(dyLivePromotions, item)
-		dates = append(dates, k)
+	liveInfo, comErr := hbase.GetLiveInfo(roomId)
+	if comErr != nil {
+		receiver.FailReturn(comErr)
+		return
 	}
 	promotionsList := dy2.DyLivePromotionChart{
-		StartTime:     dates,
-		PromotionList: dyLivePromotions,
+		StartTime:     []string{},
+		PromotionList: [][]dy2.DyLivePromotion{},
+	}
+	startRowKey, stopRowKey, err := es.NewEsLiveBusiness().ScanProductByRoomId(liveInfo)
+	if err == nil {
+		promotionsMap := map[string][]entity.DyLivePromotion{}
+		promotionsSalesMap := map[string]int64{}
+		stopRow, err1 := hbase.GetRoomProductInfo(stopRowKey)
+		if err1 == nil {
+			tmpProductId := ""
+			for _, v := range stopRow.PtmPromotion {
+				startFormat := time.Unix(v.StartTime, 0).Format("2006-01-02 15:04:05")
+				if _, ok := promotionsMap[startFormat]; !ok {
+					promotionsMap[startFormat] = []entity.DyLivePromotion{}
+				}
+				promotionsMap[startFormat] = append(promotionsMap[startFormat], v)
+				tmpProductId = v.ProductID
+			}
+			promotionsSalesMap[tmpProductId] = utils.ToInt64(math.Floor(stopRow.PredictSales))
+		}
+		if startRowKey != stopRowKey {
+			mapData, _ := hbase.GetRoomProductInfoRangDate(startRowKey, stopRowKey)
+			for k, d := range mapData {
+				promotionsSalesMap[k] = utils.ToInt64(math.Floor(d.PredictSales))
+				for _, v := range d.PtmPromotion {
+					startFormat := time.Unix(v.StartTime, 0).Format("2006-01-02 15:04:05")
+					if _, ok := promotionsMap[startFormat]; !ok {
+						promotionsMap[startFormat] = []entity.DyLivePromotion{}
+					}
+					promotionsMap[startFormat] = append(promotionsMap[startFormat], v)
+				}
+			}
+		}
+		dates := make([]string, 0)
+		dyLivePromotions := make([][]dy2.DyLivePromotion, 0)
+		promotionSales := map[string]int{}
+		//按时间排序
+		var keys []string
+		for k := range promotionsMap {
+			keys = append(keys, k)
+		}
+		sort.Strings(keys)
+		for _, k := range keys {
+			v := promotionsMap[k]
+			item := make([]dy2.DyLivePromotion, 0)
+			for _, v1 := range v {
+				saleNum := 1
+				if s, ok := promotionSales[v1.ProductID]; ok {
+					saleNum = s + 1
+				}
+				var sales int64 = 0
+				if sa, ok := promotionsSalesMap[v1.ProductID]; ok {
+					sales = sa
+				}
+				item = append(item, dy2.DyLivePromotion{
+					ProductID: business.IdEncrypt(v1.ProductID),
+					ForSale:   v1.ForSale,
+					StartTime: v1.StartTime,
+					StopTime:  v1.StopTime,
+					Price:     v1.Price,
+					Sales:     v1.Sales,
+					NowSales:  sales,
+					GmvSales:  sales,
+					Title:     v1.Title,
+					Cover:     dyimg.Product(v1.Cover),
+					Index:     v1.Index,
+					SaleNum:   saleNum,
+				})
+			}
+			dyLivePromotions = append(dyLivePromotions, item)
+			dates = append(dates, k)
+		}
+		promotionsList = dy2.DyLivePromotionChart{
+			StartTime:     dates,
+			PromotionList: dyLivePromotions,
+		}
 	}
 	receiver.SuccReturn(map[string]interface{}{
 		"promotions_list": promotionsList,
@@ -447,7 +478,7 @@ func (receiver *LiveController) LiveProductSaleChart() {
 		receiver.FailReturn(global.NewError(4000))
 		return
 	}
-	info, _ := hbase.GetRoomProductInfo(roomId, productId)
+	info, _ := hbase.GetRoomProductInfo(roomId + "_" + productId)
 	trends := business.RoomProductTrendOrderByTime(info.TrendData)
 	timestamps := make([]int64, 0)
 	sales := make([]float64, 0)
