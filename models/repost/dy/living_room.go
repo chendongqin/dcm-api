@@ -32,6 +32,8 @@ type LivingProducts struct {
 	Pv            int64            `json:"pv"`
 	Price         float64          `json:"price"`
 	CreateTime    string           `json:"create_time"`
+	StartTime     int64            `json:"start_time"`
+	IsReturn      int              `json:"is_return"` //是否返场
 	PredictSales  float64          `json:"predict_sales"`
 	PredictGmv    float64          `json:"predict_gmv"`
 	BuyRate       float64          `json:"buy_rate"`
