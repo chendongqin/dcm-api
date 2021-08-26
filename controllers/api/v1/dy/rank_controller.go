@@ -25,11 +25,12 @@ type RankController struct {
 func (receiver *RankController) Prepare() {
 	receiver.InitApiController()
 	receiver.CheckDyUserGroupRight(business.DyRankMinShowNum, business.DyJewelRankShowNum)
+	receiver.lockAction()
 }
 
 func (receiver *RankController) lockAction() {
 	ip := receiver.Ctx.Input.IP()
-	if business.UserActionLock("rank", ip, 1) {
+	if !business.UserActionLock("rank", ip, 1) {
 		receiver.FailReturn(global.NewError(4211))
 		return
 	}

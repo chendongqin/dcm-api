@@ -159,6 +159,7 @@ type LiveRoomProductSaleStatus struct {
 	StopTime   int64 `json:"stop_time"`
 	StartSales int64 `json:"start_sales"`
 	FinalSales int64 `json:"final_sales"`
+	Sales      int64 `json:"sales"`
 }
 
 type LiveCurProductCount struct {
