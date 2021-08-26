@@ -1,6 +1,7 @@
 package business
 
 import (
+	"dongchamao/business/es"
 	"dongchamao/global"
 	"dongchamao/hbase"
 	"dongchamao/models/entity"
@@ -167,6 +168,14 @@ func (l *LiveBusiness) LiveRoomAnalyse(roomId string) (data dy.DyLiveRoomAnalyse
 		data.LiveLongTime = liveInfo.FinishTime - liveInfo.CreateTime
 	}
 	salesData, _ := hbase.GetLiveSalesData(roomId)
+	if salesData.Gmv == 0 {
+		salesData.Gmv = liveInfo.PredictGmv
+		salesData.Sales = liveInfo.PredictSales
+		//if liveInfo.RealGmv > 0 {
+		//	gmv = liveInfo.RealGmv
+		//	sales = liveInfo.RealSales
+		//}
+	}
 	if liveInfo.TotalUser > 0 {
 		data.Uv = (salesData.Gmv + float64(salesData.TicketCount)/10) / float64(liveInfo.TotalUser)
 		data.SaleRate = salesData.Sales / float64(liveInfo.TotalUser)
@@ -175,7 +184,8 @@ func (l *LiveBusiness) LiveRoomAnalyse(roomId string) (data dy.DyLiveRoomAnalyse
 	}
 	data.Volume = int64(math.Floor(salesData.Sales))
 	data.Amount = salesData.Gmv
-	data.PromotionNum = salesData.NumProducts
+	esLiveBusiness := es.NewEsLiveBusiness()
+	data.PromotionNum = esLiveBusiness.CountRoomProductByRoomId(liveInfo)
 	if salesData.Sales > 0 {
 		data.PerPrice = salesData.Gmv / salesData.Sales
 	}

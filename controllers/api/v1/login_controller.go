@@ -43,6 +43,9 @@ func (receiver *LoginController) Login() {
 		if isNew == 0 && user.SetPassword == 0 {
 			setPassword = 1
 		}
+	} else if grantType == "wechat" {
+		openid := InputData.GetString("openid", "")
+		user, authToken, expTime, isNew, comErr = userBusiness.QrLogin(openid, appId)
 	} else {
 		comErr = global.NewError(4000)
 	}

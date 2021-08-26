@@ -42,7 +42,7 @@ func (receiver *DirtyBusiness) ChangeAuthorCate(authorId, tags, tagsTow string) 
 
 //修改商品分类
 func (receiver *DirtyBusiness) ChangeProductCate(productId, dcmLevelFirst, firstCate, secondCate, thirdCate string) global.CommonError {
-	_, comErr := hbase2.GetDyProductBrand(productId)
+	_, comErr := hbase2.GetProductInfo(productId)
 	if comErr != nil {
 		return comErr
 	}
@@ -59,7 +59,7 @@ func (receiver *DirtyBusiness) ChangeProductCate(productId, dcmLevelFirst, first
 	}
 	jsonByte, _ := jsoniter.Marshal(artificialData)
 	columnL := hbaseBusiness.BuildColumnValue("other", "artificial_data", string(jsonByte), entity.String)
-	err := hbaseBusiness.PutByRowKey(hbaseService.HbaseDyProductBrand, productId, []*hbase.TColumnValue{columnL})
+	err := hbaseBusiness.PutByRowKey(hbaseService.HbaseDyProduct, productId, []*hbase.TColumnValue{columnL})
 	if err != nil {
 		return global.NewError(5000)
 	}

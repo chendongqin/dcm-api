@@ -177,6 +177,59 @@ func (receiver *UserBusiness) SmsLogin(mobile, code string, appId int) (user dcm
 	return
 }
 
+//微信扫码登录
+func (receiver *UserBusiness) QrLogin(openid string, appId int) (user dcm.DcUser, tokenString string, expire int64, isNew int, comErr global.CommonError) {
+	if openid == "" {
+		comErr = global.NewError(4301)
+		return
+	}
+	//判断 dc_wechat 是否有openid信息
+	wechatModel := dcm.DcWechat{}
+	if exist, _ := dcm.GetSlaveDbSession().Where("openid = ?", openid).Get(&wechatModel); !exist {
+		comErr = global.NewError(4300)
+		return
+	}
+	nowTime := time.Now()
+	isNew = 0
+	//查询是否绑定用户
+	userModel := dcm.DcUser{}
+	isExistUser := false
+	if exist, _ := dcm.GetSlaveDbSession().Where("openid = ?", openid).Get(&userModel); !exist {
+		//如果没有用户微信尝试unionid 在次获取用户信息
+		if exist, _ := dcm.GetSlaveDbSession().Where("unionid = ?", wechatModel.Unionid).Get(&userModel); !exist {
+			isExistUser = false
+		}
+	}
+	if !isExistUser {
+		userModel.Openid = wechatModel.Openid
+		userModel.Unionid = wechatModel.Unionid
+		userModel.Nickname = wechatModel.NickName
+		userModel.Avatar = wechatModel.Avatar
+		userModel.Entrance = AppIdMap[appId]
+		userModel.Status = 1
+		userModel.CreateTime = nowTime
+		userModel.UpdateTime = nowTime
+		affect, err := dcm.Insert(nil, &userModel)
+		if affect == 0 || err != nil {
+			comErr = global.NewError(5000)
+			return
+		}
+		isNew = 1
+	}
+	if userModel.Status != 1 {
+		comErr = global.NewError(4212)
+		return
+	}
+
+	tokenString, expire, err := receiver.CreateToken(appId, userModel.Id, 604800)
+	if err != nil {
+		comErr = global.NewError(5000)
+		return
+	}
+
+	return userModel, tokenString, expire, isNew, nil
+}
+
 func (receiver *UserBusiness) DeleteUserInfoCache(userid int) bool {
 	memberKey := cache.GetCacheKey(cache.UserInfo, userid)
 	err := global.Cache.Delete(memberKey)
