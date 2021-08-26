@@ -72,6 +72,47 @@ func (receiver *AccountController) ResetPwd() {
 	return
 }
 
+//修改手机号
+func (receiver *AccountController) ChangeMobile() {
+	InputData := receiver.InputFormat()
+	mobile := InputData.GetString("mobile", "")
+	code := InputData.GetString("code", "")
+	valid := InputData.GetString("valid", "")
+	userBusiness := business.NewUserBusiness()
+	//新手机号存在校验
+	exist, comErr := userBusiness.MobileExist(mobile)
+	if comErr != nil {
+		receiver.FailReturn(global.NewError(5000))
+		return
+	}
+	if exist {
+		receiver.FailReturn(global.NewMsgError("该手机号已存在"))
+		return
+	}
+	//旧手机验证
+	validKey := cache.GetCacheKey(cache.OldMobileVerify, valid)
+	oldMobile := global.Cache.Get(validKey)
+	if oldMobile != receiver.UserInfo.Username {
+		receiver.FailReturn(global.NewMsgError("旧手机验证失败"))
+	}
+	//新手机验证码校验
+	codeKey := cache.GetCacheKey(cache.SmsCodeVerify, "change_mobile", mobile)
+	verifyCode := global.Cache.Get(codeKey)
+	if verifyCode != code {
+		receiver.FailReturn(global.NewError(4209))
+		return
+	}
+	//修改手机号
+	affect, _ := userBusiness.UpdateUserAndClearCache(nil, receiver.UserId, map[string]interface{}{"username": mobile})
+	if affect == 0 {
+		receiver.FailReturn(global.NewError(4213))
+		return
+	}
+	receiver.Logout()
+	receiver.SuccReturn(nil)
+	return
+}
+
 //info
 func (receiver *AccountController) Info() {
 	username := receiver.UserInfo.Username
@@ -231,6 +272,11 @@ func (receiver *AccountController) AddCollect() {
 		receiver.FailReturn(global.NewError(4000))
 		return
 	}
+	tagId, err := receiver.GetInt("tag_id")
+	if err != nil {
+		receiver.FailReturn(global.NewError(4000))
+		return
+	}
 	collectId := receiver.GetString("collect_id")
 	collectType, err := receiver.GetInt("collect_type", 1)
 	if err != nil {
@@ -240,7 +286,7 @@ func (receiver *AccountController) AddCollect() {
 	var comErr global.CommonError
 	switch platform {
 	case 1:
-		comErr = business.NewUserBusiness().AddDyCollect(collectId, collectType, receiver.UserInfo.Id)
+		comErr = business.NewUserBusiness().AddDyCollect(collectId, collectType, tagId, receiver.UserInfo.Id)
 	}
 	if comErr != nil {
 		receiver.FailReturn(comErr)
