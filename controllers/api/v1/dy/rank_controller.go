@@ -191,7 +191,7 @@ func (receiver *RankController) DyLiveHourSellRank() {
 	var ret map[string]interface{}
 	cacheKey := cache.GetCacheKey(cache.DyRankCache, "live_hour_sell", utils.Md5_encode(fmt.Sprintf("%s", dateTime.Format("2006010215"))))
 	cacheStr := global.Cache.Get(cacheKey)
-	if cacheStr != "" {
+	if cacheStr != "" && date+" "+hour != time.Now().Format("2006-01-02 15:04") {
 		cacheStr = utils.DeserializeData(cacheStr)
 		_ = jsoniter.Unmarshal([]byte(cacheStr), &ret)
 	} else {
