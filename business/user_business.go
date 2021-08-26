@@ -6,6 +6,7 @@ import (
 	"dongchamao/global/utils"
 	"dongchamao/hbase"
 	"dongchamao/models/dcm"
+	"dongchamao/models/repost"
 	"dongchamao/services/mutex"
 	"fmt"
 	"github.com/dgrijalva/jwt-go"
@@ -348,15 +349,7 @@ func (receiver *UserBusiness) GetCacheUserLevel(userId, levelType int, enableCac
 	return vipLevel.Level
 }
 
-type CollectRet struct {
-	dcm.DcUserDyCollect
-	FollowerCount      int64
-	FollowerIncreCount int64
-	Predict7Gmv        float64
-	Predict7Digg       float64
-}
-
-func (receiver *UserBusiness) GetDyCollect(tagId, collectType int, keywords string) (data []CollectRet, comErr global.CommonError) {
+func (receiver *UserBusiness) GetDyCollect(tagId, collectType int, keywords string) (data []repost.CollectRet, comErr global.CommonError) {
 	var collects []dcm.DcUserDyCollect
 	dbCollect := dcm.GetDbSession().Table(dcm.DcUserDyCollect{})
 	defer dbCollect.Close()
@@ -370,7 +363,7 @@ func (receiver *UserBusiness) GetDyCollect(tagId, collectType int, keywords stri
 		comErr = global.NewError(5000)
 		return
 	}
-	data = make([]CollectRet, len(collects))
+	data = make([]repost.CollectRet, len(collects))
 	for k, v := range collects {
 		data[k].DcUserDyCollect = v
 		dyAuthor, _ := hbase.GetAuthor(v.CollectId)
