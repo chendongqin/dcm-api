@@ -4,10 +4,12 @@ import (
 	"dongchamao/business"
 	"dongchamao/controllers/api"
 	"dongchamao/global"
+	"dongchamao/global/consistent"
 	"dongchamao/global/utils"
 	"github.com/astaxie/beego"
 	"github.com/astaxie/beego/logs"
 	"github.com/silenceper/wechat/v2/officialaccount/message"
+	"golang.org/x/tools/go/ssa/interp/testdata/src/strings"
 )
 
 type WechatController struct {
@@ -48,7 +50,8 @@ func (receiver *WechatController) CheckScan() {
 		return
 	}
 	//从缓存中获取用户openId
-	openId := global.Cache.Get("openid:" + sessionId)
+	cacheKey := "openid:" + consistent.WECHAT_QR_LOGIN
+	openId := global.Cache.Get(cacheKey + sessionId)
 	if openId == "" {
 		receiver.FailReturn(global.NewError(4006))
 		return
@@ -74,29 +77,44 @@ func (receiver *WechatController) Receive() {
 			return nil
 		}
 		var text *message.Text
-		text = message.NewText("扫码登录成功!!")
+		text = message.NewText("扫码登录成功!!") //TODO 事件推送返回信息 可以抽象出来 也可以后台配置
+		//msg.EventKey 返回场景基本都是qrscene_你自己定义场景key
 		if msg.MsgType == message.MsgTypeEvent {
 			switch msg.Event {
 			case message.EventSubscribe:
+				//自定义evnet_key 解析
 				logs.Error("[扫码登录微信1001]=>缓存key:[%s],openid:[%s]", msg.EventKey, msg.GetOpenID())
+				if strings.Contains(msg.EventKey, consistent.WECHAT_QR_LOGIN) {
+					err := business.NewWechatBusiness().SubscribeOfficial(userWechat)
+					if err != nil {
+						logs.Error("[扫码绑定] 数据更新失败1001，err: %s", err)
+						text = message.NewText("扫码关注失败!!")
+						return &message.Reply{MsgType: message.MsgTypeText, MsgData: text}
+					}
+					//设置 openid 缓存 前端监听
+					_ = global.Cache.Set("openid:"+msg.EventKey, msg.GetOpenID(), 1800)
+					return &message.Reply{MsgType: message.MsgTypeText, MsgData: text}
+				}
 				return &message.Reply{MsgType: message.MsgTypeText, MsgData: text}
 			case message.EventUnsubscribe:
 				logs.Error("[扫码登录微信1002]=>缓存key:[%s],openid:[%s]", msg.EventKey, msg.GetOpenID())
+				_ := business.NewWechatBusiness().UnSubscribeOfficial(msg.GetOpenID())
 				return &message.Reply{MsgType: message.MsgTypeText, MsgData: text}
 			case message.EventScan:
 				//自定义事件key
-				err := business.NewWechatBusiness().SubscribeOfficial(userWechat)
-				if err != nil {
-					logs.Error("[扫码绑定] 数据更新失败1001，err: %s", err)
-					return nil
+				if strings.Contains(msg.EventKey, consistent.WECHAT_QR_LOGIN) {
+					err := business.NewWechatBusiness().SubscribeOfficial(userWechat)
+					if err != nil {
+						logs.Error("[扫码绑定] 数据更新失败1001，err: %s", err)
+						text = message.NewText("扫码关注失败!!")
+						return &message.Reply{MsgType: message.MsgTypeText, MsgData: text}
+					}
+					//设置 openid 缓存 前端监听
+					_ = global.Cache.Set("openid:"+msg.EventKey, msg.GetOpenID(), 1800)
+					return &message.Reply{MsgType: message.MsgTypeText, MsgData: text}
 				}
-				text = message.NewText("扫码登录成功！")
-				//设置 openid 缓存 前端监听
-				logs.Error("[扫码登录微信1003]=>缓存key:[%s],openid:[%s]", msg.EventKey, msg.GetOpenID())
-				_ = global.Cache.Set("openid:"+msg.EventKey, msg.GetOpenID(), 1800)
-				return &message.Reply{MsgType: message.MsgTypeText, MsgData: text}
 				//default:
-				//	return &message.Reply{MsgType: message.MsgTypeText, MsgData: text}
+				return &message.Reply{MsgType: message.MsgTypeText, MsgData: text}
 			}
 		}
 		return &message.Reply{MsgType: message.MsgTypeText, MsgData: text}
