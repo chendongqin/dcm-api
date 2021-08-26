@@ -30,7 +30,7 @@ func (receiver *RankController) Prepare() {
 
 func (receiver *RankController) lockAction() {
 	ip := receiver.Ctx.Input.IP()
-	if !business.UserActionLock("rank", ip, 1) {
+	if !business.UserActionLock(receiver.TrueUri, ip, 1) {
 		receiver.FailReturn(global.NewError(4211))
 		return
 	}
@@ -66,7 +66,7 @@ func (receiver *RankController) DyStartAuthorLiveRank() {
 	for k, v := range data {
 		data[k].CoreUserId = business.IdEncrypt(v.CoreUserId)
 	}
-	if !receiver.HasAuth {
+	if !receiver.HasAuth && len(data) > receiver.MaxTotal {
 		data = data[0:receiver.MaxTotal]
 	}
 	ret = map[string]interface{}{
@@ -122,9 +122,9 @@ func (receiver *RankController) DyLiveHourRank() {
 		list := make([]entity.DyLiveHourRank, 0)
 		utils.MapToStruct(ret["list"], &list)
 		ret["list"] = list[0:receiver.MaxTotal]
-		ret["has_login"] = receiver.HasLogin
-		ret["has_auth"] = receiver.HasAuth
 	}
+	ret["has_login"] = receiver.HasLogin
+	ret["has_auth"] = receiver.HasAuth
 	receiver.SuccReturn(ret)
 	return
 }
@@ -172,9 +172,9 @@ func (receiver *RankController) DyLiveTopRank() {
 		list := make([]interface{}, 0)
 		utils.MapToStruct(ret["list"], &list)
 		ret["list"] = list[0:receiver.MaxTotal]
-		ret["has_login"] = receiver.HasLogin
-		ret["has_auth"] = receiver.HasAuth
 	}
+	ret["has_login"] = receiver.HasLogin
+	ret["has_auth"] = receiver.HasAuth
 	receiver.SuccReturn(ret)
 	return
 }
@@ -234,9 +234,9 @@ func (receiver *RankController) DyLiveHourSellRank() {
 		list := make([]interface{}, 0)
 		utils.MapToStruct(ret["list"], &list)
 		ret["list"] = list[0:receiver.MaxTotal]
-		ret["has_login"] = receiver.HasLogin
-		ret["has_auth"] = receiver.HasAuth
 	}
+	ret["has_login"] = receiver.HasLogin
+	ret["has_auth"] = receiver.HasAuth
 	receiver.SuccReturn(ret)
 	return
 }
@@ -284,9 +284,9 @@ func (receiver *RankController) DyLiveHourPopularityRank() {
 		list := make([]interface{}, 0)
 		utils.MapToStruct(ret["list"], &list)
 		ret["list"] = list[0:receiver.MaxTotal]
-		ret["has_login"] = receiver.HasLogin
-		ret["has_auth"] = receiver.HasAuth
 	}
+	ret["has_login"] = receiver.HasLogin
+	ret["has_auth"] = receiver.HasAuth
 	receiver.SuccReturn(ret)
 	return
 }
@@ -359,13 +359,14 @@ func (receiver *RankController) DyLiveShareWeekRank() {
 		list := make([]interface{}, 0)
 		utils.MapToStruct(ret["list"], &list)
 		ret["list"] = list[0:receiver.MaxTotal]
-		ret["has_login"] = receiver.HasLogin
-		ret["has_auth"] = receiver.HasAuth
 	}
+	ret["has_login"] = receiver.HasLogin
+	ret["has_auth"] = receiver.HasAuth
 	receiver.SuccReturn(ret)
 	return
 }
 
+//抖音视频达人分享日榜
 func (receiver *RankController) DyAwemeShareRank() {
 	date := receiver.Ctx.Input.Param(":date")
 	if date == "" {
@@ -417,9 +418,9 @@ func (receiver *RankController) DyAwemeShareRank() {
 		list := make([]interface{}, 0)
 		utils.MapToStruct(ret["list"], &list)
 		ret["list"] = list[0:receiver.MaxTotal]
-		ret["has_login"] = receiver.HasLogin
-		ret["has_auth"] = receiver.HasAuth
 	}
+	ret["has_login"] = receiver.HasLogin
+	ret["has_auth"] = receiver.HasAuth
 	receiver.SuccReturn(ret)
 	return
 }
