@@ -29,6 +29,9 @@ func (receiver *InternalController) AuthorSearch() {
 			list[k].UniqueId = v.ShortId
 		}
 	}
+	if total > 10000 {
+		total = 10000
+	}
 	receiver.SuccReturn(map[string]interface{}{
 		"list":  list,
 		"total": total,
@@ -73,6 +76,9 @@ func (receiver *InternalController) ProductSearch() {
 	if comErr != nil {
 		receiver.FailReturn(comErr)
 		return
+	}
+	if total > 10000 {
+		total = 10000
 	}
 	receiver.SuccReturn(map[string]interface{}{
 		"list":  list,

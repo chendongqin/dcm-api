@@ -577,9 +577,14 @@ func (receiver *ProductController) ProductLiveRoomList() {
 			countList = append(countList, item)
 		}
 	}
+	maxTotal := total
+	if total > business.EsMaxShowNum {
+		maxTotal = business.EsMaxShowNum
+	}
 	receiver.SuccReturn(map[string]interface{}{
-		"list":  countList,
-		"total": total,
+		"list":           countList,
+		"total":          total,
+		"max_show_total": maxTotal,
 	})
 	return
 }
@@ -613,9 +618,14 @@ func (receiver *ProductController) ProductLiveAuthorAnalysis() {
 		list[k].RoomNum = len(v.RelatedRooms)
 		list[k].RelatedRooms = []entity.DyProductAuthorRelatedRoom{}
 	}
+	maxTotal := total
+	if total > business.EsMaxShowNum {
+		maxTotal = business.EsMaxShowNum
+	}
 	receiver.SuccReturn(map[string]interface{}{
-		"list":  list,
-		"total": total,
+		"list":           list,
+		"total":          total,
+		"max_show_total": maxTotal,
 	})
 	return
 }
@@ -662,8 +672,13 @@ func (receiver *ProductController) ProductAuthorLiveRooms() {
 		}
 		list[k].LiveSecond = endLiveTime - v.StartTs
 	}
+	maxTotal := total
+	if total > business.EsMaxShowNum {
+		maxTotal = business.EsMaxShowNum
+	}
 	receiver.SuccReturn(map[string]interface{}{
-		"list":  list,
-		"total": total,
+		"list":           list,
+		"total":          total,
+		"max_show_total": maxTotal,
 	})
 }

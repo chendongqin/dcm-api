@@ -160,9 +160,7 @@ func (l *LiveBusiness) LiveRoomAnalyse(roomId string) (data dy.DyLiveRoomAnalyse
 	data.AvgOnlineTime = l.CountAvgOnlineTime(liveInfo.OnlineTrends, liveInfo.CreateTime, liveInfo.TotalUser)
 	liveInfo.OnlineTrends = OnlineTrendOrderByTime(liveInfo.OnlineTrends)
 	lenNum := len(liveInfo.OnlineTrends)
-	if lenNum > 1 {
-		data.IncFans = liveInfo.OnlineTrends[lenNum-1].FollowerCount - liveInfo.OnlineTrends[0].FollowerCount
-	}
+	data.IncFans = liveInfo.FollowCount
 	if liveInfo.RoomStatus == 2 {
 		data.LiveLongTime = time.Now().Unix() - liveInfo.CreateTime
 	} else {

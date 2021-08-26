@@ -25,6 +25,7 @@ const (
 )
 
 const (
+	EsMaxShowNum          = 10000
 	DyJewelBaseShowNum    = 5000
 	DyJewelBaseMinShowNum = 10
 	DyJewelRankShowNum    = 1500

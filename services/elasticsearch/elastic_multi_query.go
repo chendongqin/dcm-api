@@ -383,12 +383,12 @@ func (this *ElasticMultiQuery) SetMultiQuery() *ElasticMultiQuery {
 		query["size"] = this.Limit["pagesize"]
 		from := utils.ToInt64(query["from"])
 		size := utils.ToInt64(query["size"])
-		if from > 50000 {
+		if from > 10000 {
 			from = 0
 			size = 0
 			this.IsDeepPage = true
-		} else if from+size > 50000 {
-			size = 50000 - from
+		} else if from+size > 10000 {
+			size = 10000 - from
 		}
 		query["from"] = from
 		query["size"] = size

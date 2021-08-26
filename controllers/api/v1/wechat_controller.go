@@ -9,7 +9,7 @@ import (
 	"github.com/astaxie/beego"
 	"github.com/astaxie/beego/logs"
 	"github.com/silenceper/wechat/v2/officialaccount/message"
-	"golang.org/x/tools/go/ssa/interp/testdata/src/strings"
+	"strings"
 )
 
 type WechatController struct {
@@ -98,7 +98,7 @@ func (receiver *WechatController) Receive() {
 				return &message.Reply{MsgType: message.MsgTypeText, MsgData: text}
 			case message.EventUnsubscribe:
 				logs.Error("[扫码登录微信1002]=>缓存key:[%s],openid:[%s]", msg.EventKey, msg.GetOpenID())
-				_ := business.NewWechatBusiness().UnSubscribeOfficial(msg.GetOpenID())
+				_ = business.NewWechatBusiness().UnSubscribeOfficial(msg.GetOpenID())
 				return &message.Reply{MsgType: message.MsgTypeText, MsgData: text}
 			case message.EventScan:
 				//自定义事件key
