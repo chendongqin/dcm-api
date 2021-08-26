@@ -25,7 +25,7 @@ func (receiver *CommonController) Sms() {
 		receiver.FailReturn(global.NewError(4205))
 		return
 	}
-	if !utils.InArrayString(grantType, []string{"login", "findpwd"}) {
+	if !utils.InArrayString(grantType, []string{"login", "findpwd", "change_mobile"}) {
 		receiver.FailReturn(global.NewError(4000))
 		return
 	}
@@ -75,7 +75,7 @@ func (receiver *CommonController) CheckSmsCode() {
 		receiver.FailReturn(global.NewError(4205))
 		return
 	}
-	if !utils.InArrayString(grantType, []string{"findpwd"}) {
+	if !utils.InArrayString(grantType, []string{"findpwd", "change_mobile"}) {
 		receiver.FailReturn(global.NewError(4000))
 		return
 	}
@@ -84,6 +84,18 @@ func (receiver *CommonController) CheckSmsCode() {
 	verifyCode := global.Cache.Get(codeKey)
 	if verifyCode != code {
 		receiver.FailReturn(global.NewError(4209))
+		return
+	}
+	//换绑手机号时验证旧手机凭证
+	if grantType == "change_mobile" {
+		valid := utils.GetRandomString(10)
+		cacheKey := cache.GetCacheKey(cache.OldMobileVerify, valid)
+		err := global.Cache.Set(cacheKey, mobile, 300)
+		if logger.CheckError(err) != nil {
+			receiver.FailReturn(global.NewError(5000))
+			return
+		}
+		receiver.SuccReturn(map[string]interface{}{"valid": valid})
 		return
 	}
 	receiver.SuccReturn(nil)
