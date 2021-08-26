@@ -171,7 +171,8 @@ func GetAuthorReputation(authorId string) (data entity.DyReputation, comErr glob
 }
 
 //星图达人
-func GetXtAuthorDetail(authorId string) (data *entity.XtAuthorDetail, comErr global.CommonError) {
+func GetXtAuthorDetail(authorId string) (data entity.XtAuthorDetail, comErr global.CommonError) {
+	data = entity.XtAuthorDetail{}
 	query := hbasehelper.NewQuery()
 	result, err := query.SetTable(hbaseService.HbaseXtAuthorDetail).GetByRowKey([]byte(authorId))
 	if err != nil {
@@ -183,10 +184,8 @@ func GetXtAuthorDetail(authorId string) (data *entity.XtAuthorDetail, comErr glo
 		return
 	}
 	detailMap := hbaseService.HbaseFormat(result, entity.XtAuthorDetailMap)
-	detail := &entity.XtAuthorDetail{}
-	utils.MapToStruct(detailMap, detail)
-	detail.UID = authorId
-	data = detail
+	utils.MapToStruct(detailMap, &data)
+	data.UID = authorId
 	return
 }
 

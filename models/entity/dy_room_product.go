@@ -5,17 +5,25 @@ var DyRoomProductMap = HbaseEntity{
 	"price":                            {Double, "price"},
 	"author_id":                        {String, "author_id"},
 	"room_id":                          {String, "room_id"},
+	"pmt_promotion":                    {AJson, "pmt_promotion"},
+	"promotion":                        {AJson, "promotion"},
+	"other_predict_sales":              {Double, "predict_sales"},
+	"other_predict_gmv":                {Double, "predict_gmv"},
 	"other_predict_sales_trend":        {AJson, "predict_sales_trend"},
 	"other_predict_sales_detail_trend": {AJson, "predict_sales_detail_trend"},
 }
 
 type DyRoomProduct struct {
+	PtmPromotion     []DyLivePromotion              `json:"pmt_promotion"`
+	Promotion        []DyLiveCurPromotion           `json:"promotion"`
 	TrendData        []DyRoomProductTrend           `json:"trend_data"`
 	SalesTrend       []DyRoomProductSaleTrend       `json:"sales_trend"`
 	SalesDetailTrend []DyRoomProductSaleDetailTrend `json:"sales_detail_trend"`
 	Price            float64                        `json:"price"`
 	AuthorId         string                         `json:"author_id"`
 	RoomId           string                         `json:"room_id"`
+	PredictSales     float64                        `json:"predict_sales"`
+	PredictGmv       float64                        `json:"predict_gmv"`
 }
 
 type DyRoomProductSaleTrend struct {

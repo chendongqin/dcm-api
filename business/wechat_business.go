@@ -64,7 +64,9 @@ func (receiver *WechatBusiness) SubscribeOfficial(userWechat *user.Info) error {
 	if !exist {
 		_, err = dbSession.InsertOne(wechatModel)
 	} else {
-		_, err = dbSession.Where("unionid = ?", userWechat.UnionID).Cols("openid", "unionid", "nick_name", "avatar", "sex", "country", "province", "city", "language", "remark", "subscribe", "subscribe_time", "subscribe_scene").Update(wechatModel)
+		_, err = dbSession.Where("unionid = ?", userWechat.UnionID).Cols("openid", "unionid", "nick_name", "avatar",
+			"sex", "country", "province", "city", "language", "remark", "subscribe", "subscribe_time", "subscribe_scene").
+			Update(wechatModel)
 	}
 	if err != nil {
 		dbSession.Rollback()
@@ -77,4 +79,13 @@ func (receiver *WechatBusiness) SubscribeOfficial(userWechat *user.Info) error {
 	_ = dbSession.Commit()
 	return nil
 
+}
+
+func (receiver *WechatBusiness) UnSubscribeOfficial(openId string) error {
+	_, err := dcm.GetDbSession().Table(dcm.DcWechat{}).Where("openid = ?", openId).
+		Update(map[string]interface{}{"subscribe": 2, "unsubscribe_time": time.Now().Unix()})
+	if err != nil {
+		return err
+	}
+	return nil
 }

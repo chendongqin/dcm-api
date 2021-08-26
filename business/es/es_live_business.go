@@ -90,7 +90,12 @@ func (receiver *EsLiveBusiness) CountRoomProductByRoomId(roomInfo entity.DyLiveI
 	esTable := fmt.Sprintf(es.DyRoomProductRecordsTable, date)
 	esQuery, esMultiQuery := elasticsearch.NewElasticQueryGroup()
 	esQuery.SetTerm("room_id", roomInfo.RoomID)
+	var cacheTime time.Duration = 60
+	if date != time.Now().Format("20060102") {
+		cacheTime = 600
+	}
 	total, _ := esMultiQuery.
+		SetCache(cacheTime).
 		SetTable(esTable).
 		AddMust(esQuery.Condition).
 		SetMultiQuery().
@@ -230,6 +235,41 @@ func (receiver *EsLiveBusiness) RoomProductByRoomId(roomInfo entity.DyLiveInfo, 
 	return
 }
 
+func (receiver *EsLiveBusiness) ScanProductByRoomId(roomInfo entity.DyLiveInfo) (startRowKey, stopRowKey string, comErr global.CommonError) {
+	date := time.Unix(roomInfo.DiscoverTime, 0).Format("20060102")
+	esTable := fmt.Sprintf(es.DyRoomProductRecordsTable, date)
+	esQuery, esMultiQuery := elasticsearch.NewElasticQueryGroup()
+	esQuery.SetTerm("room_id", roomInfo.RoomID)
+	result := esMultiQuery.
+		SetTable(esTable).
+		AddMust(esQuery.Condition).
+		SetOrderBy(elasticsearch.NewElasticOrder().Add("product_id.keyword", "desc").Order).
+		SetMultiQuery().
+		QueryOne()
+	if esMultiQuery.Count == 0 {
+		comErr = global.NewError(4000)
+		return
+	}
+	stopRow := es.EsAuthorLiveProduct{}
+	utils.MapToStruct(result, &stopRow)
+	if esMultiQuery.Count > 1 {
+		_, esMultiQuery2 := elasticsearch.NewElasticQueryGroup()
+		result2 := esMultiQuery2.
+			SetTable(esTable).
+			AddMust(esQuery.Condition).
+			SetOrderBy(elasticsearch.NewElasticOrder().Add("product_id.keyword", "asc").Order).
+			SetMultiQuery().
+			QueryOne()
+		startRow := es.EsAuthorLiveProduct{}
+		utils.MapToStruct(result2, &startRow)
+		startRowKey = startRow.RoomID + "_" + startRow.ProductID
+	} else {
+		startRowKey = stopRow.RoomID + "_" + stopRow.ProductID
+	}
+	stopRowKey = stopRow.RoomID + "_" + stopRow.ProductID
+	return
+}
+
 //直播统计
 func (receiver *EsLiveBusiness) SumRoomProductByRoomId(roomInfo entity.DyLiveInfo) (float64, int) {
 	date := time.Unix(roomInfo.DiscoverTime, 0).Format("20060102")
@@ -298,16 +338,6 @@ func (receiver *EsLiveBusiness) LivingProductList(roomInfo entity.DyLiveInfo, so
 		SetMultiQuery().
 		Query()
 	utils.MapToStruct(results, &list)
-	for k, v := range list {
-		if v.IsReturn == 1 && v.StartTime == v.ShelfTime {
-			list[k].IsReturn = 0
-		}
-		list[k].Cover = dyimg.Product(v.Cover)
-		list[k].PredictSales = math.Floor(v.PredictSales)
-		if v.Pv > 0 {
-			list[k].BuyRate = v.PredictSales / float64(v.Pv)
-		}
-	}
 	total = esMultiQuery.Count
 	return
 }

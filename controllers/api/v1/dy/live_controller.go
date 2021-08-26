@@ -5,6 +5,7 @@ import (
 	"dongchamao/business/es"
 	controllers "dongchamao/controllers/api"
 	"dongchamao/global"
+	"dongchamao/global/utils"
 	"dongchamao/hbase"
 	"dongchamao/models/entity"
 	dy2 "dongchamao/models/repost/dy"
@@ -165,7 +166,7 @@ func (receiver *LiveController) LiveInfoData() {
 		incFansRate = float64(liveInfo.FollowCount) / float64(liveInfo.TotalUser)
 		interactRate = float64(liveInfo.BarrageCount) / float64(liveInfo.TotalUser)
 		liveSale.Uv = (gmv + float64(liveSaleData.TicketCount)/10) / float64(liveInfo.TotalUser)
-		liveSale.SaleRate = gmv / float64(liveInfo.TotalUser)
+		liveSale.SaleRate = sales / float64(liveInfo.TotalUser)
 	}
 	avgOnlineTime := liveBusiness.CountAvgOnlineTime(liveInfo.OnlineTrends, liveInfo.CreateTime, liveInfo.TotalUser)
 	returnLiveInfo := dy2.DyLiveInfo{
@@ -238,57 +239,89 @@ func (receiver *LiveController) LivePromotions() {
 		receiver.FailReturn(global.NewError(4000))
 		return
 	}
-	livePmt, _ := hbase.GetLivePmt(roomId)
-	livePromotionsMap := map[int]entity.DyLivePromotion{}
-	for _, v := range livePmt.Promotions {
-		livePromotionsMap[v.Index] = v
-	}
-	var keys []int
-	for k := range livePromotionsMap {
-		keys = append(keys, k)
-	}
-	sort.Ints(keys)
-	promotionsMap := map[string][]entity.DyLivePromotion{}
-	for _, k := range keys {
-		if v, ok := livePromotionsMap[k]; ok {
-			startFormat := time.Unix(v.StartTime, 0).Format("2006-01-02 15:04:05")
-			if _, ok1 := promotionsMap[startFormat]; !ok1 {
-				promotionsMap[startFormat] = make([]entity.DyLivePromotion, 0)
-			}
-			promotionsMap[startFormat] = append(promotionsMap[startFormat], v)
-		}
-	}
-	dates := make([]string, 0)
-	dyLivePromotions := make([][]dy2.DyLivePromotion, 0)
-	promotionSales := map[string]int{}
-	for k, v := range promotionsMap {
-		item := make([]dy2.DyLivePromotion, 0)
-		for _, v1 := range v {
-			saleNum := 1
-			if s, ok := promotionSales[v1.ProductID]; ok {
-				saleNum = s + 1
-			}
-			item = append(item, dy2.DyLivePromotion{
-				ProductID: business.IdEncrypt(v1.ProductID),
-				ForSale:   v1.ForSale,
-				StartTime: v1.StartTime,
-				StopTime:  v1.StopTime,
-				Price:     v1.Price,
-				Sales:     v1.Sales,
-				NowSales:  0,
-				GmvSales:  0,
-				Title:     v1.Title,
-				Cover:     dyimg.Product(v1.Cover),
-				Index:     v1.Index,
-				SaleNum:   saleNum,
-			})
-		}
-		dyLivePromotions = append(dyLivePromotions, item)
-		dates = append(dates, k)
+	liveInfo, comErr := hbase.GetLiveInfo(roomId)
+	if comErr != nil {
+		receiver.FailReturn(comErr)
+		return
 	}
 	promotionsList := dy2.DyLivePromotionChart{
-		StartTime:     dates,
-		PromotionList: dyLivePromotions,
+		StartTime:     []string{},
+		PromotionList: [][]dy2.DyLivePromotion{},
+	}
+	startRowKey, stopRowKey, err := es.NewEsLiveBusiness().ScanProductByRoomId(liveInfo)
+	if err == nil {
+		promotionsMap := map[string][]entity.DyLivePromotion{}
+		promotionsSalesMap := map[string]int64{}
+		stopRow, err1 := hbase.GetRoomProductInfo(stopRowKey)
+		if err1 == nil {
+			tmpProductId := ""
+			for _, v := range stopRow.PtmPromotion {
+				startFormat := time.Unix(v.StartTime, 0).Format("2006-01-02 15:04:05")
+				if _, ok := promotionsMap[startFormat]; !ok {
+					promotionsMap[startFormat] = []entity.DyLivePromotion{}
+				}
+				promotionsMap[startFormat] = append(promotionsMap[startFormat], v)
+				tmpProductId = v.ProductID
+			}
+			promotionsSalesMap[tmpProductId] = utils.ToInt64(math.Floor(stopRow.PredictSales))
+		}
+		if startRowKey != stopRowKey {
+			mapData, _ := hbase.GetRoomProductInfoRangDate(startRowKey, stopRowKey)
+			for k, d := range mapData {
+				promotionsSalesMap[k] = utils.ToInt64(math.Floor(d.PredictSales))
+				for _, v := range d.PtmPromotion {
+					startFormat := time.Unix(v.StartTime, 0).Format("2006-01-02 15:04:05")
+					if _, ok := promotionsMap[startFormat]; !ok {
+						promotionsMap[startFormat] = []entity.DyLivePromotion{}
+					}
+					promotionsMap[startFormat] = append(promotionsMap[startFormat], v)
+				}
+			}
+		}
+		dates := make([]string, 0)
+		dyLivePromotions := make([][]dy2.DyLivePromotion, 0)
+		promotionSales := map[string]int{}
+		//按时间排序
+		var keys []string
+		for k := range promotionsMap {
+			keys = append(keys, k)
+		}
+		sort.Strings(keys)
+		for _, k := range keys {
+			v := promotionsMap[k]
+			item := make([]dy2.DyLivePromotion, 0)
+			for _, v1 := range v {
+				saleNum := 1
+				if s, ok := promotionSales[v1.ProductID]; ok {
+					saleNum = s + 1
+				}
+				promotionSales[v1.ProductID] = saleNum
+				var sales int64 = 0
+				if sa, ok := promotionsSalesMap[v1.ProductID]; ok {
+					sales = sa
+				}
+				item = append(item, dy2.DyLivePromotion{
+					ProductID: business.IdEncrypt(v1.ProductID),
+					ForSale:   v1.ForSale,
+					StartTime: v1.StartTime,
+					StopTime:  v1.StopTime,
+					Price:     v1.Price,
+					Sales:     v1.Sales,
+					NowSales:  sales,
+					GmvSales:  sales,
+					Title:     v1.Title,
+					Cover:     dyimg.Product(v1.Cover),
+					Index:     v1.Index,
+					SaleNum:   saleNum,
+				})
+			}
+			dyLivePromotions = append(dyLivePromotions, item)
+			dates = append(dates, k)
+		}
+		promotionsList = dy2.DyLivePromotionChart{
+			StartTime:     dates,
+			PromotionList: dyLivePromotions,
+		}
 	}
 	receiver.SuccReturn(map[string]interface{}{
 		"promotions_list": promotionsList,
@@ -373,8 +406,8 @@ func (receiver *LiveController) LiveProductList() {
 			productIds = append(productIds, v.ProductID)
 		}
 		liveBusiness := business.NewLiveBusiness()
-		curMap := liveBusiness.RoomCurProductByIds(roomId, productIds)
-		pmtMap := liveBusiness.RoomPmtProductByIds(roomId, productIds)
+		//curMap := liveBusiness.RoomCurProductByIds(roomId, productIds)
+		//pmtMap := liveBusiness.RoomPmtProductByIds(roomId, productIds)
 		for _, v := range list {
 			item := dy2.LiveRoomProductCount{
 				ProductInfo: v,
@@ -387,8 +420,9 @@ func (receiver *LiveController) LiveProductList() {
 					Sales:     []int64{},
 				},
 			}
-			if s, ok := pmtMap[v.ProductID]; ok {
-				for _, s1 := range s {
+			curCount, pmtStatus, err1 := liveBusiness.RoomCurAndPmtProductById(roomId, v.ProductID)
+			if err1 == nil {
+				for _, s1 := range pmtStatus {
 					item.ProductStartSale.Timestamp = append(item.ProductStartSale.Timestamp, s1.StartTime)
 					item.ProductStartSale.Sales = append(item.ProductStartSale.Sales, s1.StartSales)
 					if s1.StopTime > 0 {
@@ -396,10 +430,7 @@ func (receiver *LiveController) LiveProductList() {
 						item.ProductEndSale.Sales = append(item.ProductEndSale.Sales, s1.FinalSales)
 					}
 				}
-			}
-			if c, ok := curMap[v.ProductID]; ok {
-				c.CurList = business.ProductCurOrderByTime(c.CurList)
-				item.ProductCur = c
+				item.ProductCur = curCount
 			} else {
 				item.ProductCur = dy2.LiveCurProductCount{
 					CurList: []dy2.LiveCurProduct{},
@@ -448,7 +479,7 @@ func (receiver *LiveController) LiveProductSaleChart() {
 		receiver.FailReturn(global.NewError(4000))
 		return
 	}
-	info, _ := hbase.GetRoomProductInfo(roomId, productId)
+	info, _ := hbase.GetRoomProductInfo(roomId + "_" + productId)
 	trends := business.RoomProductTrendOrderByTime(info.TrendData)
 	timestamps := make([]int64, 0)
 	sales := make([]float64, 0)
@@ -614,7 +645,41 @@ func (receiver *LiveController) LivingProduct() {
 	}
 	esLiveBusiness := es.NewEsLiveBusiness()
 	sales, total := esLiveBusiness.SumRoomProductByRoomId(liveInfo)
-	list, total, comErr := esLiveBusiness.LivingProductList(liveInfo, sortStr, orderBy, page, pageSize)
+	originalList, total, comErr := esLiveBusiness.LivingProductList(liveInfo, sortStr, orderBy, page, pageSize)
+	list := make([]dy2.LivingProducts, 0)
+	utils.MapToStruct(originalList, &list)
+	liveBusiness := business.NewLiveBusiness()
+	for k, v := range list {
+		list[k].RoomID = business.IdEncrypt(v.RoomID)
+		list[k].ProductID = business.IdEncrypt(v.ProductID)
+		list[k].AuthorID = business.IdEncrypt(v.AuthorID)
+		if v.IsReturn == 1 && v.StartTime == v.ShelfTime {
+			list[k].IsReturn = 0
+		}
+		list[k].Cover = dyimg.Product(v.Cover)
+		list[k].PredictSales = math.Floor(v.PredictSales)
+		if v.Pv > 0 {
+			list[k].BuyRate = v.PredictSales / float64(v.Pv)
+		}
+		list[k].CurList = []dy2.LiveCurProduct{}
+		curCount, pmtStatus, err := liveBusiness.RoomCurAndPmtProductById(roomId, v.ProductID)
+		if err == nil {
+			list[k].CurSecond = curCount.CurSecond
+			pmtStatusLen := len(pmtStatus)
+			if pmtStatusLen > 0 {
+				startPmt := pmtStatus[0]
+				stopPmt := pmtStatus[pmtStatusLen-1]
+				list[k].StartPmtSales = startPmt.StartSales
+				list[k].EndPmtSales = stopPmt.FinalSales
+			}
+			if len(curCount.CurList) > 0 {
+				list[k].CurList = curCount.CurList
+				cur := curCount.CurList[len(curCount.CurList)-1]
+				list[k].StartCurTime = cur.StartTime
+				list[k].EndCurTime = cur.EndTime
+			}
+		}
+	}
 	receiver.SuccReturn(map[string]interface{}{
 		"list":  list,
 		"sales": sales,

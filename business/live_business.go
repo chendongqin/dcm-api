@@ -1,13 +1,14 @@
 package business
 
 import (
+	"dongchamao/business/es"
 	"dongchamao/global"
-	"dongchamao/global/utils"
 	"dongchamao/hbase"
 	"dongchamao/models/entity"
 	"dongchamao/models/repost/dy"
 	"dongchamao/services/dyimg"
 	"math"
+	"sort"
 	"time"
 )
 
@@ -20,14 +21,15 @@ func NewLiveBusiness() *LiveBusiness {
 	return new(LiveBusiness)
 }
 
-//获取讲解商品数据
-func (l *LiveBusiness) RoomCurProductByIds(roomId string, productIds []string) map[string]dy.LiveCurProductCount {
-	curInfo, _ := hbase.GetLiveCurProduct(roomId)
-	productMap := map[string]dy.LiveCurProductCount{}
-	for _, v := range curInfo.Promotion {
-		if !utils.InArrayString(v.ProductID, productIds) {
-			continue
-		}
+func (l *LiveBusiness) RoomCurAndPmtProductById(roomId, productId string) (curProductCount dy.LiveCurProductCount, ptmSales []dy.LiveRoomProductSaleStatus, comErr global.CommonError) {
+	roomProduct, comErr := hbase.GetRoomProductInfo(roomId + "_" + productId)
+	if comErr != nil {
+		return
+	}
+	curProductCount = dy.LiveCurProductCount{
+		CurList: []dy.LiveCurProduct{},
+	}
+	for k, v := range roomProduct.Promotion {
 		if v.EndTime == 0 {
 			continue
 		}
@@ -46,54 +48,40 @@ func (l *LiveBusiness) RoomCurProductByIds(roomId string, productIds []string) m
 			StartSales:   v.StartSales,
 			EndSales:     endSales,
 		}
-		if c, ok := productMap[v.ProductID]; ok {
-			c.CurSecond += curSecond
-			if c.MaxPrice < v.PriceMax {
-				c.MaxPrice = v.PriceMax
-			}
-			if c.MinPrice > v.PriceMin {
-				c.MinPrice = v.PriceMin
-			}
-			c.CurNum += 1
-			c.CurList = append(c.CurList, cur)
-			productMap[v.ProductID] = c
+		curProductCount.CurSecond += curSecond
+		if k == 0 {
+			curProductCount.MaxPrice = v.PriceMax
+			curProductCount.MinPrice = v.PriceMin
 		} else {
-			productMap[v.ProductID] = dy.LiveCurProductCount{
-				CurSecond: curSecond,
-				MaxPrice:  v.PriceMax,
-				MinPrice:  v.PriceMin,
-				CurNum:    1,
-				ShopId:    v.ShopId,
-				ShopName:  v.ShopName,
-				ShopIcon:  v.ShopIcon,
-				CurList:   []dy.LiveCurProduct{cur},
+			if curProductCount.MaxPrice < v.PriceMax {
+				curProductCount.MaxPrice = v.PriceMax
+			}
+			if curProductCount.MinPrice > v.PriceMin {
+				curProductCount.MinPrice = v.PriceMin
 			}
 		}
+		curProductCount.CurNum += 1
+		curProductCount.CurList = append(curProductCount.CurList, cur)
 	}
-	return productMap
-}
-
-//获取商品数据
-func (l *LiveBusiness) RoomPmtProductByIds(roomId string, productIds []string) map[string][]dy.LiveRoomProductSaleStatus {
-	pmtInfo, _ := hbase.GetLivePmt(roomId)
-	productMap := map[string][]dy.LiveRoomProductSaleStatus{}
-	for _, v := range pmtInfo.Promotions {
-		if !utils.InArrayString(v.ProductID, productIds) {
-			continue
-		}
+	sort.Slice(curProductCount.CurList, func(i, j int) bool {
+		return curProductCount.CurList[i].StartTime < curProductCount.CurList[j].StartTime
+	})
+	ptmSales = []dy.LiveRoomProductSaleStatus{}
+	for _, v := range roomProduct.PtmPromotion {
 		if v.StartTime > 0 {
-			if _, ok := productMap[v.ProductID]; !ok {
-				productMap[v.ProductID] = make([]dy.LiveRoomProductSaleStatus, 0)
-			}
-			productMap[v.ProductID] = append(productMap[v.ProductID], dy.LiveRoomProductSaleStatus{
+			ptmSales = append(ptmSales, dy.LiveRoomProductSaleStatus{
 				StartTime:  v.StartTime,
 				StopTime:   v.StopTime,
 				StartSales: v.InitialSales,
 				FinalSales: v.FinalSales,
+				Sales:      v.Sales,
 			})
 		}
 	}
-	return productMap
+	sort.Slice(ptmSales, func(i, j int) bool {
+		return ptmSales[i].StartTime < ptmSales[j].StartTime
+	})
+	return
 }
 
 //直播间商品趋势
@@ -173,15 +161,21 @@ func (l *LiveBusiness) LiveRoomAnalyse(roomId string) (data dy.DyLiveRoomAnalyse
 	data.AvgOnlineTime = l.CountAvgOnlineTime(liveInfo.OnlineTrends, liveInfo.CreateTime, liveInfo.TotalUser)
 	liveInfo.OnlineTrends = OnlineTrendOrderByTime(liveInfo.OnlineTrends)
 	lenNum := len(liveInfo.OnlineTrends)
-	if lenNum > 1 {
-		data.IncFans = liveInfo.OnlineTrends[lenNum-1].FollowerCount - liveInfo.OnlineTrends[0].FollowerCount
-	}
+	data.IncFans = liveInfo.FollowCount
 	if liveInfo.RoomStatus == 2 {
 		data.LiveLongTime = time.Now().Unix() - liveInfo.CreateTime
 	} else {
 		data.LiveLongTime = liveInfo.FinishTime - liveInfo.CreateTime
 	}
 	salesData, _ := hbase.GetLiveSalesData(roomId)
+	if salesData.Gmv == 0 {
+		salesData.Gmv = liveInfo.PredictGmv
+		salesData.Sales = liveInfo.PredictSales
+		//if liveInfo.RealGmv > 0 {
+		//	gmv = liveInfo.RealGmv
+		//	sales = liveInfo.RealSales
+		//}
+	}
 	if liveInfo.TotalUser > 0 {
 		data.Uv = (salesData.Gmv + float64(salesData.TicketCount)/10) / float64(liveInfo.TotalUser)
 		data.SaleRate = salesData.Sales / float64(liveInfo.TotalUser)
@@ -190,7 +184,8 @@ func (l *LiveBusiness) LiveRoomAnalyse(roomId string) (data dy.DyLiveRoomAnalyse
 	}
 	data.Volume = int64(math.Floor(salesData.Sales))
 	data.Amount = salesData.Gmv
-	data.PromotionNum = salesData.NumProducts
+	esLiveBusiness := es.NewEsLiveBusiness()
+	data.PromotionNum = esLiveBusiness.CountRoomProductByRoomId(liveInfo)
 	if salesData.Sales > 0 {
 		data.PerPrice = salesData.Gmv / salesData.Sales
 	}

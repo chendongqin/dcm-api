@@ -1,10 +1,12 @@
 package test
 
 import (
+	"dongchamao/global/consistent"
 	"fmt"
 	"github.com/silenceper/wechat/v2"
 	"github.com/silenceper/wechat/v2/cache"
 	"github.com/silenceper/wechat/v2/officialaccount/config"
+	"strings"
 	"testing"
 )
 
@@ -36,4 +38,9 @@ func TestUserInfo(t *testing.T) {
 	WxOfficial := wc.GetOfficialAccount(cfg)
 	userInfo, _ := WxOfficial.GetUser().GetUserInfo("oYywQ54At-8F_hTmOZMa40cG9ygA")
 	fmt.Println(userInfo)
+}
+
+func TestUserStr(t *testing.T) {
+	eventKey := "qrscene_qrlogin:ca46379c043766ae95e19be66105e879"
+	fmt.Println(strings.Contains(eventKey, consistent.WECHAT_QR_LOGIN))
 }

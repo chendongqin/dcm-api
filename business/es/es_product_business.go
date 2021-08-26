@@ -200,6 +200,7 @@ func (i *EsProductBusiness) InternalSearch(productId, title, dcmLevelFirst, firs
 		SetTable(esTable).
 		AddMust(esQuery.Condition).
 		SetLimit((page-1)*pageSize, pageSize).
+		SetOrderBy(elasticsearch.NewElasticOrder().Add("order_account", "desc").Order).
 		SetMultiQuery().
 		Query()
 	utils.MapToStruct(results, &list)

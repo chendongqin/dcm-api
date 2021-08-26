@@ -25,11 +25,12 @@ type RankController struct {
 func (receiver *RankController) Prepare() {
 	receiver.InitApiController()
 	receiver.CheckDyUserGroupRight(business.DyRankMinShowNum, business.DyJewelRankShowNum)
+	receiver.lockAction()
 }
 
 func (receiver *RankController) lockAction() {
 	ip := receiver.Ctx.Input.IP()
-	if business.UserActionLock("rank", ip, 1) {
+	if !business.UserActionLock(receiver.TrueUri, ip, 1) {
 		receiver.FailReturn(global.NewError(4211))
 		return
 	}
@@ -41,7 +42,7 @@ func (receiver *RankController) DyStartAuthorVideoRank() {
 	category := receiver.GetString("category", "全部")
 	var ret map[string]interface{}
 	data, updateTime, _ := hbase.GetStartAuthorVideoRank(rankType, category)
-	if !receiver.HasAuth {
+	if !receiver.HasAuth && len(data) > receiver.MaxTotal {
 		data = data[0:receiver.MaxTotal]
 	}
 	for k, v := range data {
@@ -65,7 +66,7 @@ func (receiver *RankController) DyStartAuthorLiveRank() {
 	for k, v := range data {
 		data[k].CoreUserId = business.IdEncrypt(v.CoreUserId)
 	}
-	if !receiver.HasAuth {
+	if !receiver.HasAuth && len(data) > receiver.MaxTotal {
 		data = data[0:receiver.MaxTotal]
 	}
 	ret = map[string]interface{}{
@@ -121,9 +122,9 @@ func (receiver *RankController) DyLiveHourRank() {
 		list := make([]entity.DyLiveHourRank, 0)
 		utils.MapToStruct(ret["list"], &list)
 		ret["list"] = list[0:receiver.MaxTotal]
-		ret["has_login"] = receiver.HasLogin
-		ret["has_auth"] = receiver.HasAuth
 	}
+	ret["has_login"] = receiver.HasLogin
+	ret["has_auth"] = receiver.HasAuth
 	receiver.SuccReturn(ret)
 	return
 }
@@ -171,9 +172,9 @@ func (receiver *RankController) DyLiveTopRank() {
 		list := make([]interface{}, 0)
 		utils.MapToStruct(ret["list"], &list)
 		ret["list"] = list[0:receiver.MaxTotal]
-		ret["has_login"] = receiver.HasLogin
-		ret["has_auth"] = receiver.HasAuth
 	}
+	ret["has_login"] = receiver.HasLogin
+	ret["has_auth"] = receiver.HasAuth
 	receiver.SuccReturn(ret)
 	return
 }
@@ -233,9 +234,9 @@ func (receiver *RankController) DyLiveHourSellRank() {
 		list := make([]interface{}, 0)
 		utils.MapToStruct(ret["list"], &list)
 		ret["list"] = list[0:receiver.MaxTotal]
-		ret["has_login"] = receiver.HasLogin
-		ret["has_auth"] = receiver.HasAuth
 	}
+	ret["has_login"] = receiver.HasLogin
+	ret["has_auth"] = receiver.HasAuth
 	receiver.SuccReturn(ret)
 	return
 }
@@ -283,9 +284,9 @@ func (receiver *RankController) DyLiveHourPopularityRank() {
 		list := make([]interface{}, 0)
 		utils.MapToStruct(ret["list"], &list)
 		ret["list"] = list[0:receiver.MaxTotal]
-		ret["has_login"] = receiver.HasLogin
-		ret["has_auth"] = receiver.HasAuth
 	}
+	ret["has_login"] = receiver.HasLogin
+	ret["has_auth"] = receiver.HasAuth
 	receiver.SuccReturn(ret)
 	return
 }
@@ -358,13 +359,14 @@ func (receiver *RankController) DyLiveShareWeekRank() {
 		list := make([]interface{}, 0)
 		utils.MapToStruct(ret["list"], &list)
 		ret["list"] = list[0:receiver.MaxTotal]
-		ret["has_login"] = receiver.HasLogin
-		ret["has_auth"] = receiver.HasAuth
 	}
+	ret["has_login"] = receiver.HasLogin
+	ret["has_auth"] = receiver.HasAuth
 	receiver.SuccReturn(ret)
 	return
 }
 
+//抖音视频达人分享日榜
 func (receiver *RankController) DyAwemeShareRank() {
 	date := receiver.Ctx.Input.Param(":date")
 	if date == "" {
@@ -412,13 +414,13 @@ func (receiver *RankController) DyAwemeShareRank() {
 			_ = global.Cache.Set(cacheKey, utils.SerializeData(ret), 86400)
 		}
 	}
-	if !receiver.HasAuth {
-		list := make([]interface{}, 0)
-		utils.MapToStruct(ret["list"], &list)
+	list := make([]interface{}, 0)
+	utils.MapToStruct(ret["list"], &list)
+	if !receiver.HasAuth && len(list) > receiver.MaxTotal {
 		ret["list"] = list[0:receiver.MaxTotal]
-		ret["has_login"] = receiver.HasLogin
-		ret["has_auth"] = receiver.HasAuth
 	}
+	ret["has_login"] = receiver.HasLogin
+	ret["has_auth"] = receiver.HasAuth
 	receiver.SuccReturn(ret)
 	return
 }
@@ -438,6 +440,13 @@ func (receiver *RankController) DyAuthorTakeGoodsRank() {
 	orderBy := receiver.GetString("order_by", "desc")
 	page := receiver.GetPage("page")
 	pageSize := receiver.GetPageSize("page_size", 10, 100)
+	if !receiver.HasAuth {
+		dateType = 1
+		page = 1
+		if pageSize > receiver.MaxTotal {
+			pageSize = receiver.MaxTotal
+		}
+	}
 	var ret map[string]interface{}
 	cacheKey := cache.GetCacheKey(cache.DyRankCache, "author_take_goods", utils.Md5_encode(fmt.Sprintf("%s%d%s%s%s%d%d%d", startDate, dateType, tags, sortStr, orderBy, verified, page, pageSize)))
 	cacheStr := global.Cache.Get(cacheKey)
@@ -491,14 +500,9 @@ func (receiver *RankController) DyAuthorTakeGoodsRank() {
 			_ = global.Cache.Set(cacheKey, utils.SerializeData(ret), 86400)
 		}
 	}
-	if !receiver.HasAuth {
-		list := make([]interface{}, 0)
-		utils.MapToStruct(ret["list"], &list)
-		ret["list"] = list[0:receiver.MaxTotal]
-		ret["has_login"] = receiver.HasLogin
-		ret["has_auth"] = receiver.HasAuth
-		ret["total"] = receiver.MaxTotal
-	} else if utils.ToInt(ret["total"]) > receiver.MaxTotal {
+	ret["has_login"] = receiver.HasLogin
+	ret["has_auth"] = receiver.HasAuth
+	if !receiver.HasAuth && utils.ToInt(ret["total"]) > receiver.MaxTotal {
 		ret["total"] = receiver.MaxTotal
 	}
 	receiver.SuccReturn(ret)
@@ -516,6 +520,12 @@ func (receiver *RankController) DyAuthorFollowerRank() {
 	isDelivery, _ := receiver.GetInt("is_delivery", 0)
 	page := receiver.GetPage("page")
 	pageSize := receiver.GetPageSize("page_size", 10, 100)
+	if !receiver.HasAuth {
+		page = 1
+		if pageSize > receiver.MaxTotal {
+			pageSize = receiver.MaxTotal
+		}
+	}
 	dateTime, err := time.ParseInLocation("2006-01-02", date, time.Local)
 	if err != nil {
 		receiver.FailReturn(global.NewError(4000))
@@ -551,14 +561,9 @@ func (receiver *RankController) DyAuthorFollowerRank() {
 			_ = global.Cache.Set(cacheKey, utils.SerializeData(ret), 86400)
 		}
 	}
-	if !receiver.HasAuth {
-		list := make([]interface{}, 0)
-		utils.MapToStruct(ret["list"], &list)
-		ret["list"] = list[0:receiver.MaxTotal]
-		ret["has_login"] = receiver.HasLogin
-		ret["has_auth"] = receiver.HasAuth
-		ret["total"] = receiver.MaxTotal
-	} else if utils.ToInt(ret["total"]) > receiver.MaxTotal {
+	ret["has_login"] = receiver.HasLogin
+	ret["has_auth"] = receiver.HasAuth
+	if !receiver.HasAuth && utils.ToInt(ret["total"]) > receiver.MaxTotal {
 		ret["total"] = receiver.MaxTotal
 	}
 	receiver.SuccReturn(ret)

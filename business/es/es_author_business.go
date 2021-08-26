@@ -318,7 +318,7 @@ func (receiver *EsAuthorBusiness) SaleAuthorRankCount(startTime time.Time, dateT
 		esQuery.SetTerm("tags.keyword", tags)
 	}
 	if verified == 1 {
-		esQuery.SetTerm("verification_type", 1)
+		esQuery.SetTerm("verification_type", 2)
 	}
 	var esTable string
 	switch dateType {
@@ -371,8 +371,8 @@ func (receiver *EsAuthorBusiness) SaleAuthorRankCount(startTime time.Time, dateT
 					"r_bucket_sort": map[string]interface{}{
 						"bucket_sort": map[string]interface{}{
 							"sort": map[string]interface{}{
-								"sum_gmv": map[string]interface{}{
-									"order": "desc",
+								sortStr: map[string]interface{}{
+									"order": orderBy,
 								},
 							},
 							"from": (page - 1) * pageSize,

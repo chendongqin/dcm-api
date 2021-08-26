@@ -8,6 +8,7 @@ import (
 	"dongchamao/services/hbaseService"
 	"dongchamao/services/hbaseService/hbasehelper"
 	"math"
+	"strings"
 )
 
 //获取直播间商品讲解数据
@@ -28,9 +29,8 @@ func GetLiveCurProduct(roomId string) (data entity.DyLiveCurProduct, comErr glob
 }
 
 //直播间全网销量
-func GetRoomProductInfo(roomId, productId string) (data entity.DyRoomProduct, comErr global.CommonError) {
+func GetRoomProductInfo(rowKey string) (data entity.DyRoomProduct, comErr global.CommonError) {
 	query := hbasehelper.NewQuery()
-	rowKey := roomId + "_" + productId
 	result, err := query.SetTable(hbaseService.HbaseDyRoomProduct).GetByRowKey([]byte(rowKey))
 	if err != nil {
 		comErr = global.NewMsgError(err.Error())
@@ -42,6 +42,33 @@ func GetRoomProductInfo(roomId, productId string) (data entity.DyRoomProduct, co
 	}
 	infoMap := hbaseService.HbaseFormat(result, entity.DyRoomProductMap)
 	utils.MapToStruct(infoMap, &data)
+	return
+}
+
+func GetRoomProductInfoRangDate(startRowKey, stopRowKey string) (data map[string]entity.DyRoomProduct, comErr global.CommonError) {
+	query := hbasehelper.NewQuery()
+	results, err := query.
+		SetTable(hbaseService.HbaseDyRoomProduct).
+		SetStartRow([]byte(startRowKey)).
+		SetStopRow([]byte(stopRowKey)).
+		Scan(10000)
+	if err != nil {
+		return
+	}
+	data = map[string]entity.DyRoomProduct{}
+	for _, v := range results {
+		rowKey := string(v.GetRow())
+		rowKeyArr := strings.Split(rowKey, "_")
+		if len(rowKeyArr) < 2 {
+			comErr = global.NewError(5000)
+			return
+		}
+		productId := rowKeyArr[1]
+		dataMap := hbaseService.HbaseFormat(v, entity.DyRoomProductMap)
+		detail := entity.DyRoomProduct{}
+		utils.MapToStruct(dataMap, &detail)
+		data[productId] = detail
+	}
 	return
 }
 
