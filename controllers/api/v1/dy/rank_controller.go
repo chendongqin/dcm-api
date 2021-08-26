@@ -42,7 +42,7 @@ func (receiver *RankController) DyStartAuthorVideoRank() {
 	category := receiver.GetString("category", "全部")
 	var ret map[string]interface{}
 	data, updateTime, _ := hbase.GetStartAuthorVideoRank(rankType, category)
-	if !receiver.HasAuth {
+	if !receiver.HasAuth && len(data) > receiver.MaxTotal {
 		data = data[0:receiver.MaxTotal]
 	}
 	for k, v := range data {
