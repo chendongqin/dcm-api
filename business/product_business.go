@@ -333,12 +333,6 @@ func (receiver *ProductBusiness) ProductAuthorAnalysisCount(productId, keyword s
 			Num:  v,
 		})
 	}
-	if otherTags > 0 {
-		countList.Tags = append(countList.Tags, dy.DyCate{
-			Name: "其他",
-			Num:  otherTags,
-		})
-	}
 	if otherLevel > 0 {
 		countList.Level = append(countList.Level, dy.DyIntCate{
 			Name: 0,
