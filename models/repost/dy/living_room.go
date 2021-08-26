@@ -42,4 +42,5 @@ type LivingProducts struct {
 	EndCurTime    int64            `json:"end_cur_time"`
 	StartPmtSales int64            `json:"start_pmt_sales"`
 	EndPmtSales   int64            `json:"end_pmt_sales"`
+	CurSecond     int64            `json:"cur_second"`
 }

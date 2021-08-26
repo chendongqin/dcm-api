@@ -618,6 +618,9 @@ func (receiver *LiveController) LivingProduct() {
 	utils.MapToStruct(originalList, &list)
 	liveBusiness := business.NewLiveBusiness()
 	for k, v := range list {
+		list[k].RoomID = business.IdEncrypt(v.RoomID)
+		list[k].ProductID = business.IdEncrypt(v.ProductID)
+		list[k].AuthorID = business.IdEncrypt(v.AuthorID)
 		if v.IsReturn == 1 && v.StartTime == v.ShelfTime {
 			list[k].IsReturn = 0
 		}
@@ -629,6 +632,7 @@ func (receiver *LiveController) LivingProduct() {
 		list[k].CurList = []dy2.LiveCurProduct{}
 		curCount, pmtStatus, err := liveBusiness.RoomCurAndPmtProductById(roomId, v.ProductID)
 		if err == nil {
+			list[k].CurSecond = curCount.CurSecond
 			pmtStatusLen := len(pmtStatus)
 			if pmtStatusLen > 0 {
 				startPmt := pmtStatus[0]
