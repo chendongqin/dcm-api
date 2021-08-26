@@ -371,8 +371,8 @@ func (receiver *EsAuthorBusiness) SaleAuthorRankCount(startTime time.Time, dateT
 					"r_bucket_sort": map[string]interface{}{
 						"bucket_sort": map[string]interface{}{
 							"sort": map[string]interface{}{
-								"sum_gmv": map[string]interface{}{
-									"order": "desc",
+								sortStr: map[string]interface{}{
+									"order": orderBy,
 								},
 							},
 							"from": (page - 1) * pageSize,

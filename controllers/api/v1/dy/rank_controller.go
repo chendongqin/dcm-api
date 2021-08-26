@@ -432,6 +432,9 @@ func (receiver *RankController) DyAuthorTakeGoodsRank() {
 		return
 	}
 	dateType, _ := receiver.GetInt("date_type", 1)
+	if !receiver.HasAuth && dateType != 1 {
+		dateType = 1
+	}
 	tags := receiver.GetString("tags")
 	verified, _ := receiver.GetInt("verified")
 	sortStr := receiver.GetString("sort", "sum_gmv")
