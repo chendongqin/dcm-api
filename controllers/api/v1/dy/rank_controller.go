@@ -433,15 +433,19 @@ func (receiver *RankController) DyAuthorTakeGoodsRank() {
 		return
 	}
 	dateType, _ := receiver.GetInt("date_type", 1)
-	if !receiver.HasAuth && dateType != 1 {
-		dateType = 1
-	}
 	tags := receiver.GetString("tags")
 	verified, _ := receiver.GetInt("verified")
 	sortStr := receiver.GetString("sort", "sum_gmv")
 	orderBy := receiver.GetString("order_by", "desc")
 	page := receiver.GetPage("page")
 	pageSize := receiver.GetPageSize("page_size", 10, 100)
+	if !receiver.HasAuth {
+		dateType = 1
+		page = 1
+		if pageSize > receiver.MaxTotal {
+			pageSize = receiver.MaxTotal
+		}
+	}
 	var ret map[string]interface{}
 	cacheKey := cache.GetCacheKey(cache.DyRankCache, "author_take_goods", utils.Md5_encode(fmt.Sprintf("%s%d%s%s%s%d%d%d", startDate, dateType, tags, sortStr, orderBy, verified, page, pageSize)))
 	cacheStr := global.Cache.Get(cacheKey)
@@ -495,14 +499,9 @@ func (receiver *RankController) DyAuthorTakeGoodsRank() {
 			_ = global.Cache.Set(cacheKey, utils.SerializeData(ret), 86400)
 		}
 	}
-	if !receiver.HasAuth {
-		list := make([]interface{}, 0)
-		utils.MapToStruct(ret["list"], &list)
-		ret["list"] = list[0:receiver.MaxTotal]
-		ret["has_login"] = receiver.HasLogin
-		ret["has_auth"] = receiver.HasAuth
-		ret["total"] = receiver.MaxTotal
-	} else if utils.ToInt(ret["total"]) > receiver.MaxTotal {
+	ret["has_login"] = receiver.HasLogin
+	ret["has_auth"] = receiver.HasAuth
+	if !receiver.HasAuth && utils.ToInt(ret["total"]) > receiver.MaxTotal {
 		ret["total"] = receiver.MaxTotal
 	}
 	receiver.SuccReturn(ret)
@@ -520,6 +519,12 @@ func (receiver *RankController) DyAuthorFollowerRank() {
 	isDelivery, _ := receiver.GetInt("is_delivery", 0)
 	page := receiver.GetPage("page")
 	pageSize := receiver.GetPageSize("page_size", 10, 100)
+	if !receiver.HasAuth {
+		page = 1
+		if pageSize > receiver.MaxTotal {
+			pageSize = receiver.MaxTotal
+		}
+	}
 	dateTime, err := time.ParseInLocation("2006-01-02", date, time.Local)
 	if err != nil {
 		receiver.FailReturn(global.NewError(4000))
@@ -555,14 +560,9 @@ func (receiver *RankController) DyAuthorFollowerRank() {
 			_ = global.Cache.Set(cacheKey, utils.SerializeData(ret), 86400)
 		}
 	}
-	if !receiver.HasAuth {
-		list := make([]interface{}, 0)
-		utils.MapToStruct(ret["list"], &list)
-		ret["list"] = list[0:receiver.MaxTotal]
-		ret["has_login"] = receiver.HasLogin
-		ret["has_auth"] = receiver.HasAuth
-		ret["total"] = receiver.MaxTotal
-	} else if utils.ToInt(ret["total"]) > receiver.MaxTotal {
+	ret["has_login"] = receiver.HasLogin
+	ret["has_auth"] = receiver.HasAuth
+	if !receiver.HasAuth && utils.ToInt(ret["total"]) > receiver.MaxTotal {
 		ret["total"] = receiver.MaxTotal
 	}
 	receiver.SuccReturn(ret)
