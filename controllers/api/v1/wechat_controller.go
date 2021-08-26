@@ -74,11 +74,14 @@ func (receiver *WechatController) Receive() {
 			return nil
 		}
 		var text *message.Text
+		text = message.NewText("扫码登录成功!!")
 		if msg.MsgType == message.MsgTypeEvent {
 			switch msg.Event {
 			case message.EventSubscribe:
+				logs.Debug("[扫码登录微信1001]=>缓存key:[%s],openid:[%s]", msg.EventKey, msg.GetOpenID())
 				return &message.Reply{MsgType: message.MsgTypeText, MsgData: text}
 			case message.EventUnsubscribe:
+				logs.Debug("[扫码登录微信1002]=>缓存key:[%s],openid:[%s]", msg.EventKey, msg.GetOpenID())
 				return &message.Reply{MsgType: message.MsgTypeText, MsgData: text}
 			case message.EventScan:
 				//自定义事件key
@@ -89,27 +92,22 @@ func (receiver *WechatController) Receive() {
 				}
 				text = message.NewText("扫码登录成功！")
 				//设置 openid 缓存 前端监听
-				logs.Debug("[扫码登录微信]=>缓存key:[%s],openid:[%s]", msg.EventKey, msg.GetOpenID())
+				logs.Debug("[扫码登录微信1003]=>缓存key:[%s],openid:[%s]", msg.EventKey, msg.GetOpenID())
 				_ = global.Cache.Set("openid:"+msg.EventKey, msg.GetOpenID(), 1800)
 				return &message.Reply{MsgType: message.MsgTypeText, MsgData: text}
 				//default:
 				//	return &message.Reply{MsgType: message.MsgTypeText, MsgData: text}
 			}
 		}
-		//text := message.NewText(msg.Content)
 		return &message.Reply{MsgType: message.MsgTypeText, MsgData: text}
 	})
 
 	//处理消息接收以及回复
 	err := server.Serve()
 	if err != nil {
-		logs.Error("[微信回复] 回复消息失败 serve err: %s", err)
+		logs.Error("[微信回复] 回复消息失败 serve err: %s", err.Error())
 		return
 	}
 	//发送回复的消息
-	err = server.Send()
-	if err != nil {
-		logs.Error("[微信回复] 回复消息失败 send err: %s", err)
-		return
-	}
+	_ = server.Send()
 }
