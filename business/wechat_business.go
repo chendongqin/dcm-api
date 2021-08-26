@@ -62,6 +62,7 @@ func (receiver *WechatBusiness) SubscribeOfficial(userWechat *user.Info) error {
 	wechatModel.QrScene = userWechat.QrScene
 	wechatModel.QrSceneStr = userWechat.QrSceneStr
 	if !exist {
+		wechatModel.CreatedAt = time.Now()
 		_, err = dbSession.InsertOne(wechatModel)
 	} else {
 		_, err = dbSession.Where("unionid = ?", userWechat.UnionID).Cols("openid", "unionid", "nick_name", "avatar",
