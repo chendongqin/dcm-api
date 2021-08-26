@@ -295,6 +295,7 @@ func (receiver *LiveController) LivePromotions() {
 				if s, ok := promotionSales[v1.ProductID]; ok {
 					saleNum = s + 1
 				}
+				promotionSales[v1.ProductID] = saleNum
 				var sales int64 = 0
 				if sa, ok := promotionsSalesMap[v1.ProductID]; ok {
 					sales = sa
