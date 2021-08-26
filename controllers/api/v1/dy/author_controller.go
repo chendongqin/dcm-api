@@ -150,6 +150,8 @@ func (receiver *AuthorController) BaseSearch() {
 			list[k].UniqueId = v.ShortId
 		}
 		list[k].AuthorId = business.IdEncrypt(v.AuthorId)
+		authorData, _ := hbase.GetAuthor(v.AuthorId)
+		list[k].RoomId = business.IdEncrypt(authorData.RoomId)
 	}
 	totalPage := math.Ceil(float64(total) / float64(pageSize))
 	maxPage := math.Ceil(float64(receiver.MaxTotal) / float64(pageSize))
