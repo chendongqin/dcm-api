@@ -66,7 +66,7 @@ func (receiver *WechatController) Receive() {
 		server.SkipValidate(true)
 	}
 	server.SetMessageHandler(func(msg *message.MixMessage) *message.Reply {
-		logs.Debug("[微信回调]=>请求参数:[%s],事件内容:[%s]", inputData, msg)
+		logs.Error("[微信回调]=>请求参数:[%s],事件内容:[%s]", inputData, msg)
 		//回复消息：演示回复用户发送的消息
 		userWechat, err := business.NewWechatBusiness().GetInfoByOpenId(msg.GetOpenID())
 		if err != nil {
@@ -78,10 +78,10 @@ func (receiver *WechatController) Receive() {
 		if msg.MsgType == message.MsgTypeEvent {
 			switch msg.Event {
 			case message.EventSubscribe:
-				logs.Debug("[扫码登录微信1001]=>缓存key:[%s],openid:[%s]", msg.EventKey, msg.GetOpenID())
+				logs.Error("[扫码登录微信1001]=>缓存key:[%s],openid:[%s]", msg.EventKey, msg.GetOpenID())
 				return &message.Reply{MsgType: message.MsgTypeText, MsgData: text}
 			case message.EventUnsubscribe:
-				logs.Debug("[扫码登录微信1002]=>缓存key:[%s],openid:[%s]", msg.EventKey, msg.GetOpenID())
+				logs.Error("[扫码登录微信1002]=>缓存key:[%s],openid:[%s]", msg.EventKey, msg.GetOpenID())
 				return &message.Reply{MsgType: message.MsgTypeText, MsgData: text}
 			case message.EventScan:
 				//自定义事件key
@@ -92,7 +92,7 @@ func (receiver *WechatController) Receive() {
 				}
 				text = message.NewText("扫码登录成功！")
 				//设置 openid 缓存 前端监听
-				logs.Debug("[扫码登录微信1003]=>缓存key:[%s],openid:[%s]", msg.EventKey, msg.GetOpenID())
+				logs.Error("[扫码登录微信1003]=>缓存key:[%s],openid:[%s]", msg.EventKey, msg.GetOpenID())
 				_ = global.Cache.Set("openid:"+msg.EventKey, msg.GetOpenID(), 1800)
 				return &message.Reply{MsgType: message.MsgTypeText, MsgData: text}
 				//default:
