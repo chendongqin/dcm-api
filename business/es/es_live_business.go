@@ -238,7 +238,7 @@ func (receiver *EsLiveBusiness) ScanProductByRoomId(roomInfo entity.DyLiveInfo) 
 	result := esMultiQuery.
 		SetTable(esTable).
 		AddMust(esQuery.Condition).
-		SetOrderBy(elasticsearch.NewElasticOrder().Add("product_id", "desc").Order).
+		SetOrderBy(elasticsearch.NewElasticOrder().Add("product_id.keyword", "desc").Order).
 		SetMultiQuery().
 		QueryOne()
 	if esMultiQuery.Count == 0 {
@@ -252,7 +252,7 @@ func (receiver *EsLiveBusiness) ScanProductByRoomId(roomInfo entity.DyLiveInfo) 
 		result2 := esMultiQuery2.
 			SetTable(esTable).
 			AddMust(esQuery.Condition).
-			SetOrderBy(elasticsearch.NewElasticOrder().Add("product_id", "asc").Order).
+			SetOrderBy(elasticsearch.NewElasticOrder().Add("product_id.keyword", "asc").Order).
 			SetMultiQuery().
 			QueryOne()
 		startRow := es.EsAuthorLiveProduct{}
