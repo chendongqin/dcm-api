@@ -25,7 +25,7 @@ func (receiver *CommonController) Sms() {
 		receiver.FailReturn(global.NewError(4205))
 		return
 	}
-	if !utils.InArrayString(grantType, []string{"login", "findpwd", "change_mobile"}) {
+	if !utils.InArrayString(grantType, []string{"login", "findpwd", "change_mobile", "bind_mobile"}) {
 		receiver.FailReturn(global.NewError(4000))
 		return
 	}

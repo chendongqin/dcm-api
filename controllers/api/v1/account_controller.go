@@ -72,6 +72,39 @@ func (receiver *AccountController) ResetPwd() {
 	return
 }
 
+//绑定手机号
+func (receiver *AccountController) BindMobile() {
+	InputData := receiver.InputFormat()
+	mobile := InputData.GetString("mobile", "")
+	code := InputData.GetString("code", "")
+	userBusiness := business.NewUserBusiness()
+	//新手机号存在校验
+	exist, comErr := userBusiness.MobileExist(mobile)
+	if comErr != nil {
+		receiver.FailReturn(global.NewError(5000))
+		return
+	}
+	if exist {
+		receiver.FailReturn(global.NewMsgError("该手机号已存在"))
+		return
+	}
+	//新手机验证码校验
+	codeKey := cache.GetCacheKey(cache.SmsCodeVerify, "bind_mobile", mobile)
+	verifyCode := global.Cache.Get(codeKey)
+	if verifyCode != code {
+		receiver.FailReturn(global.NewError(4209))
+		return
+	}
+	//写入手机号
+	affect, _ := userBusiness.UpdateUserAndClearCache(nil, receiver.UserId, map[string]interface{}{"username": mobile})
+	if affect == 0 {
+		receiver.FailReturn(global.NewError(4213))
+		return
+	}
+	receiver.SuccReturn(nil)
+	return
+}
+
 //修改手机号
 func (receiver *AccountController) ChangeMobile() {
 	InputData := receiver.InputFormat()
