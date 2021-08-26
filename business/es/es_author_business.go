@@ -318,7 +318,7 @@ func (receiver *EsAuthorBusiness) SaleAuthorRankCount(startTime time.Time, dateT
 		esQuery.SetTerm("tags.keyword", tags)
 	}
 	if verified == 1 {
-		esQuery.SetTerm("verification_type", 1)
+		esQuery.SetTerm("verification_type", 2)
 	}
 	var esTable string
 	switch dateType {
