@@ -208,6 +208,8 @@ func (receiver *UserBusiness) QrLogin(openid string, appId int) (user dcm.DcUser
 		userModel.Avatar = wechatModel.Avatar
 		userModel.Entrance = AppIdMap[appId]
 		userModel.Status = 1
+		userModel.Salt = utils.GetRandomString(4)
+		userModel.Password = utils.Md5_encode(utils.GetRandomString(16) + userModel.Salt)
 		userModel.CreateTime = nowTime
 		userModel.UpdateTime = nowTime
 		affect, err := dcm.Insert(nil, &userModel)

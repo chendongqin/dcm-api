@@ -19,7 +19,7 @@ type LoginController struct {
 func (receiver *LoginController) Login() {
 	InputData := receiver.InputFormat()
 	grantType := InputData.GetString("grant_type", "password")
-	appId := InputData.GetInt("app_id", 0)
+	appId := receiver.AppId
 	if !utils.InArrayInt(appId, []int{10000, 10001, 10002, 10003, 10004, 10005}) {
 		receiver.FailReturn(global.NewError(4000))
 		return
