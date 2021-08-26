@@ -230,9 +230,9 @@ func (receiver *RankController) DyLiveHourSellRank() {
 		}
 		_ = global.Cache.Set(cacheKey, utils.SerializeData(ret), cacheTime)
 	}
-	if !receiver.HasAuth {
-		list := make([]interface{}, 0)
-		utils.MapToStruct(ret["list"], &list)
+	list := make([]interface{}, 0)
+	utils.MapToStruct(ret["list"], &list)
+	if !receiver.HasAuth && len(list) > receiver.MaxTotal {
 		ret["list"] = list[0:receiver.MaxTotal]
 	}
 	ret["has_login"] = receiver.HasLogin
