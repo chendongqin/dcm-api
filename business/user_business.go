@@ -180,7 +180,7 @@ func (receiver *UserBusiness) SmsLogin(mobile, code string, appId int) (user dcm
 //微信扫码登录
 func (receiver *UserBusiness) QrLogin(openid string, appId int) (user dcm.DcUser, tokenString string, expire int64, isNew int, comErr global.CommonError) {
 	if openid == "" {
-		comErr = global.NewError(4200)
+		comErr = global.NewError(4301)
 		return
 	}
 	//判断 dc_wechat 是否有openid信息
