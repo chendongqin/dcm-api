@@ -305,16 +305,44 @@ func (receiver *ProductBusiness) ProductAuthorAnalysisCount(productId, keyword s
 		}
 		authorMap[v.AuthorId] = v.AuthorId
 	}
+	otherTags := 0
+	otherLevel := 0
 	for k, v := range tagsMap {
+		if k == "其他" {
+			otherTags = v
+			continue
+		}
 		countList.Tags = append(countList.Tags, dy.DyCate{
 			Name: k,
 			Num:  v,
 		})
 	}
+	if otherTags > 0 {
+		countList.Tags = append(countList.Tags, dy.DyCate{
+			Name: "其他",
+			Num:  otherTags,
+		})
+	}
 	for k, v := range levelMap {
+		if k == 0 {
+			otherLevel = v
+			continue
+		}
 		countList.Level = append(countList.Level, dy.DyIntCate{
 			Name: k,
 			Num:  v,
+		})
+	}
+	if otherTags > 0 {
+		countList.Tags = append(countList.Tags, dy.DyCate{
+			Name: "其他",
+			Num:  otherTags,
+		})
+	}
+	if otherLevel > 0 {
+		countList.Level = append(countList.Level, dy.DyIntCate{
+			Name: 0,
+			Num:  otherLevel,
 		})
 	}
 	if keyword == "" && (len(countList.Tags) > 0 || len(countList.Level) > 0) {
