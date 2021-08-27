@@ -328,7 +328,7 @@ func (a *AuthorBusiness) CountLiveRoomAnalyse(authorId string, startTime, endTim
 	hbaseDataChan := make(chan dy.DyLiveRoomAnalyse, roomNum)
 	for _, rooms := range roomsMap {
 		for _, room := range rooms {
-			go func(roomId string, wg *sync.WaitGroup) {
+			go func(roomId string) {
 				defer global.RecoverPanic()
 				defer wg.Done()
 				liveBusiness := NewLiveBusiness()
@@ -336,7 +336,7 @@ func (a *AuthorBusiness) CountLiveRoomAnalyse(authorId string, startTime, endTim
 				if comErr == nil {
 					hbaseDataChan <- roomAnalyse
 				}
-			}(room.RoomID, &wg)
+			}(room.RoomID)
 		}
 	}
 	wg.Wait()

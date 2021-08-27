@@ -43,6 +43,11 @@ func (receiver *EsLiveBusiness) SearchAuthorRooms(authorId, keyword, sortStr, or
 		comErr = global.NewError(4000)
 		return
 	}
+	if sortStr == "gmv" {
+		sortStr = "predict_gmv"
+	} else if sortStr == "sales" {
+		sortStr = "predict_sales"
+	}
 	//兼容数据 2021-06-29
 	esTable := GetESTableByTime(es.DyAuthorLiveRecordsTable, startDate, endDate)
 	esQuery, esMultiQuery := elasticsearch.NewElasticQueryGroup()
@@ -78,7 +83,8 @@ func (receiver *EsLiveBusiness) SearchAuthorRooms(authorId, keyword, sortStr, or
 		Query()
 	utils.MapToStruct(results, &list)
 	for k, v := range list {
-		list[k].Sales = math.Floor(v.Sales)
+		list[k].Sales = math.Floor(v.PredictSales)
+		list[k].Gmv = math.Floor(v.PredictGmv)
 	}
 	total = esMultiQuery.Count
 	return
