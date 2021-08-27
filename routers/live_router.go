@@ -20,6 +20,7 @@ func init() {
 		),
 		beego.NSNamespace("/living",
 			beego.NSRouter("/base/:room_id", &v1dy.LiveController{}, "get:LivingBaseData"),
+			beego.NSRouter("/sale/:room_id", &v1dy.LiveController{}, "get:LivingSaleData"),
 			beego.NSRouter("/watch/chart/:room_id", &v1dy.LiveController{}, "get:LivingWatchChart"),
 			beego.NSRouter("/product/:room_id", &v1dy.LiveController{}, "get:LivingProduct"),
 		),

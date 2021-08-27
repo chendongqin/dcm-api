@@ -582,13 +582,6 @@ func (receiver *LiveController) LivingBaseData() {
 		receiver.FailReturn(comErr)
 		return
 	}
-	var gmv = liveInfo.PredictGmv
-	liveSaleData, _ := hbase.GetLiveSalesData(roomId)
-	if liveInfo.RoomStatus == 4 {
-		if liveSaleData.Gmv > 0 {
-			gmv = liveSaleData.Gmv
-		}
-	}
 	authorData, _ := hbase.GetAuthor(liveInfo.User.ID)
 	livingInfo := dy2.LivingInfo{
 		RoomId:   business.IdDecrypt(liveInfo.RoomID),
@@ -599,15 +592,38 @@ func (receiver *LiveController) LivingBaseData() {
 			FollowerCount: authorData.Data.FollowerCount,
 			RoomId:        business.IdDecrypt(authorData.RoomId),
 		},
-		Title:          liveInfo.Title,
-		Cover:          dyimg.Fix(liveInfo.Cover),
+		Title:        liveInfo.Title,
+		Cover:        dyimg.Fix(liveInfo.Cover),
+		CreateTime:   liveInfo.CreateTime,
+		RoomShareUrl: business.LiveShareUrl + roomId,
+	}
+	receiver.SuccReturn(livingInfo)
+	return
+}
+
+//数据大屏销售数据
+func (receiver *LiveController) LivingSaleData() {
+	roomId := business.IdDecrypt(receiver.Ctx.Input.Param(":room_id"))
+	liveInfo, comErr := hbase.GetLiveInfo(roomId)
+	if comErr != nil {
+		receiver.FailReturn(comErr)
+		return
+	}
+	var gmv = liveInfo.PredictGmv
+	liveSaleData, _ := hbase.GetLiveSalesData(roomId)
+	if liveInfo.RoomStatus == 4 {
+		if liveSaleData.Gmv > 0 {
+			gmv = liveSaleData.Gmv
+		}
+	}
+	livingInfo := dy2.LivingSale{
+		RoomId:         business.IdDecrypt(liveInfo.RoomID),
 		CreateTime:     liveInfo.CreateTime,
 		Gmv:            gmv,
 		UserCount:      liveInfo.UserCount,
 		TotalUserCount: liveInfo.TotalUser,
 		RoomStatus:     liveInfo.RoomStatus,
 		FinishTime:     liveInfo.FinishTime,
-		RoomShareUrl:   business.LiveShareUrl + roomId,
 	}
 	if liveInfo.FinishTime > 0 {
 		livingInfo.LiveTime = liveInfo.FinishTime - liveInfo.CreateTime
@@ -634,7 +650,6 @@ func (receiver *LiveController) LivingWatchChart() {
 	incOnlineTrends, _, _ := business.NewLiveBusiness().DealOnlineTrends(liveInfo)
 	receiver.SuccReturn(map[string]interface{}{
 		"room_id": business.IdEncrypt(roomId),
-		"gmv":     liveInfo.PredictGmv,
 		"trends":  incOnlineTrends,
 	})
 	return
