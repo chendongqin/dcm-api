@@ -85,6 +85,10 @@ func (receiver *WechatController) Receive() {
 				//自定义evnet_key 解析
 				logs.Error("[扫码登录微信1001]=>缓存key:[%s],openid:[%s]", msg.EventKey, msg.GetOpenID())
 				if strings.Contains(msg.EventKey, consistent.WECHAT_QR_LOGIN) {
+					//这边自定义的事件 还会有细分  qrlogin / qrscene_qrlogin
+					if strings.Contains(msg.EventKey, consistent.WECHAT_QR_SCENE_LOGIN) {
+						msg.EventKey = msg.EventKey[8:]
+					}
 					err := business.NewWechatBusiness().SubscribeOfficial(userWechat)
 					if err != nil {
 						logs.Error("[扫码绑定] 数据更新失败1001，err: %s", err)
