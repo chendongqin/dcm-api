@@ -369,9 +369,10 @@ func (receiver *UserBusiness) GetDyCollect(tagId, collectType int, keywords stri
 	for k, v := range collects {
 		data[k].DcUserDyCollect = v
 		dyAuthor, _ := hbase.GetAuthor(v.CollectId)
-		basic, _ := hbase.GetAuthorBasic(v.CollectId, "")
+		authorData, _ := hbase.GetAuthor(v.CollectId)
+		basicData, _ := hbase.GetAuthorBasic(v.CollectId, time.Now().AddDate(0, 0, -1).Format("20060102"))
 		data[k].FollowerCount = dyAuthor.Data.Fans.Douyin.Count
-		data[k].FollowerIncreCount = basic.FollowerCount - basic.FollowerCountBefore
+		data[k].FollowerIncreCount = authorData.FollowerCount - basicData.FollowerCount
 	}
 	return
 }

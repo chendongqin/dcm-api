@@ -73,8 +73,14 @@ func (i *EsProductBusiness) BaseSearch(productId, keyword, category, secondCateg
 	if relateAweme == 1 {
 		esQuery.SetRange("relate_aweme", map[string]interface{}{"gt": 0})
 	}
-	if commerceType != 0 {
-		esQuery.SetTerm("commerce_type", commerceType)
+	if commerceType == 1 {
+		esQuery.SetTerms("commerce_type", []int{1, 2})
+	} else if commerceType == 2 {
+		esQuery.SetTerms("commerce_type", []int{1, 2, 4, 5})
+	} else if commerceType == 3 {
+		esQuery.SetTerms("commerce_type", []int{3, 4})
+	} else if commerceType == 3 {
+		esQuery.SetTerms("commerce_type", []int{2, 3, 4, 5})
 	}
 	if minCommissionRate > 0 {
 		esQuery.SetRange("commission_rate", map[string]interface{}{
