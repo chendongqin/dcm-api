@@ -2,6 +2,7 @@ package v1
 
 import (
 	"dongchamao/business"
+	"dongchamao/business/es"
 	"dongchamao/controllers/api"
 	"dongchamao/global"
 	"dongchamao/global/cache"
@@ -167,7 +168,7 @@ func (receiver *AccountController) Info() {
 		expiration := "-"
 		subExpiration := "-"
 		if v.ExpirationTime.After(time.Now()) {
-			expiration = v.ExpirationTime.Format("2006-01-02 15:04:05")
+			expiration = v.ExpirationTime.Format("2006-01-02")
 		}
 		if v.SubExpirationTime.After(time.Now()) {
 			subExpiration = v.SubExpirationTime.Format("2006-01-02 15:04:05")
@@ -296,6 +297,18 @@ func (receiver *AccountController) DyUserSearchList() {
 		"total": total,
 	})
 	return
+}
+
+func (receiver *AccountController) DyUnionSearch() {
+	keyword := receiver.GetString("keyword")
+	ret := map[string]interface{}{
+		"author":  es.NewEsAuthorBusiness().KeywordSearch(keyword),
+		"live":    es.NewEsLiveBusiness().KeywordSearch(keyword),
+		"product": es.NewEsProductBusiness().KeywordSearch(keyword),
+	}
+	receiver.SuccReturn(ret)
+	return
+
 }
 
 func (receiver *AccountController) AddCollect() {

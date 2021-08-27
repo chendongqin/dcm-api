@@ -26,13 +26,13 @@ func init() {
 			beego.NSRouter("/code", &v1.CommonController{}, "post:Sms"),
 			beego.NSRouter("/verify/:grant_type/:username/:code", &v1.CommonController{}, "get:CheckSmsCode"),
 		),
+		beego.NSNamespace("/config",
+			beego.NSRouter("/:key_name", &v1.CommonController{}, "get:GetConfig"),
+			beego.NSRouter("/list", &v1.CommonController{}, "get:GetConfigList"),
+		),
 	)
 	// 注册路由组
 	beego.AddNamespace(ns)
-
 	beego.Router("/v1/test", &v1.CommonController{}, "get:Test")
-	beego.Router("/v1/config/:key_name", &v1.CommonController{}, "get:GetConfig")
-	beego.Router("/v1/config/list", &v1.CommonController{}, "get:GetConfigList")
 	beego.Router("/v1/id/:id", &v1.CommonController{}, "get:IdEncryptDecrypt")
-
 }
