@@ -250,7 +250,7 @@ func (receiver *AuthorController) AuthorViewData() {
 	productCount := dy2.DyAuthorBaseProductCount{}
 	startTime := time.Now().AddDate(0, 0, -31)
 	yesterday := time.Now().AddDate(0, 0, -1)
-	cacheKey := cache.GetCacheKey(cache.AuthorViewProductAllList, startTime.Format("20060102"), yesterday.Format("20060102"))
+	cacheKey := cache.GetCacheKey(cache.AuthorViewProductAllList, authorId, startTime.Format("20060102"), yesterday.Format("20060102"))
 	cacheStr := global.Cache.Get(cacheKey)
 	if cacheStr != "" {
 		cacheStr = utils.DeserializeData(cacheStr)
