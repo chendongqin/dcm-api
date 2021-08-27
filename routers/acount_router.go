@@ -13,7 +13,6 @@ func init() {
 			beego.NSRouter("/info", &v1.AccountController{}, "get:Info"),
 			beego.NSRouter("/logout", &v1.AccountController{}, "get:Logout"),
 			beego.NSRouter("/mobile/change", &v1.AccountController{}, "put:ChangeMobile"),
-			beego.NSRouter("/mobile/bind", &v1.AccountController{}, "put:BindMobile"),
 			beego.NSRouter("/dy/search/:type", &v1.AccountController{}, "put:DyUserSearchSave"),
 			beego.NSRouter("/dy/search/:id", &v1.AccountController{}, "delete:DyUserSearchDel"),
 			beego.NSRouter("/dy/search/:type", &v1.AccountController{}, "get:DyUserSearchList"),
