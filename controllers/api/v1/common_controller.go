@@ -7,10 +7,15 @@ import (
 	"dongchamao/global/cache"
 	"dongchamao/global/logger"
 	"dongchamao/global/utils"
+	"dongchamao/hbase"
 	"dongchamao/models/dcm"
+	"dongchamao/models/entity"
+	dy2 "dongchamao/models/repost/dy"
 	"dongchamao/services/ali_sms"
 	"encoding/json"
+	"fmt"
 	"strings"
+	"time"
 )
 
 type CommonController struct {
@@ -139,5 +144,90 @@ func (receiver *CommonController) GetConfig() {
 		return
 	}
 	receiver.SuccReturn(data)
+	return
+}
+
+func (receiver *CommonController) RedAuthorRoom() {
+	listType := receiver.Ctx.Input.Param(":type")
+	sql := "status = 1"
+	if listType == "advance" {
+		sql += fmt.Sprintf(" AND living_time > '%s' ", time.Now().Format("2006-01-02 15:04:05"))
+	} else {
+		sql += fmt.Sprintf(" AND living_time <= '%s' AND living_time >'%s' ", time.Now().Format("2006-01-02 15:04:05"), time.Now().AddDate(0, 0, -6).Format("2006-01-02 15:04:05"))
+	}
+	list := make([]dcm.DcAuthorRoom, 0)
+	_ = dcm.GetSlaveDbSession().
+		Table(new(dcm.DcAuthorRoom)).
+		Where(sql).
+		Desc("weight").
+		Find(&list)
+	if listType == "advance" {
+		data := make([]dy2.RedAuthorRoom, 0)
+		for _, v := range list {
+			authorData, _ := hbase.GetAuthor(v.AuthorId)
+			data = append(data, dy2.RedAuthorRoom{
+				AuthorId:   business.IdEncrypt(v.AuthorId),
+				Sign:       authorData.Data.Signature,
+				Nickname:   authorData.Data.Nickname,
+				LivingTime: v.LivingTime.Format("2006-01-02 15:04"),
+				RoomId:     business.IdEncrypt(authorData.RoomId),
+			})
+		}
+		receiver.SuccReturn(map[string]interface{}{
+			"list":  data,
+			"total": len(list),
+		})
+		return
+	}
+	liveBusiness := business.NewLiveBusiness()
+	dateMap := map[string][]dy2.RedAuthorRoom{}
+	for _, v := range list {
+		date := v.LivingTime.Format("2006-01-02")
+		if _, ok := dateMap[date]; !ok {
+			dateMap[date] = []dy2.RedAuthorRoom{}
+		}
+		authorData, _ := hbase.GetAuthor(v.AuthorId)
+		var gmv, sales float64
+		if v.RoomId == "" {
+			rooms, _ := hbase.GetAuthorRoomsByDate(v.AuthorId, v.LivingTime.Format("20060102"))
+			room := entity.DyAuthorLiveRoom{}
+			for _, r := range rooms {
+				if r.CreateTime > v.LivingTime.Unix() {
+					room = r
+					break
+				}
+				if r.CreateTime > room.CreateTime {
+					room = r
+				}
+			}
+			v.RoomId = room.RoomID
+			if room.RoomID != "" {
+				go func(id int, roomId string) {
+					_, _ = dcm.UpdateInfo(nil, id, map[string]interface{}{"room_id": roomId}, new(dcm.DcAuthorRoom))
+				}(v.Id, room.RoomID)
+			}
+		}
+		gmv, sales = liveBusiness.LiveSalesData(v.RoomId)
+		dateMap[date] = append(dateMap[date], dy2.RedAuthorRoom{
+			AuthorId:           business.IdEncrypt(v.AuthorId),
+			Sign:               authorData.Data.Signature,
+			Nickname:           authorData.Data.Nickname,
+			AuthorLivingRoomId: business.IdEncrypt(authorData.RoomId),
+			RoomId:             business.IdEncrypt(v.RoomId),
+			Gmv:                gmv,
+			Sales:              sales,
+		})
+	}
+	data := make([]dy2.RedAuthorRoomBox, 0)
+	for k, v := range dateMap {
+		data = append(data, dy2.RedAuthorRoomBox{
+			Date: k,
+			List: v,
+		})
+	}
+	receiver.SuccReturn(map[string]interface{}{
+		"list":  data,
+		"total": len(list),
+	})
 	return
 }

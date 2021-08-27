@@ -103,3 +103,19 @@ type DyAuthorBaseProductPriceChart struct {
 	Sales      int64  `json:"sales"`
 	ProductNum int    `json:"product_num"`
 }
+
+type RedAuthorRoom struct {
+	AuthorId           string  `json:"author_id"`
+	AuthorLivingRoomId string  `json:"author_living_room_id"`
+	Sign               string  `json:"sign"`
+	Nickname           string  `json:"nickname"`
+	LivingTime         string  `json:"living_time"`
+	RoomId             string  `json:"room_id"`
+	Gmv                float64 `json:"gmv"`
+	Sales              float64 `json:"sales"`
+}
+
+type RedAuthorRoomBox struct {
+	Date string          `json:"date"`
+	List []RedAuthorRoom `json:"list"`
+}

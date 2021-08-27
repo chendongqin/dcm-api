@@ -1,6 +1,7 @@
 package routers
 
 import (
+	v1 "dongchamao/controllers/api/v1"
 	v1dy "dongchamao/controllers/api/v1/dy"
 	"github.com/astaxie/beego"
 )
@@ -9,6 +10,7 @@ func init() {
 	//抖音达人
 	ns := beego.NewNamespace("/v1/dy",
 		beego.NSNamespace("/author",
+			beego.NSRouter("/red/:type", &v1.CommonController{}, "get:RedAuthorRoom"),
 			beego.NSRouter("/search", &v1dy.AuthorController{}, "get:BaseSearch"),
 			beego.NSRouter("/cate", &v1dy.AuthorController{}, "get:AuthorCate"),
 			beego.NSRouter("/live/tags", &v1dy.AuthorController{}, "get:GetCacheAuthorLiveTags"),

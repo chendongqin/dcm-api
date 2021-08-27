@@ -27,6 +27,7 @@ var LoginWitheUri = []string{
 	"/v1/dy/author/search",
 	"/v1/dy/product/search",
 	"/v1/dy/live/search",
+	"/v1/dy/author/red",
 }
 
 var SignWitheUri = []string{

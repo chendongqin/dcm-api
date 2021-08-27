@@ -234,7 +234,7 @@ func GetAuthorRoomsByDate(authorId, date string) (data []entity.DyAuthorLiveRoom
 		comErr = global.NewError(4040)
 		return
 	}
-	infoMap := hbaseService.HbaseFormat(result, entity.DyAuthorFansMap)
+	infoMap := hbaseService.HbaseFormat(result, entity.DyAuthorRoomMappingMap)
 	hData := &entity.DyAuthorRoomMapping{}
 	utils.MapToStruct(infoMap, hData)
 	data = hData.Data
