@@ -7,15 +7,10 @@ import (
 	"dongchamao/global/cache"
 	"dongchamao/global/logger"
 	"dongchamao/global/utils"
-	"dongchamao/hbase"
 	"dongchamao/models/dcm"
-	"dongchamao/models/entity"
-	dy2 "dongchamao/models/repost/dy"
 	"dongchamao/services/ali_sms"
 	"encoding/json"
-	"fmt"
 	"strings"
-	"time"
 )
 
 type CommonController struct {
@@ -144,6 +139,27 @@ func (receiver *CommonController) GetConfig() {
 		return
 	}
 	receiver.SuccReturn(data)
+	return
+}
+
+func (receiver *CommonController) GetConfigList() {
+	var config []dcm.DcConfigJson
+	if err := dcm.GetDbSession().Table(dcm.DcConfigJson{}).Where("auth=1").Find(&config); err != nil {
+		receiver.FailReturn(global.NewError(5000))
+		return
+	}
+	var data = make([]map[string]interface{}, len(config))
+	utils.MapToStruct(config, &data)
+	var ret = make(map[string]map[string]interface{}, len(config))
+	for _, v := range data {
+		var jsonMap map[string]interface{}
+		if err := json.Unmarshal([]byte(v["Value"].(string)), &jsonMap); err != nil {
+			receiver.FailReturn(global.NewError(5000))
+			return
+		}
+		ret[v["KeyName"].(string)] = jsonMap
+	}
+	receiver.SuccReturn(ret)
 	return
 }
 
