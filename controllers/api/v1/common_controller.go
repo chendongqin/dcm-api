@@ -192,6 +192,8 @@ func (receiver *CommonController) RedAuthorRoom() {
 				Nickname:   authorData.Data.Nickname,
 				LivingTime: v.LivingTime.Format("2006-01-02 15:04"),
 				RoomId:     business.IdEncrypt(authorData.RoomId),
+				Tags:       authorData.Tags,
+				RoomCount:  authorData.RoomCount,
 			})
 		}
 		receiver.SuccReturn(map[string]interface{}{
@@ -237,6 +239,8 @@ func (receiver *CommonController) RedAuthorRoom() {
 			RoomId:             business.IdEncrypt(v.RoomId),
 			Gmv:                gmv,
 			Sales:              sales,
+			Tags:               authorData.Tags,
+			RoomCount:          authorData.RoomCount,
 		})
 	}
 	data := make([]dy2.RedAuthorRoomBox, 0)
