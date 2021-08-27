@@ -24,6 +24,7 @@ import (
 	"net"
 	"net/http"
 	"os"
+	"strconv"
 	"strings"
 	"time"
 )
@@ -305,13 +306,19 @@ func _initWxOfficialAccount() {
 	wechatAppSecret := Cfg.String("wx_office_app_secret")
 	wechatToken := Cfg.String("wx_office_app_token")
 	wechatEncodedAESKey := Cfg.String("wx_office_encoded_aes_key")
-	memory := wxCache.NewMemory() //TODO 建议改成 REDIS
+
+	db, _ := strconv.Atoi(Cfg.String("default_redis_db"))
+	wxRedis := &wxCache.RedisOpts{
+		Host:     Cfg.String("default_redis_host"),
+		Password: Cfg.String("default_redis_passwd"),
+		Database: db,
+	}
 	cfg := &config.Config{
 		AppID:          wechatAppId,
 		AppSecret:      wechatAppSecret,
 		Token:          wechatToken,
 		EncodingAESKey: wechatEncodedAESKey,
-		Cache:          memory,
+		Cache:          wxCache.NewRedis(wxRedis),
 	}
 	WxOfficial = wc.GetOfficialAccount(cfg)
 }
