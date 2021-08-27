@@ -7,10 +7,15 @@ import (
 	"dongchamao/global/cache"
 	"dongchamao/global/logger"
 	"dongchamao/global/utils"
+	"dongchamao/hbase"
 	"dongchamao/models/dcm"
+	"dongchamao/models/entity"
+	dy2 "dongchamao/models/repost/dy"
 	"dongchamao/services/ali_sms"
 	"encoding/json"
+	"fmt"
 	"strings"
+	"time"
 )
 
 type CommonController struct {
