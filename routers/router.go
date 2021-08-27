@@ -27,7 +27,7 @@ func init() {
 			beego.NSRouter("/verify/:grant_type/:username/:code", &v1.CommonController{}, "get:CheckSmsCode"),
 		),
 		beego.NSNamespace("/config",
-			beego.NSRouter("/get/:key_name", &v1.CommonController{}, "get:GetConfig"),
+			beego.NSRouter("/:key_name", &v1.CommonController{}, "get:GetConfig"),
 			beego.NSRouter("/list", &v1.CommonController{}, "get:GetConfigList"),
 		),
 	)
