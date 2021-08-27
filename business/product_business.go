@@ -18,7 +18,6 @@ import (
 	"regexp"
 	"sort"
 	"strings"
-	"sync"
 	"time"
 )
 
@@ -420,35 +419,4 @@ func (receiver *ProductBusiness) ExplainTaobaoShortUrl(url string) string {
 	}
 
 	return ""
-}
-
-//channel控制go协程获取商品信息
-func (receiver *ProductBusiness) GetProductByIdsLimitGo(productIds []string, maxNum int) map[string]entity.DyProductBrand {
-	var wg sync.WaitGroup
-	productLen := len(productIds)
-	if productLen < maxNum {
-		maxNum = productLen
-	}
-	productChan := make(chan string, maxNum)
-	products := make([]entity.DyProductBrand, 0)
-	productMap := map[string]entity.DyProductBrand{}
-	for _, v := range productIds {
-		productChan <- v
-		wg.Add(1)
-		go func(aCh chan string, wg *sync.WaitGroup) {
-			defer wg.Done()
-			productId, ok := <-aCh
-			if ok {
-				data, comErr := hbase.GetDyProductBrand(productId)
-				if comErr == nil {
-					products = append(products, data)
-				}
-			}
-		}(productChan, &wg)
-	}
-	wg.Wait()
-	for _, v := range products {
-		productMap[v.DyPromotionId] = v
-	}
-	return productMap
 }

@@ -1,22 +1,27 @@
 package dy
 
 type LivingInfo struct {
-	RoomId         string           `json:"room_id"`
-	AuthorId       string           `json:"author_id"`
-	Author         LivingAuthorInfo `json:"author"`
-	Title          string           `json:"title"`
-	Cover          string           `json:"cover"`
-	CreateTime     int64            `json:"create_time"`
-	UserCount      int64            `json:"user_count"`
-	TotalUserCount int64            `json:"total_user_count"`
-	RoomStatus     int              `json:"room_status"`
-	FinishTime     int64            `json:"finish_time"`
-	LiveTime       int64            `json:"live_time"`
-	Uv             float64          `json:"uv"`
-	Gmv            float64          `json:"gmv"`
-	AvgOnlineTime  float64          `json:"avg_online_time"`
-	BarrageRate    float64          `json:"barrage_rate"`
-	RoomShareUrl   string           `json:"room_share_url"`
+	RoomId       string           `json:"room_id"`
+	AuthorId     string           `json:"author_id"`
+	Author       LivingAuthorInfo `json:"author"`
+	Title        string           `json:"title"`
+	Cover        string           `json:"cover"`
+	CreateTime   int64            `json:"create_time"`
+	RoomShareUrl string           `json:"room_share_url"`
+}
+
+type LivingSale struct {
+	RoomId         string  `json:"room_id"`
+	CreateTime     int64   `json:"create_time"`
+	UserCount      int64   `json:"user_count"`
+	TotalUserCount int64   `json:"total_user_count"`
+	RoomStatus     int     `json:"room_status"`
+	FinishTime     int64   `json:"finish_time"`
+	LiveTime       int64   `json:"live_time"`
+	Uv             float64 `json:"uv"`
+	Gmv            float64 `json:"gmv"`
+	AvgOnlineTime  float64 `json:"avg_online_time"`
+	BarrageRate    float64 `json:"barrage_rate"`
 }
 
 type LivingAuthorInfo struct {

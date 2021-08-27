@@ -328,7 +328,7 @@ func (a *AuthorBusiness) CountLiveRoomAnalyse(authorId string, startTime, endTim
 	hbaseDataChan := make(chan dy.DyLiveRoomAnalyse, roomNum)
 	for _, rooms := range roomsMap {
 		for _, room := range rooms {
-			go func(roomId string, wg *sync.WaitGroup) {
+			go func(roomId string) {
 				defer global.RecoverPanic()
 				defer wg.Done()
 				liveBusiness := NewLiveBusiness()
@@ -336,7 +336,7 @@ func (a *AuthorBusiness) CountLiveRoomAnalyse(authorId string, startTime, endTim
 				if comErr == nil {
 					hbaseDataChan <- roomAnalyse
 				}
-			}(room.RoomID, &wg)
+			}(room.RoomID)
 		}
 	}
 	wg.Wait()
@@ -534,28 +534,9 @@ func (a *AuthorBusiness) GetAuthorProductAnalyse(authorId, keyword, firstCate, s
 	productMapList := map[string]entity.DyAuthorProductAnalysis{}
 	var sumGmv float64 = 0
 	var sumSale float64 = 0
-	hbaseDataList := make([]entity.DyAuthorProductAnalysis, 0)
-	esAuthorBusiness := es.NewEsAuthorBusiness()
-	startRow, stopRow, tmpErr := esAuthorBusiness.AuthorProductAnalysis(authorId, keyword, startTime, endTime)
-	if tmpErr != nil {
-		comErr = tmpErr
+	hbaseDataList, comErr := a.GetAuthorProductHbaseList(authorId, keyword, startTime, endTime)
+	if comErr != nil {
 		return
-	}
-	startRowKey := startRow.AuthorDateProduct
-	stopRowKey := stopRow.AuthorDateProduct
-	if startRowKey == "" || stopRowKey == "" {
-		return
-	}
-	cacheKey := cache.GetCacheKey(cache.AuthorProductAllList, startRowKey, stopRowKey)
-	cacheStr := global.Cache.Get(cacheKey)
-	if cacheStr != "" {
-		cacheStr = utils.DeserializeData(cacheStr)
-		_ = jsoniter.Unmarshal([]byte(cacheStr), &hbaseDataList)
-	} else {
-		hbaseDataList, _ = hbase.GetAuthorProductAnalysisRange(startRowKey, stopRowKey)
-		hbaseData, _ := hbase.GetAuthorProductAnalysis(stopRowKey)
-		hbaseDataList = append(hbaseDataList, hbaseData)
-		_ = global.Cache.Set(cacheKey, utils.SerializeData(hbaseDataList), 300)
 	}
 	for _, v := range hbaseDataList {
 		//数据过滤
@@ -707,7 +688,7 @@ func (a *AuthorBusiness) GetAuthorProductAnalyse(authorId, keyword, firstCate, s
 			case "gmv":
 				left = newList[i].Gmv
 				right = newList[j].Gmv
-			case "sale":
+			case "sales":
 				left = newList[i].Sales
 				right = newList[j].Sales
 			}
@@ -742,6 +723,36 @@ func (a *AuthorBusiness) GetAuthorProductAnalyse(authorId, keyword, firstCate, s
 	analysisCount.VideoNum = videoNum
 	analysisCount.Gmv = sumGmv
 	analysisCount.Sales = sumSale
+	return
+}
+
+//获取达人电商分析数据
+func (a *AuthorBusiness) GetAuthorProductHbaseList(authorId, keyword string, startTime, endTime time.Time) (hbaseDataList []entity.DyAuthorProductAnalysis, comErr global.CommonError) {
+	hbaseDataList = make([]entity.DyAuthorProductAnalysis, 0)
+	esAuthorBusiness := es.NewEsAuthorBusiness()
+	startRow, stopRow, tmpErr := esAuthorBusiness.AuthorProductAnalysis(authorId, keyword, startTime, endTime)
+	if tmpErr != nil {
+		comErr = tmpErr
+		return
+	}
+	startRowKey := startRow.AuthorDateProduct
+	stopRowKey := stopRow.AuthorDateProduct
+	if startRowKey == "" || stopRowKey == "" {
+		return
+	}
+	cacheKey := cache.GetCacheKey(cache.AuthorProductAllList, startRowKey, stopRowKey)
+	cacheStr := global.Cache.Get(cacheKey)
+	if cacheStr != "" {
+		cacheStr = utils.DeserializeData(cacheStr)
+		_ = jsoniter.Unmarshal([]byte(cacheStr), &hbaseDataList)
+	} else {
+		hbaseData, _ := hbase.GetAuthorProductAnalysis(stopRowKey)
+		if startRowKey != stopRowKey {
+			hbaseDataList, _ = hbase.GetAuthorProductAnalysisRange(startRowKey, stopRowKey)
+		}
+		hbaseDataList = append(hbaseDataList, hbaseData)
+		_ = global.Cache.Set(cacheKey, utils.SerializeData(hbaseDataList), 300)
+	}
 	return
 }
 
