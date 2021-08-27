@@ -191,7 +191,7 @@ func (receiver *RankController) DyLiveHourSellRank() {
 	var ret map[string]interface{}
 	cacheKey := cache.GetCacheKey(cache.DyRankCache, "live_hour_sell", utils.Md5_encode(fmt.Sprintf("%s", dateTime.Format("2006010215"))))
 	cacheStr := global.Cache.Get(cacheKey)
-	if cacheStr != "" {
+	if cacheStr != "" && date+" "+hour != time.Now().Format("2006-01-02 15:00") {
 		cacheStr = utils.DeserializeData(cacheStr)
 		_ = jsoniter.Unmarshal([]byte(cacheStr), &ret)
 	} else {
@@ -230,9 +230,9 @@ func (receiver *RankController) DyLiveHourSellRank() {
 		}
 		_ = global.Cache.Set(cacheKey, utils.SerializeData(ret), cacheTime)
 	}
-	if !receiver.HasAuth {
-		list := make([]interface{}, 0)
-		utils.MapToStruct(ret["list"], &list)
+	list := make([]entity.DyLiveHourSellRank, 0)
+	utils.MapToStruct(ret["list"], &list)
+	if !receiver.HasAuth && len(list) > receiver.MaxTotal {
 		ret["list"] = list[0:receiver.MaxTotal]
 	}
 	ret["has_login"] = receiver.HasLogin

@@ -25,7 +25,7 @@ func (receiver *CommonController) Sms() {
 		receiver.FailReturn(global.NewError(4205))
 		return
 	}
-	if !utils.InArrayString(grantType, []string{"login", "findpwd", "change_mobile"}) {
+	if !utils.InArrayString(grantType, []string{"login", "findpwd", "change_mobile", "bind_mobile"}) {
 		receiver.FailReturn(global.NewError(4000))
 		return
 	}
@@ -139,5 +139,26 @@ func (receiver *CommonController) GetConfig() {
 		return
 	}
 	receiver.SuccReturn(data)
+	return
+}
+
+func (receiver *CommonController) GetConfigList() {
+	var config []dcm.DcConfigJson
+	if err := dcm.GetDbSession().Table(dcm.DcConfigJson{}).Where("auth=1").Find(&config); err != nil {
+		receiver.FailReturn(global.NewError(5000))
+		return
+	}
+	var data = make([]map[string]interface{}, len(config))
+	utils.MapToStruct(config, &data)
+	var ret = make(map[string]map[string]interface{}, len(config))
+	for _, v := range data {
+		var jsonMap map[string]interface{}
+		if err := json.Unmarshal([]byte(v["Value"].(string)), &jsonMap); err != nil {
+			receiver.FailReturn(global.NewError(5000))
+			return
+		}
+		ret[v["KeyName"].(string)] = jsonMap
+	}
+	receiver.SuccReturn(ret)
 	return
 }

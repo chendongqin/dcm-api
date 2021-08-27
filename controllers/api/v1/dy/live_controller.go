@@ -582,6 +582,33 @@ func (receiver *LiveController) LivingBaseData() {
 		receiver.FailReturn(comErr)
 		return
 	}
+	authorData, _ := hbase.GetAuthor(liveInfo.User.ID)
+	livingInfo := dy2.LivingInfo{
+		RoomId:   business.IdDecrypt(liveInfo.RoomID),
+		AuthorId: business.IdDecrypt(liveInfo.User.ID),
+		Author: dy2.LivingAuthorInfo{
+			Avatar:        dyimg.Fix(authorData.Data.Avatar),
+			Nickname:      authorData.Data.Nickname,
+			FollowerCount: authorData.Data.FollowerCount,
+			RoomId:        business.IdDecrypt(authorData.RoomId),
+		},
+		Title:        liveInfo.Title,
+		Cover:        dyimg.Fix(liveInfo.Cover),
+		CreateTime:   liveInfo.CreateTime,
+		RoomShareUrl: business.LiveShareUrl + roomId,
+	}
+	receiver.SuccReturn(livingInfo)
+	return
+}
+
+//数据大屏销售数据
+func (receiver *LiveController) LivingSaleData() {
+	roomId := business.IdDecrypt(receiver.Ctx.Input.Param(":room_id"))
+	liveInfo, comErr := hbase.GetLiveInfo(roomId)
+	if comErr != nil {
+		receiver.FailReturn(comErr)
+		return
+	}
 	var gmv = liveInfo.PredictGmv
 	liveSaleData, _ := hbase.GetLiveSalesData(roomId)
 	if liveInfo.RoomStatus == 4 {
@@ -589,11 +616,8 @@ func (receiver *LiveController) LivingBaseData() {
 			gmv = liveSaleData.Gmv
 		}
 	}
-	liveingInfo := dy2.LivingInfo{
+	livingInfo := dy2.LivingSale{
 		RoomId:         business.IdDecrypt(liveInfo.RoomID),
-		AuthorId:       business.IdDecrypt(liveInfo.User.ID),
-		Title:          liveInfo.Title,
-		Cover:          dyimg.Fix(liveInfo.Cover),
 		CreateTime:     liveInfo.CreateTime,
 		Gmv:            gmv,
 		UserCount:      liveInfo.UserCount,
@@ -602,16 +626,16 @@ func (receiver *LiveController) LivingBaseData() {
 		FinishTime:     liveInfo.FinishTime,
 	}
 	if liveInfo.FinishTime > 0 {
-		liveingInfo.LiveTime = liveInfo.FinishTime - liveInfo.CreateTime
+		livingInfo.LiveTime = liveInfo.FinishTime - liveInfo.CreateTime
 	} else {
-		liveingInfo.LiveTime = time.Now().Unix() - liveInfo.CreateTime
+		livingInfo.LiveTime = time.Now().Unix() - liveInfo.CreateTime
 	}
 	if liveInfo.TotalUser > 0 {
-		liveingInfo.Uv = (gmv + float64(liveSaleData.TicketCount)/10) / float64(liveInfo.TotalUser)
-		liveingInfo.BarrageRate = float64(liveInfo.BarrageCount) / float64(liveInfo.TotalUser)
+		livingInfo.Uv = (gmv + float64(liveSaleData.TicketCount)/10) / float64(liveInfo.TotalUser)
+		livingInfo.BarrageRate = float64(liveInfo.BarrageCount) / float64(liveInfo.TotalUser)
 	}
-	liveingInfo.AvgOnlineTime = business.NewLiveBusiness().CountAvgOnlineTime(liveInfo.OnlineTrends, liveInfo.CreateTime, liveInfo.TotalUser)
-	receiver.SuccReturn(liveingInfo)
+	livingInfo.AvgOnlineTime = business.NewLiveBusiness().CountAvgOnlineTime(liveInfo.OnlineTrends, liveInfo.CreateTime, liveInfo.TotalUser)
+	receiver.SuccReturn(livingInfo)
 	return
 }
 
