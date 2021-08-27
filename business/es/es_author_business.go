@@ -269,6 +269,25 @@ func (receiver *EsAuthorBusiness) SimpleSearch(
 	return
 }
 
+func (receiver *EsAuthorBusiness) KeywordSearch(keyword string) (list []es.DyAuthor) {
+	esQuery, esMultiQuery := elasticsearch.NewElasticQueryGroup()
+	esTable := es.DyAuthorTable
+	esQuery.SetMatchPhrase("tags", keyword)
+	esQuery.SetMatchPhrase("nickname", keyword)
+	esQuery.SetMatchPhrase("unique_id", keyword)
+	esQuery.SetMatchPhrase("short_id", keyword)
+	esQuery.SetMatchPhrase("author_id", keyword)
+	results := esMultiQuery.
+		SetTable(esTable).
+		AddShould(esQuery.Condition).
+		SetLimit(0, 4).
+		SetOrderBy(elasticsearch.NewElasticOrder().Add("follower_count", "desc").Order).
+		SetMultiQuery().
+		Query()
+	utils.MapToStruct(results, &list)
+	return
+}
+
 //商品达人分析
 func (receiver *EsAuthorBusiness) AuthorProductAnalysis(authorId, keyword string, startTime, endTime time.Time) (startRow es.EsDyAuthorProductAnalysis, endRow es.EsDyAuthorProductAnalysis, comErr global.CommonError) {
 	esTable := GetESTableByTime(es.DyAuthorProductAnalysisTable, startTime, endTime)

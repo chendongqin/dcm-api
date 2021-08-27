@@ -207,3 +207,20 @@ func (i *EsProductBusiness) InternalSearch(productId, title, dcmLevelFirst, firs
 	total = esMultiQuery.Count
 	return
 }
+
+func (i *EsProductBusiness) KeywordSearch(keyword string) (list []es.DyProduct) {
+	esQuery, esMultiQuery := elasticsearch.NewElasticQueryGroup()
+	esTable := es.DyProductTable
+	esQuery.SetMatchPhrase("nickname", keyword)
+	esQuery.SetMatchPhrase("displayId", keyword)
+	esQuery.SetMatchPhrase("shortId", keyword)
+	esQuery.SetMatchPhrase("title", keyword)
+	results := esMultiQuery.
+		SetTable(esTable).
+		AddShould(esQuery.Condition).
+		SetLimit(0, 3).
+		SetMultiQuery().
+		Query()
+	utils.MapToStruct(results, &list)
+	return
+}

@@ -667,3 +667,22 @@ func (receiver *EsLiveBusiness) SearchLiveRooms(keyword, category, firstName, se
 	total = esMultiQuery.Count
 	return
 }
+
+func (receiver *EsLiveBusiness) KeywordSearch(keyword string) (list []es.EsDyLiveInfo) {
+	esQuery, esMultiQuery := elasticsearch.NewElasticQueryGroup()
+	esTable := GetESTableByTime(es.DyLiveInfoBaseTable, time.Now().AddDate(0, 0, -90), time.Now())
+	esQuery.SetMatchPhrase("room_id", keyword)
+	esQuery.SetMatchPhrase("nickname", keyword)
+	esQuery.SetMatchPhrase("display_id", keyword)
+	esQuery.SetMatchPhrase("short_id", keyword)
+	esQuery.SetMatchPhrase("title", keyword)
+	esQuery.SetMatchPhrase("tags", keyword)
+	results := esMultiQuery.
+		SetTable(esTable).
+		AddShould(esQuery.Condition).
+		SetLimit(0, 3).
+		SetMultiQuery().
+		Query()
+	utils.MapToStruct(results, &list)
+	return
+}
