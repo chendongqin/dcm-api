@@ -190,9 +190,21 @@ func (receiver *AuthorController) AuthorBaseData() {
 	}
 	reputation, _ := authorBusiness.HbaseGetAuthorReputation(authorId)
 	fansClub, _ := hbase.GetAuthorFansClub(authorId)
-	basic, _ := hbase.GetAuthorBasic(authorId, "")
+	basicBefore, _ := hbase.GetAuthorBasic(authorId, time.Now().AddDate(0, 0, -1).Format("20060102"))
 	authorBase.Data.ID = business.IdEncrypt(authorBase.Data.ID)
 	authorBase.Data.RoomID = business.IdEncrypt(authorBase.Data.RoomID)
+	basic := entity.DyAuthorBasic{
+		FollowerCount:        authorBase.FollowerCount,
+		FollowerCountBefore:  basicBefore.FollowerCount,
+		TotalFansCount:       authorBase.TotalFansCount,
+		TotalFansCountBefore: basicBefore.TotalFansCount,
+		TotalFavorited:       authorBase.TotalFavorited,
+		TotalFavoritedBefore: basicBefore.TotalFavorited,
+		CommentCount:         authorBase.CommentCount,
+		CommentCountBefore:   basicBefore.CommentCount,
+		ForwardCount:         authorBase.ForwardCount,
+		ForwardCountBefore:   basicBefore.ForwardCount,
+	}
 	returnMap := map[string]interface{}{
 		"author_base": authorBase.Data,
 		"room_count":  authorBase.RoomCount,

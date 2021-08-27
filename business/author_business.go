@@ -71,7 +71,7 @@ func (a *AuthorBusiness) HbaseGetFansRangDate(authorId, startDate, endDate strin
 	//末点补点
 	if endDate == time.Now().Format("20060102") {
 		if _, ok := dateMap[endDate]; !ok {
-			endData, _ := hbase.GetAuthorBasic(authorId, "")
+			endData, _ := hbase.GetAuthor(authorId)
 			dateMap[endDate] = entity.DyAuthorFans{
 				FollowerCount:       endData.FollowerCount,
 				TotalFansGroupCount: endData.TotalFansCount,
@@ -163,13 +163,13 @@ func (a *AuthorBusiness) HbaseGetAuthorBasicRangeDate(authorId string, startTime
 	//末点补点
 	if endDate == time.Now().Format("20060102") {
 		if _, ok := dateMap[endDate]; !ok {
-			basicData, _ := hbase.GetAuthorBasic(authorId, "")
+			authorData, _ := hbase.GetAuthor(authorId)
 			dateMap[endDate] = dy.DyAuthorBasicChart{
-				FollowerCount:  basicData.FollowerCount,
-				TotalFansCount: basicData.TotalFansCount,
-				TotalFavorited: basicData.TotalFavorited,
-				CommentCount:   basicData.CommentCount,
-				ForwardCount:   basicData.ForwardCount,
+				FollowerCount:  authorData.FollowerCount,
+				TotalFansCount: authorData.TotalFansCount,
+				TotalFavorited: authorData.TotalFavorited,
+				CommentCount:   authorData.CommentCount,
+				ForwardCount:   authorData.ForwardCount,
 			}
 		}
 	}

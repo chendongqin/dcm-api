@@ -12,6 +12,7 @@ import (
 	"dongchamao/models/entity"
 	dy2 "dongchamao/models/repost/dy"
 	"dongchamao/services/ali_sms"
+	"dongchamao/services/dyimg"
 	"encoding/json"
 	"fmt"
 	"strings"
@@ -188,10 +189,13 @@ func (receiver *CommonController) RedAuthorRoom() {
 			authorData, _ := hbase.GetAuthor(v.AuthorId)
 			data = append(data, dy2.RedAuthorRoom{
 				AuthorId:   business.IdEncrypt(v.AuthorId),
+				Avatar:     dyimg.Fix(authorData.Data.Avatar),
 				Sign:       authorData.Data.Signature,
 				Nickname:   authorData.Data.Nickname,
-				LivingTime: v.LivingTime.Format("2006-01-02 15:04"),
+				LivingTime: v.LivingTime.Unix(),
 				RoomId:     business.IdEncrypt(authorData.RoomId),
+				Tags:       authorData.Tags,
+				RoomCount:  authorData.RoomCount,
 			})
 		}
 		receiver.SuccReturn(map[string]interface{}{
@@ -232,11 +236,14 @@ func (receiver *CommonController) RedAuthorRoom() {
 		dateMap[date] = append(dateMap[date], dy2.RedAuthorRoom{
 			AuthorId:           business.IdEncrypt(v.AuthorId),
 			Sign:               authorData.Data.Signature,
+			Avatar:             dyimg.Fix(authorData.Data.Avatar),
 			Nickname:           authorData.Data.Nickname,
 			AuthorLivingRoomId: business.IdEncrypt(authorData.RoomId),
 			RoomId:             business.IdEncrypt(v.RoomId),
 			Gmv:                gmv,
 			Sales:              sales,
+			Tags:               authorData.Tags,
+			RoomCount:          authorData.RoomCount,
 		})
 	}
 	data := make([]dy2.RedAuthorRoomBox, 0)

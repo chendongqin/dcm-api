@@ -27,6 +27,11 @@ var DyAuthorMap = HbaseEntity{
 	"other_first_aweme_time":   {Long, "first_aweme_time"},
 	"other_product_count":      {Int, "product_count"},
 	"other_first_product_time": {Long, "first_product_time"},
+	"other_total_fans_count":   {Long, "total_fans_count"},
+	"other_follower_count":     {Long, "follower_count"},
+	"other_total_favorited":    {Long, "total_favorited"},
+	"other_comment_count":      {Long, "comment_count"},
+	"other_forward_count":      {Long, "forward_count"},
 }
 
 type DyAuthor struct {
@@ -58,6 +63,11 @@ type DyAuthor struct {
 	FirstLiveTime    int64           `json:"first_live_time"`
 	FirstAwemeTime   int64           `json:"first_aweme_time"`
 	FirstProductTime int64           `json:"first_product_time"`
+	TotalFansCount   int64           `json:"total_fans_count"`
+	FollowerCount    int64           `json:"follower_count"`
+	TotalFavorited   int64           `json:"total_favorited"`
+	CommentCount     int64           `json:"comment_count"`
+	ForwardCount     int64           `json:"forward_count"`
 }
 
 type DyAuthorRoom struct {
