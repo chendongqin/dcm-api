@@ -48,7 +48,7 @@ func (a *AuthorAwemeBusiness) HbaseGetVideoAggRangeDate(authorId string, startTi
 			aggCreateTime := time.Unix(agg.AwemeCreateTime, 0)
 			hour := aggCreateTime.Format("15")
 			videoNum++
-			if agg.DyPromotionId != "0" {
+			if !utils.InArrayString(agg.DyPromotionId, []string{"0", ""}) {
 				productVideo++
 			}
 			diggCount += agg.DiggCount
