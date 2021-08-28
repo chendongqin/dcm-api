@@ -6,7 +6,7 @@ import (
 
 type DcUser struct {
 	Id               int       `xorm:"not null pk autoincr INT(11)"`
-	Username         string    `xorm:"not null default '' comment('用户名（手机号）') unique CHAR(11)"`
+	Username         string    `xorm:"not null default '' comment('用户名（手机号）') CHAR(11)"`
 	Nickname         string    `xorm:"not null comment('昵称') VARCHAR(30)"`
 	Password         string    `xorm:"not null default '' comment('密码') VARCHAR(32)"`
 	Salt             string    `xorm:"not null comment('盐') CHAR(4)"`

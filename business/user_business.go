@@ -194,9 +194,10 @@ func (receiver *UserBusiness) QrLogin(openid string, appId int) (user dcm.DcUser
 	isNew = 0
 	//查询是否绑定用户
 	userModel := dcm.DcUser{}
-	isExistUser := false
+	isExistUser := true
 	if exist, _ := dcm.GetSlaveDbSession().Where("openid = ?", openid).Get(&userModel); !exist {
 		//如果没有用户微信尝试unionid 在次获取用户信息
+		isExistUser = false
 		if exist, _ := dcm.GetSlaveDbSession().Where("unionid = ?", wechatModel.Unionid).Get(&userModel); !exist {
 			isExistUser = false
 		}
