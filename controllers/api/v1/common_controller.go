@@ -273,10 +273,31 @@ func (receiver *CommonController) DyUnionSearch() {
 		return
 	}
 	receiver.KeywordBan(keyword)
+	authorList := es.NewEsAuthorBusiness().KeywordSearch(keyword)
+	for k, v := range authorList {
+		authorData, _ := hbase.GetAuthor(v.AuthorId)
+		authorList[k].AuthorId = business.IdEncrypt(v.AuthorId)
+		authorList[k].RoomId = business.IdEncrypt(authorData.RoomId)
+		if v.UniqueId == "" || v.UniqueId == "0" {
+			authorList[k].UniqueId = v.ShortId
+		}
+	}
+	liveList := es.NewEsLiveBusiness().KeywordSearch(keyword)
+	for k, v := range liveList {
+		liveList[k].AuthorId = business.IdEncrypt(v.AuthorId)
+		liveList[k].RoomId = business.IdEncrypt(v.RoomId)
+		if v.DisplayId == "" || v.DisplayId == "0" {
+			liveList[k].DisplayId = v.ShortId
+		}
+	}
+	productList := es.NewEsProductBusiness().KeywordSearch(keyword)
+	for k, v := range productList {
+		productList[k].ProductId = business.IdEncrypt(v.ProductId)
+	}
 	ret := map[string]interface{}{
-		"author":  es.NewEsAuthorBusiness().KeywordSearch(keyword),
-		"live":    es.NewEsLiveBusiness().KeywordSearch(keyword),
-		"product": es.NewEsProductBusiness().KeywordSearch(keyword),
+		"author":  authorList,
+		"live":    liveList,
+		"product": productList,
 	}
 	receiver.SuccReturn(ret)
 	return
