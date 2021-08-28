@@ -27,15 +27,19 @@ type CommonController struct {
 func (receiver *CommonController) Sms() {
 	InputData := receiver.InputFormat()
 	grantType := InputData.GetString("grant_type", "")
-	mobile := InputData.GetString("mobile", receiver.UserInfo.Username)
-	if !utils.VerifyMobileFormat(mobile) {
-		receiver.FailReturn(global.NewError(4205))
-		return
-	}
+	mobile := InputData.GetString("mobile", "")
 	if !utils.InArrayString(grantType, []string{"login", "findpwd", "change_mobile", "bind_mobile"}) {
 		receiver.FailReturn(global.NewError(4000))
 		return
 	}
+	if utils.InArrayString(grantType, []string{"change_mobile"}) {
+		mobile = receiver.UserInfo.Username
+	}
+	if !utils.VerifyMobileFormat(mobile) {
+		receiver.FailReturn(global.NewError(4205))
+		return
+	}
+
 	limitIpKey := cache.GetCacheKey(cache.SmsCodeLimitBySome, "ip", receiver.Ip)
 	verifyData := global.Cache.Get(limitIpKey)
 	if verifyData != "" {
