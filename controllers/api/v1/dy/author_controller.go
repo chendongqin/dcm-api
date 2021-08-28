@@ -668,8 +668,10 @@ func (receiver *AuthorController) AuthorLiveRooms() {
 	esLiveBusiness := es.NewEsLiveBusiness()
 	list, total, comErr := esLiveBusiness.SearchAuthorRooms(authorId, keyword, sortStr, orderBy, page, size, t1, t2)
 	for k, v := range list {
-		list[k].RoomID = business.IdEncrypt(v.RoomID)
-		list[k].AuthorID = business.IdEncrypt(v.AuthorID)
+		list[k].RoomId = business.IdEncrypt(v.RoomId)
+		list[k].AuthorId = business.IdEncrypt(v.AuthorId)
+		list[k].PredictSales = math.Floor(v.PredictSales)
+		list[k].PredictGmv = math.Floor(v.PredictGmv)
 	}
 	if comErr != nil {
 		receiver.FailReturn(comErr)

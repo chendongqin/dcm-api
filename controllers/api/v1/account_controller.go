@@ -122,9 +122,13 @@ func (receiver *AccountController) Info() {
 	if receiver.UserInfo.Unionid != "" {
 
 	}
+	usernameEncrypt := ""
+	if len(username) >= 11 {
+		usernameEncrypt = username[:3] + "****" + username[7:]
+	}
 	account := dy.RepostAccountData{
 		UserId:      receiver.UserInfo.Id,
-		Username:    username[:3] + "****" + username[7:],
+		Username:    usernameEncrypt,
 		Nickname:    receiver.UserInfo.Nickname,
 		Avatar:      receiver.UserInfo.Avatar,
 		PasswordSet: receiver.UserInfo.SetPassword,

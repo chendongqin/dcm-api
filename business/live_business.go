@@ -168,14 +168,14 @@ func (l *LiveBusiness) LiveRoomAnalyse(roomId string) (data dy.DyLiveRoomAnalyse
 		data.LiveLongTime = liveInfo.FinishTime - liveInfo.CreateTime
 	}
 	salesData, _ := hbase.GetLiveSalesData(roomId)
-	if salesData.Gmv == 0 {
-		salesData.Gmv = liveInfo.PredictGmv
-		salesData.Sales = liveInfo.PredictSales
-		//if liveInfo.RealGmv > 0 {
-		//	gmv = liveInfo.RealGmv
-		//	sales = liveInfo.RealSales
-		//}
-	}
+	//if salesData.Gmv == 0 {
+	salesData.Gmv = liveInfo.PredictGmv
+	salesData.Sales = liveInfo.PredictSales
+	//if liveInfo.RealGmv > 0 {
+	//	gmv = liveInfo.RealGmv
+	//	sales = liveInfo.RealSales
+	//}
+	//}
 	if liveInfo.TotalUser > 0 {
 		data.Uv = (salesData.Gmv + float64(salesData.TicketCount)/10) / float64(liveInfo.TotalUser)
 		data.SaleRate = salesData.Sales / float64(liveInfo.TotalUser)
@@ -195,19 +195,6 @@ func (l *LiveBusiness) LiveRoomAnalyse(roomId string) (data dy.DyLiveRoomAnalyse
 	}
 	if lenNum > 0 {
 		data.AvgUserCount = sumUserCount / int64(lenNum)
-	}
-	return
-}
-
-//获取销售额、销量
-func (l *LiveBusiness) LiveSalesData(roomId string) (gmv, sales float64) {
-	salesData, _ := hbase.GetLiveSalesData(roomId)
-	gmv = salesData.Gmv
-	sales = salesData.Sales
-	if salesData.Gmv == 0 {
-		liveInfo, _ := hbase.GetLiveInfo(roomId)
-		gmv = liveInfo.PredictGmv
-		sales = liveInfo.PredictSales
 	}
 	return
 }

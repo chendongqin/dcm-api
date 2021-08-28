@@ -66,6 +66,7 @@ func (receiver *LiveController) SearchRoom() {
 	hasProduct, _ := receiver.GetInt("has_product", 0)
 	isBrand, _ := receiver.GetInt("is_brand", 0)
 	keywordType, _ := receiver.GetInt("keyword_type", 0)
+	listType, _ := receiver.GetInt("list_type", 0)
 	page := receiver.GetPage("page")
 	pageSize := receiver.GetPageSize("page_size", 10, 100)
 	receiver.KeywordBan(keyword)
@@ -100,6 +101,24 @@ func (receiver *LiveController) SearchRoom() {
 	for k, v := range list {
 		list[k].AuthorId = business.IdEncrypt(v.AuthorId)
 		list[k].RoomId = business.IdEncrypt(v.RoomId)
+		list[k].Cover = dyimg.Fix(v.Cover)
+		list[k].Avatar = dyimg.Fix(v.Avatar)
+		////todo gmv处理
+		//if v.RealGmv > 0 {
+		//	list[k].PredictGmv = v.RealGmv
+		//}
+		//if v.RealUvValue > 0 {
+		//	list[k].PredictUvValue = v.RealUvValue
+		//}
+		list[k].AvgUserCount = math.Floor(v.AvgUserCount)
+		if v.DisplayId == "" {
+			list[k].DisplayId = v.ShortId
+		}
+		list[k].TagsArr = v.GetTagsArr()
+		if listType == 1 {
+			liveInfo, _ := hbase.GetLiveInfo(v.RoomId)
+			list[k].FinishTime = liveInfo.FinishTime
+		}
 	}
 	totalPage := math.Ceil(float64(total) / float64(pageSize))
 	maxPage := math.Ceil(float64(receiver.MaxTotal) / float64(pageSize))
@@ -153,16 +172,16 @@ func (receiver *LiveController) LiveInfoData() {
 	interactRate = 0
 	liveSale := dy2.DyLiveRoomSaleData{}
 	//todo gmv数据兼容
-	gmv := liveSaleData.Gmv
-	sales := liveSaleData.Sales
-	if liveSaleData.Gmv == 0 {
-		gmv = liveInfo.PredictGmv
-		sales = liveInfo.PredictSales
-		//if liveInfo.RealGmv > 0 {
-		//	gmv = liveInfo.RealGmv
-		//	sales = liveInfo.RealSales
-		//}
-	}
+	//gmv := liveSaleData.Gmv
+	//sales := liveSaleData.Sales
+	//if liveSaleData.Gmv == 0 {
+	gmv := liveInfo.PredictGmv
+	sales := liveInfo.PredictSales
+	//if liveInfo.RealGmv > 0 {
+	//	gmv = liveInfo.RealGmv
+	//	sales = liveInfo.RealSales
+	//}
+	//}
 	if liveInfo.TotalUser > 0 {
 		incFansRate = float64(liveInfo.FollowCount) / float64(liveInfo.TotalUser)
 		interactRate = float64(liveInfo.BarrageCount) / float64(liveInfo.TotalUser)
@@ -612,11 +631,11 @@ func (receiver *LiveController) LivingSaleData() {
 	}
 	var gmv = liveInfo.PredictGmv
 	liveSaleData, _ := hbase.GetLiveSalesData(roomId)
-	if liveInfo.RoomStatus == 4 {
-		if liveSaleData.Gmv > 0 {
-			gmv = liveSaleData.Gmv
-		}
-	}
+	//if liveInfo.RoomStatus == 4 {
+	//	if liveSaleData.Gmv > 0 {
+	//		gmv = liveSaleData.Gmv
+	//	}
+	//}
 	livingInfo := dy2.LivingSale{
 		RoomId:         business.IdDecrypt(liveInfo.RoomID),
 		CreateTime:     liveInfo.CreateTime,
