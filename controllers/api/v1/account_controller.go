@@ -76,8 +76,8 @@ func (receiver *AccountController) ResetPwd() {
 func (receiver *AccountController) ChangeMobile() {
 	InputData := receiver.InputFormat()
 	mobile := InputData.GetString("mobile", "")
+	oldCode := InputData.GetString("old_code", "")
 	code := InputData.GetString("code", "")
-	valid := InputData.GetString("valid", "")
 	userBusiness := business.NewUserBusiness()
 	//新手机号存在校验
 	exist, comErr := userBusiness.MobileExist(mobile)
@@ -91,14 +91,15 @@ func (receiver *AccountController) ChangeMobile() {
 	}
 	//旧手机验证
 	if receiver.UserInfo.Username != "" {
-		validKey := cache.GetCacheKey(cache.OldMobileVerify, valid)
-		oldMobile := global.Cache.Get(validKey)
-		if oldMobile != receiver.UserInfo.Username {
-			receiver.FailReturn(global.NewMsgError("旧手机验证失败"))
+		codeKey := cache.GetCacheKey(cache.SmsCodeVerify, "change_mobile", mobile)
+		verifyCode := global.Cache.Get(codeKey)
+		if verifyCode != oldCode {
+			receiver.FailReturn(global.NewError(4209))
+			return
 		}
 	}
 	//新手机验证码校验
-	codeKey := cache.GetCacheKey(cache.SmsCodeVerify, "change_mobile", mobile)
+	codeKey := cache.GetCacheKey(cache.SmsCodeVerify, "bind_mobile", mobile)
 	verifyCode := global.Cache.Get(codeKey)
 	if verifyCode != code {
 		receiver.FailReturn(global.NewError(4209))

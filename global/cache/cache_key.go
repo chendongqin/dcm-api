@@ -16,7 +16,6 @@ const (
 	//短信验证码
 	SmsCodeLimitBySome KeyName = "dcm:sms:limit:%s:%s" //短信发送限制
 	SmsCodeVerify      KeyName = "dcm:sms:code:%s:%s"
-	OldMobileVerify    KeyName = "dcm:sms:old:%s"
 	// 全局关闭验证
 	SecurityVerifyDisabled KeyName = "dcm:security:verify:disabled"
 	//触发滑块验证
