@@ -24,7 +24,7 @@ func NewEsLiveBusiness() *EsLiveBusiness {
 }
 
 //达人直播间搜索
-func (receiver *EsLiveBusiness) SearchAuthorRooms(authorId, keyword, sortStr, orderBy string, page, size int, startDate, endDate time.Time) (list []es.EsAuthorLiveRoom, total int, comErr global.CommonError) {
+func (receiver *EsLiveBusiness) SearchAuthorRooms(authorId, keyword, sortStr, orderBy string, page, size int, startDate, endDate time.Time) (list []es.EsDyLiveInfo, total int, comErr global.CommonError) {
 	if sortStr == "" {
 		sortStr = "create_timestamp"
 	}
@@ -57,22 +57,7 @@ func (receiver *EsLiveBusiness) SearchAuthorRooms(authorId, keyword, sortStr, or
 		"lt":  endDate.AddDate(0, 0, 1).Unix(),
 	})
 	if keyword != "" {
-		esQuery.AddCondition(map[string]interface{}{
-			"bool": map[string]interface{}{
-				"should": []interface{}{
-					map[string]interface{}{
-						"match_phrase": map[string]interface{}{
-							"title": keyword,
-						},
-					},
-					map[string]interface{}{
-						"match_phrase": map[string]interface{}{
-							"product_title": keyword,
-						},
-					},
-				},
-			},
-		})
+		esQuery.SetMultiMatch([]string{"title", "product_title"}, keyword)
 	}
 	results := esMultiQuery.
 		SetTable(esTable).
@@ -82,10 +67,6 @@ func (receiver *EsLiveBusiness) SearchAuthorRooms(authorId, keyword, sortStr, or
 		SetMultiQuery().
 		Query()
 	utils.MapToStruct(results, &list)
-	for k, v := range list {
-		list[k].Sales = math.Floor(v.PredictSales)
-		list[k].Gmv = math.Floor(v.PredictGmv)
-	}
 	total = esMultiQuery.Count
 	return
 }
@@ -155,24 +136,24 @@ func (receiver *EsLiveBusiness) RoomProductByRoomId(roomInfo entity.DyLiveInfo, 
 	}
 	if firstLabel != "" {
 		if firstLabel == "其他" {
-			//esQuery.AddCondition(map[string]interface{}{
-			//	"bool": map[string]interface{}{
-			//		"should": []map[string]interface{}{
-			//			{
-			//				"terms": map[string]interface{}{"dcm_level_first.keyword": []string{firstLabel, ""}},
-			//			},
-			//			{
-			//				"bool": map[string]interface{}{
-			//					"must_not": map[string]interface{}{
-			//						"exists": map[string]interface{}{
-			//							"field": "dcm_level_first",
-			//						},
-			//					},
-			//				},
-			//			},
-			//		},
-			//	},
-			//})
+			esQuery.AddCondition(map[string]interface{}{
+				"bool": map[string]interface{}{
+					"should": []map[string]interface{}{
+						{
+							"terms": map[string]interface{}{"dcm_level_first.keyword": []string{firstLabel, ""}},
+						},
+						{
+							"bool": map[string]interface{}{
+								"must_not": map[string]interface{}{
+									"exists": map[string]interface{}{
+										"field": "dcm_level_first",
+									},
+								},
+							},
+						},
+					},
+				},
+			})
 			secondLabel = ""
 			thirdLabel = ""
 		} else {
@@ -469,7 +450,7 @@ func (receiver *EsLiveBusiness) GetAuthorProductSearchRoomIds(authorId, productI
 	return
 }
 
-//达人直播间搜索
+//商品直播间搜索
 func (receiver *EsLiveBusiness) SearchProductRooms(productId, keyword, sortStr, orderBy string,
 	page, size int, startTime, endTime time.Time) (list []es.EsAuthorLiveProduct, total int, comErr global.CommonError) {
 	if sortStr == "" {
