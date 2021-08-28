@@ -30,6 +30,7 @@ var LoginWitheUri = []string{
 	"/v1/dy/author/red",
 	"/v1/config",
 	"/v1/config/list",
+	"/v1/search/dy",
 }
 
 var SignWitheUri = []string{

@@ -2,7 +2,6 @@ package v1
 
 import (
 	"dongchamao/business"
-	"dongchamao/business/es"
 	"dongchamao/controllers/api"
 	"dongchamao/global"
 	"dongchamao/global/cache"
@@ -266,18 +265,6 @@ func (receiver *AccountController) DyUserSearchList() {
 		"total": total,
 	})
 	return
-}
-
-func (receiver *AccountController) DyUnionSearch() {
-	keyword := receiver.GetString("keyword")
-	ret := map[string]interface{}{
-		"author":  es.NewEsAuthorBusiness().KeywordSearch(keyword),
-		"live":    es.NewEsLiveBusiness().KeywordSearch(keyword),
-		"product": es.NewEsProductBusiness().KeywordSearch(keyword),
-	}
-	receiver.SuccReturn(ret)
-	return
-
 }
 
 func (receiver *AccountController) AddCollect() {

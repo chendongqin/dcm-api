@@ -561,3 +561,12 @@ func (receiver *ApiBaseController) GetRangeDate() (startTime, endTime time.Time,
 	}
 	return
 }
+
+//禁词
+func (receiver *ApiBaseController) KeywordBan(keyword string) {
+	if utils.InArrayString(keyword, []string{"chanmama", "蝉妈妈"}) {
+		receiver.FailReturn(global.NewError(10000))
+		return
+	}
+	return
+}

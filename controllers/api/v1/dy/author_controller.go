@@ -104,6 +104,7 @@ func (receiver *AuthorController) BaseSearch() {
 	superSeller, _ := receiver.GetInt("super_seller", 0)
 	page := receiver.GetPage("page")
 	pageSize := receiver.GetPageSize("page_size", 10, 100)
+	receiver.KeywordBan(keyword)
 	if !receiver.HasLogin && keyword != "" {
 		receiver.FailReturn(global.NewError(4001))
 		return

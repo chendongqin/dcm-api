@@ -272,14 +272,23 @@ func (receiver *EsAuthorBusiness) SimpleSearch(
 func (receiver *EsAuthorBusiness) KeywordSearch(keyword string) (list []es.DyAuthor) {
 	esQuery, esMultiQuery := elasticsearch.NewElasticQueryGroup()
 	esTable := es.DyAuthorTable
-	esQuery.SetMatchPhrase("tags", keyword)
-	esQuery.SetMatchPhrase("nickname", keyword)
-	esQuery.SetMatchPhrase("unique_id", keyword)
-	esQuery.SetMatchPhrase("short_id", keyword)
-	esQuery.SetMatchPhrase("author_id", keyword)
+	if utils.HasChinese(keyword) {
+		slop := 100
+		length := len([]rune(keyword))
+		if length <= 3 {
+			slop = 2
+		}
+		esQuery.SetMatchPhraseWithParams("nickname", keyword, alias.M{
+			"slop": slop,
+		})
+	} else {
+		esQuery.
+			SetMultiMatch([]string{"author_id", "nickname", "unique_id", "short_id"}, keyword)
+	}
 	results := esMultiQuery.
 		SetTable(esTable).
-		AddShould(esQuery.Condition).
+		SetCache(60).
+		AddMust(esQuery.Condition).
 		SetLimit(0, 4).
 		SetOrderBy(elasticsearch.NewElasticOrder().Add("follower_count", "desc").Order).
 		SetMultiQuery().

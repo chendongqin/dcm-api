@@ -44,7 +44,8 @@ var ErrCode = map[int]string{
 	5000: "系统错误",
 	6000: "操作过于频繁,请稍后重试",
 
-	8000: "滑块验证",
+	8000:  "滑块验证",
+	10000: "由于相关法律和政策，无法展示相关结果",
 }
 
 func NewError(errCode int) CommonError {

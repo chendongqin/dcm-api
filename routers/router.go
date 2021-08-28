@@ -30,6 +30,9 @@ func init() {
 			beego.NSRouter("/:key_name", &v1.CommonController{}, "get:GetConfig"),
 			beego.NSRouter("/list", &v1.CommonController{}, "get:GetConfigList"),
 		),
+		beego.NSNamespace("/search",
+			beego.NSRouter("/dy", &v1.CommonController{}, "get:DyUnionSearch"),
+		),
 	)
 	// 注册路由组
 	beego.AddNamespace(ns)

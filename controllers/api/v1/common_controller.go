@@ -2,6 +2,7 @@ package v1
 
 import (
 	"dongchamao/business"
+	"dongchamao/business/es"
 	"dongchamao/controllers/api"
 	"dongchamao/global"
 	"dongchamao/global/cache"
@@ -258,4 +259,21 @@ func (receiver *CommonController) RedAuthorRoom() {
 		"total": len(list),
 	})
 	return
+}
+
+//抖音首页查询
+func (receiver *CommonController) DyUnionSearch() {
+	if !business.UserActionLock(receiver.TrueUri, receiver.Ip, 2) {
+		receiver.FailReturn(global.NewError(4211))
+	}
+	keyword := receiver.GetString("keyword")
+	receiver.KeywordBan(keyword)
+	ret := map[string]interface{}{
+		"author":  es.NewEsAuthorBusiness().KeywordSearch(keyword),
+		"live":    es.NewEsLiveBusiness().KeywordSearch(keyword),
+		"product": es.NewEsProductBusiness().KeywordSearch(keyword),
+	}
+	receiver.SuccReturn(ret)
+	return
+
 }

@@ -68,6 +68,7 @@ func (receiver *LiveController) SearchRoom() {
 	keywordType, _ := receiver.GetInt("keyword_type", 0)
 	page := receiver.GetPage("page")
 	pageSize := receiver.GetPageSize("page_size", 10, 100)
+	receiver.KeywordBan(keyword)
 	if !receiver.HasAuth {
 		today := time.Now().Format("20060102")
 		lastDay := time.Now().AddDate(0, 0, -6).Format("20060102")
