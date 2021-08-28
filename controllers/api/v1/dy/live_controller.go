@@ -153,16 +153,16 @@ func (receiver *LiveController) LiveInfoData() {
 	interactRate = 0
 	liveSale := dy2.DyLiveRoomSaleData{}
 	//todo gmv数据兼容
-	gmv := liveSaleData.Gmv
-	sales := liveSaleData.Sales
-	if liveSaleData.Gmv == 0 {
-		gmv = liveInfo.PredictGmv
-		sales = liveInfo.PredictSales
-		//if liveInfo.RealGmv > 0 {
-		//	gmv = liveInfo.RealGmv
-		//	sales = liveInfo.RealSales
-		//}
-	}
+	//gmv := liveSaleData.Gmv
+	//sales := liveSaleData.Sales
+	//if liveSaleData.Gmv == 0 {
+	gmv := liveInfo.PredictGmv
+	sales := liveInfo.PredictSales
+	//if liveInfo.RealGmv > 0 {
+	//	gmv = liveInfo.RealGmv
+	//	sales = liveInfo.RealSales
+	//}
+	//}
 	if liveInfo.TotalUser > 0 {
 		incFansRate = float64(liveInfo.FollowCount) / float64(liveInfo.TotalUser)
 		interactRate = float64(liveInfo.BarrageCount) / float64(liveInfo.TotalUser)
@@ -612,11 +612,11 @@ func (receiver *LiveController) LivingSaleData() {
 	}
 	var gmv = liveInfo.PredictGmv
 	liveSaleData, _ := hbase.GetLiveSalesData(roomId)
-	if liveInfo.RoomStatus == 4 {
-		if liveSaleData.Gmv > 0 {
-			gmv = liveSaleData.Gmv
-		}
-	}
+	//if liveInfo.RoomStatus == 4 {
+	//	if liveSaleData.Gmv > 0 {
+	//		gmv = liveSaleData.Gmv
+	//	}
+	//}
 	livingInfo := dy2.LivingSale{
 		RoomId:         business.IdDecrypt(liveInfo.RoomID),
 		CreateTime:     liveInfo.CreateTime,
