@@ -49,10 +49,10 @@ func (receiver *EsLiveBusiness) SearchAuthorRooms(authorId, keyword, sortStr, or
 		sortStr = "predict_sales"
 	}
 	//兼容数据 2021-06-29
-	esTable := GetESTableByTime(es.DyAuthorLiveRecordsTable, startDate, endDate)
+	esTable := GetESTableByTime(es.DyLiveInfoBaseTable, startDate, endDate)
 	esQuery, esMultiQuery := elasticsearch.NewElasticQueryGroup()
 	esQuery.SetTerm("author_id", authorId)
-	esQuery.SetRange("create_timestamp", map[string]interface{}{
+	esQuery.SetRange("create_time", map[string]interface{}{
 		"gte": startDate.Unix(),
 		"lt":  endDate.AddDate(0, 0, 1).Unix(),
 	})
@@ -155,35 +155,35 @@ func (receiver *EsLiveBusiness) RoomProductByRoomId(roomInfo entity.DyLiveInfo, 
 	}
 	if firstLabel != "" {
 		if firstLabel == "其他" {
-			esQuery.AddCondition(map[string]interface{}{
-				"bool": map[string]interface{}{
-					"should": []map[string]interface{}{
-						{
-							"terms": map[string]interface{}{"dcm_level_first.keyword": []string{firstLabel, ""}},
-						},
-						{
-							"bool": map[string]interface{}{
-								"must_not": map[string]interface{}{
-									"exists": map[string]interface{}{
-										"field": "dcm_level_first",
-									},
-								},
-							},
-						},
-					},
-				},
-			})
+			//esQuery.AddCondition(map[string]interface{}{
+			//	"bool": map[string]interface{}{
+			//		"should": []map[string]interface{}{
+			//			{
+			//				"terms": map[string]interface{}{"dcm_level_first.keyword": []string{firstLabel, ""}},
+			//			},
+			//			{
+			//				"bool": map[string]interface{}{
+			//					"must_not": map[string]interface{}{
+			//						"exists": map[string]interface{}{
+			//							"field": "dcm_level_first",
+			//						},
+			//					},
+			//				},
+			//			},
+			//		},
+			//	},
+			//})
 			secondLabel = ""
 			thirdLabel = ""
 		} else {
-			esQuery.SetTerm("dcm_level_first.keyword", firstLabel)
+			esQuery.SetMatchPhrase("dcm_level_first.keyword", firstLabel)
 		}
 	}
 	if secondLabel != "" {
-		esQuery.SetTerm("first_cname.keyword", secondLabel)
+		esQuery.SetMatchPhrase("first_cname.keyword", secondLabel)
 	}
 	if thirdLabel != "" {
-		esQuery.SetTerm("second_cname.keyword", thirdLabel)
+		esQuery.SetMatchPhrase("second_cname.keyword", thirdLabel)
 	}
 	orderEs := elasticsearch.NewElasticOrder().Add(sortStr, orderBy).Order
 	results := esMultiQuery.
@@ -470,7 +470,8 @@ func (receiver *EsLiveBusiness) GetAuthorProductSearchRoomIds(authorId, productI
 }
 
 //达人直播间搜索
-func (receiver *EsLiveBusiness) SearchProductRooms(productId, keyword, sortStr, orderBy string, page, size int, startTime, endTime time.Time) (list []es.EsAuthorLiveProduct, total int, comErr global.CommonError) {
+func (receiver *EsLiveBusiness) SearchProductRooms(productId, keyword, sortStr, orderBy string,
+	page, size int, startTime, endTime time.Time) (list []es.EsAuthorLiveProduct, total int, comErr global.CommonError) {
 	if sortStr == "" {
 		sortStr = "shelf_time"
 	}
@@ -497,22 +498,7 @@ func (receiver *EsLiveBusiness) SearchProductRooms(productId, keyword, sortStr, 
 		"lt":  endTime.AddDate(0, 0, 1).Unix(),
 	})
 	if keyword != "" {
-		esQuery.AddCondition(map[string]interface{}{
-			"bool": map[string]interface{}{
-				"should": []interface{}{
-					map[string]interface{}{
-						"match_phrase": map[string]interface{}{
-							"room_title": keyword,
-						},
-					},
-					map[string]interface{}{
-						"match_phrase": map[string]interface{}{
-							"nickname": keyword,
-						},
-					},
-				},
-			},
-		})
+		esQuery.SetMultiMatch([]string{"room_title", "nickname"}, keyword)
 	}
 	results := esMultiQuery.
 		SetTable(esTable).
@@ -546,7 +532,11 @@ func (receiver *EsLiveBusiness) SearchProductRooms(productId, keyword, sortStr, 
 	return
 }
 
-func (receiver *EsLiveBusiness) SearchLiveRooms(keyword, category, firstName, secondName, thirdName string, minAmount, maxAmount, minAvgUserCount, maxAvgUserCount int64, minUv, maxUv, hasProduct, brand, keywordType int, sortStr, orderBy string, page, size int, startTime, endTime time.Time) (list []es.EsDyLiveInfo, total int, comErr global.CommonError) {
+func (receiver *EsLiveBusiness) SearchLiveRooms(keyword, category, firstName, secondName, thirdName string,
+	minAmount, maxAmount, minAvgUserCount, maxAvgUserCount int64,
+	minUv, maxUv, hasProduct, brand, keywordType int,
+	sortStr, orderBy string, page, size int,
+	startTime, endTime time.Time) (list []es.EsDyLiveInfo, total int, comErr global.CommonError) {
 	if sortStr == "" {
 		sortStr = "avg_user_count"
 	}
@@ -624,7 +614,7 @@ func (receiver *EsLiveBusiness) SearchLiveRooms(keyword, category, firstName, se
 		esQuery.SetTerm("brand", 1)
 	}
 	if hasProduct == 1 {
-		esQuery.SetRange("num_promotions", map[string]interface{}{
+		esQuery.SetRange("num_product", map[string]interface{}{
 			"gt": 0,
 		})
 	}
@@ -648,22 +638,6 @@ func (receiver *EsLiveBusiness) SearchLiveRooms(keyword, category, firstName, se
 		SetMultiQuery().
 		Query()
 	utils.MapToStruct(results, &list)
-	for k, v := range list {
-		list[k].Cover = dyimg.Fix(v.Cover)
-		list[k].Avatar = dyimg.Fix(v.Avatar)
-		////todo gmv处理
-		//if v.RealGmv > 0 {
-		//	list[k].PredictGmv = v.RealGmv
-		//}
-		//if v.RealUvValue > 0 {
-		//	list[k].PredictUvValue = v.RealUvValue
-		//}
-		list[k].AvgUserCount = math.Floor(v.AvgUserCount)
-		if v.DisplayId == "" {
-			list[k].DisplayId = v.ShortId
-		}
-		list[k].TagsArr = v.GetTagsArr()
-	}
 	total = esMultiQuery.Count
 	return
 }

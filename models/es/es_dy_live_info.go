@@ -15,7 +15,6 @@ type EsDyLiveInfo struct {
 	AuthorId        string   `json:"author_id"`
 	CreateTime      int64    `json:"create_time"`
 	CreateTimestamp string   `json:"create_timestamp"`
-	NumPromotions   int64    `json:"num_promotions"`
 	PredictUvValue  float64  `json:"predict_uv_value"`
 	RealUvValue     float64  `json:"real_uv_value"`
 	PredictGmv      float64  `json:"predict_gmv"`
@@ -24,6 +23,19 @@ type EsDyLiveInfo struct {
 	AllUserCount    float64  `json:"all_user_count"`
 	Tags            string   `json:"tags"`
 	TagsArr         []string `json:"tags_arr"`
+	NumProduct      int      `json:"num_product"`
+	ProductTitle    string   `json:"product_title"`
+	NumCrawlTimes   int      `json:"num_crawl_times"`
+	PredictSales    float64  `json:"predict_sales"`
+	RealSales       float64  `json:"real_sales"`
+	DcmLevelFirst   string   `json:"dcm_level_first"`
+	FirstCname      string   `json:"first_cname"`
+	SecondCname     string   `json:"second_cname"`
+	ThirdCname      string   `json:"third_cname"`
+	MaxUserCount    int      `json:"max_user_count"`
+	RowTime         string   `json:"row_time"`
+	Dt              string   `json:"dt"`
+	FinishTime      int64    `json:"finish_time"`
 }
 
 func (receiver EsDyLiveInfo) GetTagsArr() []string {
