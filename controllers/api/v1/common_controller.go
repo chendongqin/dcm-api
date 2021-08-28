@@ -265,8 +265,13 @@ func (receiver *CommonController) RedAuthorRoom() {
 func (receiver *CommonController) DyUnionSearch() {
 	if !business.UserActionLock(receiver.TrueUri, receiver.Ip, 2) {
 		receiver.FailReturn(global.NewError(4211))
+		return
 	}
-	keyword := receiver.GetString("keyword")
+	keyword := receiver.GetString("keyword", "")
+	if keyword == "" {
+		receiver.FailReturn(global.NewError(4000))
+		return
+	}
 	receiver.KeywordBan(keyword)
 	ret := map[string]interface{}{
 		"author":  es.NewEsAuthorBusiness().KeywordSearch(keyword),
