@@ -134,12 +134,23 @@ func (receiver *UserBusiness) LoginByPwd(username, pwd string, appId int) (user 
 }
 
 //验证码登陆
-func (receiver *UserBusiness) SmsLogin(mobile, code string, appId int) (user dcm.DcUser, tokenString string, expire int64, isNew int, comErr global.CommonError) {
+func (receiver *UserBusiness) SmsLogin(mobile, code, openid string, appId int) (user dcm.DcUser, tokenString string, expire int64, isNew int, comErr global.CommonError) {
 	codeKey := cache.GetCacheKey(cache.SmsCodeVerify, "login", mobile)
 	verifyCode := global.Cache.Get(codeKey)
-	if verifyCode != code {
+	if mobile == "" || verifyCode != code {
 		comErr = global.NewError(4209)
 		return
+	}
+	if openid != "" {
+		wechatModel := dcm.DcWechat{} //如果有微信信息 头像/昵称 默认用微信
+		if exist, _ := dcm.GetSlaveDbSession().Where("openid = ?", openid).Get(&wechatModel); exist {
+			user.Nickname = wechatModel.NickName
+			user.Avatar = wechatModel.Avatar
+			user.Openid = wechatModel.Openid
+			user.Unionid = wechatModel.Unionid
+		}
+	} else {
+		user.Nickname = mobile[:3] + "****" + mobile[7:]
 	}
 	exist, err := dcm.GetBy("username", mobile, &user)
 	if exist && err == nil {

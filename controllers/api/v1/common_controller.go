@@ -27,7 +27,7 @@ type CommonController struct {
 func (receiver *CommonController) Sms() {
 	InputData := receiver.InputFormat()
 	grantType := InputData.GetString("grant_type", "")
-	mobile := InputData.GetString("mobile", "")
+	mobile := InputData.GetString("mobile", receiver.UserInfo.Username)
 	if !utils.VerifyMobileFormat(mobile) {
 		receiver.FailReturn(global.NewError(4205))
 		return
