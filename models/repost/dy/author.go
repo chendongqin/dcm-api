@@ -111,9 +111,10 @@ type RedAuthorRoom struct {
 	Sign               string  `json:"sign"`
 	Nickname           string  `json:"nickname"`
 	LivingTime         int64   `json:"living_time"`
+	LiveTitle          string  `json:"live_title"`
 	RoomId             string  `json:"room_id"`
 	Gmv                float64 `json:"gmv"`
-	Sales              float64 `json:"sales"`
+	TotalUser          int64   `json:"total_user"`
 	Tags               string  `json:"tags"`
 	RoomCount          int     `json:"room_count"`
 }

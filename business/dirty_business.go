@@ -52,14 +52,14 @@ func (receiver *DirtyBusiness) ChangeProductCate(productId, dcmLevelFirst, first
 	}
 	hbaseBusiness := NewHbaseBusiness()
 	artificialData := map[string]interface{}{
-		"dcm_level_first": dcmLevelFirst,
-		"first_cname":     firstCate,
-		"second_cname":    secondCate,
-		"third_cname":     thirdCate,
+		"first_cname":  firstCate,
+		"second_cname": secondCate,
+		"third_cname":  thirdCate,
 	}
 	jsonByte, _ := jsoniter.Marshal(artificialData)
-	columnL := hbaseBusiness.BuildColumnValue("other", "artificial_data", string(jsonByte), entity.String)
-	err := hbaseBusiness.PutByRowKey(hbaseService.HbaseDyProduct, productId, []*hbase.TColumnValue{columnL})
+	columnL := hbaseBusiness.BuildColumnValue("other", "manmade_category", string(jsonByte), entity.String)
+	columnL2 := hbaseBusiness.BuildColumnValue("info", "dcm_level_first", dcmLevelFirst, entity.String)
+	err := hbaseBusiness.PutByRowKey(hbaseService.HbaseDyProduct, productId, []*hbase.TColumnValue{columnL, columnL2})
 	if err != nil {
 		return global.NewError(5000)
 	}

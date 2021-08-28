@@ -199,19 +199,6 @@ func (l *LiveBusiness) LiveRoomAnalyse(roomId string) (data dy.DyLiveRoomAnalyse
 	return
 }
 
-//获取销售额、销量
-func (l *LiveBusiness) LiveSalesData(roomId string) (gmv, sales float64) {
-	salesData, _ := hbase.GetLiveSalesData(roomId)
-	gmv = salesData.Gmv
-	sales = salesData.Sales
-	if salesData.Gmv == 0 {
-		liveInfo, _ := hbase.GetLiveInfo(roomId)
-		gmv = liveInfo.PredictGmv
-		sales = liveInfo.PredictSales
-	}
-	return
-}
-
 //平均停留时长计算
 func (l *LiveBusiness) CountAvgOnlineTime(onlineTrends []entity.DyLiveOnlineTrends, startTime, totalUser int64) float64 {
 	lenNum := len(onlineTrends)

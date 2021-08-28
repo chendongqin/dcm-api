@@ -205,7 +205,6 @@ func (receiver *CommonController) RedAuthorRoom() {
 		})
 		return
 	}
-	liveBusiness := business.NewLiveBusiness()
 	dateMap := map[string][]dy2.RedAuthorRoom{}
 	for _, v := range list {
 		date := v.LivingTime.Format("2006-01-02")
@@ -213,7 +212,6 @@ func (receiver *CommonController) RedAuthorRoom() {
 			dateMap[date] = []dy2.RedAuthorRoom{}
 		}
 		authorData, _ := hbase.GetAuthor(v.AuthorId)
-		var gmv, sales float64
 		if v.RoomId == "" {
 			rooms, _ := hbase.GetAuthorRoomsByDate(v.AuthorId, v.LivingTime.Format("20060102"))
 			room := entity.DyAuthorLiveRoom{}
@@ -233,7 +231,7 @@ func (receiver *CommonController) RedAuthorRoom() {
 				}(v.Id, room.RoomID)
 			}
 		}
-		gmv, sales = liveBusiness.LiveSalesData(v.RoomId)
+		liveInfo, _ := hbase.GetLiveInfo(v.RoomId)
 		dateMap[date] = append(dateMap[date], dy2.RedAuthorRoom{
 			AuthorId:           business.IdEncrypt(v.AuthorId),
 			Sign:               authorData.Data.Signature,
@@ -241,8 +239,9 @@ func (receiver *CommonController) RedAuthorRoom() {
 			Nickname:           authorData.Data.Nickname,
 			AuthorLivingRoomId: business.IdEncrypt(authorData.RoomId),
 			RoomId:             business.IdEncrypt(v.RoomId),
-			Gmv:                gmv,
-			Sales:              sales,
+			Gmv:                liveInfo.PredictGmv,
+			LiveTitle:          liveInfo.Title,
+			TotalUser:          liveInfo.TotalUser,
 			Tags:               authorData.Tags,
 			RoomCount:          authorData.RoomCount,
 		})
