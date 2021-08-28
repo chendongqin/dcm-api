@@ -9,13 +9,18 @@ import (
 func GetESTableByTime(table string, start, stop time.Time) string {
 	esTableArr := make([]string, 0)
 	begin := start
-	endTime := stop.Unix()
+	endMonth := stop.Month()
+	if begin.Month() > endMonth {
+		endMonth += 12
+	}
+	beginMonth := begin.Month()
 	for {
-		if begin.Unix() > endTime {
+		if beginMonth > endMonth {
 			break
 		}
 		esTableArr = append(esTableArr, fmt.Sprintf(table, begin.Format("200601")+"*"))
 		begin = begin.AddDate(0, 1, 0)
+		beginMonth += 1
 	}
 	return strings.Join(esTableArr, ",")
 }
