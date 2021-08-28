@@ -66,7 +66,6 @@ func (receiver *LiveController) SearchRoom() {
 	hasProduct, _ := receiver.GetInt("has_product", 0)
 	isBrand, _ := receiver.GetInt("is_brand", 0)
 	keywordType, _ := receiver.GetInt("keyword_type", 0)
-	listType, _ := receiver.GetInt("list_type", 0)
 	page := receiver.GetPage("page")
 	pageSize := receiver.GetPageSize("page_size", 10, 100)
 	receiver.KeywordBan(keyword)
@@ -115,10 +114,6 @@ func (receiver *LiveController) SearchRoom() {
 			list[k].DisplayId = v.ShortId
 		}
 		list[k].TagsArr = v.GetTagsArr()
-		if listType == 1 {
-			liveInfo, _ := hbase.GetLiveInfo(v.RoomId)
-			list[k].FinishTime = liveInfo.FinishTime
-		}
 	}
 	totalPage := math.Ceil(float64(total) / float64(pageSize))
 	maxPage := math.Ceil(float64(receiver.MaxTotal) / float64(pageSize))

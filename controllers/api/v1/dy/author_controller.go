@@ -656,6 +656,7 @@ func (receiver *AuthorController) AuthorLiveRooms() {
 	orderBy := InputData.GetString("order_by", "desc")
 	page := InputData.GetInt("page", 1)
 	size := InputData.GetInt("page_size", 10)
+	listType, _ := receiver.GetInt("list_type", 0)
 	if authorId == "" {
 		receiver.FailReturn(global.NewError(4000))
 		return
@@ -665,9 +666,6 @@ func (receiver *AuthorController) AuthorLiveRooms() {
 		receiver.FailReturn(comErr)
 		return
 	}
-	if sortStr == "create_timestamp" {
-		sortStr = "create_time"
-	}
 	esLiveBusiness := es.NewEsLiveBusiness()
 	list, total, comErr := esLiveBusiness.SearchAuthorRooms(authorId, keyword, sortStr, orderBy, page, size, t1, t2)
 	for k, v := range list {
@@ -675,6 +673,10 @@ func (receiver *AuthorController) AuthorLiveRooms() {
 		list[k].AuthorId = business.IdEncrypt(v.AuthorId)
 		list[k].PredictSales = math.Floor(v.PredictSales)
 		list[k].PredictGmv = math.Floor(v.PredictGmv)
+		if listType == 1 {
+			liveInfo, _ := hbase.GetLiveInfo(v.RoomId)
+			list[k].FinishTime = liveInfo.FinishTime
+		}
 	}
 	if comErr != nil {
 		receiver.FailReturn(comErr)

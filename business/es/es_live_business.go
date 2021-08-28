@@ -26,12 +26,12 @@ func NewEsLiveBusiness() *EsLiveBusiness {
 //达人直播间搜索
 func (receiver *EsLiveBusiness) SearchAuthorRooms(authorId, keyword, sortStr, orderBy string, page, size int, startDate, endDate time.Time) (list []es.EsDyLiveInfo, total int, comErr global.CommonError) {
 	if sortStr == "" {
-		sortStr = "create_timestamp"
+		sortStr = "create_time"
 	}
 	if orderBy == "" {
 		orderBy = "desc"
 	}
-	if !utils.InArrayString(sortStr, []string{"create_time", "gmv", "sales", "max_user_count"}) {
+	if !utils.InArrayString(sortStr, []string{"create_time", "predict_gmv", "predict_sales", "max_user_count"}) {
 		comErr = global.NewError(4000)
 		return
 	}
@@ -42,11 +42,6 @@ func (receiver *EsLiveBusiness) SearchAuthorRooms(authorId, keyword, sortStr, or
 	if size > 100 {
 		comErr = global.NewError(4000)
 		return
-	}
-	if sortStr == "gmv" {
-		sortStr = "predict_gmv"
-	} else if sortStr == "sales" {
-		sortStr = "predict_sales"
 	}
 	//兼容数据 2021-06-29
 	esTable := GetESTableByTime(es.DyLiveInfoBaseTable, startDate, endDate)
