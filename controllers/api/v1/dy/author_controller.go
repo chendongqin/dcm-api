@@ -652,7 +652,7 @@ func (receiver *AuthorController) AuthorLiveRooms() {
 	authorId := business.IdDecrypt(receiver.Ctx.Input.Param(":author_id"))
 	InputData := receiver.InputFormat()
 	keyword := InputData.GetString("keyword", "")
-	sortStr := InputData.GetString("sort", "create_timestamp")
+	sortStr := InputData.GetString("sort", "create_time")
 	orderBy := InputData.GetString("order_by", "desc")
 	page := InputData.GetInt("page", 1)
 	size := InputData.GetInt("page_size", 10)
@@ -664,6 +664,9 @@ func (receiver *AuthorController) AuthorLiveRooms() {
 	if comErr != nil {
 		receiver.FailReturn(comErr)
 		return
+	}
+	if sortStr == "create_timestamp" {
+		sortStr = "create_time"
 	}
 	esLiveBusiness := es.NewEsLiveBusiness()
 	list, total, comErr := esLiveBusiness.SearchAuthorRooms(authorId, keyword, sortStr, orderBy, page, size, t1, t2)

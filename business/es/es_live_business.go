@@ -31,7 +31,7 @@ func (receiver *EsLiveBusiness) SearchAuthorRooms(authorId, keyword, sortStr, or
 	if orderBy == "" {
 		orderBy = "desc"
 	}
-	if !utils.InArrayString(sortStr, []string{"create_timestamp", "gmv", "sales", "max_user_count"}) {
+	if !utils.InArrayString(sortStr, []string{"create_time", "gmv", "sales", "max_user_count"}) {
 		comErr = global.NewError(4000)
 		return
 	}
