@@ -5,6 +5,7 @@ import (
 	"dongchamao/controllers/api"
 	"dongchamao/global"
 	"dongchamao/global/cache"
+	"dongchamao/global/logger"
 	"dongchamao/global/utils"
 	"dongchamao/models/dcm"
 	"dongchamao/models/repost"
@@ -90,28 +91,38 @@ func (receiver *AccountController) ChangeMobile() {
 		return
 	}
 	//旧手机验证
-	if receiver.UserInfo.Username != "" {
-		codeKey := cache.GetCacheKey(cache.SmsCodeVerify, "change_mobile", mobile)
-		verifyCode := global.Cache.Get(codeKey)
-		if verifyCode != oldCode {
-			receiver.FailReturn(global.NewError(4209))
-			return
-		}
+	codeKey := cache.GetCacheKey(cache.SmsCodeVerify, "change_mobile", mobile)
+	verifyCode := global.Cache.Get(codeKey)
+	if verifyCode != oldCode {
+		receiver.FailReturn(global.NewError(4209))
+		return
 	}
 	//新手机验证码校验
-	codeKey := cache.GetCacheKey(cache.SmsCodeVerify, "bind_mobile", mobile)
-	verifyCode := global.Cache.Get(codeKey)
-	if verifyCode != code {
+	codeKey1 := cache.GetCacheKey(cache.SmsCodeVerify, "bind_mobile", mobile)
+	verifyCode1 := global.Cache.Get(codeKey1)
+	if verifyCode1 != code {
 		receiver.FailReturn(global.NewError(4209))
 		return
 	}
 	//修改手机号
-	affect, _ := userBusiness.UpdateUserAndClearCache(nil, receiver.UserId, map[string]interface{}{"username": mobile})
-	if affect == 0 {
-		receiver.FailReturn(global.NewError(4213))
+	dbSession := dcm.GetDbSession()
+	_ = dbSession.Begin()
+	affect, err := userBusiness.UpdateUserAndClearCache(dbSession, receiver.UserId, map[string]interface{}{"username": mobile})
+	if affect == 0 || logger.CheckError(err) != nil {
+		_ = dbSession.Rollback()
+		receiver.FailReturn(global.NewError(5000))
 		return
 	}
+	_, err = dbSession.Table(new(dcm.DcVipOrder)).Where("user_id=?", receiver.UserId).Update(map[string]interface{}{"username": mobile})
+	if logger.CheckError(err) != nil {
+		_ = dbSession.Rollback()
+		receiver.FailReturn(global.NewError(5000))
+		return
+	}
+	_ = dbSession.Commit()
 	receiver.Logout()
+	_ = global.Cache.Delete(codeKey)
+	_ = global.Cache.Delete(codeKey1)
 	receiver.SuccReturn(nil)
 	return
 }
