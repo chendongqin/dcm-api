@@ -45,7 +45,7 @@ func (receiver *LoginController) Login() {
 		}
 	} else if grantType == "wechat" {
 		openid := InputData.GetString("openid", "")
-		user, authToken, expTime, isNew, comErr = userBusiness.QrLogin(openid, appId)
+		user, authToken, expTime, comErr = userBusiness.QrLogin(openid, appId)
 	} else {
 		comErr = global.NewError(4000)
 	}

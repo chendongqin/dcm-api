@@ -179,7 +179,7 @@ func (receiver *UserBusiness) SmsLogin(mobile, code string, appId int) (user dcm
 }
 
 //微信扫码登录
-func (receiver *UserBusiness) QrLogin(openid string, appId int) (user dcm.DcUser, tokenString string, expire int64, isNew int, comErr global.CommonError) {
+func (receiver *UserBusiness) QrLogin(openid string, appId int) (user dcm.DcUser, tokenString string, expire int64, comErr global.CommonError) {
 	if openid == "" {
 		comErr = global.NewError(4301)
 		return
@@ -190,11 +190,10 @@ func (receiver *UserBusiness) QrLogin(openid string, appId int) (user dcm.DcUser
 		comErr = global.NewError(4300)
 		return
 	}
-	nowTime := time.Now()
-	isNew = 0
+	//nowTime := time.Now()
+	isExistUser := true
 	//查询是否绑定用户
 	userModel := dcm.DcUser{}
-	isExistUser := true
 	if exist, _ := dcm.GetSlaveDbSession().Where("openid = ?", openid).Get(&userModel); !exist {
 		//如果没有用户微信尝试unionid 在次获取用户信息
 		isExistUser = false
@@ -202,36 +201,19 @@ func (receiver *UserBusiness) QrLogin(openid string, appId int) (user dcm.DcUser
 			isExistUser = false
 		}
 	}
-	if !isExistUser {
-		userModel.Openid = wechatModel.Openid
-		userModel.Unionid = wechatModel.Unionid
-		userModel.Nickname = wechatModel.NickName
-		userModel.Avatar = wechatModel.Avatar
-		userModel.Entrance = AppIdMap[appId]
-		userModel.Status = 1
-		userModel.Salt = utils.GetRandomString(4)
-		userModel.Password = utils.Md5_encode(utils.GetRandomString(16) + userModel.Salt)
-		userModel.CreateTime = nowTime
-		userModel.UpdateTime = nowTime
-		affect, err := dcm.Insert(nil, &userModel)
-		if affect == 0 || err != nil {
+	var err error
+	if isExistUser == true {
+		if userModel.Status != 1 {
+			comErr = global.NewError(4212)
+			return
+		}
+		tokenString, expire, err = receiver.CreateToken(appId, userModel.Id, 604800)
+		if err != nil {
 			comErr = global.NewError(5000)
 			return
 		}
-		isNew = 1
 	}
-	if userModel.Status != 1 {
-		comErr = global.NewError(4212)
-		return
-	}
-
-	tokenString, expire, err := receiver.CreateToken(appId, userModel.Id, 604800)
-	if err != nil {
-		comErr = global.NewError(5000)
-		return
-	}
-
-	return userModel, tokenString, expire, isNew, nil
+	return userModel, tokenString, expire, nil
 }
 
 func (receiver *UserBusiness) DeleteUserInfoCache(userid int) bool {

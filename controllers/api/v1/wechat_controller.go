@@ -134,3 +134,10 @@ func (receiver *WechatController) Receive() {
 	//发送回复的消息
 	_ = server.Send()
 }
+
+//微信客户端 获取open相关信息
+
+//func (receiver *WechatController) WxApp() {
+//	inputData := receiver.InputFormat()
+//	code := inputData.GetString("code", "")
+//}
