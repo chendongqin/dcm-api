@@ -28,5 +28,4 @@ build jar2:
         refs:
           - master
       script:
-        - sudo cp /data/conf/dcm-prod.conf conf/app.conf
         - sudo /data/sh/dcm/dcm-prod.sh
