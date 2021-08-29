@@ -174,14 +174,25 @@ func (receiver *ProductBusiness) ProductAuthorAnalysis(productId, keyword, tag s
 			authorIds = append(authorIds, v.AuthorId)
 		}
 	}
-	authorBusiness := NewAuthorBusiness()
-	authorDataMap := authorBusiness.GetAuthorByIdsLimitGo(authorIds, 200)
+	//开启任务处理
+	cacheAuthorKey := cache.GetCacheKey(cache.ProductAuthorAllMap, startRowKey, stopRowKey)
+	cacheAuthorStr := global.Cache.Get(cacheAuthorKey)
+	authorDataMap := map[string]entity.DyAuthor{}
+	if cacheAuthorStr != "" {
+		cacheAuthorStr = utils.DeserializeData(cacheAuthorStr)
+		_ = jsoniter.Unmarshal([]byte(cacheAuthorStr), &authorDataMap)
+	} else {
+		authorDataMap = NewAuthorBusiness().GetAuthorFormPool(authorIds, 10)
+		if tag == "" && minFollow == 0 && maxFollow == 0 && scoreType == 5 {
+			_ = global.Cache.Set(cacheAuthorKey, utils.SerializeData(authorDataMap), 300)
+		}
+	}
 	for _, v := range authorMap {
 		if a, ok := authorDataMap[v.AuthorId]; ok {
 			v.FollowCount = a.FollowerCount
 			if v.DisplayId == "" {
-				v.DisplayId = a.UniqueID
-				v.ShortId = a.ShortID
+				v.DisplayId = a.Data.UniqueID
+				v.ShortId = a.Data.ShortID
 			}
 		}
 		if minFollow > 0 && v.FollowCount < minFollow {
@@ -192,6 +203,9 @@ func (receiver *ProductBusiness) ProductAuthorAnalysis(productId, keyword, tag s
 		}
 		list = append(list, v)
 	}
+	sort.Slice(list, func(i, j int) bool {
+		return list[i].Gmv > list[j].Gmv
+	})
 	total = len(list)
 	start := (page - 1) * pageSize
 	end := start + pageSize

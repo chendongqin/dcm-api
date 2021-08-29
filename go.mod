@@ -34,6 +34,7 @@ require (
 	github.com/stretchr/testify v1.7.0
 	github.com/urfave/cli v1.22.5
 	github.com/vmihailenco/msgpack/v4 v4.3.12
+	github.com/wazsmwazsm/mortar v1.5.2
 	github.com/wechatpay-apiv3/wechatpay-go v0.2.5
 	gopkg.in/mgo.v2 v2.0.0-20190816093944-a6b53ec6cb22
 	xorm.io/core v0.7.3

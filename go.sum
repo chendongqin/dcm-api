@@ -466,6 +466,8 @@ github.com/vmihailenco/msgpack/v4 v4.3.12 h1:07s4sz9IReOgdikxLTKNbBdqDMLsjPKXwvC
 github.com/vmihailenco/msgpack/v4 v4.3.12/go.mod h1:gborTTJjAo/GWTqqRjrLCn9pgNN+NXzzngzBKDPIqw4=
 github.com/vmihailenco/tagparser v0.1.1 h1:quXMXlA39OCbd2wAdTsGDlK9RkOk6Wuw+x37wVyIuWY=
 github.com/vmihailenco/tagparser v0.1.1/go.mod h1:OeAg3pn3UbLjkWt+rN9oFYB6u/cQgqMEUPoW2WPyhdI=
+github.com/wazsmwazsm/mortar v1.5.2 h1:K5zqqOELSq6FSLDsFvLRQNBGhRWyJJn7pwVfPnR8HlQ=
+github.com/wazsmwazsm/mortar v1.5.2/go.mod h1:nARvbyHLORE6ZqKgB3oQ1wvg8GZcisM+0X2mEKkogwI=
 github.com/wechatpay-apiv3/wechatpay-go v0.2.5 h1:FRT1UbEekkgsCNthqQDj3O8h3nSApHBS9ecuj5VKfHU=
 github.com/wechatpay-apiv3/wechatpay-go v0.2.5/go.mod h1:W8ucVAOCKOii933cWROLaDLmRQ2cg/vHHVF4vGAVq9Q=
 github.com/wendal/errors v0.0.0-20130201093226-f66c77a7882b/go.mod h1:Q12BUT7DqIlHRmgv3RskH+UCM/4eqVMgI0EMmlSpAXc=

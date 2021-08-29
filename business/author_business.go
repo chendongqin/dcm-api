@@ -4,6 +4,7 @@ import (
 	"dongchamao/business/es"
 	"dongchamao/global"
 	"dongchamao/global/cache"
+	"dongchamao/global/logger"
 	"dongchamao/global/utils"
 	"dongchamao/hbase"
 	"dongchamao/models/dcm"
@@ -12,6 +13,7 @@ import (
 	"dongchamao/services"
 	"dongchamao/services/dyimg"
 	jsoniter "github.com/json-iterator/go"
+	"github.com/wazsmwazsm/mortar"
 	"math"
 	"sort"
 	"strings"
@@ -792,32 +794,42 @@ func (a *AuthorBusiness) GetAuthorProductRooms(authorId, productId string, start
 }
 
 //channel控制go协程获取达人信息
-func (a *AuthorBusiness) GetAuthorByIdsLimitGo(authorIds []string, maxNum int) map[string]entity.DyAuthorData {
-	var wg sync.WaitGroup
-	authorLen := len(authorIds)
-	if authorLen < maxNum {
-		maxNum = authorLen
+func (a *AuthorBusiness) GetAuthorFormPool(authorIds []string, poolNum uint64) map[string]entity.DyAuthor {
+	// 创建容量为 poolNum 的任务池
+	pool, err := mortar.NewPool(poolNum)
+	if err != nil {
+		panic(err)
 	}
-	authorChan := make(chan string, maxNum)
-	authors := make([]entity.DyAuthorData, 0)
-	authorMap := map[string]entity.DyAuthorData{}
-	for _, v := range authorIds {
-		authorChan <- v
+	wg := new(sync.WaitGroup)
+	dataList := make([]entity.DyAuthor, 0)
+	for _, id := range authorIds {
 		wg.Add(1)
-		go func(aCh chan string, wg *sync.WaitGroup) {
-			defer wg.Done()
-			authorId, ok := <-aCh
-			if ok {
-				authorData, comErr := hbase.GetAuthor(authorId)
-				if comErr == nil {
-					authors = append(authors, authorData.Data)
+		// 创建任务
+		task := &mortar.Task{
+			Handler: func(params ...interface{}) {
+				defer wg.Done()
+				if len(params) < 1 {
+					return
 				}
-			}
-		}(authorChan, &wg)
+				id := utils.ToString(params[0])
+				author, _ := hbase.GetAuthor(id)
+				dataList = append(dataList, author)
+			},
+		}
+		// 添加任务函数的参数
+		task.Params = []interface{}{id}
+		// 将任务放入任务池
+		err = pool.Put(task)
+		if err != nil {
+			logger.Error(err)
+		}
 	}
 	wg.Wait()
-	for _, v := range authors {
-		authorMap[v.ID] = v
+	// 安全关闭任务池（保证已加入池中的任务被消费完）
+	pool.Close()
+	authorMap := map[string]entity.DyAuthor{}
+	for _, v := range dataList {
+		authorMap[v.AuthorID] = v
 	}
 	return authorMap
 }
