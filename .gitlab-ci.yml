@@ -18,7 +18,7 @@ build jar1:
     - sudo /usr/local/go/bin/go mod tidy
     - sudo /usr/local/go/bin/go mod vendor
     - sudo /usr/local/go/bin/go build -o dcm-api-dev -ldflags "-s -w"
-    - supervisorctl restart dcm-api-service
+    - supervisorctl stop dcm-api-service
     - sudo cp -f dcm-api-dev /data/runner/dcm/
     - sudo /data/sh/dcm/dcm-dev.sh
     - supervisorctl restart dcm-api-service
