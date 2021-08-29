@@ -194,6 +194,13 @@ func (receiver *ProductBusiness) ProductAuthorAnalysis(productId, keyword, tag s
 				v.DisplayId = a.Data.UniqueID
 				v.ShortId = a.Data.ShortID
 			}
+		} else {
+			a, _ := hbase.GetAuthor(v.AuthorId)
+			v.FollowCount = a.FollowerCount
+			if v.DisplayId == "" {
+				v.DisplayId = a.Data.UniqueID
+				v.ShortId = a.Data.ShortID
+			}
 		}
 		if minFollow > 0 && v.FollowCount < minFollow {
 			continue
