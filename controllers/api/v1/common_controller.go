@@ -16,6 +16,7 @@ import (
 	"dongchamao/services/dyimg"
 	"encoding/json"
 	"fmt"
+	"sort"
 	"strings"
 	"time"
 )
@@ -245,6 +246,9 @@ func (receiver *CommonController) RedAuthorRoom() {
 			List: v,
 		})
 	}
+	sort.Slice(data, func(i, j int) bool {
+		return data[i].Date < data[j].Date
+	})
 	receiver.SuccReturn(map[string]interface{}{
 		"list":  data,
 		"total": len(list),

@@ -193,6 +193,7 @@ func (receiver *EsAuthorBusiness) BaseSearch(
 	}
 	results := esMultiQuery.
 		SetTable(esTable).
+		SetCache(180).
 		AddMust(esQuery.Condition).
 		SetLimit((page-1)*pageSize, pageSize).
 		SetOrderBy(elasticsearch.NewElasticOrder().Add(sortStr, orderBy).Order).
