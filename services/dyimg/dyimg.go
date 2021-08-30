@@ -23,6 +23,8 @@ const (
 	ProductThumb  = "thumb"
 )
 
+var cdnUrl = "https://cdn-images.dongchamao.com"
+
 var cdn = []string{
 	"https://cdn-images.dongchamao.com",
 }
@@ -54,12 +56,11 @@ func buildURL(prefix, source string) string {
 		return source
 	}
 	source = strings.Replace(source, "https://", "", 1)
-	source = strings.Replace(source, "http://", "", 1)
-	return cdn[0] + "/" + source
-	md5Str := Md5_encode(source)
-	source = url.QueryEscape(source)
-	fileName := md5Str + ".jpeg"
-	return pickCDN(md5Str) + "/douyin/" + prefix + "/" + fileName + "?source=" + source
+	return cdnUrl + "/" + source
+	//md5Str := Md5_encode(source)
+	//source = url.QueryEscape(source)
+	//fileName := md5Str + ".jpeg"
+	//return pickCDN(md5Str) + "/douyin/" + prefix + "/" + fileName + "?source=" + source
 }
 
 func Md5_encode(str string) string {
@@ -75,7 +76,7 @@ func Fix(image string) string {
 	//image = strings.Replace(image, "-ipv6", "", 1)
 	image = strings.Replace(image, ".heic", ".jpeg", 1)
 	image = WebpToJpg(image)
-	return Convert("", Fix(image))
+	return Convert("", image)
 }
 
 func Aweme(image string) string {
