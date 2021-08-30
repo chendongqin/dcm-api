@@ -616,8 +616,8 @@ func (receiver *RankController) DyAuthorTakeGoodsRank() {
 				"room_title":     v.Source.RoomTitle,
 				"date_time":      v.Source.CreateTime,
 				"max_user_count": v.Source.MaxUserCount,
-				"real_gmv":       v.Source.RealGmv,
-				"real_sales":     v.Source.RealSales,
+				"gmv":            v.Source.PredictGmv,
+				"sales":          v.Source.PredictSales,
 			})
 		}
 		data[k] = dy.TakeGoodsRankRet{
