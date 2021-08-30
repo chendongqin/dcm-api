@@ -25,7 +25,7 @@ type RankController struct {
 func (receiver *RankController) Prepare() {
 	receiver.InitApiController()
 	receiver.CheckDyUserGroupRight(business.DyRankMinShowNum, business.DyJewelRankShowNum)
-	receiver.lockAction()
+	//receiver.lockAction()
 }
 
 func (receiver *RankController) lockAction() {
@@ -425,6 +425,150 @@ func (receiver *RankController) DyAwemeShareRank() {
 	return
 }
 
+//抖音销量日榜
+func (receiver *RankController) ProductSalesTopDayRank() {
+	date := receiver.Ctx.Input.Param(":date")
+	fCate := receiver.GetString("first_cate", "")
+	sCate := receiver.GetString("second_cate", "")
+	tCate := receiver.GetString("third_cate", "")
+	sortStr := receiver.GetString("sort", "")
+	orderBy := receiver.GetString("order", "")
+	page := receiver.GetPage("page")
+	pageSize := receiver.GetPageSize("page_size", 10, 100)
+	if date == "" {
+		receiver.FailReturn(global.NewError(4000))
+		return
+	}
+	pslTime := "2006-01-02"
+	dateTime, err := time.ParseInLocation(pslTime, date, time.Local)
+	if err != nil {
+		receiver.FailReturn(global.NewError(4000))
+		return
+	}
+	if !receiver.HasAuth {
+		if page != 1 {
+			receiver.FailReturn(global.NewError(4004))
+			return
+		}
+		pageSize = receiver.MaxTotal
+	}
+	list, total, comErr := es.NewEsProductBusiness().ProductSalesTopDayRank(dateTime.Format("20060102"), fCate, sCate, tCate, sortStr, orderBy, page, pageSize)
+	if comErr != nil {
+		receiver.FailReturn(comErr)
+		return
+	}
+	for k, v := range list {
+		list[k].ProductId = business.IdEncrypt(v.ProductId)
+		list[k].Images = dyimg.Fix(v.Images)
+	}
+	if total > receiver.MaxTotal {
+		total = receiver.MaxTotal
+	}
+	receiver.SuccReturn(map[string]interface{}{
+		"has_login": receiver.HasLogin,
+		"has_auth":  receiver.HasAuth,
+		"list":      list,
+		"total":     total,
+	})
+	return
+}
+
+//抖音热推日榜
+func (receiver *RankController) ProductShareTopDayRank() {
+	date := receiver.Ctx.Input.Param(":date")
+	fCate := receiver.GetString("first_cate", "")
+	sCate := receiver.GetString("second_cate", "")
+	tCate := receiver.GetString("third_cate", "")
+	sortStr := receiver.GetString("sort", "")
+	orderBy := receiver.GetString("order", "")
+	page := receiver.GetPage("page")
+	pageSize := receiver.GetPageSize("page_size", 10, 100)
+	if date == "" {
+		receiver.FailReturn(global.NewError(4000))
+		return
+	}
+	pslTime := "2006-01-02"
+	dateTime, err := time.ParseInLocation(pslTime, date, time.Local)
+	if err != nil {
+		receiver.FailReturn(global.NewError(4000))
+		return
+	}
+	if !receiver.HasAuth {
+		if page != 1 {
+			receiver.FailReturn(global.NewError(4004))
+			return
+		}
+		pageSize = receiver.MaxTotal
+	}
+	list, total, comErr := es.NewEsProductBusiness().ProductShareTopDayRank(dateTime.Format("20060102"), fCate, sCate, tCate, sortStr, orderBy, page, pageSize)
+	if comErr != nil {
+		receiver.FailReturn(comErr)
+		return
+	}
+	for k, v := range list {
+		list[k].ProductId = business.IdEncrypt(v.ProductId)
+		list[k].Images = dyimg.Fix(v.Images)
+	}
+	if total > receiver.MaxTotal {
+		total = receiver.MaxTotal
+	}
+	receiver.SuccReturn(map[string]interface{}{
+		"has_login": receiver.HasLogin,
+		"has_auth":  receiver.HasAuth,
+		"list":      list,
+		"total":     total,
+	})
+	return
+}
+
+//抖音直播销量日榜
+func (receiver *RankController) LiveProductSalesTopDayRank() {
+	date := receiver.Ctx.Input.Param(":date")
+	fCate := receiver.GetString("first_cate", "")
+	sCate := receiver.GetString("second_cate", "")
+	tCate := receiver.GetString("third_cate", "")
+	sortStr := receiver.GetString("sort", "")
+	orderBy := receiver.GetString("order", "")
+	page := receiver.GetPage("page")
+	pageSize := receiver.GetPageSize("page_size", 10, 100)
+	if date == "" {
+		receiver.FailReturn(global.NewError(4000))
+		return
+	}
+	pslTime := "2006-01-02"
+	dateTime, err := time.ParseInLocation(pslTime, date, time.Local)
+	if err != nil {
+		receiver.FailReturn(global.NewError(4000))
+		return
+	}
+	if !receiver.HasAuth {
+		if page != 1 {
+			receiver.FailReturn(global.NewError(4004))
+			return
+		}
+		pageSize = receiver.MaxTotal
+	}
+	list, total, comErr := es.NewEsProductBusiness().LiveProductSalesTopDayRank(dateTime.Format("20060102"), fCate, sCate, tCate, sortStr, orderBy, page, pageSize)
+	if comErr != nil {
+		receiver.FailReturn(comErr)
+		return
+	}
+	for k, v := range list {
+		list[k].ProductId = business.IdEncrypt(v.ProductId)
+		list[k].Images = dyimg.Fix(v.Images)
+	}
+	if total > receiver.MaxTotal {
+		total = receiver.MaxTotal
+	}
+	receiver.SuccReturn(map[string]interface{}{
+		"has_login": receiver.HasLogin,
+		"has_auth":  receiver.HasAuth,
+		"list":      list,
+		"total":     total,
+	})
+	return
+}
+
 //达人带货榜
 func (receiver *RankController) DyAuthorTakeGoodsRank() {
 	date := receiver.Ctx.Input.Param(":date")
@@ -448,58 +592,61 @@ func (receiver *RankController) DyAuthorTakeGoodsRank() {
 		}
 	}
 	var ret map[string]interface{}
-	cacheKey := cache.GetCacheKey(cache.DyRankCache, "author_take_goods", utils.Md5_encode(fmt.Sprintf("%s%d%s%s%s%d%d%d", startDate, dateType, tags, sortStr, orderBy, verified, page, pageSize)))
-	cacheStr := global.Cache.Get(cacheKey)
-	if cacheStr != "" {
-		cacheStr = utils.DeserializeData(cacheStr)
-		_ = jsoniter.Unmarshal([]byte(cacheStr), &ret)
-	} else {
-		list, total, _ := es.NewEsAuthorBusiness().SaleAuthorRankCount(startDate, dateType, tags, sortStr, orderBy, verified, page, pageSize)
-		var structData []es2.DyAuthorTakeGoodsCount
-		utils.MapToStruct(list, &structData)
-		data := make([]dy.TakeGoodsRankRet, len(structData))
-		for k, v := range structData {
-			hits := v.Hit.Hits.Hits
-			uniqueId := hits[0].Source.UniqueID
-			if uniqueId == "" {
-				uniqueId = hits[0].Source.ShortID
-			}
-			var roomList = make([]map[string]interface{}, 0, len(hits))
-			for _, v := range hits {
-				roomList = append(roomList, map[string]interface{}{
-					"room_cover":     dyimg.Fix(v.Source.RoomCover),
-					"room_id":        business.IdEncrypt(v.Source.RoomID),
-					"room_title":     v.Source.RoomTitle,
-					"date_time":      v.Source.CreateTime,
-					"max_user_count": v.Source.MaxUserCount,
-					"real_gmv":       v.Source.RealGmv,
-					"real_sales":     v.Source.RealSales,
-				})
-			}
-			data[k] = dy.TakeGoodsRankRet{
-				Rank:             (page-1)*pageSize + k + 1,
-				Nickname:         hits[0].Source.Nickname,
-				VerificationType: hits[0].Source.VerificationType,
-				VerifyName:       hits[0].Source.VerifyName,
-				AuthorCover:      dyimg.Avatar(hits[0].Source.AuthorCover),
-				SumGmv:           v.SumGmv.Value,
-				SumSales:         v.SumSales.Value,
-				AvgPrice:         v.AvgPrice.Value,
-				AuthorId:         business.IdEncrypt(utils.ToString(v.Key.AuthorID)),
-				RoomCount:        len(hits),
-				Tags:             hits[0].Source.Tags,
-				UniqueId:         business.IdEncrypt(utils.ToString(uniqueId)),
-				RoomList:         roomList,
-			}
+	//cacheKey := cache.GetCacheKey(cache.DyRankCache, "author_take_goods", utils.Md5_encode(fmt.Sprintf("%s%d%s%s%s%d%d%d", startDate, dateType, tags, sortStr, orderBy, verified, page, pageSize)))
+	//cacheStr := global.Cache.Get(cacheKey)
+	//if cacheStr != "" {
+	//	cacheStr = utils.DeserializeData(cacheStr)
+	//	_ = jsoniter.Unmarshal([]byte(cacheStr), &ret)
+	//} else {
+	list, total, _ := es.NewEsAuthorBusiness().SaleAuthorRankCount(startDate, dateType, tags, sortStr, orderBy, verified, page, pageSize)
+	var structData []es2.DyAuthorTakeGoodsCount
+	utils.MapToStruct(list, &structData)
+	data := make([]dy.TakeGoodsRankRet, len(structData))
+	for k, v := range structData {
+		hits := v.Hit.Hits.Hits
+		uniqueId := hits[0].Source.UniqueID
+		if uniqueId == "" {
+			uniqueId = hits[0].Source.ShortID
 		}
-		ret = map[string]interface{}{
-			"list":  data,
-			"total": total,
+		var roomList = make([]map[string]interface{}, 0, len(hits))
+		for _, v := range hits {
+			roomList = append(roomList, map[string]interface{}{
+				"room_cover":     dyimg.Fix(v.Source.RoomCover),
+				"room_id":        business.IdEncrypt(v.Source.RoomID),
+				"room_title":     v.Source.RoomTitle,
+				"date_time":      v.Source.CreateTime,
+				"max_user_count": v.Source.MaxUserCount,
+				"real_gmv":       v.Source.RealGmv,
+				"real_sales":     v.Source.RealSales,
+			})
 		}
-		if startDate.Format("20060102") != time.Now().Format("20060102") {
-			_ = global.Cache.Set(cacheKey, utils.SerializeData(ret), 86400)
+		data[k] = dy.TakeGoodsRankRet{
+			Rank:             (page-1)*pageSize + k + 1,
+			Nickname:         hits[0].Source.Nickname,
+			VerificationType: hits[0].Source.VerificationType,
+			VerifyName:       hits[0].Source.VerifyName,
+			AuthorCover:      dyimg.Avatar(hits[0].Source.AuthorCover),
+			SumGmv:           v.SumGmv.Value,
+			SumSales:         v.SumSales.Value,
+			AvgPrice:         v.AvgPrice.Value,
+			AuthorId:         business.IdEncrypt(utils.ToString(v.Key.AuthorID)),
+			RoomCount:        len(hits),
+			Tags:             hits[0].Source.Tags,
+			UniqueId:         business.IdEncrypt(utils.ToString(uniqueId)),
+			RoomList:         roomList,
 		}
 	}
+	if total > receiver.MaxTotal {
+		total = receiver.MaxTotal
+	}
+	ret = map[string]interface{}{
+		"list":  data,
+		"total": total,
+	}
+	//	if startDate.Format("20060102") != time.Now().Format("20060102") {
+	//		_ = global.Cache.Set(cacheKey, utils.SerializeData(ret), 86400)
+	//	}
+	//}
 	ret["has_login"] = receiver.HasLogin
 	ret["has_auth"] = receiver.HasAuth
 	if !receiver.HasAuth && utils.ToInt(ret["total"]) > receiver.MaxTotal {
@@ -552,6 +699,9 @@ func (receiver *RankController) DyAuthorFollowerRank() {
 		if comErr != nil {
 			receiver.FailReturn(global.NewError(4000))
 			return
+		}
+		if total > receiver.MaxTotal {
+			total = receiver.MaxTotal
 		}
 		ret = map[string]interface{}{
 			"list":  data,

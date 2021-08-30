@@ -6,6 +6,7 @@ import (
 	"dongchamao/global/utils"
 	"dongchamao/models/es"
 	"dongchamao/services/elasticsearch"
+	"fmt"
 	"time"
 )
 
@@ -227,5 +228,131 @@ func (i *EsProductBusiness) KeywordSearch(keyword string) (list []es.DyProduct) 
 		SetMultiQuery().
 		Query()
 	utils.MapToStruct(results, &list)
+	return
+}
+
+func (i *EsProductBusiness) ProductSalesTopDayRank(day, fCate, sCate, tCate, sortStr, orderBy string,
+	page, pageSize int) (list []es.DyProductSalesTopRank, total int, commonError global.CommonError) {
+	esQuery, esMultiQuery := elasticsearch.NewElasticQueryGroup()
+	esTable := fmt.Sprintf(es.DyProductSalesTopTable, day)
+	if sortStr == "" {
+		sortStr = "order_count"
+	}
+	if orderBy == "" {
+		orderBy = "desc"
+	}
+	if !utils.InArrayString(sortStr, []string{"cos_fee", "order_count"}) {
+		commonError = global.NewError(4000)
+	}
+	if !utils.InArrayString(orderBy, []string{"desc", "asc"}) {
+		commonError = global.NewError(4000)
+	}
+	if fCate != "" {
+		esQuery.SetTerm("dcm_cname.keyword", fCate)
+	}
+	if sCate != "" {
+		esQuery.SetTerm("first_cname.keyword", sCate)
+	}
+	if tCate != "" {
+		esQuery.SetTerm("second_cname.keyword", tCate)
+	}
+	esOrder := elasticsearch.NewElasticOrder().Add(sortStr, orderBy)
+	if sortStr != "order_count" {
+		esOrder.Add("order_count", "desc")
+	}
+	results := esMultiQuery.
+		SetTable(esTable).
+		SetCache(600).
+		AddShould(esQuery.Condition).
+		SetLimit((page-1)*pageSize, pageSize).
+		SetOrderBy(esOrder.Order).
+		SetMultiQuery().
+		Query()
+	utils.MapToStruct(results, &list)
+	total = esMultiQuery.Count
+	return
+}
+
+func (i *EsProductBusiness) ProductShareTopDayRank(day, fCate, sCate, tCate, sortStr, orderBy string,
+	page, pageSize int) (list []es.DyProductShareTopRank, total int, commonError global.CommonError) {
+	esQuery, esMultiQuery := elasticsearch.NewElasticQueryGroup()
+	esTable := fmt.Sprintf(es.DyProductShareTopTable, day)
+	if sortStr == "" {
+		sortStr = "share_count"
+	}
+	if orderBy == "" {
+		orderBy = "desc"
+	}
+	if !utils.InArrayString(sortStr, []string{"cos_fee", "share_count"}) {
+		commonError = global.NewError(4000)
+	}
+	if !utils.InArrayString(orderBy, []string{"desc", "asc"}) {
+		commonError = global.NewError(4000)
+	}
+	if fCate != "" {
+		esQuery.SetTerm("dcm_cname.keyword", fCate)
+	}
+	if sCate != "" {
+		esQuery.SetTerm("first_cname.keyword", sCate)
+	}
+	if tCate != "" {
+		esQuery.SetTerm("second_cname.keyword", tCate)
+	}
+	esOrder := elasticsearch.NewElasticOrder().Add(sortStr, orderBy)
+	if sortStr != "share_count" {
+		esOrder.Add("share_count", "desc")
+	}
+	results := esMultiQuery.
+		SetTable(esTable).
+		SetCache(600).
+		AddShould(esQuery.Condition).
+		SetLimit((page-1)*pageSize, pageSize).
+		SetOrderBy(esOrder.Order).
+		SetMultiQuery().
+		Query()
+	utils.MapToStruct(results, &list)
+	total = esMultiQuery.Count
+	return
+}
+
+func (i *EsProductBusiness) LiveProductSalesTopDayRank(day, fCate, sCate, tCate, sortStr, orderBy string,
+	page, pageSize int) (list []es.DyLiveProductSaleTopRank, total int, commonError global.CommonError) {
+	esQuery, esMultiQuery := elasticsearch.NewElasticQueryGroup()
+	esTable := fmt.Sprintf(es.DyLiveProductSalesTopTable, day)
+	if sortStr == "" {
+		sortStr = "gmv"
+	}
+	if orderBy == "" {
+		orderBy = "desc"
+	}
+	if !utils.InArrayString(sortStr, []string{"cos_fee", "sales", "gmv", "live_count", "price"}) {
+		commonError = global.NewError(4000)
+	}
+	if !utils.InArrayString(orderBy, []string{"desc", "asc"}) {
+		commonError = global.NewError(4000)
+	}
+	if fCate != "" {
+		esQuery.SetTerm("dcm_cname.keyword", fCate)
+	}
+	if sCate != "" {
+		esQuery.SetTerm("first_cname.keyword", sCate)
+	}
+	if tCate != "" {
+		esQuery.SetTerm("second_cname.keyword", tCate)
+	}
+	esOrder := elasticsearch.NewElasticOrder().Add(sortStr, orderBy)
+	if sortStr != "gmv" {
+		esOrder.Add("gmv", "desc")
+	}
+	results := esMultiQuery.
+		SetTable(esTable).
+		SetCache(600).
+		AddShould(esQuery.Condition).
+		SetLimit((page-1)*pageSize, pageSize).
+		SetOrderBy(esOrder.Order).
+		SetMultiQuery().
+		Query()
+	utils.MapToStruct(results, &list)
+	total = esMultiQuery.Count
 	return
 }

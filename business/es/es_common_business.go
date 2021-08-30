@@ -7,6 +7,9 @@ import (
 )
 
 func GetESTableByTime(table string, start, stop time.Time) string {
+	if start.Format("20060102") == stop.Format("20060102") {
+		return fmt.Sprintf(table, start.Format("20060102"))
+	}
 	esTableArr := make([]string, 0)
 	begin := start
 	endMonth := stop.Month()
