@@ -290,7 +290,7 @@ func (receiver *EsAuthorBusiness) KeywordSearch(keyword string) (list []es.DyAut
 		SetCache(60).
 		AddMust(esQuery.Condition).
 		SetLimit(0, 4).
-		SetOrderBy(elasticsearch.NewElasticOrder().Add("follower_count", "desc").Order).
+		SetOrderBy(elasticsearch.NewElasticOrder().Add("follower_incre_count", "desc").Order).
 		SetMultiQuery().
 		Query()
 	utils.MapToStruct(results, &list)
