@@ -425,6 +425,150 @@ func (receiver *RankController) DyAwemeShareRank() {
 	return
 }
 
+//抖音销量日榜
+func (receiver *RankController) ProductSalesTopDayRank() {
+	date := receiver.Ctx.Input.Param(":date")
+	fCate := receiver.GetString("first_cate", "")
+	sCate := receiver.GetString("second_cate", "")
+	tCate := receiver.GetString("third_cate", "")
+	sortStr := receiver.GetString("sort", "")
+	orderBy := receiver.GetString("order", "")
+	page := receiver.GetPage("page")
+	pageSize := receiver.GetPageSize("page_size", 10, 100)
+	if date == "" {
+		receiver.FailReturn(global.NewError(4000))
+		return
+	}
+	pslTime := "2006-01-02"
+	dateTime, err := time.ParseInLocation(pslTime, date, time.Local)
+	if err != nil {
+		receiver.FailReturn(global.NewError(4000))
+		return
+	}
+	if !receiver.HasAuth {
+		if page != 1 {
+			receiver.FailReturn(global.NewError(4004))
+			return
+		}
+		pageSize = receiver.MaxTotal
+	}
+	list, total, comErr := es.NewEsProductBusiness().ProductSalesTopDayRank(dateTime.Format("20060102"), fCate, sCate, tCate, sortStr, orderBy, page, pageSize)
+	if comErr != nil {
+		receiver.FailReturn(comErr)
+		return
+	}
+	for k, v := range list {
+		list[k].ProductId = business.IdEncrypt(v.ProductId)
+		list[k].Images = dyimg.Fix(v.Images)
+	}
+	if total > receiver.MaxTotal {
+		total = receiver.MaxTotal
+	}
+	receiver.SuccReturn(map[string]interface{}{
+		"has_login": receiver.HasLogin,
+		"has_auth":  receiver.HasAuth,
+		"list":      list,
+		"total":     total,
+	})
+	return
+}
+
+//抖音热推日榜
+func (receiver *RankController) ProductShareTopDayRank() {
+	date := receiver.Ctx.Input.Param(":date")
+	fCate := receiver.GetString("first_cate", "")
+	sCate := receiver.GetString("second_cate", "")
+	tCate := receiver.GetString("third_cate", "")
+	sortStr := receiver.GetString("sort", "")
+	orderBy := receiver.GetString("order", "")
+	page := receiver.GetPage("page")
+	pageSize := receiver.GetPageSize("page_size", 10, 100)
+	if date == "" {
+		receiver.FailReturn(global.NewError(4000))
+		return
+	}
+	pslTime := "2006-01-02"
+	dateTime, err := time.ParseInLocation(pslTime, date, time.Local)
+	if err != nil {
+		receiver.FailReturn(global.NewError(4000))
+		return
+	}
+	if !receiver.HasAuth {
+		if page != 1 {
+			receiver.FailReturn(global.NewError(4004))
+			return
+		}
+		pageSize = receiver.MaxTotal
+	}
+	list, total, comErr := es.NewEsProductBusiness().ProductShareTopDayRank(dateTime.Format("20060102"), fCate, sCate, tCate, sortStr, orderBy, page, pageSize)
+	if comErr != nil {
+		receiver.FailReturn(comErr)
+		return
+	}
+	for k, v := range list {
+		list[k].ProductId = business.IdEncrypt(v.ProductId)
+		list[k].Images = dyimg.Fix(v.Images)
+	}
+	if total > receiver.MaxTotal {
+		total = receiver.MaxTotal
+	}
+	receiver.SuccReturn(map[string]interface{}{
+		"has_login": receiver.HasLogin,
+		"has_auth":  receiver.HasAuth,
+		"list":      list,
+		"total":     total,
+	})
+	return
+}
+
+//抖音直播销量日榜
+func (receiver *RankController) LiveProductSalesTopDayRank() {
+	date := receiver.Ctx.Input.Param(":date")
+	fCate := receiver.GetString("first_cate", "")
+	sCate := receiver.GetString("second_cate", "")
+	tCate := receiver.GetString("third_cate", "")
+	sortStr := receiver.GetString("sort", "")
+	orderBy := receiver.GetString("order", "")
+	page := receiver.GetPage("page")
+	pageSize := receiver.GetPageSize("page_size", 10, 100)
+	if date == "" {
+		receiver.FailReturn(global.NewError(4000))
+		return
+	}
+	pslTime := "2006-01-02"
+	dateTime, err := time.ParseInLocation(pslTime, date, time.Local)
+	if err != nil {
+		receiver.FailReturn(global.NewError(4000))
+		return
+	}
+	if !receiver.HasAuth {
+		if page != 1 {
+			receiver.FailReturn(global.NewError(4004))
+			return
+		}
+		pageSize = receiver.MaxTotal
+	}
+	list, total, comErr := es.NewEsProductBusiness().LiveProductSalesTopDayRank(dateTime.Format("20060102"), fCate, sCate, tCate, sortStr, orderBy, page, pageSize)
+	if comErr != nil {
+		receiver.FailReturn(comErr)
+		return
+	}
+	for k, v := range list {
+		list[k].ProductId = business.IdEncrypt(v.ProductId)
+		list[k].Images = dyimg.Fix(v.Images)
+	}
+	if total > receiver.MaxTotal {
+		total = receiver.MaxTotal
+	}
+	receiver.SuccReturn(map[string]interface{}{
+		"has_login": receiver.HasLogin,
+		"has_auth":  receiver.HasAuth,
+		"list":      list,
+		"total":     total,
+	})
+	return
+}
+
 //达人带货榜
 func (receiver *RankController) DyAuthorTakeGoodsRank() {
 	date := receiver.Ctx.Input.Param(":date")
