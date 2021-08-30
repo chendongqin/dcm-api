@@ -473,7 +473,7 @@ func (receiver *EsAuthorBusiness) DyAuthorFollowerIncRank(date, tags, province, 
 		return
 	}
 	if tags != "" {
-		esQuery.SetTerm("tags.keyword", tags)
+		esQuery.SetMatchPhrase("tags", tags)
 	}
 	if isDelivery != 0 {
 		esQuery.SetTerm("is_delivery", isDelivery)
@@ -494,8 +494,5 @@ func (receiver *EsAuthorBusiness) DyAuthorFollowerIncRank(date, tags, province, 
 		Query()
 	utils.MapToStruct(results, &list)
 	total = esMultiQuery.Count
-	if total > 1500 {
-		total = 1500
-	}
 	return
 }

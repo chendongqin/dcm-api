@@ -700,6 +700,9 @@ func (receiver *RankController) DyAuthorFollowerRank() {
 			receiver.FailReturn(global.NewError(4000))
 			return
 		}
+		if total > receiver.MaxTotal {
+			total = receiver.MaxTotal
+		}
 		ret = map[string]interface{}{
 			"list":  data,
 			"total": total,
