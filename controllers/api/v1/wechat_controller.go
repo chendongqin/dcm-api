@@ -150,7 +150,7 @@ func (receiver *WechatController) WechatApp() {
 		return
 	}
 	receiver.SuccReturn(map[string]interface{}{
-		"union_id": unionid,
+		"unionid": unionid,
 	})
 	return
 }
