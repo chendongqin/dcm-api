@@ -7,6 +7,7 @@ import (
 	"dongchamao/global/consistent"
 	"dongchamao/global/utils"
 	"dongchamao/models/dcm"
+	"dongchamao/models/repost/dy"
 	"github.com/astaxie/beego"
 	"github.com/astaxie/beego/logs"
 	"github.com/silenceper/wechat/v2/officialaccount/message"
@@ -50,9 +51,8 @@ func (receiver *WechatController) CheckScan() {
 		receiver.FailReturn(global.NewError(4000))
 		return
 	}
-	//从缓存中获取用户openId
+	//从缓存中获取用户unionid
 	cacheKey := "unionid:" + sessionId
-
 	uniondId := global.Cache.Get(cacheKey)
 	if uniondId == "" {
 		receiver.FailReturn(global.NewError(4006))
@@ -98,13 +98,13 @@ func (receiver *WechatController) Receive() {
 						return &message.Reply{MsgType: message.MsgTypeText, MsgData: text}
 					}
 					//设置openid缓存 前端监听
-					_ = global.Cache.Set("unionid:"+msg.EventKey, msg.UnionID, 1800)
+					_ = global.Cache.Set("unionid:"+msg.EventKey, userWechat.UnionID, 1800)
 					return &message.Reply{MsgType: message.MsgTypeText, MsgData: text}
 				}
 				return &message.Reply{MsgType: message.MsgTypeText, MsgData: text}
 			case message.EventUnsubscribe:
-				logs.Error("[扫码登录微信1002]=>缓存key:[%s],openid:[%s]", msg.EventKey, msg.UnionID)
-				_ = business.NewWechatBusiness().UnSubscribeOfficial(msg.UnionID)
+				logs.Error("[扫码登录微信1002]=>缓存key:[%s],openid:[%s]", msg.EventKey, userWechat.UnionID)
+				_ = business.NewWechatBusiness().UnSubscribeOfficial(userWechat.UnionID)
 				return &message.Reply{MsgType: message.MsgTypeText, MsgData: text}
 			case message.EventScan:
 				//自定义事件key
@@ -116,7 +116,7 @@ func (receiver *WechatController) Receive() {
 						return &message.Reply{MsgType: message.MsgTypeText, MsgData: text}
 					}
 					//设置 openid 缓存 前端监听
-					_ = global.Cache.Set("unionid:"+msg.EventKey, msg.UnionID, 1800)
+					_ = global.Cache.Set("unionid:"+msg.EventKey, userWechat.UnionID, 1800)
 					return &message.Reply{MsgType: message.MsgTypeText, MsgData: text}
 				}
 				//default:
@@ -159,10 +159,10 @@ func (receiver *WechatController) WechatApp() {
 func (receiver *WechatController) WechatPhone() {
 	inputData := receiver.InputFormat()
 	userName := inputData.GetString("username", "")
-	code := inputData.GetString("code", "")
+	//code := inputData.GetString("code", "1234")
 	unionid := inputData.GetString("unionid", "")
 	//source := inputData.GetString("source", "") //    1.二维码2.微信一键登录
-	if userName == "" || code == "" || unionid == "" {
+	if userName == "" || unionid == "" {
 		receiver.FailReturn(global.NewError(4000))
 		return
 	}
@@ -180,10 +180,10 @@ func (receiver *WechatController) WechatPhone() {
 		return
 	}
 	//开始更新用户信息
-	//if userModel.Unionid != "" {
-	//	receiver.FailReturn(global.NewError(4305))
-	//	return
-	//}
+	if userModel.Unionid != "" {
+		receiver.FailReturn(global.NewError(4305))
+		return
+	}
 
 	//userModel.OpenidApp = wechatModel.OpenidApp
 	//userModel.Openid = wechatModel.Openid
@@ -200,7 +200,18 @@ func (receiver *WechatController) WechatPhone() {
 		receiver.FailReturn(global.NewError(4213))
 		return
 	}
-	//TODO 是否需要返回新的 token
-	receiver.SuccReturn(nil)
+	tokenString, expire, err := business.NewUserBusiness().CreateToken(receiver.AppId, userModel.Id, 604800)
+	if err != nil {
+		receiver.FailReturn(global.NewError(5000))
+		return
+	}
+	receiver.RegisterLogin(tokenString, expire)
+	receiver.SuccReturn(map[string]interface{}{
+		"token_info": dy.RepostAccountToken{
+			UserId:      userModel.Id,
+			TokenString: tokenString,
+			ExpTime:     expire,
+		},
+	})
 	return
 }
