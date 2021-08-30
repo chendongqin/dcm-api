@@ -8,6 +8,7 @@ import (
 	"dongchamao/global/utils"
 	"dongchamao/models/dcm"
 	"dongchamao/models/repost/dy"
+	"fmt"
 	"github.com/astaxie/beego"
 	"github.com/astaxie/beego/logs"
 	"github.com/silenceper/wechat/v2/officialaccount/message"
@@ -150,7 +151,7 @@ func (receiver *WechatController) WechatApp() {
 		return
 	}
 	receiver.SuccReturn(map[string]interface{}{
-		"union_id": unionid,
+		"unionid": unionid,
 	})
 	return
 }

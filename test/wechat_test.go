@@ -49,8 +49,55 @@ func TestUserStr(t *testing.T) {
 
 //客户端微信登录
 func TestWxApp(t *testing.T) {
-	code := "081wfm0w3lxNYW2BgJ1w3CaWoR0wfm04"
-	userInfo, err := business.NewWxAppBusiness().AppLogin(code)
+	code := "001ZTQFa1DSvFB0rWwFa17BQOl3ZTQFI"
+	userInfo, _ := business.NewWxAppBusiness().AppLogin(code)
 	fmt.Println(userInfo)
-	fmt.Println(err)
+	//fmt.Println(err)
+}
+
+//获取微信公众号
+func TestWxMenu(t *testing.T){
+	wc := wechat.NewWechat()
+	memory := cache.NewMemory() //TODO 建议改成 REDIS
+	cfg := &config.Config{
+		AppID:          "wx6392924bcb25fd24",
+		AppSecret:      "a0bc0bcdbb77219655ff8aff1b110559",
+		Token:          "7B6DB2CF18CC177BBFB5ED72B3644899",
+		EncodingAESKey: "Qgnn0UH9oz5rNHZIex27UkY4Xxu3daMUFbHvLaaaRwe",
+		Cache:          memory,
+	}
+	WxOfficial := wc.GetOfficialAccount(cfg)
+	menuInfo := WxOfficial.GetMenu()
+	fmt.Println(menuInfo.GetMenu())
+}
+
+//获取微信公众号
+func TestDelWxMenu(t *testing.T){
+	wc := wechat.NewWechat()
+	memory := cache.NewMemory() //TODO 建议改成 REDIS
+	cfg := &config.Config{
+		AppID:          "wx6392924bcb25fd24",
+		AppSecret:      "a0bc0bcdbb77219655ff8aff1b110559",
+		Token:          "7B6DB2CF18CC177BBFB5ED72B3644899",
+		EncodingAESKey: "Qgnn0UH9oz5rNHZIex27UkY4Xxu3daMUFbHvLaaaRwe",
+		Cache:          memory,
+	}
+	WxOfficial := wc.GetOfficialAccount(cfg)
+	menuInfo := WxOfficial.GetMenu()
+	fmt.Println(menuInfo.DeleteMenu())
+}
+
+func TestSetWxMenu(t *testing.T){
+	wc := wechat.NewWechat()
+	memory := cache.NewMemory() //TODO 建议改成 REDIS
+	cfg := &config.Config{
+		AppID:          "wx6392924bcb25fd24",
+		AppSecret:      "a0bc0bcdbb77219655ff8aff1b110559",
+		Token:          "7B6DB2CF18CC177BBFB5ED72B3644899",
+		EncodingAESKey: "Qgnn0UH9oz5rNHZIex27UkY4Xxu3daMUFbHvLaaaRwe",
+		Cache:          memory,
+	}
+	WxOfficial := wc.GetOfficialAccount(cfg)
+	menuInfo := WxOfficial.GetMenu()
+	fmt.Println(menuInfo.SetMenuByJSON(`{"button":[{"type":"click","name":"关于我们","key":" ABOUT_UD"},{"name":"主菜单","sub_button":[{"type":"view","name":"搜索","url":"http://www.soso.com/"},{"type":"click","name":"赞一下我们","key":"V1001_GOOD"}]}]}`))
 }
