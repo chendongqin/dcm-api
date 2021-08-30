@@ -62,7 +62,7 @@ func buildURL(prefix, source string) string {
 	} else if strings.Index(source, "http") == 0 {
 		source = strings.Replace(source, "http://", "", 1)
 	}
-	return cdn[0] + source
+	return cdn[0] + "/" + source
 }
 
 func Md5_encode(str string) string {
