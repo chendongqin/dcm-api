@@ -683,3 +683,26 @@ func (receiver *ProductController) ProductAuthorLiveRooms() {
 		"max_show_total": maxTotal,
 	})
 }
+
+//商品直播间
+func (receiver *ProductController) ProductRoomsRangeDate() {
+	productId := business.IdDecrypt(receiver.GetString(":product_id", ""))
+	startTime, endTime, comErr := receiver.GetRangeDate()
+	if comErr != nil {
+		receiver.FailReturn(comErr)
+		return
+	}
+	page := receiver.GetPage("page")
+	pageSize := receiver.GetPageSize("page_size", 5, 10)
+	authorBusiness := business.NewAuthorBusiness()
+	list, total, comErr := authorBusiness.GetAuthorProductRooms("", productId, startTime, endTime, page, pageSize, "predict_gmv", "desc")
+	if comErr != nil {
+		receiver.FailReturn(comErr)
+		return
+	}
+	receiver.SuccReturn(map[string]interface{}{
+		"list":  list,
+		"total": total,
+	})
+	return
+}

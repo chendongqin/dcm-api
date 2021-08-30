@@ -419,22 +419,34 @@ func (receiver *EsLiveBusiness) AllRoomProductCateByRoomId(roomInfo entity.DyLiv
 }
 
 //达人直播带货商品直播列表
-func (receiver *EsLiveBusiness) GetAuthorProductSearchRoomIds(authorId, productId string, startTime, stopTime time.Time, page, pageSize int) (roomIds []string, total int, comErr global.CommonError) {
+func (receiver *EsLiveBusiness) GetAuthorProductSearchRoomIds(authorId, productId string, startTime, stopTime time.Time, page, pageSize int, sortStr, orderBy string) (roomIds []string, total int, comErr global.CommonError) {
 	esTable := GetESTableByTime(es.DyRoomProductRecordsTable, startTime, stopTime)
 	esQuery, esMultiQuery := elasticsearch.NewElasticQueryGroup()
-	esQuery.SetTerm("author_id", authorId)
-	esQuery.SetTerm("product_id", productId)
-	esQuery.SetRange("shelf_time", map[string]interface{}{
-		"gte": startTime.Unix(),
-		"lt":  stopTime.AddDate(0, 0, 1).Unix(),
-	})
+	if authorId != "" {
+		esQuery.SetTerm("author_id", authorId)
+	}
+	if productId != "" {
+		esQuery.SetTerm("product_id", productId)
+	}
+	if startTime.Unix() != stopTime.Unix() {
+		esQuery.SetRange("shelf_time", map[string]interface{}{
+			"gte": startTime.Unix(),
+			"lt":  stopTime.AddDate(0, 0, 1).Unix(),
+		})
+	}
+	if sortStr == "" {
+		sortStr = "shelf_time"
+	}
+	if orderBy == "" {
+		orderBy = "desc"
+	}
 	results := esMultiQuery.
 		SetTable(esTable).
 		SetFields("room_id").
 		AddMust(esQuery.Condition).
 		SetMultiQuery().
 		SetLimit((page-1)*pageSize, pageSize).
-		SetOrderBy(elasticsearch.NewElasticOrder().Add("shelf_time", "desc").Order).
+		SetOrderBy(elasticsearch.NewElasticOrder().Add(sortStr, orderBy).Order).
 		Query()
 	list := make([]es.EsAuthorLiveProduct, 0)
 	utils.MapToStruct(results, &list)

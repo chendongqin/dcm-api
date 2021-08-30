@@ -759,9 +759,9 @@ func (a *AuthorBusiness) GetAuthorProductHbaseList(authorId, keyword string, sta
 }
 
 //达人电商分析直播列表
-func (a *AuthorBusiness) GetAuthorProductRooms(authorId, productId string, startTime, stopTime time.Time, page, pageSize int) (list []dy.DyAuthorProductRoom, total int, comErr global.CommonError) {
+func (a *AuthorBusiness) GetAuthorProductRooms(authorId, productId string, startTime, stopTime time.Time, page, pageSize int, sortStr, orderBy string) (list []dy.DyAuthorProductRoom, total int, comErr global.CommonError) {
 	esLiveBusiness := es.NewEsLiveBusiness()
-	roomIds, total, comErr := esLiveBusiness.GetAuthorProductSearchRoomIds(authorId, productId, startTime, stopTime, page, pageSize)
+	roomIds, total, comErr := esLiveBusiness.GetAuthorProductSearchRoomIds(authorId, productId, startTime, stopTime, page, pageSize, sortStr, orderBy)
 	if len(roomIds) == 0 || comErr != nil {
 		return
 	}

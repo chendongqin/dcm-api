@@ -741,7 +741,7 @@ func (receiver *AuthorController) AuthorProductRooms() {
 	page := receiver.GetPage("page")
 	pageSize := receiver.GetPageSize("page_size", 5, 10)
 	authorBusiness := business.NewAuthorBusiness()
-	list, total, comErr := authorBusiness.GetAuthorProductRooms(authorId, productId, startTime, endTime, page, pageSize)
+	list, total, comErr := authorBusiness.GetAuthorProductRooms(authorId, productId, startTime, endTime, page, pageSize, "shelf_time", "desc")
 	if comErr != nil {
 		receiver.FailReturn(comErr)
 		return
