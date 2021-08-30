@@ -20,6 +20,7 @@ type DcUser struct {
 	Status           int       `xorm:"not null default 1 comment('状态1正常0禁用') TINYINT(1)"`
 	Openid           string    `xorm:"not null default '' comment('openid') VARCHAR(100)"`
 	Unionid          string    `xorm:"not null default '' comment('unionid') VARCHAR(100)"`
+	OpenidApp        string    `xorm:"not null default '' comment('客户端openid') VARCHAR(100)"`
 	CreateTime       time.Time `xorm:"comment('创建时间') TIMESTAMP"`
 	UpdateTime       time.Time `xorm:"comment('更新时间') TIMESTAMP"`
 	SetPassword      int       `xorm:"not null default 0 comment('是否设置了登陆密码') TINYINT(1)"`

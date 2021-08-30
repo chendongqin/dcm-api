@@ -1,6 +1,7 @@
 package test
 
 import (
+	"dongchamao/business"
 	"dongchamao/global/consistent"
 	"fmt"
 	"github.com/silenceper/wechat/v2"
@@ -25,6 +26,7 @@ func TestWxAccessToken(t *testing.T) {
 	fmt.Println(accToken)
 }
 
+//获取用户信息 (公众号)
 func TestUserInfo(t *testing.T) {
 	wc := wechat.NewWechat()
 	memory := cache.NewMemory() //TODO 建议改成 REDIS
@@ -43,4 +45,12 @@ func TestUserInfo(t *testing.T) {
 func TestUserStr(t *testing.T) {
 	eventKey := "qrscene_qrlogin:ca46379c043766ae95e19be66105e879"
 	fmt.Println(strings.Contains(eventKey, consistent.WECHAT_QR_LOGIN))
+}
+
+//客户端微信登录
+func TestWxApp(t *testing.T) {
+	code := "081wfm0w3lxNYW2BgJ1w3CaWoR0wfm04"
+	userInfo, err := business.NewWxAppBusiness().AppLogin(code)
+	fmt.Println(userInfo)
+	fmt.Println(err)
 }

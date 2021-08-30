@@ -39,14 +39,17 @@ func (receiver *LoginController) Login() {
 	} else if grantType == "sms" {
 		username := InputData.GetString("username", "")
 		code := InputData.GetString("code", "")
-		openid := InputData.GetString("openid", "")
-		user, authToken, expTime, isNew, comErr = userBusiness.SmsLogin(username, code, openid, appId)
+		abstractId := InputData.GetString("unionid", "")
+		user, authToken, expTime, isNew, comErr = userBusiness.SmsLogin(username, code, abstractId, appId)
 		if isNew == 0 && user.SetPassword == 0 {
 			setPassword = 1
 		}
-	} else if grantType == "wechat" {
-		openid := InputData.GetString("openid", "")
-		user, authToken, expTime, comErr = userBusiness.QrLogin(openid, appId)
+	} else if grantType == "wechat" { //微信扫码登录
+		unionid := InputData.GetString("unionid", "")
+		user, authToken, expTime, comErr = userBusiness.WechatLogin(unionid, grantType, appId)
+	} else if grantType == "wechat_app" { //微信登录
+		unionid := InputData.GetString("unionid", "")
+		user, authToken, expTime, comErr = userBusiness.WechatLogin(unionid, grantType, appId)
 	} else {
 		comErr = global.NewError(4000)
 	}

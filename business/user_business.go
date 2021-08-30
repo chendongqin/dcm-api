@@ -134,21 +134,27 @@ func (receiver *UserBusiness) LoginByPwd(username, pwd string, appId int) (user 
 }
 
 //验证码登陆
-func (receiver *UserBusiness) SmsLogin(mobile, code, openid string, appId int) (user dcm.DcUser, tokenString string, expire int64, isNew int, comErr global.CommonError) {
+func (receiver *UserBusiness) SmsLogin(mobile, code, unionid string, appId int) (user dcm.DcUser, tokenString string, expire int64, isNew int, comErr global.CommonError) {
+	if mobile == "" || code == "" {
+		comErr = global.NewError(4000)
+		return
+	}
 	codeKey := cache.GetCacheKey(cache.SmsCodeVerify, "login", mobile)
-	verifyCode := global.Cache.Get(codeKey)
-	if mobile == "" || verifyCode != code {
+	if verifyCode := global.Cache.Get(codeKey); verifyCode != code {
 		comErr = global.NewError(4209)
 		return
 	}
-	if openid != "" {
+	if unionid != "" {
 		wechatModel := dcm.DcWechat{} //如果有微信信息 头像/昵称 默认用微信
-		if exist, _ := dcm.GetSlaveDbSession().Where("openid = ?", openid).Get(&wechatModel); exist {
-			user.Nickname = wechatModel.NickName
-			user.Avatar = wechatModel.Avatar
-			user.Openid = wechatModel.Openid
-			user.Unionid = wechatModel.Unionid
+		if exist, _ := dcm.GetSlaveDbSession().Where("unionid = ?", unionid).Get(&wechatModel); !exist {
+			comErr = global.NewError(4304)
+			return
 		}
+		user.Nickname = wechatModel.NickName
+		user.Avatar = wechatModel.Avatar
+		user.Openid = wechatModel.Openid
+		user.OpenidApp = wechatModel.OpenidApp
+		user.Unionid = wechatModel.Unionid
 	} else {
 		user.Nickname = mobile[:3] + "****" + mobile[7:]
 	}
@@ -189,31 +195,34 @@ func (receiver *UserBusiness) SmsLogin(mobile, code, openid string, appId int) (
 	return
 }
 
-//微信扫码登录
-func (receiver *UserBusiness) QrLogin(openid string, appId int) (user dcm.DcUser, tokenString string, expire int64, comErr global.CommonError) {
-	if openid == "" {
+//微信登录 1.客户端 2.扫码两种方式
+func (receiver *UserBusiness) WechatLogin(unionid, source string, appId int) (user dcm.DcUser, tokenString string, expire int64, comErr global.CommonError) {
+	if unionid == "" {
 		comErr = global.NewError(4301)
 		return
 	}
 	//判断 dc_wechat 是否有openid信息
 	wechatModel := dcm.DcWechat{}
-	if exist, _ := dcm.GetSlaveDbSession().Where("openid = ?", openid).Get(&wechatModel); !exist {
+	if exist, _ := dcm.GetSlaveDbSession().Where("unionid = ?", unionid).Get(&wechatModel); !exist {
 		comErr = global.NewError(4300)
 		return
 	}
-	//nowTime := time.Now()
-	isExistUser := true
-	//查询是否绑定用户
-	userModel := dcm.DcUser{}
-	if exist, _ := dcm.GetSlaveDbSession().Where("openid = ?", openid).Get(&userModel); !exist {
-		//如果没有用户微信尝试unionid 在次获取用户信息
-		isExistUser = false
-		if exist, _ := dcm.GetSlaveDbSession().Where("unionid = ?", wechatModel.Unionid).Get(&userModel); !exist {
-			isExistUser = false
+	if source == "wechat" {
+		if wechatModel.Subscribe != 1 {
+			comErr = global.NewError(4300)
+			return
+		}
+	}
+	if source == "wechat_app" {
+		if wechatModel.OpenidApp == "" {
+			comErr = global.NewError(4302)
+			return
 		}
 	}
 	var err error
-	if isExistUser == true {
+	//查询是否绑定用户
+	userModel := dcm.DcUser{}
+	if exist, _ := dcm.GetSlaveDbSession().Where("unionid = ?", unionid).Get(&userModel); exist {
 		if userModel.Status != 1 {
 			comErr = global.NewError(4212)
 			return
@@ -224,9 +233,38 @@ func (receiver *UserBusiness) QrLogin(openid string, appId int) (user dcm.DcUser
 			return
 		}
 	}
+
 	return userModel, tokenString, expire, nil
 }
 
+//func (receiver *UserBusiness) WxAppLogin(unionid string, appId int) (user dcm.DcUser, tokenString string, expire int64, comErr global.CommonError) {
+//	if unionid == "" {
+//		comErr = global.NewError(4303)
+//		return
+//	}
+//	//判断 dc_wechat 是否有unionid信息
+//	wechatModel := dcm.DcWechat{}
+//	if exist, _ := dcm.GetSlaveDbSession().Where("unionid = ?", unionid).Get(&wechatModel); !exist {
+//		comErr = global.NewError(4300)
+//		return
+//	}
+//	var err error
+//	//查询是否绑定用户
+//	userModel := dcm.DcUser{}
+//	if exist, _ := dcm.GetSlaveDbSession().Where("unionid = ?", unionid).Get(&userModel); exist {
+//		if userModel.Status != 1 {
+//			comErr = global.NewError(4212)
+//			return
+//		}
+//		tokenString, expire, err = receiver.CreateToken(appId, userModel.Id, 604800)
+//		if err != nil {
+//			comErr = global.NewError(5000)
+//			return
+//		}
+//
+//	}
+//	return userModel, tokenString, expire, nil
+//}
 func (receiver *UserBusiness) DeleteUserInfoCache(userid int) bool {
 	memberKey := cache.GetCacheKey(cache.UserInfo, userid)
 	err := global.Cache.Delete(memberKey)
