@@ -223,6 +223,7 @@ func (i *EsProductBusiness) KeywordSearch(keyword string) (list []es.DyProduct) 
 		SetCache(60).
 		AddShould(esQuery.Condition).
 		SetLimit(0, 3).
+		SetOrderBy(elasticsearch.NewElasticOrder().Add("order_account", "desc").Order).
 		SetMultiQuery().
 		Query()
 	utils.MapToStruct(results, &list)

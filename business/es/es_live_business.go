@@ -626,6 +626,7 @@ func (receiver *EsLiveBusiness) KeywordSearch(keyword string) (list []es.EsDyLiv
 		SetTable(esTable).
 		SetCache(60).
 		AddMust(esQuery.Condition).
+		SetOrderBy(elasticsearch.NewElasticOrder().Add("create_time", "desc").Order).
 		SetLimit(0, 3).
 		SetMultiQuery().
 		Query()

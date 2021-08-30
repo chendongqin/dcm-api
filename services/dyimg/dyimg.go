@@ -24,8 +24,7 @@ const (
 )
 
 var cdn = []string{
-	"https://cdn-images.chanmama.com",
-	"https://cdn-images.chanmama.com",
+	"https://cdn-images.dongchamao.com",
 }
 
 func BytesToInt64(b []byte) int64 {
@@ -37,8 +36,8 @@ func BytesToInt64(b []byte) int64 {
 
 func pickCDN(md5 string) string {
 	length := len(cdn)
-	bytes, _ := hex.DecodeString(md5)
-	hashValue := BytesToInt64(bytes)
+	bytesStr, _ := hex.DecodeString(md5)
+	hashValue := BytesToInt64(bytesStr)
 	count := hashValue % int64(length)
 	count = int64(math.Abs(float64(count))) //md5 128bits > 64bits, 取绝对值
 	baseURL := cdn[count]
@@ -50,15 +49,15 @@ func buildURL(prefix, source string) string {
 	if err != nil {
 		return source
 	}
-	//已经转换过的直接返回
 	return source
+	//已经转换过的直接返回
 	if strings.Contains(infoURL.Host, "dongchamao") {
 		return source
 	}
-	md5 := Md5_encode(source)
+	md5Str := Md5_encode(source)
 	source = url.QueryEscape(source)
-	fileName := md5 + ".jpeg"
-	return pickCDN(md5) + "/douyin/" + prefix + "/" + fileName + "?source=" + source
+	fileName := md5Str + ".jpeg"
+	return pickCDN(md5Str) + "/douyin/" + prefix + "/" + fileName + "?source=" + source
 }
 
 func Md5_encode(str string) string {

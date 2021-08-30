@@ -255,7 +255,19 @@ func (receiver *EsAuthorBusiness) SimpleSearch(
 		esQuery.SetMatchPhrase("nickname", nickname)
 	}
 	if keyword != "" {
-		esQuery.SetMultiMatch([]string{"unique_id", "short_id", "author_id"}, keyword)
+		if utils.HasChinese(keyword) {
+			slop := 100
+			length := len([]rune(keyword))
+			if length <= 3 {
+				slop = 2
+			}
+			esMultiQuery.AddMust(elasticsearch.Query().
+				SetMatchPhraseWithParams("nickname", keyword, alias.M{
+					"slop": slop,
+				}).Condition)
+		} else {
+			esQuery.SetMultiMatch([]string{"unique_id", "short_id", "nickname", "author_id"}, keyword)
+		}
 	}
 	results := esMultiQuery.
 		SetTable(esTable).
@@ -272,6 +284,7 @@ func (receiver *EsAuthorBusiness) SimpleSearch(
 func (receiver *EsAuthorBusiness) KeywordSearch(keyword string) (list []es.DyAuthor) {
 	esQuery, esMultiQuery := elasticsearch.NewElasticQueryGroup()
 	esTable := es.DyAuthorTable
+	esQuery.SetTerm("exist", 1)
 	if utils.HasChinese(keyword) {
 		slop := 100
 		length := len([]rune(keyword))
@@ -290,7 +303,7 @@ func (receiver *EsAuthorBusiness) KeywordSearch(keyword string) (list []es.DyAut
 		SetCache(60).
 		AddMust(esQuery.Condition).
 		SetLimit(0, 4).
-		SetOrderBy(elasticsearch.NewElasticOrder().Add("follower_count", "desc").Order).
+		SetOrderBy(elasticsearch.NewElasticOrder().Add("follower_incre_count", "desc").Order).
 		SetMultiQuery().
 		Query()
 	utils.MapToStruct(results, &list)
