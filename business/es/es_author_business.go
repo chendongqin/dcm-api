@@ -45,7 +45,7 @@ func (receiver *EsAuthorBusiness) BaseSearch(
 	esTable := es.DyAuthorTable
 	esQuery, esMultiQuery := elasticsearch.NewElasticQueryGroup()
 	esQuery.SetTerm("exist", 1)
-	if sortStr == "follower_count" && minFollower == 0 && maxFollower == 0 {
+	if sortStr == "follower_count" && minFollower == 0 && maxFollower == 0 && keyword == "" {
 		minFollower = 2600000
 	}
 	if keyword != "" {
