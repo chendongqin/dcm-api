@@ -1674,3 +1674,96 @@ func AesDecrypt(crypted, key []byte) ([]byte, error) {
 	origData = PKCS7UnPadding(origData)
 	return origData, nil
 }
+
+// NewRequest 请求包装
+func NewRequest(method, url string, data []byte) (body []byte, err error) {
+
+	if method == "GET" {
+		url = fmt.Sprint(url, "?", string(data))
+		data = nil
+	}
+
+	client := http.Client{}
+	req, err := http.NewRequest(method, url, bytes.NewBuffer(data))
+	if err != nil {
+		return body, err
+	}
+
+	resp, err := client.Do(req)
+	if err != nil {
+		return nil, err
+	}
+
+	body, err = ioutil.ReadAll(resp.Body)
+	defer resp.Body.Close()
+	if err != nil {
+		return body, err
+	}
+
+	return body, err
+}
+
+// Struct2Map struct to map，依赖 json tab
+func Struct2Map(r interface{}) (s map[string]string, err error) {
+	var temp map[string]interface{}
+	var result = make(map[string]string)
+
+	bin, err := json.Marshal(r)
+	if err != nil {
+		return result, err
+	}
+	if err := json.Unmarshal(bin, &temp); err != nil {
+		return nil, err
+	}
+	for k, v := range temp {
+		result[k], err = ToStringE(v)
+		if err != nil {
+			return nil, err
+		}
+	}
+	return result, nil
+}
+
+// ToStringE interface to string
+func ToStringE(i interface{}) (string, error) {
+	switch s := i.(type) {
+	case string:
+		return s, nil
+	case bool:
+		return strconv.FormatBool(s), nil
+	case float64:
+		return strconv.FormatFloat(s, 'f', -1, 64), nil
+	case float32:
+		return strconv.FormatFloat(float64(s), 'f', -1, 32), nil
+	case int:
+		return strconv.Itoa(s), nil
+	case int64:
+		return strconv.FormatInt(s, 10), nil
+	case int32:
+		return strconv.Itoa(int(s)), nil
+	case int16:
+		return strconv.FormatInt(int64(s), 10), nil
+	case int8:
+		return strconv.FormatInt(int64(s), 10), nil
+	case uint:
+		return strconv.FormatInt(int64(s), 10), nil
+	case uint64:
+		return strconv.FormatInt(int64(s), 10), nil
+	case uint32:
+		return strconv.FormatInt(int64(s), 10), nil
+	case uint16:
+		return strconv.FormatInt(int64(s), 10), nil
+	case uint8:
+		return strconv.FormatInt(int64(s), 10), nil
+	case []byte:
+		return string(s), nil
+	case nil:
+		return "", nil
+	case fmt.Stringer:
+		return s.String(), nil
+	case error:
+		return s.Error(), nil
+	default:
+		return "", fmt.Errorf("unable to cast %#v of type %T to string", i, i)
+	}
+}

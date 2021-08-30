@@ -6,6 +6,7 @@ import (
 	"dongchamao/global"
 	"dongchamao/global/consistent"
 	"dongchamao/global/utils"
+	"dongchamao/models/dcm"
 	"github.com/astaxie/beego"
 	"github.com/astaxie/beego/logs"
 	"github.com/silenceper/wechat/v2/officialaccount/message"
@@ -50,15 +51,15 @@ func (receiver *WechatController) CheckScan() {
 		return
 	}
 	//从缓存中获取用户openId
-	cacheKey := "openid:" + sessionId
+	cacheKey := "unionid:" + sessionId
 
-	openId := global.Cache.Get(cacheKey)
-	if openId == "" {
+	uniondId := global.Cache.Get(cacheKey)
+	if uniondId == "" {
 		receiver.FailReturn(global.NewError(4006))
 		return
 	}
 	receiver.SuccReturn(map[string]interface{}{
-		"open_id": openId,
+		"unionid": uniondId,
 	})
 	return
 }
@@ -96,14 +97,14 @@ func (receiver *WechatController) Receive() {
 						text = message.NewText("扫码关注失败!!")
 						return &message.Reply{MsgType: message.MsgTypeText, MsgData: text}
 					}
-					//设置 openid 缓存 前端监听
-					_ = global.Cache.Set("openid:"+msg.EventKey, msg.GetOpenID(), 1800)
+					//设置openid缓存 前端监听
+					_ = global.Cache.Set("unionid:"+msg.EventKey, msg.UnionID, 1800)
 					return &message.Reply{MsgType: message.MsgTypeText, MsgData: text}
 				}
 				return &message.Reply{MsgType: message.MsgTypeText, MsgData: text}
 			case message.EventUnsubscribe:
-				logs.Error("[扫码登录微信1002]=>缓存key:[%s],openid:[%s]", msg.EventKey, msg.GetOpenID())
-				_ = business.NewWechatBusiness().UnSubscribeOfficial(msg.GetOpenID())
+				logs.Error("[扫码登录微信1002]=>缓存key:[%s],openid:[%s]", msg.EventKey, msg.UnionID)
+				_ = business.NewWechatBusiness().UnSubscribeOfficial(msg.UnionID)
 				return &message.Reply{MsgType: message.MsgTypeText, MsgData: text}
 			case message.EventScan:
 				//自定义事件key
@@ -115,7 +116,7 @@ func (receiver *WechatController) Receive() {
 						return &message.Reply{MsgType: message.MsgTypeText, MsgData: text}
 					}
 					//设置 openid 缓存 前端监听
-					_ = global.Cache.Set("openid:"+msg.EventKey, msg.GetOpenID(), 1800)
+					_ = global.Cache.Set("unionid:"+msg.EventKey, msg.UnionID, 1800)
 					return &message.Reply{MsgType: message.MsgTypeText, MsgData: text}
 				}
 				//default:
@@ -136,8 +137,70 @@ func (receiver *WechatController) Receive() {
 }
 
 //微信客户端 获取open相关信息
+func (receiver *WechatController) WechatApp() {
+	inputData := receiver.InputFormat()
+	code := inputData.GetString("code", "")
+	if code == "" {
+		receiver.FailReturn(global.NewError(4000))
+		return
+	}
+	unionid, err := business.NewWxAppBusiness().AppLogin(code)
+	if err != nil {
+		receiver.FailReturn(global.NewError(4302))
+		return
+	}
+	receiver.SuccReturn(map[string]interface{}{
+		"union_id": unionid,
+	})
+	return
+}
 
-//func (receiver *WechatController) WxApp() {
-//	inputData := receiver.InputFormat()
-//	code := inputData.GetString("code", "")
-//}
+//微信登录绑定老账号
+func (receiver *WechatController) WechatPhone() {
+	inputData := receiver.InputFormat()
+	userName := inputData.GetString("username", "")
+	code := inputData.GetString("code", "")
+	unionid := inputData.GetString("unionid", "")
+	//source := inputData.GetString("source", "") //    1.二维码2.微信一键登录
+	if userName == "" || code == "" || unionid == "" {
+		receiver.FailReturn(global.NewError(4000))
+		return
+	}
+	wechatModel := dcm.DcWechat{}
+	if exist, _ := dcm.GetSlaveDbSession().Where("unionid = ?", unionid).Get(&wechatModel); !exist {
+		receiver.FailReturn(global.NewError(4304))
+		return
+	}
+	//TODO 校验验证码 ...
+
+	//查询手机是否该用户 ...
+	userModel := dcm.DcUser{}
+	if exist, _ := dcm.GetSlaveDbSession().Where("username = ?", userName).Get(&userModel); !exist {
+		receiver.FailReturn(global.NewError(4204))
+		return
+	}
+	//开始更新用户信息
+	//if userModel.Unionid != "" {
+	//	receiver.FailReturn(global.NewError(4305))
+	//	return
+	//}
+
+	//userModel.OpenidApp = wechatModel.OpenidApp
+	//userModel.Openid = wechatModel.Openid
+
+	userBusiness := business.NewUserBusiness()
+	updateData := map[string]interface{}{
+		"openid_app":  wechatModel.OpenidApp,
+		"openid":      wechatModel.Openid,
+		"unionid":     wechatModel.Unionid,
+		"update_time": utils.GetNowTimeStamp(),
+	}
+	affect, _ := userBusiness.UpdateUserAndClearCache(nil, userModel.Id, updateData)
+	if affect == 0 {
+		receiver.FailReturn(global.NewError(4213))
+		return
+	}
+	//TODO 是否需要返回新的 token
+	receiver.SuccReturn(nil)
+	return
+}
