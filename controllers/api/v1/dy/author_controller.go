@@ -147,14 +147,23 @@ func (receiver *AuthorController) BaseSearch() {
 		receiver.FailReturn(comErr)
 		return
 	}
+	authorIds := make([]string, 0)
+	for _, v := range list {
+		authorIds = append(authorIds, v.AuthorId)
+	}
+	authorMap := business.NewAuthorBusiness().GetAuthorFormPool(authorIds, 10)
 	for k, v := range list {
 		list[k].Avatar = dyimg.Fix(v.Avatar)
 		if v.UniqueId == "" || v.UniqueId == "0" {
 			list[k].UniqueId = v.ShortId
 		}
 		list[k].AuthorId = business.IdEncrypt(v.AuthorId)
-		authorData, _ := hbase.GetAuthor(v.AuthorId)
-		list[k].RoomId = business.IdEncrypt(authorData.RoomId)
+		if a, ok := authorMap[v.AuthorId]; ok {
+			list[k].RoomId = a.RoomId
+		} else {
+			authorData, _ := hbase.GetAuthor(v.AuthorId)
+			list[k].RoomId = business.IdEncrypt(authorData.RoomId)
+		}
 	}
 	totalPage := math.Ceil(float64(total) / float64(pageSize))
 	maxPage := math.Ceil(float64(receiver.MaxTotal) / float64(pageSize))
