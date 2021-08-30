@@ -49,15 +49,20 @@ func buildURL(prefix, source string) string {
 	if err != nil {
 		return source
 	}
-	return source
 	//已经转换过的直接返回
 	if strings.Contains(infoURL.Host, "dongchamao") {
 		return source
 	}
-	md5Str := Md5_encode(source)
-	source = url.QueryEscape(source)
-	fileName := md5Str + ".jpeg"
-	return pickCDN(md5Str) + "/douyin/" + prefix + "/" + fileName + "?source=" + source
+	//md5Str := Md5_encode(source)
+	//source = url.QueryEscape(source)
+	//fileName := md5Str + ".jpeg"
+	//return pickCDN(md5Str) + "/douyin/" + prefix + "/" + fileName + "?source=" + source
+	if strings.Index(source, "https") == 0 {
+		source = strings.Replace(source, "https://", "", 1)
+	} else if strings.Index(source, "http") == 0 {
+		source = strings.Replace(source, "http://", "", 1)
+	}
+	return cdn[0] + source
 }
 
 func Md5_encode(str string) string {
@@ -73,7 +78,7 @@ func Fix(image string) string {
 	//image = strings.Replace(image, "-ipv6", "", 1)
 	image = strings.Replace(image, ".heic", ".jpeg", 1)
 	image = WebpToJpg(image)
-	return image
+	return Convert("", image)
 }
 
 func Aweme(image string) string {
