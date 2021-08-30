@@ -444,9 +444,9 @@ func (receiver *EsLiveBusiness) GetAuthorProductSearchRoomIds(authorId, productI
 		SetTable(esTable).
 		SetFields("room_id").
 		AddMust(esQuery.Condition).
-		SetMultiQuery().
 		SetLimit((page-1)*pageSize, pageSize).
 		SetOrderBy(elasticsearch.NewElasticOrder().Add(sortStr, orderBy).Order).
+		SetMultiQuery().
 		Query()
 	list := make([]es.EsAuthorLiveProduct, 0)
 	utils.MapToStruct(results, &list)
