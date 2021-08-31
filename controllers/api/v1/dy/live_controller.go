@@ -756,10 +756,16 @@ func (receiver LiveController) LivingMessage() {
 			end = lenNum
 		}
 		list = data.Latest500Msg[start:end]
+		lastKey := -1
 		for k, v := range list {
 			list[k].Avatar = dyimg.Fix(v.Avatar)
+			lastKey = k
 		}
-		endNum = list[len(list)-1].RankId
+		if lastKey < 0 {
+			endNum = beginNum
+		} else {
+			endNum = list[lastKey].RankId
+		}
 	}
 	receiver.SuccReturn(map[string]interface{}{
 		"list":    list,
