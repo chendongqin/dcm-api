@@ -231,6 +231,9 @@ func (receiver *CommonController) RedAuthorRoom() {
 			date := dateTime.Format("2006-01-02")
 			tmpList := make([]dy2.RedAuthorRoom, 0)
 			roomList := authorBusiness.RedAuthorRoomByDate(authorIds, dateTime.Format("20060102"))
+			if len(roomList) == 0 {
+				continue
+			}
 			for _, v := range roomList {
 				if a, ok := authorDataMap[v.AuthorId]; ok {
 					v.RoomCount = a.RoomCount
@@ -245,7 +248,7 @@ func (receiver *CommonController) RedAuthorRoom() {
 			})
 		}
 		sort.Slice(data, func(i, j int) bool {
-			return data[i].Date < data[j].Date
+			return data[i].Date > data[j].Date
 		})
 	}
 	receiver.SuccReturn(map[string]interface{}{
