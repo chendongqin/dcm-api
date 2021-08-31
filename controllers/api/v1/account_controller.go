@@ -120,9 +120,9 @@ func (receiver *AccountController) ChangeMobile() {
 		return
 	}
 	_ = dbSession.Commit()
-	receiver.Logout()
 	_ = global.Cache.Delete(codeKey)
 	_ = global.Cache.Delete(codeKey1)
+	receiver.Logout()
 	receiver.SuccReturn(nil)
 	return
 }
