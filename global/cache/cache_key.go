@@ -34,4 +34,7 @@ const (
 	AuthorViewProductAllList KeyName = "dcm:author:view:product:%s:%s:%s"
 	//榜单数据缓存
 	DyRankCache KeyName = "dcm:rank:%s:%s"
+	//爬虫加速限制频次
+	SpiderSpeedUpLimit KeyName = "dcm:spider:limit:%s:%s" //spidername,authorId
+
 )
