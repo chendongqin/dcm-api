@@ -39,6 +39,8 @@ func IClientProfile(sig, sessionId, token, ip, scene, appKey string) error {
 	if err != nil {
 		return err
 	}
-	fmt.Println(response)
+	if *response.Code != 100 {
+		return errors.New(fmt.Sprintf("%v", response.Msg))
+	}
 	return nil
 }
