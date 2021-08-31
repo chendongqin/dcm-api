@@ -12,4 +12,5 @@ const (
 	DyProductSalesTopTable       = "dy_procuct_sales_top_%s"
 	DyProductShareTopTable       = "dy_product_share_top_%s"
 	DyLiveProductSalesTopTable   = "dy_live_product_sales_top_%s"
+	DyProductVideoTable          = "dy_product_aweme_%s"
 )

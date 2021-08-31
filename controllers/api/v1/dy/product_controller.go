@@ -707,6 +707,7 @@ func (receiver *ProductController) ProductRoomsRangeDate() {
 	return
 }
 
+//商品视频分析销量趋势
 func (receiver *ProductController) ProductAwemeSalesTrend() {
 	productId := business.IdDecrypt(receiver.GetString(":product_id", ""))
 	startTime, endTime, comErr := receiver.GetRangeDate()
@@ -739,5 +740,36 @@ func (receiver *ProductController) ProductAwemeSalesTrend() {
 	receiver.SuccReturn(map[string]interface{}{
 		"date": dateChart,
 		"list": chartList,
+	})
+}
+
+//商品视频列表
+func (receiver *ProductController) ProductAweme() {
+	productId := receiver.Ctx.Input.Param(":product_id")
+	startTime, endTime, comErr := receiver.GetRangeDate()
+	if comErr != nil {
+		receiver.FailReturn(comErr)
+		return
+	}
+	keyword := receiver.GetString("keyword", "")
+	sortStr := receiver.GetString("sort", "")
+	orderBy := receiver.GetString("order_by", "")
+	page := receiver.GetPage("page")
+	pageSize := receiver.GetPageSize("page_size", 10, 50)
+	list, total, comErr := es.NewEsVideoBusiness().SearchAwemeByProduct(productId, keyword, sortStr, orderBy, startTime, endTime, page, pageSize)
+	for k, v := range list {
+		list[k].ProductId = business.IdEncrypt(v.ProductId)
+		list[k].AwemeId = business.IdEncrypt(v.AwemeId)
+		list[k].Avatar = dyimg.Fix(v.Avatar)
+		list[k].AwemeCover = dyimg.Fix(v.AwemeCover)
+	}
+	maxTotal := total
+	if total > business.EsMaxShowNum {
+		maxTotal = business.EsMaxShowNum
+	}
+	receiver.SuccReturn(map[string]interface{}{
+		"list":           list,
+		"total":          total,
+		"max_show_total": maxTotal,
 	})
 }
