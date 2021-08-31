@@ -32,7 +32,9 @@ import (
 	"io/ioutil"
 	"math"
 	"math/rand"
+	"net"
 	"net/http"
+	"net/url"
 	"reflect"
 	"regexp"
 	"runtime"
@@ -1600,6 +1602,34 @@ func VerifyMobileFormat(mobileNum string) bool {
 	regular := "^((13[0-9])|(14[5,7])|(15[0-3,5-9])|(17[0,3,5-8])|(18[0-9])|166|198|199|(147))\\d{8}$"
 	reg := regexp.MustCompile(regular)
 	return reg.MatchString(mobileNum)
+}
+
+// IsProxyError 是否代理错误
+func IsProxyError(err error) bool {
+	if err == nil {
+		return false
+	}
+	if urlErr, ok := err.(*url.Error); ok {
+		if opErr, ok := urlErr.Err.(*net.OpError); ok {
+			if opErr.Op == "proxyconnect" {
+				return true
+			}
+		}
+	}
+	return false
+}
+
+// IsTimeoutError 是否超时错误
+func IsTimeoutError(err error) bool {
+	if err == nil {
+		return false
+	}
+	if urlErr, ok := err.(*url.Error); ok {
+		if urlErr.Timeout() {
+			return true
+		}
+	}
+	return false
 }
 
 func DeserializeData(data string) string {
