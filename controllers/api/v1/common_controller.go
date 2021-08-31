@@ -220,9 +220,10 @@ func (receiver *CommonController) RedAuthorRoom() {
 			}
 			v.RoomId = room.RoomID
 			if room.RoomID != "" {
-				go func(id int, roomId string) {
-					_, _ = dcm.UpdateInfo(nil, id, map[string]interface{}{"room_id": roomId}, new(dcm.DcAuthorRoom))
-				}(v.Id, room.RoomID)
+				updateMap := map[string]interface{}{"room_id": room.RoomID}
+				go func(id int, updateData map[string]interface{}) {
+					_, _ = dcm.UpdateInfo(nil, id, updateData, new(dcm.DcAuthorRoom))
+				}(v.Id, updateMap)
 			}
 		}
 		liveInfo, _ := hbase.GetLiveInfo(v.RoomId)
@@ -273,6 +274,7 @@ func (receiver *CommonController) DyUnionSearch() {
 	for k, v := range authorList {
 		authorData, _ := hbase.GetAuthor(v.AuthorId)
 		authorList[k].AuthorId = business.IdEncrypt(v.AuthorId)
+		authorList[k].Avatar = dyimg.Fix(v.Avatar)
 		authorList[k].RoomId = business.IdEncrypt(authorData.RoomId)
 		if v.UniqueId == "" || v.UniqueId == "0" {
 			authorList[k].UniqueId = v.ShortId

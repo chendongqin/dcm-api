@@ -639,7 +639,7 @@ func (receiver *EsLiveBusiness) KeywordSearch(keyword string) (list []es.EsDyLiv
 		SetCache(60).
 		AddMust(esQuery.Condition).
 		SetOrderBy(elasticsearch.NewElasticOrder().Add("create_time", "desc").Order).
-		SetLimit(0, 3).
+		SetLimit(0, 5).
 		SetMultiQuery().
 		Query()
 	utils.MapToStruct(results, &list)

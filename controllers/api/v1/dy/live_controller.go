@@ -735,6 +735,7 @@ func (receiver LiveController) LivingMessage() {
 	data, _ := hbase.GetLiveChatMessage(roomId)
 	list := make([]entity.LivingChatMessage, 0)
 	lenNum := len(data.Latest500Msg)
+	var endNum int64 = 0
 	if data.EndNum > beginNum && lenNum > 0 {
 		firstId := data.Latest500Msg[0].RankId
 		if beginNum <= firstId {
@@ -743,17 +744,26 @@ func (receiver LiveController) LivingMessage() {
 		start := 0
 		end := 0
 		if beginNum > 0 {
-			start = int(beginNum - firstId)
+			start = int(beginNum-firstId) + 1
+		} else {
+			start = lenNum - pageSize
+			if start < 0 {
+				start = 0
+			}
 		}
 		end = start + pageSize
 		if lenNum < end {
 			end = lenNum
 		}
 		list = data.Latest500Msg[start:end]
+		for k, v := range list {
+			list[k].Avatar = dyimg.Fix(v.Avatar)
+		}
+		endNum = list[len(list)-1].RankId
 	}
 	receiver.SuccReturn(map[string]interface{}{
 		"list":    list,
-		"end_num": data.EndNum,
+		"end_num": endNum,
 	})
 	return
 }
