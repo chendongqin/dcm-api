@@ -32,6 +32,7 @@ const (
 	ProductAuthorAllMap      KeyName = "dcm:product:author:info:%s:%s"
 	AuthorProductAllList     KeyName = "dcm:author:product:row:%s:%s"
 	AuthorViewProductAllList KeyName = "dcm:author:view:product:%s:%s:%s"
+	RedAuthorRooms           KeyName = "dcm:red:author:room:%s"
 	//榜单数据缓存
 	DyRankCache KeyName = "dcm:rank:%s:%s"
 	//爬虫加速限制频次

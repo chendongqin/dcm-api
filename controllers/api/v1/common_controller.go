@@ -10,7 +10,6 @@ import (
 	"dongchamao/global/utils"
 	"dongchamao/hbase"
 	"dongchamao/models/dcm"
-	"dongchamao/models/entity"
 	dy2 "dongchamao/models/repost/dy"
 	"dongchamao/services/ali_sms"
 	"dongchamao/services/dyimg"
@@ -184,8 +183,6 @@ func (receiver *CommonController) RedAuthorRoom() {
 	sql := "status = 1"
 	if listType == "advance" {
 		sql += fmt.Sprintf(" AND living_time > '%s' ", time.Now().Format("2006-01-02 15:04:05"))
-	} else {
-		sql += fmt.Sprintf(" AND living_time <= '%s' AND living_time >'%s' ", time.Now().Format("2006-01-02 15:04:05"), time.Now().AddDate(0, 0, -6).Format("2006-01-02 15:04:05"))
 	}
 	list := make([]dcm.DcAuthorRoom, 0)
 	_ = dcm.GetSlaveDbSession().
@@ -195,8 +192,12 @@ func (receiver *CommonController) RedAuthorRoom() {
 		Find(&list)
 	if listType == "advance" {
 		data := make([]dy2.RedAuthorRoom, 0)
+		today := time.Now().Format("20060102")
 		for _, v := range list {
 			authorData, _ := hbase.GetAuthor(v.AuthorId)
+			if authorData.RoomId != "" && v.LivingTime.Format("2006012") == today {
+				continue
+			}
 			data = append(data, dy2.RedAuthorRoom{
 				AuthorId:           business.IdEncrypt(v.AuthorId),
 				Avatar:             dyimg.Fix(authorData.Data.Avatar),
@@ -215,61 +216,41 @@ func (receiver *CommonController) RedAuthorRoom() {
 		})
 		return
 	}
-	dateMap := map[string][]dy2.RedAuthorRoom{}
-	for _, v := range list {
-		date := v.LivingTime.Format("2006-01-02")
-		if _, ok := dateMap[date]; !ok {
-			dateMap[date] = []dy2.RedAuthorRoom{}
-		}
-		authorData, _ := hbase.GetAuthor(v.AuthorId)
-		if v.RoomId == "" {
-			rooms, _ := hbase.GetAuthorRoomsByDate(v.AuthorId, v.LivingTime.Format("20060102"))
-			room := entity.DyAuthorLiveRoom{}
-			for _, r := range rooms {
-				if r.CreateTime > v.LivingTime.Unix() {
-					room = r
-					break
-				}
-				if r.CreateTime > room.CreateTime {
-					room = r
-				}
-			}
-			v.RoomId = room.RoomID
-			if room.RoomID != "" {
-				updateMap := map[string]interface{}{"room_id": room.RoomID}
-				go func(id int, updateData map[string]interface{}) {
-					_, _ = dcm.UpdateInfo(nil, id, updateData, new(dcm.DcAuthorRoom))
-				}(v.Id, updateMap)
-			}
-		}
-		liveInfo, _ := hbase.GetLiveInfo(v.RoomId)
-		dateMap[date] = append(dateMap[date], dy2.RedAuthorRoom{
-			AuthorId:           business.IdEncrypt(v.AuthorId),
-			Sign:               authorData.Data.Signature,
-			Avatar:             dyimg.Fix(authorData.Data.Avatar),
-			Nickname:           authorData.Data.Nickname,
-			AuthorLivingRoomId: business.IdEncrypt(authorData.RoomId),
-			RoomId:             business.IdEncrypt(v.RoomId),
-			Gmv:                liveInfo.PredictGmv,
-			LiveTitle:          liveInfo.Title,
-			TotalUser:          liveInfo.TotalUser,
-			Tags:               authorData.Tags,
-			RoomCount:          authorData.RoomCount,
-		})
-	}
 	data := make([]dy2.RedAuthorRoomBox, 0)
-	for k, v := range dateMap {
-		data = append(data, dy2.RedAuthorRoomBox{
-			Date: k,
-			List: v,
+	total := 0
+	if len(list) > 0 {
+		authorIds := make([]string, 0)
+		for _, v := range list {
+			authorIds = append(authorIds, v.AuthorId)
+		}
+		authorBusiness := business.NewAuthorBusiness()
+		authorDataMap := authorBusiness.GetAuthorFormPool(authorIds, 10)
+		start, _ := time.ParseInLocation("20060102", time.Now().Format("20060102"), time.Local)
+		for i := 0; i < 7; i++ {
+			dateTime := start.AddDate(0, 0, -i)
+			date := dateTime.Format("2006-01-02")
+			tmpList := make([]dy2.RedAuthorRoom, 0)
+			roomList := authorBusiness.RedAuthorRoomByDate(authorIds, dateTime.Format("20060102"))
+			for _, v := range roomList {
+				if a, ok := authorDataMap[v.AuthorId]; ok {
+					v.RoomCount = a.RoomCount
+					v.AuthorLivingRoomId = a.RoomId
+				}
+				tmpList = append(tmpList, v)
+				total++
+			}
+			data = append(data, dy2.RedAuthorRoomBox{
+				Date: date,
+				List: tmpList,
+			})
+		}
+		sort.Slice(data, func(i, j int) bool {
+			return data[i].Date > data[j].Date
 		})
 	}
-	sort.Slice(data, func(i, j int) bool {
-		return data[i].Date < data[j].Date
-	})
 	receiver.SuccReturn(map[string]interface{}{
 		"list":  data,
-		"total": len(list),
+		"total": total,
 	})
 	return
 }

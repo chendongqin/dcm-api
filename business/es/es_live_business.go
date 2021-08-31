@@ -645,3 +645,20 @@ func (receiver *EsLiveBusiness) KeywordSearch(keyword string) (list []es.EsDyLiv
 	utils.MapToStruct(results, &list)
 	return
 }
+
+//根据达人ids获取直播间
+func (receiver *EsLiveBusiness) GetRoomsByAuthorIds(authorIds []string, date string) (list []es.EsDyLiveInfo) {
+	esQuery, esMultiQuery := elasticsearch.NewElasticQueryGroup()
+	esTable := fmt.Sprintf(es.DyLiveInfoBaseTable, date)
+	esQuery.SetTerms("author_id", authorIds)
+	results := esMultiQuery.
+		SetTable(esTable).
+		SetCache(300).
+		AddMust(esQuery.Condition).
+		SetOrderBy(elasticsearch.NewElasticOrder().Add("_id", "desc").Order).
+		SetLimit(0, 500).
+		SetMultiQuery().
+		Query()
+	utils.MapToStruct(results, &list)
+	return
+}
