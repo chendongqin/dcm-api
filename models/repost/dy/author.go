@@ -123,3 +123,11 @@ type RedAuthorRoomBox struct {
 	Date string          `json:"date"`
 	List []RedAuthorRoom `json:"list"`
 }
+
+type DyAuthorIncome struct {
+	AuthorId     string `json:"author_id"`
+	Avatar       string `json:"avatar"`
+	Nickname     string `json:"nickname"`
+	UniqueId     string `json:"unique_id"`
+	IsCollection int    `json:"is_collection"`
+}
