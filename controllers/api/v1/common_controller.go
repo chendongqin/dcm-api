@@ -182,14 +182,15 @@ func (receiver *CommonController) RedAuthorRoom() {
 		for _, v := range list {
 			authorData, _ := hbase.GetAuthor(v.AuthorId)
 			data = append(data, dy2.RedAuthorRoom{
-				AuthorId:   business.IdEncrypt(v.AuthorId),
-				Avatar:     dyimg.Fix(authorData.Data.Avatar),
-				Sign:       authorData.Data.Signature,
-				Nickname:   authorData.Data.Nickname,
-				LivingTime: v.LivingTime.Unix(),
-				RoomId:     business.IdEncrypt(authorData.RoomId),
-				Tags:       authorData.Tags,
-				RoomCount:  authorData.RoomCount,
+				AuthorId:           business.IdEncrypt(v.AuthorId),
+				Avatar:             dyimg.Fix(authorData.Data.Avatar),
+				Sign:               authorData.Data.Signature,
+				Nickname:           authorData.Data.Nickname,
+				LivingTime:         v.LivingTime.Unix(),
+				AuthorLivingRoomId: business.IdEncrypt(authorData.RoomId),
+				RoomId:             business.IdEncrypt(authorData.RoomId),
+				Tags:               authorData.Tags,
+				RoomCount:          authorData.RoomCount,
 			})
 		}
 		receiver.SuccReturn(map[string]interface{}{

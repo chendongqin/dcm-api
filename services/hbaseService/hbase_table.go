@@ -21,6 +21,7 @@ const (
 	HbaseDyAuthorBasic           = "dy_author_basic"            //抖音用户基本数据信息
 	HbaseDyAuthorFans            = "dy_author_fans"             //抖音粉丝信息
 	HbaseDyLiveFansClub          = "dy_live_fansclub"           //抖音粉丝团数据信息
+	HbaseDyLiveChatMessage       = "dy_live_chat_message"       //直播间弹幕
 	HbaseDyAuthorRoomMapping     = "dy_author_room_mapping"     //达人直播间
 	HbaseDyAuthorProductAnalysis = "dy_author_product_analysis" //达人电商分析
 	HbaseXtAuthorDetail          = "xt_author_detail"           //星图达人详情

@@ -163,3 +163,20 @@ func GetRankTrends(roomId string) (data entity.DyLiveRankTrends, comErr global.C
 	utils.MapToStruct(detailMap, &data)
 	return
 }
+
+//获取直播间商品讲解数据
+func GetLiveChatMessage(roomId string) (data entity.DyLiveChatMessage, comErr global.CommonError) {
+	query := hbasehelper.NewQuery()
+	result, err := query.SetTable(hbaseService.HbaseDyLiveChatMessage).GetByRowKey([]byte(roomId))
+	if err != nil {
+		comErr = global.NewMsgError(err.Error())
+		return
+	}
+	if result.Row == nil {
+		comErr = global.NewError(4040)
+		return
+	}
+	infoMap := hbaseService.HbaseFormat(result, entity.DyLiveChatMessageMap)
+	utils.MapToStruct(infoMap, &data)
+	return
+}
