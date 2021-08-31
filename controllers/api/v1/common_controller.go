@@ -245,7 +245,7 @@ func (receiver *CommonController) RedAuthorRoom() {
 			})
 		}
 		sort.Slice(data, func(i, j int) bool {
-			return data[i].Date > data[j].Date
+			return data[i].Date < data[j].Date
 		})
 	}
 	receiver.SuccReturn(map[string]interface{}{
