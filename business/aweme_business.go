@@ -37,9 +37,9 @@ func (a *AwemeBusiness) GetAwemeChart(awemeId string, startTime, endTime time.Ti
 		if _, ok := data[end]; !ok {
 			awemeBase, _ := hbase.GetVideo(awemeId)
 			data[end] = entity.DyAwemeDiggCommentForwardCount{
-				DiggCount:    awemeBase.DiggCount,
-				CommentCount: awemeBase.CommentCount,
-				ForwardCount: awemeBase.ForwardCount,
+				DiggCount:    awemeBase.Data.DiggCount,
+				CommentCount: awemeBase.Data.CommentCount,
+				ForwardCount: awemeBase.Data.ForwardCount,
 			}
 		}
 		beginDatetime := startTime

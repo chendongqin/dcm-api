@@ -11,6 +11,7 @@ func init() {
 		beego.NSNamespace("/aweme",
 			beego.NSRouter("/info/:aweme_id", &v1dy.AwemeController{}, "get:AwemeBaseData"),
 			beego.NSRouter("/chart/:aweme_id/:start/:end", &v1dy.AwemeController{}, "get:AwemeChart"),
+			beego.NSRouter("/hot/words/:aweme_id", &v1dy.AwemeController{}, "get:AwemeCommentHotWords"),
 		),
 	)
 	// 注册路由组

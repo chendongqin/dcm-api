@@ -7,6 +7,7 @@ import (
 	"dongchamao/hbase"
 	"dongchamao/models/entity"
 	dy2 "dongchamao/models/repost/dy"
+	"sort"
 )
 
 type AwemeController struct {
@@ -31,20 +32,20 @@ func (receiver *AwemeController) AwemeBaseData() {
 		return
 	}
 	awemeSimple := dy2.DySimpleAweme{
-		AuthorID:        awemeBase.AuthorID,
-		AwemeCover:      awemeBase.AwemeCover,
-		AwemeTitle:      awemeBase.AwemeTitle,
-		AwemeCreateTime: awemeBase.AwemeCreateTime,
-		AwemeURL:        awemeBase.AwemeURL,
-		CommentCount:    awemeBase.CommentCount,
-		DiggCount:       awemeBase.DiggCount,
-		DownloadCount:   awemeBase.DownloadCount,
-		Duration:        awemeBase.Duration,
-		ForwardCount:    awemeBase.ForwardCount,
-		ID:              awemeBase.ID,
-		MusicID:         awemeBase.MusicID,
-		ShareCount:      awemeBase.ShareCount,
-		PromotionNum:    len(awemeBase.DyPromotionID),
+		AuthorID:        awemeBase.Data.AuthorID,
+		AwemeCover:      awemeBase.Data.AwemeCover,
+		AwemeTitle:      awemeBase.Data.AwemeTitle,
+		AwemeCreateTime: awemeBase.Data.AwemeCreateTime,
+		AwemeURL:        awemeBase.Data.AwemeURL,
+		CommentCount:    awemeBase.Data.CommentCount,
+		DiggCount:       awemeBase.Data.DiggCount,
+		DownloadCount:   awemeBase.Data.DownloadCount,
+		Duration:        awemeBase.Data.Duration,
+		ForwardCount:    awemeBase.Data.ForwardCount,
+		ID:              awemeBase.Data.ID,
+		MusicID:         awemeBase.Data.MusicID,
+		ShareCount:      awemeBase.Data.ShareCount,
+		PromotionNum:    len(awemeBase.Data.DyPromotionID),
 	}
 	receiver.SuccReturn(map[string]interface{}{
 		"aweme_base": awemeSimple,
@@ -122,5 +123,32 @@ func (receiver *AwemeController) AwemeChart() {
 		},
 	}
 	receiver.SuccReturn(returnMap)
+	return
+}
+
+func (receiver *AwemeController) AwemeCommentHotWords() {
+	awemeId := business.IdDecrypt(receiver.Ctx.Input.Param(":aweme_id"))
+	if awemeId == "" {
+		receiver.FailReturn(global.NewError(4000))
+		return
+	}
+	awemeBase, comErr := hbase.GetVideo(awemeId)
+	if comErr != nil {
+		receiver.FailReturn(comErr)
+		return
+	}
+	list := make([]dy2.NameValueInt64Chart, 0)
+	for k, v := range awemeBase.HotWordShow {
+		list = append(list, dy2.NameValueInt64Chart{
+			Name:  k,
+			Value: v,
+		})
+	}
+	sort.Slice(list, func(i, j int) bool {
+		return list[i].Value > list[j].Value
+	})
+	receiver.SuccReturn(map[string]interface{}{
+		"hot_words": list,
+	})
 	return
 }

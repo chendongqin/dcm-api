@@ -53,3 +53,9 @@ type DyProductLiveCount struct {
 	Tags  []DyCate    `json:"tags"`
 	Level []DyIntCate `json:"level"`
 }
+
+type ProductSalesTrendChart struct {
+	DateTimestamp int64 `json:"date_timestamp"`
+	Sales         int64 `json:"sales"`
+	VideoNum      int   `json:"video_num"`
+}

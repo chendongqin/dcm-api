@@ -706,3 +706,38 @@ func (receiver *ProductController) ProductRoomsRangeDate() {
 	})
 	return
 }
+
+func (receiver *ProductController) ProductAwemeSalesTrend() {
+	productId := business.IdDecrypt(receiver.GetString(":product_id", ""))
+	startTime, endTime, comErr := receiver.GetRangeDate()
+	if comErr != nil {
+		receiver.FailReturn(comErr)
+		return
+	}
+	hbaseDataList, comErr := hbase.GetDyProductAwemeSalesTrendRangeDate(productId, startTime, endTime)
+	if comErr != nil {
+		receiver.FailReturn(comErr)
+		return
+	}
+	chartList := make([]dy2.ProductSalesTrendChart, 0)
+	dateChart := make([]int64, 0)
+	dateChartTmp := make([]string, 0)
+	for k, _ := range hbaseDataList {
+		dateChartTmp = append(dateChartTmp, k)
+	}
+	sort.Strings(dateChartTmp)
+	for _, date := range dateChartTmp {
+		timestamp, _ := utils.Strtotime(date, "20060102")
+		dateChart = append(dateChart, timestamp)
+		v := hbaseDataList[date]
+		chartList = append(chartList, dy2.ProductSalesTrendChart{
+			DateTimestamp: timestamp,
+			Sales:         v.Sales,
+			VideoNum:      v.AwemeNum,
+		})
+	}
+	receiver.SuccReturn(map[string]interface{}{
+		"date": dateChart,
+		"list": chartList,
+	})
+}
