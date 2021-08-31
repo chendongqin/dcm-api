@@ -3,10 +3,12 @@ package business
 import (
 	"crypto/tls"
 	"dongchamao/global/utils"
+	dy2 "dongchamao/models/repost/dy"
 	"errors"
 	"fmt"
 	"github.com/astaxie/beego/logs"
 	jsoniter "github.com/json-iterator/go"
+	"github.com/tidwall/gjson"
 	"io/ioutil"
 	"net/http"
 	"net/url"
@@ -27,6 +29,7 @@ const (
 	BaseSpiderUrl            = "http://api.spider.dongchamao.cn/"
 	LiveSpiderUrl            = "http://dy-live.spider.dongchamao.cn/"
 	ZHIMASpiderUrl           = "http://zhima-proxy.spider.dongchamao.cn/"
+	AuthorInfoUrl            = "https://webcast-hl.amemv.com/webcast/room/reflow/info/?room_id=70&user_id=%s&live_id=1&app_id=1128"
 )
 
 var SpiderNames = map[string]int{
@@ -91,19 +94,31 @@ func (s *SpiderBusiness) AddLive(authorId string, followerCount int64, top int, 
 
 //抖音号搜索
 //搜索抖音号 即时接口 先根据抖音号在es中查找，查找不到在调用该方法，调用爬虫实时接口
-func (s *SpiderBusiness) GetAuthorByKeyword(keyword string) string {
+func (s *SpiderBusiness) GetAuthorByKeyword(keyword string) *dy2.DyAuthorIncome {
 	retData := ""
 	keyword = url.QueryEscape(keyword)
 	pushUrl := BaseSpiderUrl + "searchAuthor?" + "keyword=" + keyword
 	for i := 0; i < 5; i++ {
 		retData = utils.SimpleCurl(pushUrl, "GET", "", "")
-		if len(retData) == 0 {
+		jd := gjson.Parse(retData)
+		if jd.Get("data.nickname").Exists() == false {
 			logs.Error("[搜索达人] keyword:[%s] 失败", keyword)
 		} else {
-			return retData
+			uniqueId := jd.Get("data.unique_id").String()
+			if uniqueId == "0" || uniqueId == "" {
+				uniqueId = jd.Get("data.short_id").String()
+			}
+			authorIncome := &dy2.DyAuthorIncome{
+				AuthorId:     jd.Get("data.author_id").String(),
+				Avatar:       jd.Get("data.avatar").String(),
+				Nickname:     jd.Get("data.nickname").String(),
+				UniqueId:     uniqueId,
+				IsCollection: 0,
+			}
+			return authorIncome
 		}
 	}
-	return ""
+	return nil
 }
 
 // 获取正在直播的达人商品列表
@@ -152,6 +167,13 @@ func (s *SpiderBusiness) DelRecordLive(authorId string, top int) {
 		logs.Error("[定制大屏达人移除] 达人 [%s] 推送错误: %s", authorId, err)
 		return
 	}
+}
+
+//达人基本信息
+func (s *SpiderBusiness) GetAuthorBaseInfo(authorId string) string {
+	pushUrl := fmt.Sprintf(AuthorInfoUrl, authorId)
+	body := utils.SimpleCurl(pushUrl, "GET", "", "")
+	return body
 }
 
 type spiderRet struct {

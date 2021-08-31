@@ -132,8 +132,8 @@ func (receiver *AuthorController) BaseSearch() {
 	}
 	authorId := ""
 	if utils.CheckType(keyword, "url") {
-		url := business.ParseDyShortUrl(keyword)
-		authorId = utils.ParseDyAuthorUrl(url)
+		shortUrl, _ := business.ParseDyShortUrl(keyword)
+		authorId = utils.ParseDyAuthorUrl(shortUrl)
 		keyword = ""
 	} else {
 		keyword = utils.MatchDouyinNewText(keyword)
@@ -760,4 +760,53 @@ func (receiver *AuthorController) AuthorProductRooms() {
 		"total": total,
 	})
 	return
+}
+
+//达人收录
+func (receiver *AuthorController) AuthorIncome() {
+	var authorId string
+	keyword := receiver.InputFormat().GetString("keyword", "")
+	if keyword == "" {
+		receiver.FailReturn(global.NewError(4000))
+		return
+	}
+	spiderBusiness := business.NewSpiderBusiness()
+	if utils.CheckType(keyword, "url") { // 抓换链接
+		shortUrl, _ := business.ParseDyShortUrl(keyword)
+		authorId = utils.ParseDyAuthorUrl(shortUrl) // 获取authorId
+		author, err := hbase.GetAuthor(authorId)
+		if err == nil {
+			authorIncome := dy2.DyAuthorIncome{
+				AuthorId:     author.AuthorID,
+				Avatar:       author.Data.Avatar,
+				Nickname:     author.Data.Nickname,
+				UniqueId:     author.Data.UniqueID,
+				IsCollection: 0,
+			}
+			receiver.SuccReturn(authorIncome)
+			return
+		}
+	} else {
+		// 如果是keyword形式的，先查es，es没有数据就请求爬虫数据接口
+		list, total, _ := es.NewEsAuthorBusiness().SimpleSearch(
+			"", keyword, "", "",
+			1, 1)
+		if total == 0 {
+			authorIncome := spiderBusiness.GetAuthorByKeyword(keyword)
+			receiver.SuccReturn(authorIncome)
+			return
+		} else {
+			for _, author := range list {
+				authorIncome := dy2.DyAuthorIncome{
+					AuthorId:     author.AuthorId,
+					Avatar:       author.Avatar,
+					Nickname:     author.Nickname,
+					UniqueId:     author.UniqueId,
+					IsCollection: 1,
+				}
+				receiver.SuccReturn(authorIncome)
+				return
+			}
+		}
+	}
 }
