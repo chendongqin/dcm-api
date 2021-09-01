@@ -14,6 +14,7 @@ import (
 	"github.com/go-xorm/xorm"
 	"github.com/gomodule/redigo/redis"
 	jsoniter "github.com/json-iterator/go"
+	"strconv"
 	"time"
 )
 
@@ -384,7 +385,7 @@ func (receiver *UserBusiness) GetCacheUserLevel(userId, levelType int, enableCac
 	return vipLevel.Level
 }
 
-func (receiver *UserBusiness) GetDyCollect(tagId, collectType int, keywords, label string) (data []repost.CollectRet, comErr global.CommonError) {
+func (receiver *UserBusiness) GetDyCollect(tagId, collectType int, keywords, label string, userId int) (data []repost.CollectRet, comErr global.CommonError) {
 	var collects []dcm.DcUserDyCollect
 	dbCollect := dcm.GetDbSession().Table(dcm.DcUserDyCollect{})
 	defer dbCollect.Close()
@@ -399,6 +400,7 @@ func (receiver *UserBusiness) GetDyCollect(tagId, collectType int, keywords, lab
 	if label != "" {
 		query += " AND tags ='" + label + "'"
 	}
+	query += " AND user_id=" + strconv.Itoa(userId) + " AND status=1"
 	err := dbCollect.Where(query).Find(&collects)
 	if err != nil {
 		comErr = global.NewError(5000)
@@ -463,10 +465,10 @@ func (receiver *UserBusiness) AddDyCollect(collectId string, collectType, tagId,
 }
 
 //取消收藏
-func (receiver *UserBusiness) CancelDyCollect(id int) (comErr global.CommonError) {
+func (receiver *UserBusiness) CancelDyCollect(id, userId int) (comErr global.CommonError) {
 	dbCollect := dcm.GetDbSession().Table(dcm.DcUserDyCollect{})
 	defer dbCollect.Close()
-	exist, err := dbCollect.Where("id=? and status=?", id, 1).Exist()
+	exist, err := dbCollect.Where("id=? and status=? and user_id=?", id, 1, userId).Exist()
 	if err != nil {
 		comErr = global.NewError(5000)
 		return

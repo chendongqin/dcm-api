@@ -326,7 +326,7 @@ func (receiver *AccountController) DelCollect() {
 		receiver.FailReturn(global.NewError(5000))
 		return
 	}
-	comErr := business.NewUserBusiness().CancelDyCollect(id)
+	comErr := business.NewUserBusiness().CancelDyCollect(id, receiver.UserId)
 	if comErr != nil {
 		receiver.FailReturn(comErr)
 		return
@@ -355,7 +355,7 @@ func (receiver *AccountController) GetCollect() {
 	keywords := receiver.GetString("keywords")
 	switch platform {
 	case 1:
-		data, comErr := business.NewUserBusiness().GetDyCollect(tagId, collectType, keywords, label)
+		data, comErr := business.NewUserBusiness().GetDyCollect(tagId, collectType, keywords, label, receiver.UserId)
 		if comErr != nil {
 			receiver.FailReturn(comErr)
 			return
