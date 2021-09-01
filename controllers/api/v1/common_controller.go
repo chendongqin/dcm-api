@@ -234,7 +234,7 @@ func (receiver *CommonController) RedAuthorRoom() {
 				AuthorLivingRoomId: business.IdEncrypt(authorData.RoomId),
 				RoomId:             business.IdEncrypt(authorData.RoomId),
 				Tags:               authorData.Tags,
-				RoomCount:          authorData.RoomCount,
+				RoomCount:          authorData.LiveCount,
 			})
 		}
 		receiver.SuccReturn(map[string]interface{}{
@@ -263,7 +263,7 @@ func (receiver *CommonController) RedAuthorRoom() {
 			}
 			for _, v := range roomList {
 				if a, ok := authorDataMap[v.AuthorId]; ok {
-					v.RoomCount = a.RoomCount
+					v.RoomCount = a.LiveCount
 					v.AuthorLivingRoomId = a.RoomId
 				}
 				tmpList = append(tmpList, v)

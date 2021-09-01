@@ -12,6 +12,7 @@ import (
 	"dongchamao/models/entity"
 	dy2 "dongchamao/models/repost/dy"
 	"dongchamao/services/dyimg"
+	"github.com/astaxie/beego/logs"
 	jsoniter "github.com/json-iterator/go"
 	"math"
 	"sort"
@@ -217,7 +218,7 @@ func (receiver *AuthorController) AuthorBaseData() {
 	}
 	returnMap := map[string]interface{}{
 		"author_base": authorBase.Data,
-		"room_count":  authorBase.RoomCount,
+		"room_count":  authorBase.LiveCount,
 		"reputation": dy2.RepostSimpleReputation{
 			Score:         reputation.Score,
 			Level:         reputation.Level,
@@ -422,7 +423,7 @@ func (receiver *AuthorController) AuthorViewData() {
 	productCount.ProductNum = authorBase.ProductCount
 	data := dy2.DyAuthorBaseCount{
 		LiveCount: dy2.DyAuthorBaseLiveCount{
-			RoomCount:      int64(authorBase.RoomCount),
+			RoomCount:      int64(authorBase.LiveCount),
 			Room30Count:    room30Count,
 			Predict30Sales: math.Floor(authorBase.Predict30Sales),
 			Predict30Gmv:   utils.FriendlyFloat64(authorBase.Predict30Gmv),
@@ -452,11 +453,11 @@ func (receiver *AuthorController) AuthorViewData() {
 		days += 1
 		weekNum := utils.ToInt64(days / 7)
 		if weekNum > 0 {
-			data.LiveCount.AvgWeekRoomCount = utils.ToInt64(math.Ceil(float64(authorBase.RoomCount) / float64(weekNum)))
+			data.LiveCount.AvgWeekRoomCount = utils.ToInt64(math.Ceil(float64(authorBase.LiveCount) / float64(weekNum)))
 		}
 		var month = utils.ToInt64(math.Ceil(float64(time.Now().Unix()-firstLiveTime.Unix()) / (30 * 86400)))
 		if month > 0 {
-			data.LiveCount.AvgMonthRoomCount = utils.ToInt64(math.Ceil(float64(authorBase.RoomCount) / float64(month)))
+			data.LiveCount.AvgMonthRoomCount = utils.ToInt64(math.Ceil(float64(authorBase.LiveCount) / float64(month)))
 		}
 	}
 	if firstVideoTimestamp > 0 {
@@ -762,11 +763,11 @@ func (receiver *AuthorController) AuthorProductRooms() {
 	return
 }
 
-//达人收录
-func (receiver *AuthorController) AuthorIncome() {
+//达人收录 搜索
+func (receiver *AuthorController) AuthorIncomeSearch() {
 	var authorId string
 	var authorIncome = &dy2.DyAuthorIncome{}
-	keyword := receiver.InputFormat().GetString("keyword", "")
+	keyword := receiver.GetString("keyword", "")
 	if keyword == "" {
 		receiver.FailReturn(global.NewError(4000))
 		return
@@ -792,6 +793,7 @@ func (receiver *AuthorController) AuthorIncome() {
 			authorIncome = spiderBusiness.GetAuthorBaseInfo(authorId)
 		}
 		authorIncome.AuthorId = business.IdEncrypt(authorIncome.AuthorId)
+		authorIncome.Avatar = dyimg.Fix(authorIncome.Avatar)
 		receiver.SuccReturn(authorIncome)
 		return
 	} else {
@@ -802,6 +804,7 @@ func (receiver *AuthorController) AuthorIncome() {
 		if total == 0 {
 			authorIncome := spiderBusiness.GetAuthorByKeyword(keyword)
 			authorIncome.AuthorId = business.IdEncrypt(authorIncome.AuthorId)
+			authorIncome.Avatar = dyimg.Fix(authorIncome.Avatar)
 			receiver.SuccReturn(authorIncome)
 			return
 		} else {
@@ -814,9 +817,29 @@ func (receiver *AuthorController) AuthorIncome() {
 					IsCollection: 1,
 				}
 				authorIncome.AuthorId = business.IdEncrypt(authorIncome.AuthorId)
+				authorIncome.Avatar = dyimg.Fix(authorIncome.Avatar)
 				receiver.SuccReturn(authorIncome)
 				return
 			}
 		}
 	}
+}
+
+//达人收录 确认收入
+func (receiver *AuthorController) AuthorIncome() {
+	authorId := receiver.InputFormat().GetString("author_id", "")
+	if authorId == "" {
+		receiver.FailReturn(global.NewError(4000))
+		return
+	}
+	authorIdDec := business.IdDecrypt(authorId)
+	spiderBusiness := business.NewSpiderBusiness()
+	ret, ok := spiderBusiness.SpiderSpeedUp("author", authorIdDec)
+	if ok {
+		receiver.SuccReturn([]string{authorIdDec})
+	} else {
+		receiver.FailReturn(global.NewError(4000))
+	}
+	logs.Info("[收入达人结果]：", ret)
+	return
 }

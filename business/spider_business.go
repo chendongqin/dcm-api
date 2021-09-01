@@ -73,18 +73,18 @@ func NewSpiderBusiness() *SpiderBusiness {
 // 爬虫抓取加速
 // spidername 例如：爬虫名称
 // id  123,124  url id
-func (s *SpiderBusiness) SpiderSpeedUp(spiderName, id string) string {
+func (s *SpiderBusiness) SpiderSpeedUp(spiderName, id string) (string, bool) {
 	if _, ok := SpiderNames[spiderName]; !ok {
 		logs.Error("[爬虫加速] [%s] id:[%s] 推送错误: %s", spiderName, id)
-		return ""
+		return "", false
 	}
 	if len(spiderName) == 0 || len(id) == 0 {
 		logs.Error("[爬虫加速] [%s] id:[%s] 推送错误: %s", spiderName, id)
-		return ""
+		return "", false
 	}
 	pushUrl := BaseSpiderUrl + "crawl?spider=" + spiderName + "&id=" + id
 	res := utils.SimpleCurl(pushUrl, "GET", "", "")
-	return res
+	return res, true
 }
 
 // 将达人添加到直播库

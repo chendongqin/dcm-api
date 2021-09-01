@@ -9,7 +9,7 @@ var DyAuthorMap = HbaseEntity{
 	"tags_level_two":           {String, "tags_level_two"},
 	"other_aweme_list":         {AJson, "aweme_list"},
 	"other_room_list":          {AJson, "room_list"},
-	"other_room_count":         {Int, "room_count"},
+	"other_live_count":         {Int, "live_count"},
 	"other_live_duration":      {String, "live_duration"},
 	"other_avg_live_duration":  {Long, "avg_live_duration"},
 	"other_med_watch_cnt":      {Long, "med_watch_cnt"},
@@ -43,7 +43,7 @@ type DyAuthor struct {
 	TagsLevelTwo     string          `json:"tags_level_two"`
 	AwemeList        []DyAuthorAweme `json:"aweme_list"`
 	RoomList         []DyAuthorRoom  `json:"room_list"`
-	RoomCount        int             `json:"room_count"`
+	LiveCount        int             `json:"live_count"`
 	RoomId           string          `json:"room_id"`
 	RoomStatus       int             `json:"room_status"`
 	LiveDuration     string          `json:"live_duration"`

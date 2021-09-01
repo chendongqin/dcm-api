@@ -159,6 +159,7 @@ func (receiver *LiveController) LiveInfoData() {
 		WithCommerce:    liveInfo.User.WithCommerce,
 		ReputationScore: reputation.AuthorReputation.Score,
 		ReputationLevel: reputation.AuthorReputation.Level,
+		RoomId:          authorInfo.RoomId,
 	}
 	liveSaleData, _ := hbase.GetLiveSalesData(roomId)
 	incOnlineTrends, maxOnlineTrends, avgUserCount := liveBusiness.DealOnlineTrends(liveInfo)
