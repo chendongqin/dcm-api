@@ -7,6 +7,7 @@ import (
 	"dongchamao/hbase"
 	"dongchamao/models/dcm"
 	"dongchamao/models/repost"
+	"dongchamao/services/dyimg"
 	"dongchamao/services/mutex"
 	"fmt"
 	"github.com/dgrijalva/jwt-go"
@@ -383,14 +384,20 @@ func (receiver *UserBusiness) GetCacheUserLevel(userId, levelType int, enableCac
 	return vipLevel.Level
 }
 
-func (receiver *UserBusiness) GetDyCollect(tagId, collectType int, keywords string) (data []repost.CollectRet, comErr global.CommonError) {
+func (receiver *UserBusiness) GetDyCollect(tagId, collectType int, keywords, label string) (data []repost.CollectRet, comErr global.CommonError) {
 	var collects []dcm.DcUserDyCollect
 	dbCollect := dcm.GetDbSession().Table(dcm.DcUserDyCollect{})
 	defer dbCollect.Close()
 	var query string
-	query = fmt.Sprintf("tag_id=%v AND collect_type=%v", tagId, collectType)
+	query = fmt.Sprintf("collect_type=%v", collectType)
+	if tagId != 0 {
+		query = fmt.Sprintf("tag_id=%v", tagId)
+	}
 	if keywords != "" {
 		query += " AND (unique_id LIKE '%" + keywords + "%' or nickname LIKE '%" + keywords + "%')"
+	}
+	if label != "" {
+		query += " AND tags ='" + label + "'"
 	}
 	err := dbCollect.Where(query).Find(&collects)
 	if err != nil {
@@ -400,11 +407,12 @@ func (receiver *UserBusiness) GetDyCollect(tagId, collectType int, keywords stri
 	data = make([]repost.CollectRet, len(collects))
 	for k, v := range collects {
 		data[k].DcUserDyCollect = v
+		data[k].DcUserDyCollect.CollectId = IdEncrypt(v.CollectId)
 		dyAuthor, _ := hbase.GetAuthor(v.CollectId)
-		authorData, _ := hbase.GetAuthor(v.CollectId)
 		basicData, _ := hbase.GetAuthorBasic(v.CollectId, time.Now().AddDate(0, 0, -1).Format("20060102"))
 		data[k].FollowerCount = dyAuthor.Data.Fans.Douyin.Count
-		data[k].FollowerIncreCount = authorData.FollowerCount - basicData.FollowerCount
+		data[k].FollowerIncreCount = dyAuthor.FollowerCount - basicData.FollowerCount
+		data[k].Avatar = dyimg.Avatar(dyAuthor.Data.Avatar)
 	}
 	return
 }

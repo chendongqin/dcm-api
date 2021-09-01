@@ -8,4 +8,5 @@ type CollectRet struct {
 	FollowerIncreCount int64
 	Predict7Gmv        float64
 	Predict7Digg       float64
+	Avatar             string
 }
