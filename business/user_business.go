@@ -383,14 +383,20 @@ func (receiver *UserBusiness) GetCacheUserLevel(userId, levelType int, enableCac
 	return vipLevel.Level
 }
 
-func (receiver *UserBusiness) GetDyCollect(tagId, collectType int, keywords string) (data []repost.CollectRet, comErr global.CommonError) {
+func (receiver *UserBusiness) GetDyCollect(tagId, collectType int, keywords, label string) (data []repost.CollectRet, comErr global.CommonError) {
 	var collects []dcm.DcUserDyCollect
 	dbCollect := dcm.GetDbSession().Table(dcm.DcUserDyCollect{})
 	defer dbCollect.Close()
 	var query string
-	query = fmt.Sprintf("tag_id=%v AND collect_type=%v", tagId, collectType)
+	query = fmt.Sprintf("collect_type=%v", collectType)
+	if tagId != 0 {
+		query = fmt.Sprintf("tag_id=%v", tagId)
+	}
 	if keywords != "" {
 		query += " AND (unique_id LIKE '%" + keywords + "%' or nickname LIKE '%" + keywords + "%')"
+	}
+	if label != "" {
+		query += " AND tags ='" + label + "'"
 	}
 	err := dbCollect.Where(query).Find(&collects)
 	if err != nil {

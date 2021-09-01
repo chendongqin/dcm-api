@@ -345,10 +345,11 @@ func (receiver *AccountController) GetCollect() {
 		receiver.FailReturn(global.NewError(5000))
 		return
 	}
+	label := receiver.GetString("label", "")
 	keywords := receiver.GetString("keywords")
 	switch platform {
 	case 1:
-		data, comErr := business.NewUserBusiness().GetDyCollect(tagId, collectType, keywords)
+		data, comErr := business.NewUserBusiness().GetDyCollect(tagId, collectType, keywords, label)
 		if comErr != nil {
 			receiver.FailReturn(comErr)
 			return
