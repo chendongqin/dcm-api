@@ -228,6 +228,7 @@ func (receiver *AuthorController) AuthorBaseData() {
 		},
 		"fans_club": fansClub.TotalFansCount,
 		"rank":      nil,
+		"tags":      authorBase.Tags,
 		"basic":     basic,
 	}
 	receiver.SuccReturn(returnMap)

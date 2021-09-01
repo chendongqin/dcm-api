@@ -4,6 +4,7 @@ import (
 	"dongchamao/business"
 	"dongchamao/controllers/api"
 	"dongchamao/global"
+	"dongchamao/global/cache"
 	"dongchamao/global/consistent"
 	"dongchamao/global/utils"
 	"dongchamao/models/dcm"
@@ -12,6 +13,7 @@ import (
 	"github.com/astaxie/beego/logs"
 	"github.com/silenceper/wechat/v2/officialaccount/message"
 	"strings"
+	"time"
 )
 
 type WechatController struct {
@@ -159,25 +161,43 @@ func (receiver *WechatController) WechatApp() {
 func (receiver *WechatController) WechatPhone() {
 	inputData := receiver.InputFormat()
 	userName := inputData.GetString("username", "")
-	//code := inputData.GetString("code", "1234")
+	code := inputData.GetString("code", "")
 	unionid := inputData.GetString("unionid", "")
 	//source := inputData.GetString("source", "") //    1.二维码2.微信一键登录
 	if userName == "" || unionid == "" {
 		receiver.FailReturn(global.NewError(4000))
 		return
 	}
+	dbSession := dcm.GetDbSession()
 	wechatModel := dcm.DcWechat{}
-	if exist, _ := dcm.GetSlaveDbSession().Where("unionid = ?", unionid).Get(&wechatModel); !exist {
+	if exist, _ := dbSession.Where("unionid = ?", unionid).Get(&wechatModel); !exist {
 		receiver.FailReturn(global.NewError(4304))
 		return
 	}
-	//TODO 校验验证码 ...
-
+	//手机验证
+	codeKey := cache.GetCacheKey(cache.SmsCodeVerify, "bind_mobile", userName)
+	verifyCode := global.Cache.Get(codeKey)
+	if verifyCode != code {
+		receiver.FailReturn(global.NewError(4209))
+		return
+	}
 	//查询手机是否该用户 ...
 	userModel := dcm.DcUser{}
-	if exist, _ := dcm.GetSlaveDbSession().Where("username = ?", userName).Get(&userModel); !exist {
-		receiver.FailReturn(global.NewError(4204))
-		return
+	if exist, _ := dbSession.Where("username = ?", userName).Get(&userModel); !exist {
+		userModel.Username = userName
+		userModel.Nickname = wechatModel.NickName
+		userModel.Salt = utils.GetRandomString(4)
+		userModel.Password = utils.Md5_encode(utils.GetRandomString(16) + userModel.Salt)
+		userModel.Status = 1
+		userModel.CreateTime = time.Now()
+		userModel.UpdateTime = time.Now()
+		//来源
+		userModel.Entrance = business.AppIdMap[receiver.AppId]
+		affect, err := dcm.Insert(nil, &userModel)
+		if affect == 0 || err != nil {
+			receiver.FailReturn(global.NewError(5000))
+			return
+		}
 	}
 	//开始更新用户信息
 	if userModel.Unionid != "" {
@@ -187,12 +207,13 @@ func (receiver *WechatController) WechatPhone() {
 
 	//userModel.OpenidApp = wechatModel.OpenidApp
 	//userModel.Openid = wechatModel.Openid
-
 	userBusiness := business.NewUserBusiness()
 	updateData := map[string]interface{}{
 		"openid_app":  wechatModel.OpenidApp,
 		"openid":      wechatModel.Openid,
 		"unionid":     wechatModel.Unionid,
+		"nickname":    wechatModel.NickName,
+		"avatar":      wechatModel.Avatar,
 		"update_time": utils.GetNowTimeStamp(),
 	}
 	affect, _ := userBusiness.UpdateUserAndClearCache(nil, userModel.Id, updateData)
@@ -200,7 +221,12 @@ func (receiver *WechatController) WechatPhone() {
 		receiver.FailReturn(global.NewError(4213))
 		return
 	}
-	tokenString, expire, err := business.NewUserBusiness().CreateToken(receiver.AppId, userModel.Id, 604800)
+	tokenString, expire, err := userBusiness.CreateToken(receiver.AppId, userModel.Id, 604800)
+	if err != nil {
+		receiver.FailReturn(global.NewError(5000))
+		return
+	}
+	err = userBusiness.AddOrUpdateUniqueToken(userModel.Id, receiver.AppId, tokenString)
 	if err != nil {
 		receiver.FailReturn(global.NewError(5000))
 		return
