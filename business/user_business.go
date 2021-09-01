@@ -7,6 +7,7 @@ import (
 	"dongchamao/hbase"
 	"dongchamao/models/dcm"
 	"dongchamao/models/repost"
+	"dongchamao/services/dyimg"
 	"dongchamao/services/mutex"
 	"fmt"
 	"github.com/dgrijalva/jwt-go"
@@ -406,12 +407,12 @@ func (receiver *UserBusiness) GetDyCollect(tagId, collectType int, keywords, lab
 	data = make([]repost.CollectRet, len(collects))
 	for k, v := range collects {
 		data[k].DcUserDyCollect = v
+		data[k].DcUserDyCollect.CollectId = IdEncrypt(v.CollectId)
 		dyAuthor, _ := hbase.GetAuthor(v.CollectId)
-		authorData, _ := hbase.GetAuthor(v.CollectId)
 		basicData, _ := hbase.GetAuthorBasic(v.CollectId, time.Now().AddDate(0, 0, -1).Format("20060102"))
 		data[k].FollowerCount = dyAuthor.Data.Fans.Douyin.Count
-		data[k].FollowerIncreCount = authorData.FollowerCount - basicData.FollowerCount
-		data[k].Avatar = authorData.Data.Avatar
+		data[k].FollowerIncreCount = dyAuthor.FollowerCount - basicData.FollowerCount
+		data[k].Avatar = dyimg.Avatar(dyAuthor.Data.Avatar)
 	}
 	return
 }
