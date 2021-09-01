@@ -791,6 +791,7 @@ func (receiver *AuthorController) AuthorIncome() {
 		} else {
 			authorIncome = spiderBusiness.GetAuthorBaseInfo(authorId)
 		}
+		authorIncome.AuthorId = business.IdEncrypt(authorIncome.AuthorId)
 		receiver.SuccReturn(authorIncome)
 		return
 	} else {
@@ -800,6 +801,7 @@ func (receiver *AuthorController) AuthorIncome() {
 			1, 1)
 		if total == 0 {
 			authorIncome := spiderBusiness.GetAuthorByKeyword(keyword)
+			authorIncome.AuthorId = business.IdEncrypt(authorIncome.AuthorId)
 			receiver.SuccReturn(authorIncome)
 			return
 		} else {
@@ -811,6 +813,7 @@ func (receiver *AuthorController) AuthorIncome() {
 					UniqueId:     author.UniqueId,
 					IsCollection: 1,
 				}
+				authorIncome.AuthorId = business.IdEncrypt(authorIncome.AuthorId)
 				receiver.SuccReturn(authorIncome)
 				return
 			}
