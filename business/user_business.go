@@ -477,6 +477,9 @@ func (receiver *UserBusiness) CancelDyCollect(id int) (comErr global.CommonError
 
 //关键词统计
 func (receiver *UserBusiness) KeywordsRecord(keyword string) (comErr global.CommonError) {
+	if keyword == "" {
+		return
+	}
 	var record dcm.DcUserKeywordsRecord
 	db := dcm.GetDbSession()
 	defer db.Close()
