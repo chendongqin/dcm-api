@@ -51,13 +51,6 @@ type AppData struct {
 
 func (this *ApiBaseController) Prepare() {
 	this.InitApiController()
-	//todo 上线白名单过滤
-	if this.TrueUri != "/v1/user/login" {
-		if business.WitheUsername(this.UserInfo.Username) != nil {
-			this.FailReturn(global.NewError(88888))
-			return
-		}
-	}
 }
 
 func (this *ApiBaseController) InitApiController() {
@@ -65,6 +58,13 @@ func (this *ApiBaseController) InitApiController() {
 	this.AsfCheck()
 	this.CheckSign()
 	this.InitUserToken()
+	//todo 上线白名单过滤
+	if this.TrueUri != "/v1/user/login" {
+		if business.WitheUsername(this.UserInfo.Username) != nil {
+			this.FailReturn(global.NewError(88888))
+			return
+		}
+	}
 }
 
 func (this *ApiBaseController) IsMobileRequest() (is bool, version string) {

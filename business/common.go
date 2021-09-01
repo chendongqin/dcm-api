@@ -286,7 +286,13 @@ func WitheUsername(username string) error {
 		listByte, _ := jsoniter.Marshal(list)
 		global.Cache.Set(cacheKey, string(listByte), 300)
 	}
-	if len(list) == 0 {
+	newList := make([]string, 0)
+	for _, v := range list {
+		if v == "" {
+			newList = append(newList, v)
+		}
+	}
+	if len(newList) == 0 {
 		return nil
 	}
 	if !utils.InArrayString(username, list) {
