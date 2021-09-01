@@ -411,6 +411,7 @@ func (receiver *UserBusiness) GetDyCollect(tagId, collectType int, keywords, lab
 		basicData, _ := hbase.GetAuthorBasic(v.CollectId, time.Now().AddDate(0, 0, -1).Format("20060102"))
 		data[k].FollowerCount = dyAuthor.Data.Fans.Douyin.Count
 		data[k].FollowerIncreCount = authorData.FollowerCount - basicData.FollowerCount
+		data[k].Avatar = authorData.Data.Avatar
 	}
 	return
 }
