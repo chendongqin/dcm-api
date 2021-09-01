@@ -17,6 +17,7 @@ import (
 	"encoding/json"
 	"fmt"
 	jsoniter "github.com/json-iterator/go"
+	"math"
 	"sort"
 	"strings"
 	"time"
@@ -318,7 +319,8 @@ func (receiver *CommonController) RedAuthorLivingRoom() {
 				LiveTitle:  v.Title,
 				RoomId:     business.IdEncrypt(v.RoomId),
 				RoomStatus: v.RoomStatus,
-				Gmv:        v.RealGmv,
+				Gmv:        v.PredictGmv,
+				Sales:      math.Floor(v.PredictSales),
 				TotalUser:  v.WatchCnt,
 				Tags:       v.Tags,
 				CreateTime: v.CreateTime,

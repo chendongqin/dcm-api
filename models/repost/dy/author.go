@@ -115,6 +115,7 @@ type RedAuthorRoom struct {
 	RoomId             string  `json:"room_id"`
 	RoomStatus         int     `json:"room_status"`
 	Gmv                float64 `json:"gmv"`
+	Sales              float64 `json:"sales"`
 	TotalUser          int64   `json:"total_user"`
 	Tags               string  `json:"tags"`
 	RoomCount          int     `json:"room_count"`
