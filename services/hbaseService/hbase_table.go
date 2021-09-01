@@ -16,11 +16,13 @@ const (
 	HbaseDyAweme                        = "dy_aweme"                            //抖音视频
 	HbaseDyAuthorAwemeAgg               = "dy_author_aweme_agg"                 //达人抖音视频
 	HbaseDyAwemeDiggCommentForwardCount = "dy_aweme_digg_comment_forward_count" //达人抖音视频
+	HbaseDyProductAwemeSalesTrend       = "dy_product_aweme_sales_trend"        //达人抖音视频
 
 	HbaseDyAuthor                = "dy_author"                  //抖音用户信息
 	HbaseDyAuthorBasic           = "dy_author_basic"            //抖音用户基本数据信息
 	HbaseDyAuthorFans            = "dy_author_fans"             //抖音粉丝信息
 	HbaseDyLiveFansClub          = "dy_live_fansclub"           //抖音粉丝团数据信息
+	HbaseDyLiveChatMessage       = "dy_live_chat_message"       //直播间弹幕
 	HbaseDyAuthorRoomMapping     = "dy_author_room_mapping"     //达人直播间
 	HbaseDyAuthorProductAnalysis = "dy_author_product_analysis" //达人电商分析
 	HbaseXtAuthorDetail          = "xt_author_detail"           //星图达人详情

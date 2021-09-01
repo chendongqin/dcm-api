@@ -91,7 +91,7 @@ func (receiver *AccountController) ChangeMobile() {
 		return
 	}
 	//旧手机验证
-	codeKey := cache.GetCacheKey(cache.SmsCodeVerify, "change_mobile", mobile)
+	codeKey := cache.GetCacheKey(cache.SmsCodeVerify, "change_mobile", receiver.UserInfo.Username)
 	verifyCode := global.Cache.Get(codeKey)
 	if verifyCode != oldCode {
 		receiver.FailReturn(global.NewError(4209))
@@ -120,9 +120,9 @@ func (receiver *AccountController) ChangeMobile() {
 		return
 	}
 	_ = dbSession.Commit()
-	receiver.Logout()
 	_ = global.Cache.Delete(codeKey)
 	_ = global.Cache.Delete(codeKey1)
+	receiver.Logout()
 	receiver.SuccReturn(nil)
 	return
 }

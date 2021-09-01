@@ -159,3 +159,50 @@ func GetProductAuthorAnalysisRange(startRowKey, stopRowKey string) (data []entit
 	}
 	return
 }
+
+//商品视频某时间段分销数据
+func GetDyProductAwemeSalesTrendRangeDate(productId string, startTime, endTime time.Time) (data map[string]entity.DyProductAwemeSalesTrend, comErr global.CommonError) {
+	query := hbasehelper.NewQuery()
+	startRow := productId + "_" + startTime.Format("20060102")
+	endRow := productId + "_" + endTime.AddDate(0, 0, 1).Format("20060102")
+	results, err := query.
+		SetTable(hbaseService.HbaseDyProductAwemeSalesTrend).
+		SetStartRow([]byte(startRow)).
+		SetStopRow([]byte(endRow)).
+		Scan(1000)
+	if err != nil {
+		comErr = global.NewMsgError(err.Error())
+		return
+	}
+	data = map[string]entity.DyProductAwemeSalesTrend{}
+	for _, v := range results {
+		dataMap := hbaseService.HbaseFormat(v, entity.DyProductAwemeSalesTrendMap)
+		hData := entity.DyProductAwemeSalesTrend{}
+		utils.MapToStruct(dataMap, &hData)
+		rowKey := string(v.GetRow())
+		rowKeyArr := strings.Split(rowKey, "_")
+		if len(rowKeyArr) < 2 {
+			comErr = global.NewError(5000)
+			return
+		}
+		date := rowKeyArr[1]
+		data[date] = hData
+	}
+	return
+}
+
+//商品视频某天分销数据
+func GetDyProductAwemeSalesTrend(product, date string) (data entity.DyProductAwemeSalesTrend, comErr global.CommonError) {
+	query := hbasehelper.NewQuery()
+	startRow := product + "_" + date
+	result, err := query.
+		SetTable(hbaseService.HbaseDyProductAwemeSalesTrend).
+		GetByRowKey([]byte(startRow))
+	if err != nil {
+		comErr = global.NewMsgError(err.Error())
+		return
+	}
+	dataMap := hbaseService.HbaseFormat(result, entity.DyProductAwemeSalesTrendMap)
+	utils.MapToStruct(dataMap, &data)
+	return
+}

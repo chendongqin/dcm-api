@@ -1,9 +1,11 @@
 package kafka
 
 import (
+	"dongchamao/global/alias"
 	"fmt"
 	"github.com/Shopify/sarama"
 	"github.com/astaxie/beego/logs"
+	jsoniter "github.com/json-iterator/go"
 	"time"
 )
 
@@ -63,3 +65,33 @@ func Init(hosts []string) {
 //	defer c.Close()
 //	err = c.SubscribeTopics([]string{"dy-live-chat-message"}, nil)
 //}
+
+func pack(m alias.M) string {
+	str, _ := jsoniter.MarshalToString(m)
+	return str
+}
+
+func SendMessage(message *sarama.ProducerMessage) {
+	defer func() {
+		if err := recover(); err != nil {
+			logs.Critical(fmt.Sprintf("err: %s", err))
+		}
+	}()
+	producer.Input() <- message
+}
+
+func NewProductCateChangeMsg(productId string) *sarama.ProducerMessage {
+	msg := &sarama.ProducerMessage{
+		Topic: "dy-product-cate-change",
+		Value: sarama.StringEncoder(pack(alias.M{
+			"author_id": productId,
+			"type":      "product_cate_change",
+			"time":      time.Now().Format("2006-01-02 15:04:05"),
+		})),
+	}
+	return msg
+}
+
+func SendProductCateChange(productId string) {
+	SendMessage(NewProductCateChangeMsg(productId))
+}

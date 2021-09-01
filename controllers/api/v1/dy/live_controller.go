@@ -726,3 +726,50 @@ func (receiver *LiveController) LivingProduct() {
 	})
 	return
 }
+
+//直播间弹幕
+func (receiver LiveController) LivingMessage() {
+	roomId := business.IdDecrypt(receiver.Ctx.Input.Param(":room_id"))
+	beginNum, _ := receiver.GetInt64("begin", 0)
+	pageSize := receiver.GetPageSize("page_size", 30, 200)
+	data, _ := hbase.GetLiveChatMessage(roomId)
+	list := make([]entity.LivingChatMessage, 0)
+	lenNum := len(data.Latest500Msg)
+	var endNum int64 = 0
+	if data.EndNum > beginNum && lenNum > 0 {
+		firstId := data.Latest500Msg[0].RankId
+		if beginNum <= firstId {
+			beginNum = 0
+		}
+		start := 0
+		end := 0
+		if beginNum > 0 {
+			start = int(beginNum-firstId) + 1
+		} else {
+			start = lenNum - pageSize
+			if start < 0 {
+				start = 0
+			}
+		}
+		end = start + pageSize
+		if lenNum < end {
+			end = lenNum
+		}
+		list = data.Latest500Msg[start:end]
+		lastKey := -1
+		for k, v := range list {
+			list[k].Avatar = dyimg.Fix(v.Avatar)
+			lastKey = k
+		}
+		if lastKey < 0 {
+			endNum = beginNum
+		} else {
+			endNum = list[lastKey].RankId
+		}
+	}
+	receiver.SuccReturn(map[string]interface{}{
+		"list":    list,
+		"end_num": endNum,
+	})
+	return
+}

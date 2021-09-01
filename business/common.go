@@ -9,6 +9,7 @@ import (
 	"dongchamao/models/repost/dy"
 	"dongchamao/services"
 	"encoding/base64"
+	"github.com/astaxie/beego/logs"
 	jsoniter "github.com/json-iterator/go"
 	"net/http"
 	"regexp"
@@ -198,11 +199,7 @@ func UserActionLock(active string, userData string, lockTime time.Duration) bool
 }
 
 //短url还原解析
-func ParseDyShortUrl(url string) string {
-	filterUrl := utils.ParseDyVideoShare(url)
-	if filterUrl != "" && filterUrl != url {
-		url = filterUrl
-	}
+func ParseDyShortUrl(url string) (string, bool) {
 	url = strings.TrimSpace(url)
 	//判断是否短网址,之后加入缓存
 	pattern := `^(http|https):\/\/v\.douyin\.com\/.*?`
@@ -212,19 +209,23 @@ func ParseDyShortUrl(url string) string {
 		redisService := services.NewRedisService()
 		returl = redisService.Hget("douyin:shorturl:hashmap", url)
 		if returl == "" {
-			client := &http.Client{}
+			client := &http.Client{CheckRedirect: nil}
 			request, _ := http.NewRequest("GET", url, nil)
 			response, err := client.Do(request)
 			if err != nil {
-				return ""
+				return "", false
 			}
 			defer response.Body.Close()
-			returl = response.Request.URL.String()
+			returl = response.Request.Response.Request.URL.Path
+			if len(returl) == 0 {
+				return "", false
+			}
 			redisService.Hset("douyin:shorturl:hashmap", url, returl)
 		}
-		return returl
+		return returl, true
 	} else {
-		return url
+		logs.Info("[短链转换失败][%s]", url)
+		return url, false
 	}
 }
 

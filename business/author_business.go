@@ -759,9 +759,9 @@ func (a *AuthorBusiness) GetAuthorProductHbaseList(authorId, keyword string, sta
 }
 
 //达人电商分析直播列表
-func (a *AuthorBusiness) GetAuthorProductRooms(authorId, productId string, startTime, stopTime time.Time, page, pageSize int) (list []dy.DyAuthorProductRoom, total int, comErr global.CommonError) {
+func (a *AuthorBusiness) GetAuthorProductRooms(authorId, productId string, startTime, stopTime time.Time, page, pageSize int, sortStr, orderBy string) (list []dy.DyAuthorProductRoom, total int, comErr global.CommonError) {
 	esLiveBusiness := es.NewEsLiveBusiness()
-	roomIds, total, comErr := esLiveBusiness.GetAuthorProductSearchRoomIds(authorId, productId, startTime, stopTime, page, pageSize)
+	roomIds, total, comErr := esLiveBusiness.GetAuthorProductSearchRoomIds(authorId, productId, startTime, stopTime, page, pageSize, sortStr, orderBy)
 	if len(roomIds) == 0 || comErr != nil {
 		return
 	}
@@ -832,4 +832,37 @@ func (a *AuthorBusiness) GetAuthorFormPool(authorIds []string, poolNum uint64) m
 		authorMap[v.AuthorID] = v
 	}
 	return authorMap
+}
+
+//获取红人看榜直播间
+func (a *AuthorBusiness) RedAuthorRoomByDate(authorIds []string, date string) (list []dy.RedAuthorRoom) {
+	cacheKey := cache.GetCacheKey(cache.RedAuthorRooms, date)
+	cacheData := global.Cache.Get(cacheKey)
+	list = make([]dy.RedAuthorRoom, 0)
+	if cacheData != "" {
+		cacheData = utils.DeserializeData(cacheData)
+		_ = jsoniter.Unmarshal([]byte(cacheData), &list)
+		return
+	}
+	liveList := es.NewEsLiveBusiness().GetRoomsByAuthorIds(authorIds, date, 0)
+	for _, v := range liveList {
+		list = append(list, dy.RedAuthorRoom{
+			AuthorId:   IdEncrypt(v.AuthorId),
+			Avatar:     dyimg.Fix(v.Avatar),
+			Nickname:   v.Nickname,
+			LiveTitle:  v.Title,
+			RoomId:     IdEncrypt(v.RoomId),
+			RoomStatus: v.RoomStatus,
+			Gmv:        v.PredictGmv,
+			TotalUser:  v.WatchCnt,
+			Tags:       v.Tags,
+			CreateTime: v.CreateTime,
+		})
+	}
+	cacheTime := 600 * time.Second
+	if date != time.Now().Format("20060102") {
+		cacheTime = 3 * 24 * time.Hour
+	}
+	_ = global.Cache.Set(cacheKey, utils.SerializeData(list), cacheTime)
+	return
 }

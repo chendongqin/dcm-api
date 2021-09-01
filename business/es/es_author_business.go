@@ -45,7 +45,7 @@ func (receiver *EsAuthorBusiness) BaseSearch(
 	esTable := es.DyAuthorTable
 	esQuery, esMultiQuery := elasticsearch.NewElasticQueryGroup()
 	esQuery.SetTerm("exist", 1)
-	if sortStr == "follower_count" && minFollower == 0 && maxFollower == 0 {
+	if sortStr == "follower_count" && minFollower == 0 && maxFollower == 0 && keyword == "" {
 		minFollower = 2600000
 	}
 	if keyword != "" {
@@ -193,6 +193,7 @@ func (receiver *EsAuthorBusiness) BaseSearch(
 	}
 	results := esMultiQuery.
 		SetTable(esTable).
+		SetCache(180).
 		AddMust(esQuery.Condition).
 		SetLimit((page-1)*pageSize, pageSize).
 		SetOrderBy(elasticsearch.NewElasticOrder().Add(sortStr, orderBy).Order).
@@ -303,7 +304,7 @@ func (receiver *EsAuthorBusiness) KeywordSearch(keyword string) (list []es.DyAut
 		SetCache(60).
 		AddMust(esQuery.Condition).
 		SetLimit(0, 4).
-		SetOrderBy(elasticsearch.NewElasticOrder().Add("follower_incre_count", "desc").Order).
+		SetOrderBy(elasticsearch.NewElasticOrder().Add("follower_count", "desc").Order).
 		SetMultiQuery().
 		Query()
 	utils.MapToStruct(results, &list)
@@ -355,6 +356,9 @@ func (receiver *EsAuthorBusiness) SaleAuthorRankCount(startTime time.Time, dateT
 		return nil, 0, global.NewError(4004)
 	}
 	esQuery, _ := elasticsearch.NewElasticQueryGroup()
+	esQuery.SetRange("predict_gmv", map[string]interface{}{
+		"gte": 100000,
+	})
 	if tags != "" {
 		esQuery.SetTerm("tags.keyword", tags)
 	}
@@ -362,23 +366,33 @@ func (receiver *EsAuthorBusiness) SaleAuthorRankCount(startTime time.Time, dateT
 		esQuery.SetTerm("verification_type", 2)
 	}
 	var esTable string
+	cacheTime := 600 * time.Second
+	today := time.Now().Format("20060102")
 	switch dateType {
 	case 1:
-		endDate := startTime.AddDate(0, 0, 1).Add(-1)
-		esTable = GetESTableByDayTime(es.DyAuthorTakeGoodsTopTable, startTime, endDate)
+		date := startTime.Format("20060102")
+		if date != today {
+			cacheTime = 86400
+		}
+		esTable = fmt.Sprintf(es.DyAuthorTakeGoodsTopTable, date)
 	case 2:
-		endDate := startTime.AddDate(0, 0, 7).Add(-1)
+		endDate := startTime.AddDate(0, 0, 6)
+		if endDate.Format("20060102") != today {
+			cacheTime = 86400
+		}
 		esTable = GetESTableByDayTime(es.DyAuthorTakeGoodsTopTable, startTime, endDate)
 	case 3:
 		esTable = fmt.Sprintf(es.DyAuthorTakeGoodsTopTable+"*", startTime.Format("200601"))
 	}
-	countResult := elasticsearch.NewElasticMultiQuery().SetTable(esTable).RawQuery(map[string]interface{}{
+	countResult := elasticsearch.NewElasticMultiQuery().
+		SetCache(cacheTime).
+		SetTable(esTable).RawQuery(map[string]interface{}{
 		"query": map[string]interface{}{
 			"bool": map[string]interface{}{
 				"must": esQuery.Condition,
 			},
 		},
-		"size": 1500,
+		"size": 0,
 		"aggs": map[string]interface{}{
 			"authors": map[string]interface{}{
 				"aggs": map[string]interface{}{
@@ -422,7 +436,7 @@ func (receiver *EsAuthorBusiness) SaleAuthorRankCount(startTime time.Time, dateT
 					},
 				},
 				"composite": map[string]interface{}{
-					"size": 1500,
+					"size": 10000,
 					"sources": map[string]interface{}{
 						"author_id": map[string]interface{}{
 							"terms": map[string]interface{}{
@@ -438,9 +452,6 @@ func (receiver *EsAuthorBusiness) SaleAuthorRankCount(startTime time.Time, dateT
 	var total int
 	if countResult["hits"] != nil && countResult["hits"].(map[string]interface{})["total"] != nil {
 		total = int(countResult["hits"].(map[string]interface{})["total"].(float64))
-		if total > 1500 {
-			total = 1500
-		}
 	}
 	return res, total, nil
 }
@@ -463,7 +474,7 @@ func (receiver *EsAuthorBusiness) DyAuthorFollowerIncRank(date, tags, province, 
 		return
 	}
 	if tags != "" {
-		esQuery.SetTerm("tags.keyword", tags)
+		esQuery.SetMatchPhrase("tags", tags)
 	}
 	if isDelivery != 0 {
 		esQuery.SetTerm("is_delivery", isDelivery)
@@ -484,8 +495,5 @@ func (receiver *EsAuthorBusiness) DyAuthorFollowerIncRank(date, tags, province, 
 		Query()
 	utils.MapToStruct(results, &list)
 	total = esMultiQuery.Count
-	if total > 1500 {
-		total = 1500
-	}
 	return
 }

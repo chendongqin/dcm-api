@@ -113,13 +113,23 @@ type RedAuthorRoom struct {
 	LivingTime         int64   `json:"living_time"`
 	LiveTitle          string  `json:"live_title"`
 	RoomId             string  `json:"room_id"`
+	RoomStatus         int     `json:"room_status"`
 	Gmv                float64 `json:"gmv"`
 	TotalUser          int64   `json:"total_user"`
 	Tags               string  `json:"tags"`
 	RoomCount          int     `json:"room_count"`
+	CreateTime         int64   `json:"create_time"`
 }
 
 type RedAuthorRoomBox struct {
 	Date string          `json:"date"`
 	List []RedAuthorRoom `json:"list"`
+}
+
+type DyAuthorIncome struct {
+	AuthorId     string `json:"author_id"`
+	Avatar       string `json:"avatar"`
+	Nickname     string `json:"nickname"`
+	UniqueId     string `json:"unique_id"`
+	IsCollection int    `json:"is_collection"`
 }

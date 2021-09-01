@@ -6,6 +6,8 @@ import (
 	"dongchamao/models/entity"
 	"dongchamao/services/hbaseService"
 	"dongchamao/services/hbaseService/hbase"
+	"dongchamao/services/kafka"
+	"github.com/astaxie/beego/logs"
 	jsoniter "github.com/json-iterator/go"
 )
 
@@ -37,12 +39,14 @@ func (receiver *DirtyBusiness) ChangeAuthorCate(authorId, tags, tagsTow string) 
 	if err != nil {
 		return global.NewError(5000)
 	}
+	ret := NewSpiderBusiness().SpiderSpeedUp("author", authorId)
+	logs.Info("达人分类修改，爬虫推送结果：", ret)
 	return nil
 }
 
 //修改商品分类
 func (receiver *DirtyBusiness) ChangeProductCate(productId, dcmLevelFirst, firstCate, secondCate, thirdCate string) global.CommonError {
-	_, comErr := hbase2.GetProductInfo(productId)
+	productInfo, comErr := hbase2.GetProductInfo(productId)
 	if comErr != nil {
 		return comErr
 	}
@@ -56,12 +60,19 @@ func (receiver *DirtyBusiness) ChangeProductCate(productId, dcmLevelFirst, first
 		"second_cname": secondCate,
 		"third_cname":  thirdCate,
 	}
+	tableName := hbaseService.HbaseDyProduct
+	if productInfo.PlatformLabel == "小店" {
+		tableName = hbaseService.HbaseDyProductBrand
+	}
 	jsonByte, _ := jsoniter.Marshal(artificialData)
 	columnL := hbaseBusiness.BuildColumnValue("other", "manmade_category", string(jsonByte), entity.String)
 	columnL2 := hbaseBusiness.BuildColumnValue("info", "dcm_level_first", dcmLevelFirst, entity.String)
-	err := hbaseBusiness.PutByRowKey(hbaseService.HbaseDyProduct, productId, []*hbase.TColumnValue{columnL, columnL2})
+	err := hbaseBusiness.PutByRowKey(tableName, productId, []*hbase.TColumnValue{columnL, columnL2})
 	if err != nil {
 		return global.NewError(5000)
 	}
+	ret := NewSpiderBusiness().SpiderSpeedUp("product", productId)
+	logs.Info("达人分类修改，爬虫推送结果：", ret)
+	kafka.SendProductCateChange(productId)
 	return nil
 }

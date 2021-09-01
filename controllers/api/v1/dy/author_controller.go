@@ -132,8 +132,8 @@ func (receiver *AuthorController) BaseSearch() {
 	}
 	authorId := ""
 	if utils.CheckType(keyword, "url") {
-		url := business.ParseDyShortUrl(keyword)
-		authorId = utils.ParseDyAuthorUrl(url)
+		shortUrl, _ := business.ParseDyShortUrl(keyword)
+		authorId = utils.ParseDyAuthorUrl(shortUrl)
 		keyword = ""
 	} else {
 		keyword = utils.MatchDouyinNewText(keyword)
@@ -147,14 +147,23 @@ func (receiver *AuthorController) BaseSearch() {
 		receiver.FailReturn(comErr)
 		return
 	}
+	authorIds := make([]string, 0)
+	for _, v := range list {
+		authorIds = append(authorIds, v.AuthorId)
+	}
+	authorMap := business.NewAuthorBusiness().GetAuthorFormPool(authorIds, 10)
 	for k, v := range list {
 		list[k].Avatar = dyimg.Fix(v.Avatar)
 		if v.UniqueId == "" || v.UniqueId == "0" {
 			list[k].UniqueId = v.ShortId
 		}
 		list[k].AuthorId = business.IdEncrypt(v.AuthorId)
-		authorData, _ := hbase.GetAuthor(v.AuthorId)
-		list[k].RoomId = business.IdEncrypt(authorData.RoomId)
+		if a, ok := authorMap[v.AuthorId]; ok {
+			list[k].RoomId = a.RoomId
+		} else {
+			authorData, _ := hbase.GetAuthor(v.AuthorId)
+			list[k].RoomId = business.IdEncrypt(authorData.RoomId)
+		}
 	}
 	totalPage := math.Ceil(float64(total) / float64(pageSize))
 	maxPage := math.Ceil(float64(receiver.MaxTotal) / float64(pageSize))
@@ -741,7 +750,7 @@ func (receiver *AuthorController) AuthorProductRooms() {
 	page := receiver.GetPage("page")
 	pageSize := receiver.GetPageSize("page_size", 5, 10)
 	authorBusiness := business.NewAuthorBusiness()
-	list, total, comErr := authorBusiness.GetAuthorProductRooms(authorId, productId, startTime, endTime, page, pageSize)
+	list, total, comErr := authorBusiness.GetAuthorProductRooms(authorId, productId, startTime, endTime, page, pageSize, "shelf_time", "desc")
 	if comErr != nil {
 		receiver.FailReturn(comErr)
 		return
@@ -751,4 +760,63 @@ func (receiver *AuthorController) AuthorProductRooms() {
 		"total": total,
 	})
 	return
+}
+
+//达人收录
+func (receiver *AuthorController) AuthorIncome() {
+	var authorId string
+	var authorIncome = &dy2.DyAuthorIncome{}
+	keyword := receiver.InputFormat().GetString("keyword", "")
+	if keyword == "" {
+		receiver.FailReturn(global.NewError(4000))
+		return
+	}
+	spiderBusiness := business.NewSpiderBusiness()
+	if utils.CheckType(keyword, "url") { // 抓换链接
+		shortUrl, _ := business.ParseDyShortUrl(keyword)
+		if shortUrl == "" {
+			receiver.FailReturn(global.NewError(4000))
+			return
+		}
+		authorId = utils.ParseDyAuthorUrl(shortUrl) // 获取authorId
+		author, err := hbase.GetAuthor(authorId)
+		if err == nil {
+			authorIncome = &dy2.DyAuthorIncome{
+				AuthorId:     author.AuthorID,
+				Avatar:       author.Data.Avatar,
+				Nickname:     author.Data.Nickname,
+				UniqueId:     author.Data.UniqueID,
+				IsCollection: 0,
+			}
+		} else {
+			authorIncome = spiderBusiness.GetAuthorBaseInfo(authorId)
+		}
+		authorIncome.AuthorId = business.IdEncrypt(authorIncome.AuthorId)
+		receiver.SuccReturn(authorIncome)
+		return
+	} else {
+		// 如果是keyword形式的，先查es，es没有数据就请求爬虫数据接口
+		list, total, _ := es.NewEsAuthorBusiness().SimpleSearch(
+			"", keyword, "", "",
+			1, 1)
+		if total == 0 {
+			authorIncome := spiderBusiness.GetAuthorByKeyword(keyword)
+			authorIncome.AuthorId = business.IdEncrypt(authorIncome.AuthorId)
+			receiver.SuccReturn(authorIncome)
+			return
+		} else {
+			for _, author := range list {
+				authorIncome := dy2.DyAuthorIncome{
+					AuthorId:     author.AuthorId,
+					Avatar:       author.Avatar,
+					Nickname:     author.Nickname,
+					UniqueId:     author.UniqueId,
+					IsCollection: 1,
+				}
+				authorIncome.AuthorId = business.IdEncrypt(authorIncome.AuthorId)
+				receiver.SuccReturn(authorIncome)
+				return
+			}
+		}
+	}
 }

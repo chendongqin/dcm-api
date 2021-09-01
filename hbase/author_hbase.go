@@ -35,6 +35,9 @@ func GetAuthor(authorId string) (data entity.DyAuthor, comErr global.CommonError
 	if data.TagsLevelTwo == "0" {
 		data.TagsLevelTwo = ""
 	}
+	if data.Data.UniqueID == "0" || data.Data.UniqueID == "" {
+		data.Data.UniqueID = data.Data.ShortID
+	}
 	return
 }
 

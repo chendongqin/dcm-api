@@ -10,12 +10,14 @@ import (
 	"dongchamao/global/utils"
 	"dongchamao/hbase"
 	"dongchamao/models/dcm"
-	"dongchamao/models/entity"
 	dy2 "dongchamao/models/repost/dy"
 	"dongchamao/services/ali_sms"
+	"dongchamao/services/ali_tools"
 	"dongchamao/services/dyimg"
 	"encoding/json"
 	"fmt"
+	jsoniter "github.com/json-iterator/go"
+	"sort"
 	"strings"
 	"time"
 )
@@ -28,6 +30,9 @@ func (receiver *CommonController) Sms() {
 	InputData := receiver.InputFormat()
 	grantType := InputData.GetString("grant_type", "")
 	mobile := InputData.GetString("mobile", "")
+	//sig := InputData.GetString("sig", "")
+	//sessionId := InputData.GetString("session_id", "")
+	//token := InputData.GetString("token", "")
 	if !utils.InArrayString(grantType, []string{"login", "findpwd", "change_mobile", "bind_mobile"}) {
 		receiver.FailReturn(global.NewError(4000))
 		return
@@ -39,14 +44,27 @@ func (receiver *CommonController) Sms() {
 		receiver.FailReturn(global.NewError(4205))
 		return
 	}
-
-	limitIpKey := cache.GetCacheKey(cache.SmsCodeLimitBySome, "ip", receiver.Ip)
+	//if sig == "" || sessionId == "" || token == "" {
+	//	receiver.FailReturn(global.NewError(4000))
+	//	return
+	//}
+	//scene := "nc_message"
+	//if receiver.AppId != 10000 {
+	//	scene = "nc_message_h5"
+	//}
+	//appKey := "FFFF0N0000000000A2FA"
+	//err1 := ali_tools.IClientProfile(sig, sessionId, token, receiver.Ip, scene, appKey)
+	//if err1 != nil {
+	//	receiver.FailReturn(global.NewError(4000))
+	//	return
+	//}
+	limitIpKey := cache.GetCacheKey(cache.SmsCodeLimitBySome, grantType, "ip", receiver.Ip)
 	verifyData := global.Cache.Get(limitIpKey)
 	if verifyData != "" {
 		receiver.FailReturn(global.NewError(4211))
 		return
 	}
-	limitMobileKey := cache.GetCacheKey(cache.SmsCodeLimitBySome, "mobile", mobile)
+	limitMobileKey := cache.GetCacheKey(cache.SmsCodeLimitBySome, grantType, "mobile", mobile)
 	verifyData = global.Cache.Get(limitMobileKey)
 	if verifyData != "" {
 		receiver.FailReturn(global.NewError(4211))
@@ -72,8 +90,8 @@ func (receiver *CommonController) Sms() {
 		receiver.FailReturn(global.NewError(6000))
 		return
 	}
-	global.Cache.Set(limitIpKey, "1", 60)
-	global.Cache.Set(limitMobileKey, "1", 60)
+	global.Cache.Set(limitIpKey, "1", 60*time.Second)
+	global.Cache.Set(limitMobileKey, "1", 60*time.Second)
 	receiver.SuccReturn(nil)
 	return
 }
@@ -117,6 +135,24 @@ func (receiver *CommonController) IdEncryptDecrypt() {
 }
 
 func (receiver *CommonController) Test() {
+	InputData := receiver.InputFormat()
+	sig := InputData.GetString("sig", "")
+	sessionId := InputData.GetString("session_id", "")
+	token := InputData.GetString("token", "")
+	if sig == "" || sessionId == "" || token == "" {
+		receiver.FailReturn(global.NewError(4000))
+		return
+	}
+	scene := "nc_message"
+	if receiver.AppId != 10000 {
+		scene = "nc_message_h5"
+	}
+	appKey := "FFFF0N0000000000A2FA"
+	err1 := ali_tools.IClientProfile(sig, sessionId, token, receiver.Ip, scene, appKey)
+	if err1 != nil {
+		receiver.FailReturn(global.NewError(4000))
+		return
+	}
 	return
 }
 
@@ -142,22 +178,29 @@ func (receiver *CommonController) GetConfig() {
 }
 
 func (receiver *CommonController) GetConfigList() {
-	var config []dcm.DcConfigJson
-	if err := dcm.GetDbSession().Table(dcm.DcConfigJson{}).Where("auth=1").Find(&config); err != nil {
+	var ret = make(map[string]map[string]interface{}, 0)
+	cacheKey := cache.GetCacheKey(cache.ConfigKeyCache, "all")
+	cacheData := global.Cache.Get(cacheKey)
+	if cacheData != "" {
+		cacheData = utils.DeserializeData(cacheData)
+		_ = jsoniter.Unmarshal([]byte(cacheData), &ret)
+		receiver.SuccReturn(ret)
+		return
+	}
+	var configList []dcm.DcConfigJson
+	if err := dcm.GetDbSession().Table(dcm.DcConfigJson{}).Where("auth=1").Find(&configList); err != nil {
 		receiver.FailReturn(global.NewError(5000))
 		return
 	}
-	var data = make([]map[string]interface{}, len(config))
-	utils.MapToStruct(config, &data)
-	var ret = make(map[string]map[string]interface{}, len(config))
-	for _, v := range data {
+	for _, v := range configList {
 		var jsonMap map[string]interface{}
-		if err := json.Unmarshal([]byte(v["Value"].(string)), &jsonMap); err != nil {
+		if err := json.Unmarshal([]byte(v.Value), &jsonMap); err != nil {
 			receiver.FailReturn(global.NewError(5000))
 			return
 		}
-		ret[v["KeyName"].(string)] = jsonMap
+		ret[v.KeyName] = jsonMap
 	}
+	_ = global.Cache.Set(cacheKey, utils.SerializeData(ret), 300)
 	receiver.SuccReturn(ret)
 	return
 }
@@ -167,8 +210,6 @@ func (receiver *CommonController) RedAuthorRoom() {
 	sql := "status = 1"
 	if listType == "advance" {
 		sql += fmt.Sprintf(" AND living_time > '%s' ", time.Now().Format("2006-01-02 15:04:05"))
-	} else {
-		sql += fmt.Sprintf(" AND living_time <= '%s' AND living_time >'%s' ", time.Now().Format("2006-01-02 15:04:05"), time.Now().AddDate(0, 0, -6).Format("2006-01-02 15:04:05"))
 	}
 	list := make([]dcm.DcAuthorRoom, 0)
 	_ = dcm.GetSlaveDbSession().
@@ -178,17 +219,22 @@ func (receiver *CommonController) RedAuthorRoom() {
 		Find(&list)
 	if listType == "advance" {
 		data := make([]dy2.RedAuthorRoom, 0)
+		today := time.Now().Format("20060102")
 		for _, v := range list {
 			authorData, _ := hbase.GetAuthor(v.AuthorId)
+			if authorData.RoomId != "" && v.LivingTime.Format("2006012") == today {
+				continue
+			}
 			data = append(data, dy2.RedAuthorRoom{
-				AuthorId:   business.IdEncrypt(v.AuthorId),
-				Avatar:     dyimg.Fix(authorData.Data.Avatar),
-				Sign:       authorData.Data.Signature,
-				Nickname:   authorData.Data.Nickname,
-				LivingTime: v.LivingTime.Unix(),
-				RoomId:     business.IdEncrypt(authorData.RoomId),
-				Tags:       authorData.Tags,
-				RoomCount:  authorData.RoomCount,
+				AuthorId:           business.IdEncrypt(v.AuthorId),
+				Avatar:             dyimg.Fix(authorData.Data.Avatar),
+				Sign:               authorData.Data.Signature,
+				Nickname:           authorData.Data.Nickname,
+				LivingTime:         v.LivingTime.Unix(),
+				AuthorLivingRoomId: business.IdEncrypt(authorData.RoomId),
+				RoomId:             business.IdEncrypt(authorData.RoomId),
+				Tags:               authorData.Tags,
+				RoomCount:          authorData.RoomCount,
 			})
 		}
 		receiver.SuccReturn(map[string]interface{}{
@@ -197,57 +243,90 @@ func (receiver *CommonController) RedAuthorRoom() {
 		})
 		return
 	}
-	dateMap := map[string][]dy2.RedAuthorRoom{}
-	for _, v := range list {
-		date := v.LivingTime.Format("2006-01-02")
-		if _, ok := dateMap[date]; !ok {
-			dateMap[date] = []dy2.RedAuthorRoom{}
-		}
-		authorData, _ := hbase.GetAuthor(v.AuthorId)
-		if v.RoomId == "" {
-			rooms, _ := hbase.GetAuthorRoomsByDate(v.AuthorId, v.LivingTime.Format("20060102"))
-			room := entity.DyAuthorLiveRoom{}
-			for _, r := range rooms {
-				if r.CreateTime > v.LivingTime.Unix() {
-					room = r
-					break
-				}
-				if r.CreateTime > room.CreateTime {
-					room = r
-				}
-			}
-			v.RoomId = room.RoomID
-			if room.RoomID != "" {
-				go func(id int, roomId string) {
-					_, _ = dcm.UpdateInfo(nil, id, map[string]interface{}{"room_id": roomId}, new(dcm.DcAuthorRoom))
-				}(v.Id, room.RoomID)
-			}
-		}
-		liveInfo, _ := hbase.GetLiveInfo(v.RoomId)
-		dateMap[date] = append(dateMap[date], dy2.RedAuthorRoom{
-			AuthorId:           business.IdEncrypt(v.AuthorId),
-			Sign:               authorData.Data.Signature,
-			Avatar:             dyimg.Fix(authorData.Data.Avatar),
-			Nickname:           authorData.Data.Nickname,
-			AuthorLivingRoomId: business.IdEncrypt(authorData.RoomId),
-			RoomId:             business.IdEncrypt(v.RoomId),
-			Gmv:                liveInfo.PredictGmv,
-			LiveTitle:          liveInfo.Title,
-			TotalUser:          liveInfo.TotalUser,
-			Tags:               authorData.Tags,
-			RoomCount:          authorData.RoomCount,
-		})
-	}
 	data := make([]dy2.RedAuthorRoomBox, 0)
-	for k, v := range dateMap {
-		data = append(data, dy2.RedAuthorRoomBox{
-			Date: k,
-			List: v,
+	total := 0
+	if len(list) > 0 {
+		authorIds := make([]string, 0)
+		for _, v := range list {
+			authorIds = append(authorIds, v.AuthorId)
+		}
+		authorBusiness := business.NewAuthorBusiness()
+		authorDataMap := authorBusiness.GetAuthorFormPool(authorIds, 10)
+		start, _ := time.ParseInLocation("20060102", time.Now().Format("20060102"), time.Local)
+		for i := 0; i < 7; i++ {
+			dateTime := start.AddDate(0, 0, -i)
+			date := dateTime.Format("2006-01-02")
+			tmpList := make([]dy2.RedAuthorRoom, 0)
+			roomList := authorBusiness.RedAuthorRoomByDate(authorIds, dateTime.Format("20060102"))
+			if len(roomList) == 0 {
+				continue
+			}
+			for _, v := range roomList {
+				if a, ok := authorDataMap[v.AuthorId]; ok {
+					v.RoomCount = a.RoomCount
+					v.AuthorLivingRoomId = a.RoomId
+				}
+				tmpList = append(tmpList, v)
+				total++
+			}
+			data = append(data, dy2.RedAuthorRoomBox{
+				Date: date,
+				List: tmpList,
+			})
+		}
+		sort.Slice(data, func(i, j int) bool {
+			return data[i].Date > data[j].Date
 		})
 	}
 	receiver.SuccReturn(map[string]interface{}{
 		"list":  data,
-		"total": len(list),
+		"total": total,
+	})
+	return
+}
+
+//红人看榜正在直播top3
+func (receiver *CommonController) RedAuthorLivingRoom() {
+	cacheKey := cache.GetCacheKey(cache.RedAuthorLivingRooms)
+	cacheData := global.Cache.Get(cacheKey)
+	list := make([]dcm.DcAuthorRoom, 0)
+	if cacheData != "" {
+		cacheData = utils.DeserializeData(cacheData)
+		_ = jsoniter.Unmarshal([]byte(cacheData), &list)
+		receiver.SuccReturn(map[string]interface{}{
+			"list": list,
+		})
+		return
+	}
+	_ = dcm.GetSlaveDbSession().
+		Table(new(dcm.DcAuthorRoom)).
+		Where("status=?", 1).
+		Desc("weight").
+		Find(&list)
+	data := make([]dy2.RedAuthorRoom, 0)
+	if len(list) > 0 {
+		authorIds := make([]string, 0)
+		for _, v := range list {
+			authorIds = append(authorIds, v.AuthorId)
+		}
+		liveList := es.NewEsLiveBusiness().GetRoomsByAuthorIds(authorIds, time.Now().Format("20060102"), 3)
+		for _, v := range liveList {
+			data = append(data, dy2.RedAuthorRoom{
+				AuthorId:   business.IdEncrypt(v.AuthorId),
+				Avatar:     dyimg.Fix(v.Avatar),
+				Nickname:   v.Nickname,
+				LiveTitle:  v.Title,
+				RoomId:     business.IdEncrypt(v.RoomId),
+				RoomStatus: v.RoomStatus,
+				Gmv:        v.RealGmv,
+				TotalUser:  v.WatchCnt,
+				Tags:       v.Tags,
+				CreateTime: v.CreateTime,
+			})
+		}
+	}
+	receiver.SuccReturn(map[string]interface{}{
+		"list": data,
 	})
 	return
 }
@@ -268,6 +347,7 @@ func (receiver *CommonController) DyUnionSearch() {
 	for k, v := range authorList {
 		authorData, _ := hbase.GetAuthor(v.AuthorId)
 		authorList[k].AuthorId = business.IdEncrypt(v.AuthorId)
+		authorList[k].Avatar = dyimg.Fix(v.Avatar)
 		authorList[k].RoomId = business.IdEncrypt(authorData.RoomId)
 		if v.UniqueId == "" || v.UniqueId == "0" {
 			authorList[k].UniqueId = v.ShortId

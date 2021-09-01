@@ -13,7 +13,7 @@ import (
 )
 
 //视频详情
-func GetVideo(awemeId string) (data entity.DyAwemeData, comErr global.CommonError) {
+func GetVideo(awemeId string) (data entity.DyAweme, comErr global.CommonError) {
 	query := hbasehelper.NewQuery()
 	result, err := query.SetTable(hbaseService.HbaseDyAweme).GetByRowKey([]byte(awemeId))
 	if err != nil {
@@ -24,14 +24,12 @@ func GetVideo(awemeId string) (data entity.DyAwemeData, comErr global.CommonErro
 		comErr = global.NewError(4040)
 		return
 	}
-	authorMap := hbaseService.HbaseFormat(result, entity.DyAwemeMap)
-	aweme := &entity.DyAweme{}
-	utils.MapToStruct(authorMap, aweme)
-	duration := math.Ceil(float64(aweme.Data.Duration) / 1000)
-	data = aweme.Data
-	data.Duration = utils.ToInt(duration)
-	data.AwemeTitle = aweme.AwemeTitle
-	data.AwemeCover = dyimg.Fix(data.AwemeCover)
+	detailMap := hbaseService.HbaseFormat(result, entity.DyAwemeMap)
+	utils.MapToStruct(detailMap, &data)
+	duration := math.Ceil(float64(data.Data.Duration) / 1000)
+	data.Data.Duration = utils.ToInt(duration)
+	data.Data.AwemeTitle = data.AwemeTitle
+	data.Data.AwemeCover = dyimg.Fix(data.Data.AwemeCover)
 	return
 }
 

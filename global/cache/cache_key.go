@@ -14,7 +14,7 @@ const (
 	UserPrevTimeLock KeyName = "dcm:user:prev:lock:%d"
 	UserActionLock   KeyName = "dcm:user:action:lock:%s:%s"
 	//短信验证码
-	SmsCodeLimitBySome KeyName = "dcm:sms:limit:%s:%s" //短信发送限制
+	SmsCodeLimitBySome KeyName = "dcm:sms:limit:%s:%s:%s" //短信发送限制
 	SmsCodeVerify      KeyName = "dcm:sms:code:%s:%s"
 	// 全局关闭验证
 	SecurityVerifyDisabled KeyName = "dcm:security:verify:disabled"
@@ -32,6 +32,12 @@ const (
 	ProductAuthorAllMap      KeyName = "dcm:product:author:info:%s:%s"
 	AuthorProductAllList     KeyName = "dcm:author:product:row:%s:%s"
 	AuthorViewProductAllList KeyName = "dcm:author:view:product:%s:%s:%s"
+	RedAuthorRooms           KeyName = "dcm:red:author:room:%s"
+	RedAuthorLivingRooms     KeyName = "dcm:red:author:living:room"
+	RedAuthorMapCache        KeyName = "dcm:red:author:map:%s"
 	//榜单数据缓存
 	DyRankCache KeyName = "dcm:rank:%s:%s"
+	//爬虫加速限制频次
+	SpiderSpeedUpLimit KeyName = "dcm:spider:limit:%s:%s" //spidername,authorId
+
 )

@@ -683,3 +683,93 @@ func (receiver *ProductController) ProductAuthorLiveRooms() {
 		"max_show_total": maxTotal,
 	})
 }
+
+//商品直播间
+func (receiver *ProductController) ProductRoomsRangeDate() {
+	productId := business.IdDecrypt(receiver.GetString(":product_id", ""))
+	startTime, endTime, comErr := receiver.GetRangeDate()
+	if comErr != nil {
+		receiver.FailReturn(comErr)
+		return
+	}
+	page := receiver.GetPage("page")
+	pageSize := receiver.GetPageSize("page_size", 5, 10)
+	authorBusiness := business.NewAuthorBusiness()
+	list, total, comErr := authorBusiness.GetAuthorProductRooms("", productId, startTime, endTime, page, pageSize, "predict_gmv", "desc")
+	if comErr != nil {
+		receiver.FailReturn(comErr)
+		return
+	}
+	receiver.SuccReturn(map[string]interface{}{
+		"list":  list,
+		"total": total,
+	})
+	return
+}
+
+//商品视频分析销量趋势
+func (receiver *ProductController) ProductAwemeSalesTrend() {
+	productId := business.IdDecrypt(receiver.GetString(":product_id", ""))
+	startTime, endTime, comErr := receiver.GetRangeDate()
+	if comErr != nil {
+		receiver.FailReturn(comErr)
+		return
+	}
+	hbaseDataList, comErr := hbase.GetDyProductAwemeSalesTrendRangeDate(productId, startTime, endTime)
+	if comErr != nil {
+		receiver.FailReturn(comErr)
+		return
+	}
+	chartList := make([]dy2.ProductSalesTrendChart, 0)
+	dateChart := make([]int64, 0)
+	dateChartTmp := make([]string, 0)
+	for k, _ := range hbaseDataList {
+		dateChartTmp = append(dateChartTmp, k)
+	}
+	sort.Strings(dateChartTmp)
+	for _, date := range dateChartTmp {
+		timestamp, _ := utils.Strtotime(date, "20060102")
+		dateChart = append(dateChart, timestamp)
+		v := hbaseDataList[date]
+		chartList = append(chartList, dy2.ProductSalesTrendChart{
+			DateTimestamp: timestamp,
+			Sales:         v.Sales,
+			VideoNum:      v.AwemeNum,
+		})
+	}
+	receiver.SuccReturn(map[string]interface{}{
+		"date": dateChart,
+		"list": chartList,
+	})
+}
+
+//商品视频列表
+func (receiver *ProductController) ProductAweme() {
+	productId := receiver.Ctx.Input.Param(":product_id")
+	startTime, endTime, comErr := receiver.GetRangeDate()
+	if comErr != nil {
+		receiver.FailReturn(comErr)
+		return
+	}
+	keyword := receiver.GetString("keyword", "")
+	sortStr := receiver.GetString("sort", "")
+	orderBy := receiver.GetString("order_by", "")
+	page := receiver.GetPage("page")
+	pageSize := receiver.GetPageSize("page_size", 10, 50)
+	list, total, comErr := es.NewEsVideoBusiness().SearchAwemeByProduct(productId, keyword, sortStr, orderBy, startTime, endTime, page, pageSize)
+	for k, v := range list {
+		list[k].ProductId = business.IdEncrypt(v.ProductId)
+		list[k].AwemeId = business.IdEncrypt(v.AwemeId)
+		list[k].Avatar = dyimg.Fix(v.Avatar)
+		list[k].AwemeCover = dyimg.Fix(v.AwemeCover)
+	}
+	maxTotal := total
+	if total > business.EsMaxShowNum {
+		maxTotal = business.EsMaxShowNum
+	}
+	receiver.SuccReturn(map[string]interface{}{
+		"list":           list,
+		"total":          total,
+		"max_show_total": maxTotal,
+	})
+}

@@ -36,6 +36,7 @@ type EsDyLiveInfo struct {
 	RowTime         string   `json:"row_time"`
 	Dt              string   `json:"dt"`
 	FinishTime      int64    `json:"finish_time"`
+	WatchCnt        int64    `json:"watch_cnt"`
 }
 
 func (receiver EsDyLiveInfo) GetTagsArr() []string {

@@ -58,7 +58,7 @@ func InitEnv() {
 	//_initMongodb() // deprecated
 	//_initValidate()
 	//_initRabbitMqPool()
-	//_initKafkaProducer()
+	_initKafkaProducer()
 	//初始化全局httpclient超时时间
 	http.DefaultClient.Timeout = 30 * time.Second
 }
@@ -66,6 +66,9 @@ func InitEnv() {
 func _initKafkaProducer() {
 	kafkaHostsConf := Cfg.String("kafka_hosts")
 	if kafkaHostsConf == "" {
+		if IsDev() {
+			return
+		}
 		logs.Error("kafka init fail :( kafka_hosts is empty")
 		os.Exit(1)
 	}

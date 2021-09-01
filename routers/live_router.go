@@ -23,6 +23,7 @@ func init() {
 			beego.NSRouter("/sale/:room_id", &v1dy.LiveController{}, "get:LivingSaleData"),
 			beego.NSRouter("/watch/chart/:room_id", &v1dy.LiveController{}, "get:LivingWatchChart"),
 			beego.NSRouter("/product/:room_id", &v1dy.LiveController{}, "get:LivingProduct"),
+			beego.NSRouter("/message/:room_id", &v1dy.LiveController{}, "get:LivingMessage"),
 		),
 	)
 	// 注册路由组
