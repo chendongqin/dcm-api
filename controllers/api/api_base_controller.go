@@ -59,7 +59,7 @@ func (this *ApiBaseController) InitApiController() {
 	this.CheckSign()
 	this.InitUserToken()
 	//todo 上线白名单过滤
-	if this.TrueUri != "/v1/user/login" {
+	if !utils.InArrayString(this.TrueUri, []string{"/v1/user/login", "/v1/config/list"}) {
 		if business.WitheUsername(this.UserInfo.Username) != nil {
 			this.FailReturn(global.NewError(88888))
 			return

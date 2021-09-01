@@ -288,7 +288,7 @@ func WitheUsername(username string) error {
 	}
 	newList := make([]string, 0)
 	for _, v := range list {
-		if v == "" {
+		if v != "" {
 			newList = append(newList, v)
 		}
 	}
