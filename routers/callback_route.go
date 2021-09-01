@@ -9,7 +9,7 @@ func init() {
 	//第三方回调
 	ns := beego.NewNamespace("/v1",
 		beego.NSNamespace("/callback",
-			beego.NSRouter("/wechat", &v1.WechatController{}, "post:Receive"),
+			beego.NSRouter("/wechat", &v1.WechatController{}, "*:Receive"),
 		),
 	)
 	// 注册路由组
