@@ -17,7 +17,7 @@ func NewWechatBusiness() *WechatBusiness {
 }
 
 func (receiver *WechatBusiness) CreateTempQrCode(scene string) (string, error) {
-	tmpReq := basic.NewTmpQrRequest(1*3600*time.Second, scene)
+	tmpReq := basic.NewTmpQrRequest(3600, scene)
 	tk, err := global.WxOfficial.GetBasic().GetQRTicket(tmpReq)
 	if err != nil {
 		return "", err

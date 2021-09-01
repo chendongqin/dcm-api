@@ -91,8 +91,8 @@ func (receiver *CommonController) Sms() {
 		receiver.FailReturn(global.NewError(6000))
 		return
 	}
-	global.Cache.Set(limitIpKey, "1", 60*time.Second)
-	global.Cache.Set(limitMobileKey, "1", 60*time.Second)
+	global.Cache.Set(limitIpKey, "1", 60)
+	global.Cache.Set(limitMobileKey, "1", 60)
 	receiver.SuccReturn(nil)
 	return
 }
