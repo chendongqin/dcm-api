@@ -59,14 +59,14 @@ func (receiver *CommonController) Sms() {
 	//	receiver.FailReturn(global.NewError(4000))
 	//	return
 	//}
-	limitIpKey := cache.GetCacheKey(cache.SmsCodeLimitBySome, grantType, "ip", receiver.Ip)
-	verifyData := global.Cache.Get(limitIpKey)
-	if verifyData != "" {
-		receiver.FailReturn(global.NewError(4211))
-		return
-	}
+	//limitIpKey := cache.GetCacheKey(cache.SmsCodeLimitBySome, grantType, "ip", receiver.Ip)
+	//verifyData := global.Cache.Get(limitIpKey)
+	//if verifyData != "" {
+	//	receiver.FailReturn(global.NewError(4211))
+	//	return
+	//}
 	limitMobileKey := cache.GetCacheKey(cache.SmsCodeLimitBySome, grantType, "mobile", mobile)
-	verifyData = global.Cache.Get(limitMobileKey)
+	verifyData := global.Cache.Get(limitMobileKey)
 	if verifyData != "" {
 		receiver.FailReturn(global.NewError(4211))
 		return
@@ -91,7 +91,7 @@ func (receiver *CommonController) Sms() {
 		receiver.FailReturn(global.NewError(6000))
 		return
 	}
-	global.Cache.Set(limitIpKey, "1", 60)
+	//global.Cache.Set(limitIpKey, "1", 60)
 	global.Cache.Set(limitMobileKey, "1", 60)
 	receiver.SuccReturn(nil)
 	return
