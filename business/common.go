@@ -217,7 +217,7 @@ func ParseDyShortUrl(url string) (string, bool) {
 			}
 			defer response.Body.Close()
 			returl = response.Request.Response.Request.URL.Path
-			if len(returl) > 0 {
+			if len(returl) == 0 {
 				return "", false
 			}
 			redisService.Hset("douyin:shorturl:hashmap", url, returl)

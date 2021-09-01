@@ -9,6 +9,7 @@ import (
 	"crypto/sha1"
 	"crypto/sha256"
 	"crypto/sha512"
+	"crypto/tls"
 	"dongchamao/global"
 	"dongchamao/services/dyimg"
 	"dongchamao/services/hbaseService/hbase"
@@ -28,6 +29,7 @@ import (
 	"github.com/dgrijalva/jwt-go"
 	"github.com/gomodule/redigo/redis"
 	jsoniter "github.com/json-iterator/go"
+	"github.com/valyala/fasthttp"
 	"html/template"
 	"io/ioutil"
 	"math"
@@ -453,6 +455,69 @@ func SimpleCurl(url string, method string, postData string, contentType string) 
 	return string(body)
 }
 
+func TryDoReq(uri, query string, needProxy bool, check func(b []byte) bool, headers map[string]string) []byte {
+	n := 0
+	for {
+		if n != 0 {
+			time.Sleep(5 * time.Second)
+		}
+		if n > 5 {
+			return nil
+		}
+		n++
+		body, err := doReqFast(uri, query, needProxy, headers)
+		if err != nil {
+			continue
+		}
+		if len(body) < 5 {
+			logs.Error("failed do req as empty body")
+			continue
+		}
+		if check != nil && !check(body) {
+			if n > 3 {
+				return body
+			}
+			continue
+		}
+		return body
+	}
+}
+
+func doReqFast(uri, query string, needProxy bool, headers map[string]string) ([]byte, error) {
+	start := time.Now()
+	req := fasthttp.AcquireRequest()
+	resp := fasthttp.AcquireResponse()
+
+	defer func() {
+		fasthttp.ReleaseResponse(resp)
+		fasthttp.ReleaseRequest(req)
+	}()
+	req.SetRequestURI(uri + query)
+	for k, v := range headers {
+		req.Header.Set(k, v)
+	}
+	client := &fasthttp.Client{
+		Name:                     "",
+		NoDefaultUserAgentHeader: true,
+		ReadTimeout:              30 * time.Second,
+		MaxIdleConnDuration:      15 * time.Second,
+		MaxConnsPerHost:          1024,
+		TLSConfig: &tls.Config{
+			InsecureSkipVerify: true,
+		},
+	}
+
+	err := client.DoTimeout(req, resp, 20*time.Second)
+	if err != nil {
+		logs.Error("req failed")
+		return nil, err
+	}
+	requestTook := time.Now().Sub(start).Seconds()
+	logs.Info(fmt.Sprintf("[请求info接口耗时]:%d", requestTook))
+	body := resp.Body()
+	return body, nil
+}
+
 func Curl(url string, method string, postData string, contentType string) (*simplejson.Json, error) {
 	var resp *http.Response
 	var err error
@@ -818,7 +883,7 @@ func ParseDyVideoUrl(url string) (ret string) {
 //抖音作者url解析
 func ParseDyAuthorUrl(url string) (ret string) {
 	//https://www.iesdouyin.com/share/user/96407975163
-	pattern := `\/user\/(\d*?)\?`
+	pattern := `\/user\/(\d+)`
 	reg := regexp.MustCompile(pattern)
 	da := reg.FindAllStringSubmatch(url, -1)
 	if len(da) > 0 {

@@ -3,6 +3,7 @@ package test
 import (
 	"dongchamao/business"
 	"fmt"
+	"regexp"
 	"testing"
 )
 
@@ -27,4 +28,18 @@ func TestGetRoomPmt(t *testing.T) {
 	spiderBusiness := business.NewSpiderBusiness()
 	body := spiderBusiness.GetRoomPmt("73589350397")
 	fmt.Println(body)
+}
+
+func TestParseUrl(t *testing.T) {
+	pattern := `\/user\/(\d+)`
+	reg := regexp.MustCompile(pattern)
+	da := reg.FindAllStringSubmatch("/share/user/3202198174179895", -1)
+	if len(da) > 0 {
+		if len(da[0]) > 1 {
+			ret := da[0][1]
+			fmt.Println(ret)
+		}
+		return
+	}
+	return
 }

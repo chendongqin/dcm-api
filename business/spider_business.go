@@ -9,7 +9,9 @@ import (
 	"github.com/astaxie/beego/logs"
 	jsoniter "github.com/json-iterator/go"
 	"github.com/tidwall/gjson"
+	"github.com/valyala/fasthttp"
 	"io/ioutil"
+	"math/rand"
 	"net/http"
 	"net/url"
 	"strconv"
@@ -41,6 +43,23 @@ var SpiderNames = map[string]int{
 	"brand":    1,
 	"aweme":    1,
 	"comment":  1,
+}
+
+var H5UserAgents = []string{
+	"Mozilla/5.0 (Linux; Android 6.0.1; Moto G (4)) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.106 Mobile Safari/537.36",
+	"Mozilla/5.0 (Linux; Android 5.0; SM-G900P Build/LRX21T) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.106 Mobile Safari/537.36",
+	"Mozilla/5.0 (Linux; Android 8.0; Pixel 2 Build/OPD3.170816.012) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.106 Mobile Safari/537.36",
+	"Mozilla/5.0 (Linux; Android 8.0.0; Pixel 2 XL Build/OPD1.170816.004) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.106 Mobile Safari/537.36",
+	"Mozilla/5.0 (iPhone; CPU iPhone OS 10_3_1 like Mac OS X) AppleWebKit/603.1.30 (KHTML, like Gecko) Version/10.0 Mobile/14E304 Safari/602.1",
+	"Mozilla/5.0 (iPhone; CPU iPhone OS 13_2_3 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/13.0.3 Mobile/15E148 Safari/604.1",
+	"Mozilla/5.0 (iPad; CPU OS 11_0 like Mac OS X) AppleWebKit/604.1.34 (KHTML, like Gecko) Version/11.0 Mobile/15A5341f Safari/604.1",
+	"Mozilla/5.0 (Linux; Android 6.0.1; Nexus 10 Build/MOB31T) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.106 Safari/537.36",
+	"Mozilla/5.0 (Linux; U; Android 4.3; en-us; SM-N900T Build/JSS15J) AppleWebKit/534.30 (KHTML, like Gecko) Version/4.0 Mobile Safari/534.30",
+}
+
+func GetH5UserAgent() string {
+	rand.Seed(time.Now().Unix())
+	return H5UserAgents[rand.Intn(len(H5UserAgents)-1)]
 }
 
 type SpiderBusiness struct {
@@ -169,11 +188,29 @@ func (s *SpiderBusiness) DelRecordLive(authorId string, top int) {
 	}
 }
 
-//达人基本信息
-func (s *SpiderBusiness) GetAuthorBaseInfo(authorId string) string {
+//抓取达人基本信息
+func (s *SpiderBusiness) GetAuthorBaseInfo(authorId string) *dy2.DyAuthorIncome {
 	pushUrl := fmt.Sprintf(AuthorInfoUrl, authorId)
-	body := utils.SimpleCurl(pushUrl, "GET", "", "")
-	return body
+	headers := map[string]string{fasthttp.HeaderUserAgent: GetH5UserAgent()}
+	body := utils.TryDoReq(pushUrl, "", false, nil, headers)
+	jd := gjson.ParseBytes(body)
+	if jd.Get("status_code").Int() != 0 {
+		logs.Error("[搜索达人] author_id:[%s] 失败", authorId)
+	} else {
+		uniqueId := jd.Get("data.user.display_id").String()
+		if uniqueId == "0" || uniqueId == "" {
+			uniqueId = jd.Get("data.user.short_id").String()
+		}
+		authorIncome := &dy2.DyAuthorIncome{
+			AuthorId:     jd.Get("data.user.id_str").String(),
+			Avatar:       jd.Get("data.user.avatar_thumb.url_list.0").String(),
+			Nickname:     jd.Get("data.user.nickname").String(),
+			UniqueId:     uniqueId,
+			IsCollection: 0,
+		}
+		return authorIncome
+	}
+	return nil
 }
 
 type spiderRet struct {

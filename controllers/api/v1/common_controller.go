@@ -136,25 +136,6 @@ func (receiver *CommonController) IdEncryptDecrypt() {
 }
 
 func (receiver *CommonController) Test() {
-	InputData := receiver.InputFormat()
-	sig := InputData.GetString("sig", "")
-	sessionId := InputData.GetString("session_id", "")
-	token := InputData.GetString("token", "")
-	if sig == "" || sessionId == "" || token == "" {
-		receiver.FailReturn(global.NewError(4000))
-		return
-	}
-	scene := "nc_message"
-	if receiver.AppId != 10000 {
-		scene = "nc_message_h5"
-	}
-	appKey := "FFFF0N0000000000A2FA"
-	err1 := ali_tools.IClientProfile(sig, sessionId, token, receiver.Ip, scene, appKey)
-	if err1 != nil {
-		receiver.FailReturn(global.NewError(4000))
-		return
-	}
-	receiver.SuccReturn(nil)
 	return
 }
 
@@ -180,29 +161,22 @@ func (receiver *CommonController) GetConfig() {
 }
 
 func (receiver *CommonController) GetConfigList() {
-	var ret = make(map[string]map[string]interface{}, 0)
-	cacheKey := cache.GetCacheKey(cache.ConfigKeyCache, "all")
-	cacheData := global.Cache.Get(cacheKey)
-	if cacheData != "" {
-		cacheData = utils.DeserializeData(cacheData)
-		_ = jsoniter.Unmarshal([]byte(cacheData), &ret)
-		receiver.SuccReturn(ret)
-		return
-	}
-	var configList []dcm.DcConfigJson
-	if err := dcm.GetDbSession().Table(dcm.DcConfigJson{}).Where("auth=1").Find(&configList); err != nil {
+	var config []dcm.DcConfigJson
+	if err := dcm.GetDbSession().Table(dcm.DcConfigJson{}).Where("auth=1").Find(&config); err != nil {
 		receiver.FailReturn(global.NewError(5000))
 		return
 	}
-	for _, v := range configList {
+	var data = make([]map[string]interface{}, len(config))
+	utils.MapToStruct(config, &data)
+	var ret = make(map[string]map[string]interface{}, len(config))
+	for _, v := range data {
 		var jsonMap map[string]interface{}
-		if err := json.Unmarshal([]byte(v.Value), &jsonMap); err != nil {
+		if err := json.Unmarshal([]byte(v["Value"].(string)), &jsonMap); err != nil {
 			receiver.FailReturn(global.NewError(5000))
 			return
 		}
-		ret[v.KeyName] = jsonMap
+		ret[v["KeyName"].(string)] = jsonMap
 	}
-	_ = global.Cache.Set(cacheKey, utils.SerializeData(ret), 300)
 	receiver.SuccReturn(ret)
 	return
 }
@@ -253,16 +227,7 @@ func (receiver *CommonController) RedAuthorRoom() {
 			authorIds = append(authorIds, v.AuthorId)
 		}
 		authorBusiness := business.NewAuthorBusiness()
-		authorCacheKey := cache.GetCacheKey(cache.RedAuthorMapCache, utils.Md5_encode(strings.Join(authorIds, "")))
-		authorCacheData := global.Cache.Get(authorCacheKey)
-		var authorDataMap = map[string]entity.DyAuthor{}
-		if authorCacheData != "" {
-			authorCacheData = utils.DeserializeData(authorCacheData)
-			_ = jsoniter.Unmarshal([]byte(authorCacheData), &authorDataMap)
-		} else {
-			authorDataMap = authorBusiness.GetAuthorFormPool(authorIds, 10)
-			_ = global.Cache.Set(authorCacheKey, utils.SerializeData(authorDataMap), 10*time.Minute)
-		}
+		authorDataMap := authorBusiness.GetAuthorFormPool(authorIds, 10)
 		start, _ := time.ParseInLocation("20060102", time.Now().Format("20060102"), time.Local)
 		for i := 0; i < 7; i++ {
 			dateTime := start.AddDate(0, 0, -i)
@@ -292,52 +257,6 @@ func (receiver *CommonController) RedAuthorRoom() {
 	receiver.SuccReturn(map[string]interface{}{
 		"list":  data,
 		"total": total,
-	})
-	return
-}
-
-//红人看榜正在直播top3
-func (receiver *CommonController) RedAuthorLivingRoom() {
-	cacheKey := cache.GetCacheKey(cache.RedAuthorLivingRooms)
-	cacheData := global.Cache.Get(cacheKey)
-	list := make([]dcm.DcAuthorRoom, 0)
-	if cacheData != "" {
-		cacheData = utils.DeserializeData(cacheData)
-		_ = jsoniter.Unmarshal([]byte(cacheData), &list)
-		receiver.SuccReturn(map[string]interface{}{
-			"list": list,
-		})
-		return
-	}
-	_ = dcm.GetSlaveDbSession().
-		Table(new(dcm.DcAuthorRoom)).
-		Where("status=?", 1).
-		Desc("weight").
-		Find(&list)
-	data := make([]dy2.RedAuthorRoom, 0)
-	if len(list) > 0 {
-		authorIds := make([]string, 0)
-		for _, v := range list {
-			authorIds = append(authorIds, v.AuthorId)
-		}
-		liveList := es.NewEsLiveBusiness().GetRoomsByAuthorIds(authorIds, time.Now().Format("20060102"), 3)
-		for _, v := range liveList {
-			data = append(data, dy2.RedAuthorRoom{
-				AuthorId:   business.IdEncrypt(v.AuthorId),
-				Avatar:     dyimg.Fix(v.Avatar),
-				Nickname:   v.Nickname,
-				LiveTitle:  v.Title,
-				RoomId:     business.IdEncrypt(v.RoomId),
-				RoomStatus: v.RoomStatus,
-				Gmv:        v.RealGmv,
-				TotalUser:  v.WatchCnt,
-				Tags:       v.Tags,
-				CreateTime: v.CreateTime,
-			})
-		}
-	}
-	receiver.SuccReturn(map[string]interface{}{
-		"list": data,
 	})
 	return
 }
