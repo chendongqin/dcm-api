@@ -107,7 +107,13 @@ func (receiver *AccountController) ChangeMobile() {
 	//修改手机号
 	dbSession := dcm.GetDbSession()
 	_ = dbSession.Begin()
-	affect, err := userBusiness.UpdateUserAndClearCache(dbSession, receiver.UserId, map[string]interface{}{"username": mobile})
+	updateMap := map[string]interface{}{
+		"username": mobile,
+	}
+	if strings.Index(receiver.UserInfo.Nickname, "****") >= 0 {
+		updateMap["nickname"] = mobile[:3] + "****" + mobile[7:]
+	}
+	affect, err := userBusiness.UpdateUserAndClearCache(dbSession, receiver.UserId, updateMap)
 	if affect == 0 || logger.CheckError(err) != nil {
 		_ = dbSession.Rollback()
 		receiver.FailReturn(global.NewError(5000))

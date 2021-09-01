@@ -732,11 +732,15 @@ func (receiver *LiveController) LivingProduct() {
 func (receiver LiveController) LivingMessage() {
 	roomId := business.IdDecrypt(receiver.Ctx.Input.Param(":room_id"))
 	beginNum, _ := receiver.GetInt64("begin", 0)
+	visitNum, _ := receiver.GetInt64("visit_begin", 0)
 	pageSize := receiver.GetPageSize("page_size", 30, 200)
 	data, _ := hbase.GetLiveChatMessage(roomId)
 	list := make([]entity.LivingChatMessage, 0)
+	visitList := make([]entity.LivingChatVisit, 0)
 	lenNum := len(data.Latest500Msg)
+	visitLenNum := len(data.Visits)
 	var endNum int64 = 0
+	var endVisitNum int64 = 0
 	if data.EndNum > beginNum && lenNum > 0 {
 		firstId := data.Latest500Msg[0].RankId
 		if beginNum <= firstId {
@@ -768,9 +772,41 @@ func (receiver LiveController) LivingMessage() {
 			endNum = list[lastKey].RankId
 		}
 	}
+	if data.VisitNum > visitNum && visitLenNum > 0 {
+		firstId := data.Visits[0].RankId
+		if visitNum <= firstId {
+			visitNum = 0
+		}
+		start := 0
+		end := 0
+		if visitNum > 0 {
+			start = int(visitNum-firstId) + 1
+		} else {
+			start = visitLenNum - pageSize
+			if start < 0 {
+				start = 0
+			}
+		}
+		end = start + pageSize
+		if visitLenNum < end {
+			end = visitLenNum
+		}
+		visitList = data.Visits[start:end]
+		lastKey := -1
+		for k := range visitList {
+			lastKey = k
+		}
+		if lastKey < 0 {
+			endVisitNum = visitNum
+		} else {
+			endVisitNum = visitList[lastKey].RankId
+		}
+	}
 	receiver.SuccReturn(map[string]interface{}{
-		"list":    list,
-		"end_num": endNum,
+		"list":          list,
+		"end_num":       endNum,
+		"visit_list":    visitList,
+		"visit_end_num": endVisitNum,
 	})
 	return
 }
