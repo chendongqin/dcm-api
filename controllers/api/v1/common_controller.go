@@ -180,22 +180,29 @@ func (receiver *CommonController) GetConfig() {
 }
 
 func (receiver *CommonController) GetConfigList() {
-	var config []dcm.DcConfigJson
-	if err := dcm.GetDbSession().Table(dcm.DcConfigJson{}).Where("auth=1").Find(&config); err != nil {
+	var ret = make(map[string]map[string]interface{}, 0)
+	cacheKey := cache.GetCacheKey(cache.ConfigKeyCache, "all")
+	cacheData := global.Cache.Get(cacheKey)
+	if cacheData != "" {
+		cacheData = utils.DeserializeData(cacheData)
+		_ = jsoniter.Unmarshal([]byte(cacheData), &ret)
+		receiver.SuccReturn(ret)
+		return
+	}
+	var configList []dcm.DcConfigJson
+	if err := dcm.GetDbSession().Table(dcm.DcConfigJson{}).Where("auth=1").Find(&configList); err != nil {
 		receiver.FailReturn(global.NewError(5000))
 		return
 	}
-	var data = make([]map[string]interface{}, len(config))
-	utils.MapToStruct(config, &data)
-	var ret = make(map[string]map[string]interface{}, len(config))
-	for _, v := range data {
+	for _, v := range configList {
 		var jsonMap map[string]interface{}
-		if err := json.Unmarshal([]byte(v["Value"].(string)), &jsonMap); err != nil {
+		if err := json.Unmarshal([]byte(v.Value), &jsonMap); err != nil {
 			receiver.FailReturn(global.NewError(5000))
 			return
 		}
-		ret[v["KeyName"].(string)] = jsonMap
+		ret[v.KeyName] = jsonMap
 	}
+	_ = global.Cache.Set(cacheKey, utils.SerializeData(ret), 300)
 	receiver.SuccReturn(ret)
 	return
 }
