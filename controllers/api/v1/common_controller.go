@@ -12,6 +12,7 @@ import (
 	"dongchamao/models/dcm"
 	dy2 "dongchamao/models/repost/dy"
 	"dongchamao/services/ali_sms"
+	"dongchamao/services/ali_tools"
 	"dongchamao/services/dyimg"
 	"encoding/json"
 	"fmt"
@@ -133,6 +134,24 @@ func (receiver *CommonController) IdEncryptDecrypt() {
 }
 
 func (receiver *CommonController) Test() {
+	InputData := receiver.InputFormat()
+	sig := InputData.GetString("sig", "")
+	sessionId := InputData.GetString("session_id", "")
+	token := InputData.GetString("token", "")
+	if sig == "" || sessionId == "" || token == "" {
+		receiver.FailReturn(global.NewError(4000))
+		return
+	}
+	scene := "nc_message"
+	if receiver.AppId != 10000 {
+		scene = "nc_message_h5"
+	}
+	appKey := "FFFF0N0000000000A2FA"
+	err1 := ali_tools.IClientProfile(sig, sessionId, token, receiver.Ip, scene, appKey)
+	if err1 != nil {
+		receiver.FailReturn(global.NewError(4000))
+		return
+	}
 	return
 }
 
