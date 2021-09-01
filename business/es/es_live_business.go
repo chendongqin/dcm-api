@@ -647,16 +647,23 @@ func (receiver *EsLiveBusiness) KeywordSearch(keyword string) (list []es.EsDyLiv
 }
 
 //根据达人ids获取直播间
-func (receiver *EsLiveBusiness) GetRoomsByAuthorIds(authorIds []string, date string) (list []es.EsDyLiveInfo) {
+func (receiver *EsLiveBusiness) GetRoomsByAuthorIds(authorIds []string, date string, livingTop int) (list []es.EsDyLiveInfo) {
 	esQuery, esMultiQuery := elasticsearch.NewElasticQueryGroup()
 	esTable := fmt.Sprintf(es.DyLiveInfoBaseTable, date)
+	sortStr := "_id"
 	esQuery.SetTerms("author_id", authorIds)
+	pageSize := 500
+	if livingTop > 0 {
+		esQuery.SetTerm("room_status", 2)
+		sortStr = "predict_gmv"
+		pageSize = livingTop
+	}
 	results := esMultiQuery.
 		SetTable(esTable).
 		SetCache(300).
 		AddMust(esQuery.Condition).
-		SetOrderBy(elasticsearch.NewElasticOrder().Add("_id", "desc").Order).
-		SetLimit(0, 500).
+		SetOrderBy(elasticsearch.NewElasticOrder().Add(sortStr, "desc").Order).
+		SetLimit(0, pageSize).
 		SetMultiQuery().
 		Query()
 	utils.MapToStruct(results, &list)

@@ -69,3 +69,5 @@ wx_office_app_id = "wx6392924bcb25fd24"
 wx_office_app_secret ="a0bc0bcdbb77219655ff8aff1b110559"
 wx_office_app_token ="7B6DB2CF18CC177BBFB5ED72B3644899"
 wx_office_encoded_aes_key = "Qgnn0UH9oz5rNHZIex27UkY4Xxu3daMUFbHvLaaaRwe"
+
+kafka_hosts = "172.20.4.78:9092"

@@ -11,6 +11,7 @@ func init() {
 	ns := beego.NewNamespace("/v1/dy",
 		beego.NSNamespace("/author",
 			beego.NSRouter("/red/:type", &v1.CommonController{}, "get:RedAuthorRoom"),
+			beego.NSRouter("/top/red", &v1.CommonController{}, "get:RedAuthorLivingRoom"),
 			beego.NSRouter("/search", &v1dy.AuthorController{}, "get:BaseSearch"),
 			beego.NSRouter("/cate", &v1dy.AuthorController{}, "get:AuthorCate"),
 			beego.NSRouter("/live/tags", &v1dy.AuthorController{}, "get:GetCacheAuthorLiveTags"),

@@ -844,7 +844,7 @@ func (a *AuthorBusiness) RedAuthorRoomByDate(authorIds []string, date string) (l
 		_ = jsoniter.Unmarshal([]byte(cacheData), &list)
 		return
 	}
-	liveList := es.NewEsLiveBusiness().GetRoomsByAuthorIds(authorIds, date)
+	liveList := es.NewEsLiveBusiness().GetRoomsByAuthorIds(authorIds, date, 0)
 	for _, v := range liveList {
 		list = append(list, dy.RedAuthorRoom{
 			AuthorId:   IdEncrypt(v.AuthorId),
@@ -861,7 +861,7 @@ func (a *AuthorBusiness) RedAuthorRoomByDate(authorIds []string, date string) (l
 	}
 	cacheTime := 600 * time.Second
 	if date != time.Now().Format("20060102") {
-		cacheTime = 7 * 24 * time.Hour
+		cacheTime = 3 * 24 * time.Hour
 	}
 	_ = global.Cache.Set(cacheKey, utils.SerializeData(list), cacheTime)
 	return
