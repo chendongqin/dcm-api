@@ -66,6 +66,9 @@ func InitEnv() {
 func _initKafkaProducer() {
 	kafkaHostsConf := Cfg.String("kafka_hosts")
 	if kafkaHostsConf == "" {
+		if IsDev() {
+			return
+		}
 		logs.Error("kafka init fail :( kafka_hosts is empty")
 		os.Exit(1)
 	}
