@@ -58,7 +58,7 @@ func InitEnv() {
 	//_initMongodb() // deprecated
 	//_initValidate()
 	//_initRabbitMqPool()
-	//_initKafkaProducer()
+	_initKafkaProducer()
 	//初始化全局httpclient超时时间
 	http.DefaultClient.Timeout = 30 * time.Second
 }
