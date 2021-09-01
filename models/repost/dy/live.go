@@ -37,6 +37,7 @@ type DyLiveUserSimple struct {
 	WithCommerce    bool    `json:"with_commerce"`
 	ReputationScore float64 `json:"reputation_score"`
 	ReputationLevel int     `json:"reputation_level"`
+	RoomId          string  `json:"room_id"`
 }
 
 type DyLivePromotion struct {

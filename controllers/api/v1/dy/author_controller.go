@@ -218,7 +218,7 @@ func (receiver *AuthorController) AuthorBaseData() {
 	}
 	returnMap := map[string]interface{}{
 		"author_base": authorBase.Data,
-		"room_count":  authorBase.RoomCount,
+		"room_count":  authorBase.LiveCount,
 		"reputation": dy2.RepostSimpleReputation{
 			Score:         reputation.Score,
 			Level:         reputation.Level,
@@ -423,7 +423,7 @@ func (receiver *AuthorController) AuthorViewData() {
 	productCount.ProductNum = authorBase.ProductCount
 	data := dy2.DyAuthorBaseCount{
 		LiveCount: dy2.DyAuthorBaseLiveCount{
-			RoomCount:      int64(authorBase.RoomCount),
+			RoomCount:      int64(authorBase.LiveCount),
 			Room30Count:    room30Count,
 			Predict30Sales: math.Floor(authorBase.Predict30Sales),
 			Predict30Gmv:   utils.FriendlyFloat64(authorBase.Predict30Gmv),
@@ -453,11 +453,11 @@ func (receiver *AuthorController) AuthorViewData() {
 		days += 1
 		weekNum := utils.ToInt64(days / 7)
 		if weekNum > 0 {
-			data.LiveCount.AvgWeekRoomCount = utils.ToInt64(math.Ceil(float64(authorBase.RoomCount) / float64(weekNum)))
+			data.LiveCount.AvgWeekRoomCount = utils.ToInt64(math.Ceil(float64(authorBase.LiveCount) / float64(weekNum)))
 		}
 		var month = utils.ToInt64(math.Ceil(float64(time.Now().Unix()-firstLiveTime.Unix()) / (30 * 86400)))
 		if month > 0 {
-			data.LiveCount.AvgMonthRoomCount = utils.ToInt64(math.Ceil(float64(authorBase.RoomCount) / float64(month)))
+			data.LiveCount.AvgMonthRoomCount = utils.ToInt64(math.Ceil(float64(authorBase.LiveCount) / float64(month)))
 		}
 	}
 	if firstVideoTimestamp > 0 {
