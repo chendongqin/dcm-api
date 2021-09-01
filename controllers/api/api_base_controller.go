@@ -60,7 +60,7 @@ func (this *ApiBaseController) InitApiController() {
 	this.InitUserToken()
 	//todo 上线白名单过滤
 	if !utils.InArrayString(this.TrueUri, []string{"/v1/user/login", "/v1/config/list", "/v1/sms/verify", "/v1/sms/code", "/v1/wechat/phone",
-		"/v1/account/logout", "/v1/wechat/check"}) {
+		"/v1/account/logout", "/v1/wechat/check", "/v1/wechat/qrcode"}) {
 		if business.WitheUsername(this.UserInfo.Username) != nil {
 			this.FailReturn(global.NewError(88888))
 			return
