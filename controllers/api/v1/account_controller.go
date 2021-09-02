@@ -336,6 +336,8 @@ func (receiver *AccountController) DelCollect() {
 }
 
 func (receiver *AccountController) GetCollect() {
+	page := receiver.GetPage("page")
+	pageSize := receiver.GetPageSize("page_size", 10, 50)
 	platform, err := receiver.GetInt("platform", 1)
 	if err != nil {
 		receiver.FailReturn(global.NewError(5000))
@@ -355,13 +357,34 @@ func (receiver *AccountController) GetCollect() {
 	keywords := receiver.GetString("keywords")
 	switch platform {
 	case 1:
-		data, comErr := business.NewUserBusiness().GetDyCollect(tagId, collectType, keywords, label, receiver.UserId)
+		data, total, comErr := business.NewUserBusiness().GetDyCollect(tagId, collectType, keywords, label, receiver.UserId, page, pageSize)
 		if comErr != nil {
 			receiver.FailReturn(comErr)
 			return
 		}
-		receiver.SuccReturn(data)
+		receiver.SuccReturn(map[string]interface{}{
+			"list":     data,
+			"total":    total,
+			"page":     page,
+			"pageSize": pageSize,
+		})
 	}
+	return
+}
+
+func (receiver *AccountController) UpdCollectTag() {
+	id, err := receiver.GetInt(":id")
+	tagId, err := receiver.GetInt(":tag_id")
+	if err != nil {
+		receiver.FailReturn(global.NewError(5000))
+		return
+	}
+	comErr := business.NewUserBusiness().UpdCollectTag(id, tagId)
+	if comErr != nil {
+		receiver.FailReturn(comErr)
+		return
+	}
+	receiver.SuccReturn("success")
 	return
 }
 

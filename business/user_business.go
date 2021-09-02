@@ -385,9 +385,9 @@ func (receiver *UserBusiness) GetCacheUserLevel(userId, levelType int, enableCac
 	return vipLevel.Level
 }
 
-func (receiver *UserBusiness) GetDyCollect(tagId, collectType int, keywords, label string, userId int) (data []repost.CollectRet, comErr global.CommonError) {
+func (receiver *UserBusiness) GetDyCollect(tagId, collectType int, keywords, label string, userId, page, pageSize int) (data []repost.CollectRet, total int64, comErr global.CommonError) {
 	var collects []dcm.DcUserDyCollect
-	dbCollect := dcm.GetDbSession().Table(dcm.DcUserDyCollect{})
+	dbCollect := dcm.GetDbSession()
 	defer dbCollect.Close()
 	var query string
 	query = fmt.Sprintf("collect_type=%v", collectType)
@@ -401,8 +401,8 @@ func (receiver *UserBusiness) GetDyCollect(tagId, collectType int, keywords, lab
 		query += " AND tags ='" + label + "'"
 	}
 	query += " AND user_id=" + strconv.Itoa(userId) + " AND status=1"
-	err := dbCollect.Where(query).Find(&collects)
-	if err != nil {
+	err := dbCollect.Table(dcm.DcUserDyCollect{}).Where(query).Limit(pageSize, (page-1)*pageSize).Find(&collects)
+	if total, err = dbCollect.Table(dcm.DcUserDyCollect{}).Where(query).Count(); err != nil {
 		comErr = global.NewError(5000)
 		return
 	}
@@ -448,7 +448,7 @@ func (receiver *UserBusiness) AddDyCollect(collectId string, collectType, tagId,
 		collect.Nickname = author.Data.Nickname
 	}
 	if exist {
-		if _, err := dbCollect.Update(collect); err != nil {
+		if _, err := dbCollect.ID(collect.Id).Update(&collect); err != nil {
 			comErr = global.NewError(5000)
 			return
 		}
@@ -456,7 +456,7 @@ func (receiver *UserBusiness) AddDyCollect(collectId string, collectType, tagId,
 		collect.CreateTime = time.Now()
 		collect.UserId = userId
 		collect.CollectType = collectType
-		if _, err := dbCollect.Insert(collect); err != nil {
+		if _, err := dbCollect.Insert(&collect); err != nil {
 			comErr = global.NewError(5000)
 			return
 		}
@@ -478,6 +478,18 @@ func (receiver *UserBusiness) CancelDyCollect(id, userId int) (comErr global.Com
 		return
 	}
 	affect, err := dcm.UpdateInfo(dbCollect, id, map[string]interface{}{"status": 0, "update_time": time.Now()}, new(dcm.DcUserDyCollect))
+	if err != nil || affect == 0 {
+		comErr = global.NewError(5000)
+		return
+	}
+	return
+}
+
+//修改收藏分组
+func (receiver *UserBusiness) UpdCollectTag(id, tagId int) (comErr global.CommonError) {
+	dbCollect := dcm.GetDbSession().Table(dcm.DcUserDyCollect{})
+	defer dbCollect.Close()
+	affect, err := dcm.UpdateInfo(dbCollect, id, map[string]interface{}{"tag_id": tagId, "update_time": time.Now()}, new(dcm.DcUserDyCollect))
 	if err != nil || affect == 0 {
 		comErr = global.NewError(5000)
 		return
