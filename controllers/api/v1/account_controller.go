@@ -372,6 +372,7 @@ func (receiver *AccountController) GetCollect() {
 	return
 }
 
+//更换收藏分组
 func (receiver *AccountController) UpdCollectTag() {
 	id, err := receiver.GetInt(":id")
 	tagId, err := receiver.GetInt(":tag_id")
@@ -451,5 +452,21 @@ func (receiver *AccountController) DelDyCollectTag() {
 		return
 	}
 	receiver.SuccReturn("success")
+	return
+}
+
+//达人标签列表
+func (receiver *AccountController) DyCollectLabel() {
+	userBusiness := business.NewUserBusiness()
+	collectLabel, comErr := userBusiness.GetDyCollectLabel(receiver.UserId)
+	if comErr != nil {
+		receiver.FailReturn(comErr)
+		return
+	}
+	var ret []string
+	for _, v := range collectLabel {
+		ret = append(ret, strings.Split(v, "|")...)
+	}
+	receiver.SuccReturn(utils.UniqueStringSlice(ret))
 	return
 }
