@@ -245,7 +245,7 @@ func IdEncrypt(id string) string {
 		return ""
 	}
 	//restful路由避免错误
-	return strings.ReplaceAll(base64.StdEncoding.EncodeToString(str), "/", "*")
+	return "==" + strings.ReplaceAll(base64.StdEncoding.EncodeToString(str), "/", "*")
 }
 
 //id解密
@@ -253,12 +253,13 @@ func IdDecrypt(id string) string {
 	if id == "" {
 		return ""
 	}
-	if strings.Index(id, "=") < 0 {
+	if strings.Index(id, "==") != 0 {
 		if global.IsDev() {
 			return id
 		}
 		return ""
 	}
+	id = strings.Replace(id, "==", "", 1)
 	key := []byte("dwVRjLVUN4RMGAKSEvuvPV696PKrEuRT")
 	//restful路由避免错误
 	id = strings.ReplaceAll(id, "*", "/")

@@ -45,7 +45,7 @@ func (receiver *LoginController) Login() {
 			setPassword = 1
 		}
 	} else if grantType == "wechat" || grantType == "wechat_app" { //微信登录
-		unionid := InputData.GetString("unionid", "")
+		unionid := business.IdDecrypt(InputData.GetString("unionid", ""))
 		user, authToken, expTime, comErr = userBusiness.WechatLogin(unionid, grantType, appId)
 	} else {
 		comErr = global.NewError(4000)
