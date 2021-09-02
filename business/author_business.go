@@ -854,6 +854,7 @@ func (a *AuthorBusiness) RedAuthorRoomByDate(authorIds []string, date string) (l
 			RoomId:     IdEncrypt(v.RoomId),
 			RoomStatus: v.RoomStatus,
 			Gmv:        v.PredictGmv,
+			Sales:      math.Floor(v.PredictSales),
 			TotalUser:  v.WatchCnt,
 			Tags:       v.Tags,
 			CreateTime: v.CreateTime,

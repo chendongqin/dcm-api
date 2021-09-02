@@ -53,6 +53,7 @@ var ErrCode = map[int]string{
 
 	8000:  "滑块验证",
 	10000: "由于相关法律和政策，无法展示相关结果",
+	88888: "产品上线倒计时",
 }
 
 func NewError(errCode int) CommonError {

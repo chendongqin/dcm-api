@@ -327,7 +327,7 @@ func _initWxOfficialAccount() {
 }
 
 func IsDev() bool {
-	if beego.BConfig.RunMode != "product" {
+	if beego.BConfig.RunMode != "prod" {
 		return true
 	}
 	return false

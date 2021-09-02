@@ -9,6 +9,7 @@ import (
 	"dongchamao/models/repost/dy"
 	"dongchamao/services"
 	"encoding/base64"
+	"errors"
 	"github.com/astaxie/beego/logs"
 	jsoniter "github.com/json-iterator/go"
 	"net/http"
@@ -270,4 +271,32 @@ func IdDecrypt(id string) string {
 		return ""
 	}
 	return string(str)
+}
+
+func WitheUsername(username string) error {
+	cacheKey := cache.GetCacheKey(cache.ConfigKeyCache, "begin_open_phone")
+	cacheData := global.Cache.Get(cacheKey)
+	list := make([]string, 0)
+	if cacheData != "" {
+		_ = jsoniter.Unmarshal([]byte(cacheData), &list)
+	} else {
+		var configJson dcm.DcConfigJson
+		_, _ = dcm.GetBy("key_name", "begin_open_phone", &configJson)
+		list = strings.Split(configJson.Value, ",")
+		listByte, _ := jsoniter.Marshal(list)
+		global.Cache.Set(cacheKey, string(listByte), 300)
+	}
+	newList := make([]string, 0)
+	for _, v := range list {
+		if v != "" {
+			newList = append(newList, v)
+		}
+	}
+	if len(newList) == 0 {
+		return nil
+	}
+	if !utils.InArrayString(username, list) {
+		return errors.New("您没有权限~")
+	}
+	return nil
 }
