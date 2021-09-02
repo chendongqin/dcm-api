@@ -23,7 +23,7 @@ type WechatController struct {
 //临时二维码...
 func (receiver *WechatController) QrCode() {
 	inputData := receiver.InputFormat()
-	sessionId := business.IdDecrypt(inputData.GetString("session_id", ""))
+	sessionId := inputData.GetString("session_id", "")
 	var err error
 	var qrUrl string
 	if sessionId != "" {
@@ -41,7 +41,7 @@ func (receiver *WechatController) QrCode() {
 	}
 	receiver.SuccReturn(map[string]interface{}{
 		"qr_code":    qrUrl,
-		"session_id": business.IdEncrypt(sessionId),
+		"session_id": sessionId,
 	})
 }
 
