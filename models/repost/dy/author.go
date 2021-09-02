@@ -44,8 +44,8 @@ type DyAuthorProductAnalysisCount struct {
 	ProductNum int     `json:"product_num"`
 	Sales      float64 `json:"sales"`
 	Gmv        float64 `json:"gmv"`
-	RoomNum    int64   `json:"room_num"`
-	VideoNum   int64   `json:"video_num"`
+	RoomNum    int     `json:"room_num"`
+	VideoNum   int     `json:"video_num"`
 }
 
 type DyAuthorProductRoom struct {

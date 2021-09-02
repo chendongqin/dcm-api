@@ -531,8 +531,8 @@ func (a *AuthorBusiness) GetAuthorProductAnalyse(authorId, keyword, firstCate, s
 	brandNameCountMap := map[string]int{}
 	firstCateMap := map[string]map[string]bool{}
 	secondCateMap := map[string]map[string]bool{}
-	var videoNum int64 = 0
-	var liveNum int64 = 0
+	videoIdMap := map[string]string{}
+	liveIdMap := map[string]string{}
 	productMapList := map[string]entity.DyAuthorProductAnalysis{}
 	var sumGmv float64 = 0
 	var sumSale float64 = 0
@@ -576,9 +576,13 @@ func (a *AuthorBusiness) GetAuthorProductAnalyse(authorId, keyword, firstCate, s
 		} else if shopType == 2 && v.ShopId == shopId && shopId != "" {
 			continue
 		}
+		for _, l := range v.AwemeList {
+			videoIdMap[l.AwemeId] = l.AwemeId
+		}
+		for _, l := range v.RoomList {
+			liveIdMap[l.RoomId] = l.RoomId
+		}
 		//数据累加
-		videoNum += v.AwemeCount
-		liveNum += v.RoomCount
 		v.Gmv = v.AwemePredictGmv + v.LivePredictGmv
 		v.Sales = math.Floor(v.AwemePredictSales) + math.Floor(v.LivePredictSales)
 		sumGmv += v.Gmv
@@ -716,8 +720,8 @@ func (a *AuthorBusiness) GetAuthorProductAnalyse(authorId, keyword, firstCate, s
 		list[k].ProductId = IdEncrypt(v.ProductId)
 	}
 	analysisCount.ProductNum = total
-	analysisCount.RoomNum = liveNum
-	analysisCount.VideoNum = videoNum
+	analysisCount.RoomNum = len(liveIdMap)
+	analysisCount.VideoNum = len(videoIdMap)
 	analysisCount.Gmv = sumGmv
 	analysisCount.Sales = sumSale
 	return

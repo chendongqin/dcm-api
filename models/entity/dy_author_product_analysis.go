@@ -28,42 +28,38 @@ var DyAuthorProductAnalysisMap = HbaseEntity{
 }
 
 type DyAuthorProductAnalysis struct {
-	AuthorId          string                        `json:"author_id"`
-	ProductId         string                        `json:"product_id"`
-	Title             string                        `json:"title"`
-	Image             string                        `json:"image"`
-	Price             float64                       `json:"price"`
-	ShopId            string                        `json:"shop_id"`
-	ShopName          string                        `json:"shop_name"`
-	ShopIcon          string                        `json:"shop_icon"`
-	BrandName         string                        `json:"brand_name"`
-	Platform          string                        `json:"platform"`
-	DcmLevelFirst     string                        `json:"dcm_level_first"`
-	FirstCname        string                        `json:"first_cname"`
-	SecondCname       string                        `json:"second_cname"`
-	ThirdCname        string                        `json:"third_cname"`
-	LivePredictSales  float64                       `json:"live_predict_sales"`
-	LivePredictGmv    float64                       `json:"live_predict_gmv"`
-	RoomCount         int64                         `json:"room_count"`
-	AwemePredictGmv   float64                       `json:"aweme_predict_gmv"`
-	AwemeCount        int64                         `json:"aweme_count"`
-	ShelfTime         int64                         `json:"shelf_time"`
-	Gmv               float64                       `json:"gmv"`
-	Sales             float64                       `json:"sales"`
-	Status            int                           `json:"status"`
-	AwemePredictSales float64                       `json:"aweme_predict_sales"`
-	AwemeList         []DyProductAnalysisVideoSales `json:"aweme_list"`
-	RoomList          []DyProductAnalysisRoomSales  `json:"room_list"`
+	AuthorId          string                   `json:"author_id"`
+	ProductId         string                   `json:"product_id"`
+	Title             string                   `json:"title"`
+	Image             string                   `json:"image"`
+	Price             float64                  `json:"price"`
+	ShopId            string                   `json:"shop_id"`
+	ShopName          string                   `json:"shop_name"`
+	ShopIcon          string                   `json:"shop_icon"`
+	BrandName         string                   `json:"brand_name"`
+	Platform          string                   `json:"platform"`
+	DcmLevelFirst     string                   `json:"dcm_level_first"`
+	FirstCname        string                   `json:"first_cname"`
+	SecondCname       string                   `json:"second_cname"`
+	ThirdCname        string                   `json:"third_cname"`
+	LivePredictSales  float64                  `json:"live_predict_sales"`
+	LivePredictGmv    float64                  `json:"live_predict_gmv"`
+	RoomCount         int64                    `json:"room_count"`
+	AwemePredictGmv   float64                  `json:"aweme_predict_gmv"`
+	AwemeCount        int64                    `json:"aweme_count"`
+	ShelfTime         int64                    `json:"shelf_time"`
+	Gmv               float64                  `json:"gmv"`
+	Sales             float64                  `json:"sales"`
+	Status            int                      `json:"status"`
+	AwemePredictSales float64                  `json:"aweme_predict_sales"`
+	AwemeList         []DyProductAnalysisAweme `json:"aweme_list"`
+	RoomList          []DyProductAnalysisRoom  `json:"room_list"`
 }
 
-type DyProductAnalysisRoomSales struct {
-	RoomProductId string  `json:"room_product_id"`
-	PredictSales  float64 `json:"predict_sales"`
-	PredictGmv    float64 `json:"predict_gmv"`
+type DyProductAnalysisRoom struct {
+	RoomId string `json:"room_id"`
 }
 
-type DyProductAnalysisVideoSales struct {
-	RoomProductId string  `json:"room_product_id"`
-	PredictSales  float64 `json:"predict_sales"`
-	PredictGmv    float64 `json:"predict_gmv"`
+type DyProductAnalysisAweme struct {
+	AwemeId string `json:"aweme_id"`
 }
