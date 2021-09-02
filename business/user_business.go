@@ -374,7 +374,7 @@ func (receiver *UserBusiness) GetDyCollect(tagId, collectType int, keywords, lab
 		query += " AND (unique_id LIKE '%" + keywords + "%' or nickname LIKE '%" + keywords + "%')"
 	}
 	if label != "" {
-		query += " AND tags ='" + label + "'"
+		query += " AND FIND_IN_SET('" + label + "',label)"
 	}
 	query += " AND user_id=" + strconv.Itoa(userId) + " AND status=1"
 	err := dbCollect.Table(dcm.DcUserDyCollect{}).Where(query).Limit(pageSize, (page-1)*pageSize).Find(&collects)
