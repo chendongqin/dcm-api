@@ -419,6 +419,26 @@ func (receiver *UserBusiness) GetDyCollect(tagId, collectType int, keywords, lab
 	return
 }
 
+func (receiver *UserBusiness) GetDyCollectCount(userId int) (data []repost.CollectCount, comErr global.CommonError) {
+	dbCollect := dcm.GetDbSession()
+	defer dbCollect.Close()
+	if err := dbCollect.Table(dcm.DcUserDyCollect{}).Where("user_id=?", userId).Select("tag_id,count(collect_id) as count").Find(&data); err != nil {
+		comErr = global.NewError(5000)
+		return
+	}
+	return
+}
+
+func (receiver *UserBusiness) GetDyCollectLabel(userId int) (data []string, comErr global.CommonError) {
+	dbCollect := dcm.GetDbSession()
+	defer dbCollect.Close()
+	if err := dbCollect.Table(dcm.DcUserDyCollect{}).Where("user_id=? and label<>''", userId).Select("label").Find(&data); err != nil {
+		comErr = global.NewError(5000)
+		return
+	}
+	return
+}
+
 //收藏达人
 func (receiver *UserBusiness) AddDyCollect(collectId string, collectType, tagId, userId int) (comErr global.CommonError) {
 	collect := dcm.DcUserDyCollect{}
