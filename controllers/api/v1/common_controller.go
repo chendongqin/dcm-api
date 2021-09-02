@@ -179,7 +179,7 @@ func (receiver *CommonController) GetConfig() {
 }
 
 func (receiver *CommonController) GetConfigList() {
-	var ret = make(map[string]map[string]interface{}, 0)
+	var ret = make(map[string]interface{}, 0)
 	cacheKey := cache.GetCacheKey(cache.ConfigKeyCache, "all")
 	cacheData := global.Cache.Get(cacheKey)
 	if cacheData != "" {
@@ -194,12 +194,16 @@ func (receiver *CommonController) GetConfigList() {
 		return
 	}
 	for _, v := range configList {
-		var jsonMap map[string]interface{}
-		if err := json.Unmarshal([]byte(v.Value), &jsonMap); err != nil {
-			receiver.FailReturn(global.NewError(5000))
-			return
+		if v.ContentType == 0 {
+			var jsonMap map[string]interface{}
+			if err := json.Unmarshal([]byte(v.Value), &jsonMap); err != nil {
+				receiver.FailReturn(global.NewError(5000))
+				return
+			}
+			ret[v.KeyName] = jsonMap
+		} else {
+			ret[v.KeyName] = v.Value
 		}
-		ret[v.KeyName] = jsonMap
 	}
 	_ = global.Cache.Set(cacheKey, utils.SerializeData(ret), 300)
 	receiver.SuccReturn(ret)
