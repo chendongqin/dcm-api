@@ -10,3 +10,13 @@ type CollectRet struct {
 	Predict7Digg       float64
 	Avatar             string
 }
+
+type CollectTagRet struct {
+	dcm.DcUserDyCollectTag
+	Count int64
+}
+
+type CollectCount struct {
+	TagId int   `json:"tag_id" gorm:"tag_id"`
+	Count int64 `json:"count" gorm:"count"`
+}
