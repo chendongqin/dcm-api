@@ -61,7 +61,7 @@ func (receiver *WechatController) CheckScan() {
 		return
 	}
 	receiver.SuccReturn(map[string]interface{}{
-		"unionid": uniondId,
+		"unionid": business.IdEncrypt(uniondId),
 	})
 	return
 }
@@ -152,7 +152,7 @@ func (receiver *WechatController) WechatApp() {
 		return
 	}
 	receiver.SuccReturn(map[string]interface{}{
-		"unionid": unionid,
+		"unionid": business.IdEncrypt(unionid),
 	})
 	return
 }
@@ -162,7 +162,7 @@ func (receiver *WechatController) WechatPhone() {
 	inputData := receiver.InputFormat()
 	userName := inputData.GetString("username", "")
 	code := inputData.GetString("code", "")
-	unionid := inputData.GetString("unionid", "")
+	unionid := business.IdDecrypt(inputData.GetString("unionid", ""))
 	//source := inputData.GetString("source", "") //    1.二维码2.微信一键登录
 	if userName == "" || unionid == "" {
 		receiver.FailReturn(global.NewError(4000))

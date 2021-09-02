@@ -235,38 +235,14 @@ func (receiver *UserBusiness) WechatLogin(unionid, source string, appId int) (us
 			return
 		}
 	}
-
+	err = receiver.AddOrUpdateUniqueToken(user.Id, appId, tokenString)
+	if err != nil {
+		comErr = global.NewError(5000)
+		return
+	}
 	return userModel, tokenString, expire, nil
 }
 
-//func (receiver *UserBusiness) WxAppLogin(unionid string, appId int) (user dcm.DcUser, tokenString string, expire int64, comErr global.CommonError) {
-//	if unionid == "" {
-//		comErr = global.NewError(4303)
-//		return
-//	}
-//	//判断 dc_wechat 是否有unionid信息
-//	wechatModel := dcm.DcWechat{}
-//	if exist, _ := dcm.GetSlaveDbSession().Where("unionid = ?", unionid).Get(&wechatModel); !exist {
-//		comErr = global.NewError(4300)
-//		return
-//	}
-//	var err error
-//	//查询是否绑定用户
-//	userModel := dcm.DcUser{}
-//	if exist, _ := dcm.GetSlaveDbSession().Where("unionid = ?", unionid).Get(&userModel); exist {
-//		if userModel.Status != 1 {
-//			comErr = global.NewError(4212)
-//			return
-//		}
-//		tokenString, expire, err = receiver.CreateToken(appId, userModel.Id, 604800)
-//		if err != nil {
-//			comErr = global.NewError(5000)
-//			return
-//		}
-//
-//	}
-//	return userModel, tokenString, expire, nil
-//}
 func (receiver *UserBusiness) DeleteUserInfoCache(userid int) bool {
 	memberKey := cache.GetCacheKey(cache.UserInfo, userid)
 	err := global.Cache.Delete(memberKey)
