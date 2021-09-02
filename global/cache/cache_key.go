@@ -35,6 +35,8 @@ const (
 	RedAuthorRooms           KeyName = "dcm:red:author:room:%s"
 	RedAuthorLivingRooms     KeyName = "dcm:red:author:living:room"
 	RedAuthorMapCache        KeyName = "dcm:red:author:map:%s"
+	//视频商品列表
+	AwemeProductByDate KeyName = "dcm:aweme:product:%s:%s:%s"
 	//榜单数据缓存
 	DyRankCache KeyName = "dcm:rank:%s:%s"
 	//爬虫加速限制频次

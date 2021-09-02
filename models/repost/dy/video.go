@@ -40,3 +40,15 @@ type DySimpleAweme struct {
 	ShareCount      int64  `json:"share_count"`
 	PromotionNum    int    `json:"promotion_num"`
 }
+
+type DyAwemeProductSale struct {
+	AwemeId       string  `json:"aweme_id"`
+	Gmv           float64 `json:"gmv"`
+	Sales         int64   `json:"sales"`
+	Price         float64 `json:"price"`
+	Title         string  `json:"title"`
+	PlatformLabel string  `json:"platform_label"`
+	ProductStatus int     `json:"product_status"`
+	CouponInfo    string  `json:"coupon_info"`
+	Image         string  `json:"image"`
+}

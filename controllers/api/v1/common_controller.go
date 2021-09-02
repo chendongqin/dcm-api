@@ -10,6 +10,7 @@ import (
 	"dongchamao/global/utils"
 	"dongchamao/hbase"
 	"dongchamao/models/dcm"
+	"dongchamao/models/entity"
 	dy2 "dongchamao/models/repost/dy"
 	"dongchamao/services/ali_sms"
 	"dongchamao/services/ali_tools"
@@ -222,11 +223,31 @@ func (receiver *CommonController) RedAuthorRoom() {
 		Where(sql).
 		Desc("weight").
 		Find(&list)
+	authorIds := make([]string, 0)
+	for _, v := range list {
+		authorIds = append(authorIds, v.AuthorId)
+	}
+	authorBusiness := business.NewAuthorBusiness()
+	authorCacheKey := cache.GetCacheKey(cache.RedAuthorMapCache, utils.Md5_encode(strings.Join(authorIds, "")))
+	authorCacheData := global.Cache.Get(authorCacheKey)
+	var authorDataMap = map[string]entity.DyAuthor{}
+	if authorCacheData != "" {
+		authorCacheData = utils.DeserializeData(authorCacheData)
+		_ = jsoniter.Unmarshal([]byte(authorCacheData), &authorDataMap)
+	} else {
+		authorDataMap = authorBusiness.GetAuthorFormPool(authorIds, 10)
+		_ = global.Cache.Set(authorCacheKey, utils.SerializeData(authorDataMap), 600)
+	}
 	if listType == "advance" {
 		data := make([]dy2.RedAuthorRoom, 0)
 		today := time.Now().Format("20060102")
 		for _, v := range list {
-			authorData, _ := hbase.GetAuthor(v.AuthorId)
+			authorData := entity.DyAuthor{}
+			if a, ok := authorDataMap[v.AuthorId]; ok {
+				authorData = a
+			} else {
+				authorData, _ = hbase.GetAuthor(v.AuthorId)
+			}
 			if authorData.RoomId != "" && v.LivingTime.Format("2006012") == today {
 				continue
 			}
@@ -251,12 +272,12 @@ func (receiver *CommonController) RedAuthorRoom() {
 	data := make([]dy2.RedAuthorRoomBox, 0)
 	total := 0
 	if len(list) > 0 {
-		authorIds := make([]string, 0)
-		for _, v := range list {
-			authorIds = append(authorIds, v.AuthorId)
-		}
-		authorBusiness := business.NewAuthorBusiness()
-		authorDataMap := authorBusiness.GetAuthorFormPool(authorIds, 10)
+		//authorIds := make([]string, 0)
+		//for _, v := range list {
+		//	authorIds = append(authorIds, v.AuthorId)
+		//}
+		//authorBusiness := business.NewAuthorBusiness()
+		//authorDataMap := authorBusiness.GetAuthorFormPool(authorIds, 10)
 		start, _ := time.ParseInLocation("20060102", time.Now().Format("20060102"), time.Local)
 		for i := 0; i < 7; i++ {
 			dateTime := start.AddDate(0, 0, -i)

@@ -25,6 +25,9 @@ func GetProductInfo(productId string) (data entity.DyProduct, comErr global.Comm
 	detailMap := hbaseService.HbaseFormat(result, entity.DyProductMap)
 	utils.MapToStruct(detailMap, &data)
 	data.ProductID = productId
+	if data.TbCouponInfo == "null" {
+		data.TbCouponInfo = ""
+	}
 	return
 }
 
@@ -204,5 +207,28 @@ func GetDyProductAwemeSalesTrend(product, date string) (data entity.DyProductAwe
 	}
 	dataMap := hbaseService.HbaseFormat(result, entity.DyProductAwemeSalesTrendMap)
 	utils.MapToStruct(dataMap, &data)
+	return
+}
+
+//视频商品数据
+func GetDyProductAwemeDailyDistributeRange(awemeId, beginDate, endDate string) (data []entity.DyProductAwemeDailyDistribute, comErr global.CommonError) {
+	startRowKey := awemeId + "_" + beginDate + "_"
+	stopRowKey := awemeId + "_" + endDate + "_9999999999999999"
+	query := hbasehelper.NewQuery()
+	results, err := query.
+		SetTable(hbaseService.HbaseDyProductAwemeDailyDistribute).
+		SetStartRow([]byte(startRowKey)).
+		SetStopRow([]byte(stopRowKey)).
+		Scan(1000)
+	if err != nil {
+		comErr = global.NewMsgError(err.Error())
+		return
+	}
+	for _, v := range results {
+		dataMap := hbaseService.HbaseFormat(v, entity.DyProductAwemeDailyDistributeMap)
+		hData := entity.DyProductAwemeDailyDistribute{}
+		utils.MapToStruct(dataMap, &hData)
+		data = append(data, hData)
+	}
 	return
 }
