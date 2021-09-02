@@ -48,7 +48,7 @@ func (receiver *WechatController) QrCode() {
 //扫码微信回调成功 通知前端
 func (receiver *WechatController) CheckScan() {
 	inputData := receiver.InputFormat()
-	sessionId := business.IdDecrypt(inputData.GetString("session_id", ""))
+	sessionId := inputData.GetString("session_id", "")
 	if sessionId == "" {
 		receiver.FailReturn(global.NewError(4000))
 		return
