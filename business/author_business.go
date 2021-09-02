@@ -531,8 +531,8 @@ func (a *AuthorBusiness) GetAuthorProductAnalyse(authorId, keyword, firstCate, s
 	brandNameCountMap := map[string]int{}
 	firstCateMap := map[string]map[string]bool{}
 	secondCateMap := map[string]map[string]bool{}
-	videoNum := 0
-	liveNum := 0
+	var videoNum int64 = 0
+	var liveNum int64 = 0
 	productMapList := map[string]entity.DyAuthorProductAnalysis{}
 	var sumGmv float64 = 0
 	var sumSale float64 = 0
@@ -577,21 +577,21 @@ func (a *AuthorBusiness) GetAuthorProductAnalyse(authorId, keyword, firstCate, s
 			continue
 		}
 		//数据累加
-		videoNum += v.VedioCount
+		videoNum += v.AwemeCount
 		liveNum += v.RoomCount
-		v.Gmv = v.VideoPredictGmv + v.LivePredictGmv
-		v.Sales = math.Floor(v.VedioPredictSales) + math.Floor(v.LivePredictSales)
+		v.Gmv = v.AwemePredictGmv + v.LivePredictGmv
+		v.Sales = math.Floor(v.AwemePredictSales) + math.Floor(v.LivePredictSales)
 		sumGmv += v.Gmv
 		sumSale += math.Floor(v.Sales)
 		if p, ok := productMapList[v.ProductId]; ok {
 			p.Gmv += v.Gmv
 			p.Sales += v.Sales
-			p.VideoPredictGmv += v.VideoPredictGmv
+			p.AwemePredictGmv += v.AwemePredictGmv
 			p.LivePredictGmv += v.LivePredictGmv
-			p.VedioPredictSales += math.Floor(v.VedioPredictSales)
+			p.AwemePredictSales += math.Floor(v.AwemePredictSales)
 			p.LivePredictSales += math.Floor(v.LivePredictSales)
 			p.RoomCount += v.RoomCount
-			p.VedioCount += v.VedioCount
+			p.AwemeCount += v.AwemeCount
 		} else {
 			total++
 			productMapList[v.ProductId] = v
@@ -711,14 +711,9 @@ func (a *AuthorBusiness) GetAuthorProductAnalyse(authorId, keyword, firstCate, s
 	}
 	list = newList[start:end]
 	for k, v := range list {
-		productInfo, _ := hbase.GetProductInfo(v.ProductId)
-		if v.Avatar == "" {
-			v.Avatar = productInfo.Image
-		}
-		list[k].Avatar = dyimg.Product(v.Avatar)
+		list[k].Image = dyimg.Product(v.Image)
 		list[k].AuthorId = IdEncrypt(v.AuthorId)
 		list[k].ProductId = IdEncrypt(v.ProductId)
-		list[k].ProductStatus = productInfo.Status
 	}
 	analysisCount.ProductNum = total
 	analysisCount.RoomNum = liveNum

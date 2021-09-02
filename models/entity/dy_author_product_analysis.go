@@ -4,7 +4,7 @@ var DyAuthorProductAnalysisMap = HbaseEntity{
 	"author_id":           {String, "author_id"},
 	"product_id":          {String, "product_id"},
 	"title":               {String, "title"},
-	"avatar":              {String, "avatar"},
+	"image":               {String, "image"},
 	"price":               {Double, "price"},
 	"shop_id":             {String, "shop_id"},
 	"shop_name":           {String, "shop_name"},
@@ -17,22 +17,21 @@ var DyAuthorProductAnalysisMap = HbaseEntity{
 	"third_cname":         {String, "third_cname"},
 	"live_predict_sales":  {Double, "live_predict_sales"},
 	"live_predict_gmv":    {Double, "live_predict_gmv"},
-	"room_count":          {Int, "room_count"},
-	"video_predict_gmv":   {Double, "video_predict_gmv"},
-	"vedio_predict_sales": {Double, "vedio_predict_sales"},
-	"vedio_count":         {Int, "vedio_count"},
-	"row_time":            {String, "row_time"},
-	"create_time":         {String, "create_time"},
+	"room_count":          {Long, "room_count"},
+	"aweme_predict_gmv":   {Double, "aweme_predict_gmv"},
+	"aweme_predict_sales": {Double, "aweme_predict_sales"},
+	"aweme_count":         {Long, "aweme_count"},
 	"shelf_time":          {Long, "shelf_time"},
-	"vedio_product_sales": {AJson, "vedio_product_sales"},
-	"room_product_sales":  {AJson, "room_product_sales"},
+	"status":              {Int, "status"},
+	"aweme_list":          {AJson, "aweme_list"},
+	"room_list":           {AJson, "room_list"},
 }
 
 type DyAuthorProductAnalysis struct {
 	AuthorId          string                        `json:"author_id"`
 	ProductId         string                        `json:"product_id"`
 	Title             string                        `json:"title"`
-	Avatar            string                        `json:"avatar"`
+	Image             string                        `json:"image"`
 	Price             float64                       `json:"price"`
 	ShopId            string                        `json:"shop_id"`
 	ShopName          string                        `json:"shop_name"`
@@ -45,18 +44,16 @@ type DyAuthorProductAnalysis struct {
 	ThirdCname        string                        `json:"third_cname"`
 	LivePredictSales  float64                       `json:"live_predict_sales"`
 	LivePredictGmv    float64                       `json:"live_predict_gmv"`
-	RoomCount         int                           `json:"room_count"`
-	VideoPredictGmv   float64                       `json:"video_predict_gmv"`
-	VedioCount        int                           `json:"vedio_count"`
-	RowTime           string                        `json:"row_time"`
-	CreateTime        string                        `json:"create_time"`
+	RoomCount         int64                         `json:"room_count"`
+	AwemePredictGmv   float64                       `json:"aweme_predict_gmv"`
+	AwemeCount        int64                         `json:"aweme_count"`
 	ShelfTime         int64                         `json:"shelf_time"`
 	Gmv               float64                       `json:"gmv"`
 	Sales             float64                       `json:"sales"`
-	ProductStatus     int                           `json:"product_status"`
-	VedioPredictSales float64                       `json:"vedio_predict_sales"`
-	VedioProductSales []DyProductAnalysisVideoSales `json:"vedio_product_sales"`
-	RoomProductSales  []DyProductAnalysisRoomSales  `json:"room_product_sales"`
+	Status            int                           `json:"status"`
+	AwemePredictSales float64                       `json:"aweme_predict_sales"`
+	AwemeList         []DyProductAnalysisVideoSales `json:"aweme_list"`
+	RoomList          []DyProductAnalysisRoomSales  `json:"room_list"`
 }
 
 type DyProductAnalysisRoomSales struct {

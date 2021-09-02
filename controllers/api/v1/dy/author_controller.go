@@ -289,8 +289,8 @@ func (receiver *AuthorController) AuthorViewData() {
 			var totalGmv float64
 			var totalSales float64
 			for _, v := range hbaseDataList {
-				v.Gmv = v.LivePredictGmv + v.VideoPredictGmv
-				v.Sales = math.Floor(v.LivePredictSales) + math.Floor(v.VideoPredictGmv)
+				v.Gmv = v.LivePredictGmv + v.AwemePredictGmv
+				v.Sales = math.Floor(v.LivePredictSales) + math.Floor(v.AwemePredictSales)
 				totalGmv += v.Gmv
 				totalSales += v.Sales
 				category := v.DcmLevelFirst
