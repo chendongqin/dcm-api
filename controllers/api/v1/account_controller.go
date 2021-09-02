@@ -403,10 +403,10 @@ func (receiver *AccountController) GetDyCollectTags() {
 		return
 	}
 	var countMap = make(map[int]int64, len(collectCount))
-	var countRet = make([]repost.CollectTagRet, len(collectCount))
 	for _, v := range collectCount {
 		countMap[v.TagId] = v.Count
 	}
+	var countRet = make([]repost.CollectTagRet, len(data))
 	for k, v := range data {
 		countRet[k].DcUserDyCollectTag = v
 		countRet[k].Count = countMap[v.Id]
