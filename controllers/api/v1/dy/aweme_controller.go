@@ -245,8 +245,12 @@ func (receiver *AwemeController) AwemeProductAnalyseChart() {
 	}
 	var allGmv float64 = 0
 	var allSales int64 = 0
+	var productMap = map[string]string{}
 	dateMap := map[string]dy2.DyAwemeProductSale{}
 	for _, v := range hbaseList {
+		if _, ok := productMap[v.ProductId]; !ok {
+			productMap[v.ProductId] = v.ProductId
+		}
 		allGmv += v.AwemeGmv
 		allSales += v.Sales
 		if s, ok := dateMap[v.DistDate]; ok {
@@ -261,7 +265,6 @@ func (receiver *AwemeController) AwemeProductAnalyseChart() {
 		}
 	}
 	list := make([]dy2.NameValueInt64Chart, 0)
-	lenNum := len(dateMap)
 	for k, v := range dateMap {
 		valueTime, _ := time.ParseInLocation("20060102", k, time.Local)
 		list = append(list, dy2.NameValueInt64Chart{
@@ -269,13 +272,16 @@ func (receiver *AwemeController) AwemeProductAnalyseChart() {
 			Value: v.Sales,
 		})
 	}
+	sort.Slice(list, func(i, j int) bool {
+		return list[i].Name > list[i].Name
+	})
 	receiver.SuccReturn(map[string]interface{}{
 		"count": map[string]interface{}{
-			"gmv":   allGmv,
-			"sales": allSales,
+			"gmv":         allGmv,
+			"sales":       allSales,
+			"product_num": len(productMap),
 		},
-		"list":  list,
-		"total": lenNum,
+		"list": list,
 	})
 	return
 }

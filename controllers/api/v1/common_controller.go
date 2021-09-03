@@ -401,3 +401,28 @@ func (receiver *CommonController) DyUnionSearch() {
 	return
 
 }
+
+//获取当前版本接口
+func (receiver *CommonController) CheckAppVersion() {
+	appType := receiver.Ctx.Input.Param(":type")
+	platform := 0
+	if strings.ToLower(appType) == "ios" {
+		platform = 1
+	} else if strings.ToLower(appType) == "android" {
+		platform = 2
+	} else {
+		receiver.FailReturn(global.NewError(4000))
+		return
+	}
+	row := dcm.DcAppVersion{}
+	_, _ = dcm.GetSlaveDbSession().
+		Where("platform=?", platform).
+		Desc("id").
+		Get(&row)
+	receiver.SuccReturn(dy2.AppVersion{
+		Version: row.Version,
+		Info:    row.Info,
+		Force:   row.Force,
+		Url:     row.Url,
+	})
+}
