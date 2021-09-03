@@ -13,6 +13,7 @@ var DyProductMap = HbaseEntity{
 	"shop_id":                {String, "shop_id"},
 	"undercarriage":          {Int, "undercarriage"},
 	"crawl_time":             {Long, "crawl_time"},
+	"dcm_level_first":        {String, "dcm_level_first"},
 	"platform_label":         {String, "platform_label"},
 	"coupon_end_time":        {String, "coupon_end_time"},
 	"coupon_start_time":      {String, "coupon_start_time"},
@@ -54,6 +55,7 @@ type DyProduct struct {
 	ShopID              string                `json:"shop_id"`
 	ShopName            string                `json:"shop_name"`
 	Label               string                `json:"label"`
+	DcmLevelFirst       string                `json:"dcm_level_first"`
 	Undercarriage       int                   `json:"undercarriage"`
 	CrawlTime           int64                 `json:"crawl_time"`
 	PlatformLabel       string                `json:"platform_label"`

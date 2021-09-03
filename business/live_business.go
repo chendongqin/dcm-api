@@ -21,7 +21,7 @@ func NewLiveBusiness() *LiveBusiness {
 	return new(LiveBusiness)
 }
 
-func (l *LiveBusiness) RoomCurAndPmtProductById(roomId, productId string) (curProductCount dy.LiveCurProductCount, ptmSales []dy.LiveRoomProductSaleStatus, comErr global.CommonError) {
+func (l *LiveBusiness) RoomCurAndPmtProductById(roomId, productId string) (curProductCount dy.LiveCurProductCount, ptmSales []dy.LiveRoomProductSaleStatus, ptmPv int64, comErr global.CommonError) {
 	roomProduct, comErr := hbase.GetRoomProductInfo(roomId + "_" + productId)
 	if comErr != nil {
 		return
@@ -38,7 +38,7 @@ func (l *LiveBusiness) RoomCurAndPmtProductById(roomId, productId string) (curPr
 		endSales := v.EndSales
 		var avgUserCount int64 = 0
 		if v.TotalCrawlTimes > 0 {
-			avgUserCount = v.TotalUserCount / v.TotalCrawlTimes
+			avgUserCount = v.AllUserCount / v.TotalCrawlTimes
 		}
 		cur := dy.LiveCurProduct{
 			StartTime:    v.StartTime,
@@ -69,6 +69,11 @@ func (l *LiveBusiness) RoomCurAndPmtProductById(roomId, productId string) (curPr
 	ptmSales = []dy.LiveRoomProductSaleStatus{}
 	for _, v := range roomProduct.PtmPromotion {
 		if v.StartTime > 0 {
+			if v.FinalPv > 0 {
+				ptmPv += v.FinalPv - v.InitialPv
+			} else {
+				ptmPv += v.Pv - v.InitialPv
+			}
 			ptmSales = append(ptmSales, dy.LiveRoomProductSaleStatus{
 				StartTime:  v.StartTime,
 				StopTime:   v.StopTime,

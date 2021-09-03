@@ -209,9 +209,9 @@ func (receiver *EsLiveBusiness) RoomProductByRoomId(roomInfo entity.DyLiveInfo, 
 		//} else {
 		list[k].PredictSales = math.Floor(v.PredictSales)
 		//}
-		if v.Pv > 0 {
-			list[k].BuyRate = v.PredictSales / float64(v.Pv)
-		}
+		//if v.Pv > 0 {
+		//	list[k].BuyRate = v.PredictSales / float64(v.Pv)
+		//}
 	}
 	total = esMultiQuery.Count
 	return
@@ -512,9 +512,9 @@ func (receiver *EsLiveBusiness) SearchProductRooms(productId, keyword, sortStr, 
 		if v.IsReturn == 1 && v.StartTime == v.ShelfTime {
 			list[k].IsReturn = 0
 		}
-		if v.Pv > 0 {
-			list[k].BuyRate = v.PredictSales / float64(v.Pv)
-		}
+		//if v.Pv > 0 {
+		//	list[k].BuyRate = v.PredictSales / float64(v.Pv)
+		//}
 	}
 	total = esMultiQuery.Count
 	return

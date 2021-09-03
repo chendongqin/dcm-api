@@ -34,7 +34,7 @@ type DyLiveCurPromotion struct {
 	Pv              int64   `json:"pv"`                //讲解pv
 	UserCount       int64   `json:"user_count"`        //讲解在线人数
 	Sales           int64   `json:"sales"`             //爬取时全网销量
-	TotalUserCount  int64   `json:"total_user_count"`  //
+	AllUserCount    int64   `json:"all_user_count"`    //
 	TotalCrawlTimes int64   `json:"total_crawl_times"` //
 	ShopId          string  `json:"shop_id"`           //
 	ShopName        string  `json:"shop_name"`         //
