@@ -695,7 +695,7 @@ func (receiver *ProductController) ProductRoomsRangeDate() {
 	page := receiver.GetPage("page")
 	pageSize := receiver.GetPageSize("page_size", 5, 10)
 	authorBusiness := business.NewAuthorBusiness()
-	list, total, comErr := authorBusiness.GetAuthorProductRooms("", productId, startTime, endTime, page, pageSize, "predict_gmv", "desc")
+	list, total, comErr := authorBusiness.GetAuthorProductRooms("", productId, startTime, endTime, page, pageSize, "live_create_time", "desc")
 	if comErr != nil {
 		receiver.FailReturn(comErr)
 		return

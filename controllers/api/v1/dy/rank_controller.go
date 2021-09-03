@@ -105,6 +105,9 @@ func (receiver *RankController) DyLiveHourRank() {
 				data.Ranks[k].LiveInfo.User.DisplayId = v.LiveInfo.User.ShortId
 			}
 			data.Ranks[k].ShareUrl = business.LiveShareUrl + v.RoomId
+			if v.Category == "0" {
+				data.Ranks[k].Category = ""
+			}
 		}
 		ret = map[string]interface{}{
 			"list":        data.Ranks,
@@ -155,6 +158,9 @@ func (receiver *RankController) DyLiveTopRank() {
 				data.Ranks[k].LiveInfo.User.DisplayId = v.LiveInfo.User.ShortId
 			}
 			data.Ranks[k].ShareUrl = business.LiveShareUrl + v.RoomId
+			if v.Category == "0" {
+				data.Ranks[k].Category = ""
+			}
 		}
 		ret = map[string]interface{}{
 			"list":        data.Ranks,

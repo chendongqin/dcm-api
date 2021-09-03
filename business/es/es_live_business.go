@@ -632,13 +632,18 @@ func (receiver *EsLiveBusiness) SearchLiveRooms(keyword, category, firstName, se
 
 func (receiver *EsLiveBusiness) KeywordSearch(keyword string) (list []es.EsDyLiveInfo) {
 	esQuery, esMultiQuery := elasticsearch.NewElasticQueryGroup()
-	esTable := GetESTableByTime(es.DyLiveInfoBaseTable, time.Now().AddDate(0, 0, -89), time.Now())
-	esQuery.SetMultiMatch([]string{"display_id", "short_id", "title^10", "nickname", "product_title"}, keyword)
+	startTime := time.Now().AddDate(0, 0, -89)
+	esTable := GetESTableByTime(es.DyLiveInfoBaseTable, startTime, time.Now())
+	esQuery.SetMultiMatch([]string{"display_id.keyword", "short_id.keyword", "title.keyword", "nickname.keyword", "product_title.keyword"}, keyword)
+	esQuery.SetRange("create_time", map[string]interface{}{
+		"gte": startTime.Unix(),
+		"lt":  time.Now().Unix(),
+	})
 	results := esMultiQuery.
 		SetTable(esTable).
 		SetCache(60).
 		AddMust(esQuery.Condition).
-		SetOrderBy(elasticsearch.NewElasticOrder().Add("create_time", "desc").Order).
+		SetOrderBy(elasticsearch.NewElasticOrder().Add("max_user_count", "desc").Order).
 		SetLimit(0, 5).
 		SetMultiQuery().
 		Query()

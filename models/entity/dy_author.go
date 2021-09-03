@@ -172,3 +172,32 @@ type DyAuthorFansHourActive struct {
 	HourCreateTime    string `json:"hour_create_time"`
 	HourCreateTimeNum string `json:"hour_create_time_num"`
 }
+
+type DyAuthorSimple struct {
+	AuthorID         string       `json:"author_id"`
+	Data             DyAuthorData `json:"data"`
+	Tags             string       `json:"tags"`
+	TagsLevelTwo     string       `json:"tags_level_two"`
+	LiveCount        int          `json:"live_count"`
+	RoomId           string       `json:"room_id"`
+	RoomStatus       int          `json:"room_status"`
+	LiveDuration     string       `json:"live_duration"`
+	AgeLiveDuration  int64        `json:"avg_live_duration"`
+	MedWatchCnt      int64        `json:"med_watch_cnt"`
+	InteractionRate  float64      `json:"interaction_rate"`
+	Predict30Gmv     float64      `json:"predict_30_gmv"`
+	Real30Gmv        float64      `json:"real_30_gmv"`
+	Predict30Sales   float64      `json:"predict_30_sales"`
+	Real30Sales      float64      `json:"real_30_sales"`
+	AwemeCount       int          `json:"aweme_count"`
+	DiggCount        int64        `json:"digg_count"`
+	DiggFollowerRate float64      `json:"digg_follower_rate"`
+	Duration         int64        `json:"duration"`
+	MedDigg          int64        `json:"med_digg"`
+	ProductCount     int          `json:"product_count"`
+	TotalFansCount   int64        `json:"total_fans_count"`
+	FollowerCount    int64        `json:"follower_count"`
+	TotalFavorited   int64        `json:"total_favorited"`
+	CommentCount     int64        `json:"comment_count"`
+	ForwardCount     int64        `json:"forward_count"`
+}

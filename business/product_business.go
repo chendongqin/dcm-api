@@ -177,12 +177,13 @@ func (receiver *ProductBusiness) ProductAuthorAnalysis(productId, keyword, tag s
 	//开启任务处理
 	cacheAuthorKey := cache.GetCacheKey(cache.ProductAuthorAllMap, startRowKey, stopRowKey)
 	cacheAuthorStr := global.Cache.Get(cacheAuthorKey)
-	authorDataMap := map[string]entity.DyAuthor{}
+	authorDataMap := map[string]entity.DyAuthorSimple{}
 	if cacheAuthorStr != "" {
 		cacheAuthorStr = utils.DeserializeData(cacheAuthorStr)
 		_ = jsoniter.Unmarshal([]byte(cacheAuthorStr), &authorDataMap)
 	} else {
-		authorDataMap = NewAuthorBusiness().GetAuthorFormPool(authorIds, 10)
+		authorTmpMap := NewAuthorBusiness().GetAuthorFormPool(authorIds, 10)
+		utils.MapToStruct(authorTmpMap, &authorTmpMap)
 		if tag == "" && minFollow == 0 && maxFollow == 0 && scoreType == 5 {
 			_ = global.Cache.Set(cacheAuthorKey, utils.SerializeData(authorDataMap), 300)
 		}
