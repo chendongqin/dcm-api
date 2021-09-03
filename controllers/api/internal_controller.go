@@ -5,9 +5,10 @@ import (
 	"dongchamao/business/es"
 	"dongchamao/global"
 	"dongchamao/global/cache"
+	"dongchamao/models/repost"
 	"dongchamao/services/dyimg"
+	"encoding/json"
 	"strconv"
-	"strings"
 )
 
 type InternalController struct {
@@ -139,14 +140,9 @@ func (receiver *InternalController) ClearCache() {
 	case "userLevel":
 		{
 			println(val)
-			arr := strings.Split(val, ",")
-			if len(arr) < 2 {
-				receiver.FailReturn(global.NewError(4000))
-				return
-			}
-			level, _ := strconv.Atoi(arr[0])
-			userId, _ := strconv.Atoi(arr[1])
-			cacheKey = cache.GetCacheKey(cache.UserLevel, userId, level)
+			var userLevel repost.UserLevelCache
+			json.Unmarshal([]byte(val), &userLevel)
+			cacheKey = cache.GetCacheKey(cache.UserLevel, userLevel.UserId, userLevel.Platform)
 			break
 		}
 	case "configKey":
@@ -155,7 +151,7 @@ func (receiver *InternalController) ClearCache() {
 			break
 		}
 	}
-	data := global.Cache.Get(cacheKey)
+	data := global.Cache.Delete(cacheKey)
 	receiver.SuccReturn(data)
 	return
 }
