@@ -16,6 +16,9 @@ func init() {
 		beego.NSNamespace("/product",
 			beego.NSRouter("/cate/:product_id", &controllers.InternalController{}, "post:ChangeProductCate"),
 		),
+		beego.NSNamespace("/system",
+			beego.NSRouter("/cache/clear", &controllers.InternalController{}, "post:ClearCache"),
+		),
 	)
 	// 注册路由组
 	beego.AddNamespace(ns)
