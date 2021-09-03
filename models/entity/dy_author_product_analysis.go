@@ -57,9 +57,13 @@ type DyAuthorProductAnalysis struct {
 }
 
 type DyProductAnalysisRoom struct {
-	RoomId string `json:"room_id"`
+	RoomId       string  `json:"room_id"`
+	PredictSales float64 `json:"predict_sales"`
+	PredictGmv   float64 `json:"predict_gmv"`
 }
 
 type DyProductAnalysisAweme struct {
-	AwemeId string `json:"aweme_id"`
+	AwemeId      string  `json:"aweme_id"`
+	PredictSales float64 `json:"predict_sales"`
+	PredictGmv   float64 `json:"predict_gmv"`
 }

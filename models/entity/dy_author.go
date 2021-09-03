@@ -32,6 +32,13 @@ var DyAuthorMap = HbaseEntity{
 	"other_total_favorited":    {Long, "total_favorited"},
 	"other_comment_count":      {Long, "comment_count"},
 	"other_forward_count":      {Long, "forward_count"},
+	//粉丝数据
+	"gender":               {AJson, "gender"},
+	"province":             {AJson, "province"},
+	"city":                 {AJson, "city"},
+	"age_distrinbution":    {AJson, "age_distrinbution"},
+	"week_create_time_num": {AJson, "week_create_time_num"},
+	"hour_create_time_num": {AJson, "hour_create_time_num"},
 }
 
 type DyAuthor struct {
@@ -68,6 +75,13 @@ type DyAuthor struct {
 	TotalFavorited   int64           `json:"total_favorited"`
 	CommentCount     int64           `json:"comment_count"`
 	ForwardCount     int64           `json:"forward_count"`
+	//粉丝分析
+	Gender            []DyAuthorFansGender     `json:"gender"`
+	Province          []DyAuthorFansProvince   `json:"province"`
+	City              []DyAuthorFansCity       `json:"city"`
+	AgeDistrinbution  []DyAuthorFansAge        `json:"age_distrinbution"`
+	WeekCreateTimeNum []DyAuthorFansWeekActive `json:"week_create_time_num"`
+	HourCreateTimeNum []DyAuthorFansHourActive `json:"hour_create_time_num"`
 }
 
 type DyAuthorRoom struct {
@@ -127,4 +141,34 @@ type DyAuthorInfoFans struct {
 
 type DyAuthorFansCount struct {
 	Count int64 `json:"count"`
+}
+
+type DyAuthorFansGender struct {
+	Gender    string `json:"gender"`
+	GenderNum string `json:"gender_num"`
+}
+
+type DyAuthorFansProvince struct {
+	Province    string `json:"province"`
+	ProvinceNum string `json:"province_num"`
+}
+
+type DyAuthorFansCity struct {
+	City    string `json:"city"`
+	CityNum string `json:"city_num"`
+}
+
+type DyAuthorFansAge struct {
+	AgeDistrinbution    string `json:"age_distrinbution"`
+	AgeDistrinbutionNum string `json:"age_distrinbution_num"`
+}
+
+type DyAuthorFansWeekActive struct {
+	WeekCreateTime    string `json:"week_create_time"`
+	WeekCreateTimeNum string `json:"week_create_time_num"`
+}
+
+type DyAuthorFansHourActive struct {
+	HourCreateTime    string `json:"hour_create_time"`
+	HourCreateTimeNum string `json:"hour_create_time_num"`
 }

@@ -599,8 +599,15 @@ func (receiver *AuthorController) AuthorFansAnalyse() {
 		receiver.FailReturn(global.NewError(4000))
 		return
 	}
+	authorData, comErr := hbase.GetAuthor(authorId)
+	if comErr != nil {
+		receiver.FailReturn(comErr)
+		return
+	}
 	detail, comErr := hbase.GetXtAuthorDetail(authorId)
 	data := map[string][]entity.XtDistributionsList{}
+	var countCity int64 = 0
+	var countPro int64 = 0
 	if comErr == nil {
 		for _, v := range detail.Distributions {
 			name := ""
@@ -618,27 +625,81 @@ func (receiver *AuthorController) AuthorFansAnalyse() {
 			}
 			data[name] = v.DistributionList
 		}
+		for _, v := range data["city"] {
+			countCity += v.DistributionValue
+		}
+		for _, v := range data["province"] {
+			countPro += v.DistributionValue
+		}
+
 	} else {
 		data["gender"] = []entity.XtDistributionsList{}
 		data["city"] = []entity.XtDistributionsList{}
 		data["age"] = []entity.XtDistributionsList{}
 		data["province"] = []entity.XtDistributionsList{}
+		//性别处理
+		for _, v := range authorData.Gender {
+			DistributionKey := ""
+			if v.Gender == "男" {
+				DistributionKey = "male"
+			} else if v.Gender == "女" {
+				DistributionKey = "female"
+			}
+			if DistributionKey == "" {
+				continue
+			}
+			data["gender"] = append(data["gender"], entity.XtDistributionsList{
+				DistributionKey:   DistributionKey,
+				DistributionValue: utils.ToInt64(v.GenderNum),
+			})
+		}
+		for _, v := range authorData.City {
+			value := utils.ToInt64(v.CityNum)
+			countCity += value
+			data["city"] = append(data["city"], entity.XtDistributionsList{
+				DistributionKey:   v.City,
+				DistributionValue: value,
+			})
+		}
+		for _, v := range authorData.AgeDistrinbution {
+			data["age"] = append(data["age"], entity.XtDistributionsList{
+				DistributionKey:   v.AgeDistrinbution,
+				DistributionValue: utils.ToInt64(v.AgeDistrinbutionNum),
+			})
+		}
+		for _, v := range authorData.Province {
+			value := utils.ToInt64(v.ProvinceNum)
+			countPro += value
+			data["province"] = append(data["province"], entity.XtDistributionsList{
+				DistributionKey:   v.Province,
+				DistributionValue: value,
+			})
+		}
+
+	}
+	if countCity > 0 {
+		for k, v := range data["city"] {
+			data["city"][k].DistributionPer = float64(v.DistributionValue) / float64(countCity)
+		}
+	}
+	if countPro > 0 {
+		for k, v := range data["province"] {
+			data["province"][k].DistributionPer = float64(v.DistributionValue) / float64(countPro)
+		}
 	}
 	data["active_day"] = []entity.XtDistributionsList{}
+	for _, v := range authorData.HourCreateTimeNum {
+		data["active_day"] = append(data["active_day"], entity.XtDistributionsList{
+			DistributionKey:   v.HourCreateTime,
+			DistributionValue: utils.ToInt64(v.HourCreateTimeNum),
+		})
+	}
 	data["active_week"] = []entity.XtDistributionsList{}
-	var countCity int64 = 0
-	var countPro int64 = 0
-	for _, v := range data["city"] {
-		countCity += v.DistributionValue
-	}
-	for _, v := range data["province"] {
-		countPro += v.DistributionValue
-	}
-	for k, v := range data["city"] {
-		data["city"][k].DistributionPer = float64(v.DistributionValue) / float64(countCity)
-	}
-	for k, v := range data["province"] {
-		data["province"][k].DistributionPer = float64(v.DistributionValue) / float64(countPro)
+	for _, v := range authorData.WeekCreateTimeNum {
+		data["active_week"] = append(data["active_week"], entity.XtDistributionsList{
+			DistributionKey:   v.WeekCreateTime,
+			DistributionValue: utils.ToInt64(v.WeekCreateTimeNum),
+		})
 	}
 	receiver.SuccReturn(data)
 	return

@@ -28,12 +28,13 @@ const (
 	HbaseXtAuthorDetail          = "xt_author_detail"           //星图达人详情
 	HbaseDyAuthorLiveTags        = "dy_live_hour_rank_sell"     //达人带货行业
 
-	HbaseDyProduct               = "dy_product"
-	HbaseDyProductBrand          = "dy_product_brand"
-	HbaseDyProductDaily          = "dy_product_daily"
-	HbaseDyProductLiveSalesTrend = "dy_product_live_sales_trend"
-	HbaseDyLivePromotionMonth    = "dy_live_promotion_month"
-	HbaseDyProductAuthorAnalysis = "dy_product_author_analysis"
+	HbaseDyProduct                     = "dy_product"
+	HbaseDyProductBrand                = "dy_product_brand"
+	HbaseDyProductDaily                = "dy_product_daily"
+	HbaseDyProductAwemeDailyDistribute = "dy_product_aweme_daily_distribute"
+	HbaseDyProductLiveSalesTrend       = "dy_product_live_sales_trend"
+	HbaseDyLivePromotionMonth          = "dy_live_promotion_month"
+	HbaseDyProductAuthorAnalysis       = "dy_product_author_analysis"
 
 	HbaseXtHotAwemeAuthorRank     = "xt_hot_aweme_author"
 	HbaseXtHotLiveAuthorRank      = "xt_hot_live_author"

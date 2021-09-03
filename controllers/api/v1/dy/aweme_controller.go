@@ -4,10 +4,14 @@ import (
 	"dongchamao/business"
 	controllers "dongchamao/controllers/api"
 	"dongchamao/global"
+	"dongchamao/global/cache"
+	"dongchamao/global/utils"
 	"dongchamao/hbase"
 	"dongchamao/models/entity"
 	dy2 "dongchamao/models/repost/dy"
+	jsoniter "github.com/json-iterator/go"
 	"sort"
+	"time"
 )
 
 type AwemeController struct {
@@ -149,6 +153,129 @@ func (receiver *AwemeController) AwemeCommentHotWords() {
 	})
 	receiver.SuccReturn(map[string]interface{}{
 		"hot_words": list,
+	})
+	return
+}
+
+//视频商品数据
+func (receiver *AwemeController) AwemeProductAnalyse() {
+	awemeId := business.IdDecrypt(receiver.Ctx.Input.Param(":aweme_id"))
+	startTime, endTime, comErr := receiver.GetRangeDate()
+	if comErr != nil {
+		receiver.FailReturn(comErr)
+		return
+	}
+	page := receiver.GetPage("page")
+	pageSize := receiver.GetPageSize("page_size", 5, 10)
+	cacheKey := cache.GetCacheKey(cache.AwemeProductByDate, awemeId, startTime.Format("20060102"), endTime.Format("20060102"))
+	cacheData := global.Cache.Get(cacheKey)
+	var hbaseList = make([]entity.DyProductAwemeDailyDistribute, 0)
+	if cacheData != "" {
+		cacheData = utils.DeserializeData(cacheData)
+		_ = jsoniter.Unmarshal([]byte(cacheData), &hbaseList)
+	} else {
+		hbaseList, _ = hbase.GetDyProductAwemeDailyDistributeRange(awemeId, startTime.Format("20060102"), endTime.Format("20060102"))
+		_ = global.Cache.Set(cacheKey, utils.SerializeData(hbaseList), 180)
+	}
+	productMap := map[string]dy2.DyAwemeProductSale{}
+	for _, v := range hbaseList {
+		if s, ok := productMap[v.ProductId]; ok {
+			s.Sales += v.Sales
+			s.Gmv += v.AwemeGmv
+			productMap[v.ProductId] = s
+		} else {
+			productInfo, _ := hbase.GetProductInfo(v.ProductId)
+			productMap[v.ProductId] = dy2.DyAwemeProductSale{
+				AwemeId:       v.AwemeId,
+				Gmv:           v.AwemeGmv,
+				Sales:         v.Sales,
+				Price:         v.Price,
+				Title:         productInfo.Title,
+				PlatformLabel: productInfo.PlatformLabel,
+				ProductStatus: productInfo.Status,
+				CouponInfo:    productInfo.TbCouponInfo,
+				Image:         productInfo.Image,
+			}
+		}
+	}
+	list := make([]dy2.DyAwemeProductSale, 0)
+	lenNum := len(productMap)
+	start := (page - 1) * pageSize
+	end := start + pageSize
+	if start > lenNum {
+		receiver.SuccReturn(map[string]interface{}{
+			"list":  list,
+			"total": lenNum,
+		})
+		return
+	}
+	for _, v := range productMap {
+		list = append(list, v)
+	}
+	sort.Slice(list, func(i, j int) bool {
+		return list[i].Gmv < list[j].Gmv
+	})
+	if end > lenNum {
+		end = lenNum
+	}
+	list = list[start:end]
+	receiver.SuccReturn(map[string]interface{}{
+		"list":  list,
+		"total": lenNum,
+	})
+	return
+}
+
+func (receiver *AwemeController) AwemeProductAnalyseChart() {
+	awemeId := business.IdDecrypt(receiver.Ctx.Input.Param(":aweme_id"))
+	startTime, endTime, comErr := receiver.GetRangeDate()
+	if comErr != nil {
+		receiver.FailReturn(comErr)
+		return
+	}
+	cacheKey := cache.GetCacheKey(cache.AwemeProductByDate, awemeId, startTime.Format("20060102"), endTime.Format("20060102"))
+	cacheData := global.Cache.Get(cacheKey)
+	var hbaseList = make([]entity.DyProductAwemeDailyDistribute, 0)
+	if cacheData != "" {
+		cacheData = utils.DeserializeData(cacheData)
+		_ = jsoniter.Unmarshal([]byte(cacheData), &hbaseList)
+	} else {
+		hbaseList, _ = hbase.GetDyProductAwemeDailyDistributeRange(awemeId, startTime.Format("20060102"), endTime.Format("20060102"))
+		_ = global.Cache.Set(cacheKey, utils.SerializeData(hbaseList), 180)
+	}
+	var allGmv float64 = 0
+	var allSales int64 = 0
+	dateMap := map[string]dy2.DyAwemeProductSale{}
+	for _, v := range hbaseList {
+		allGmv += v.AwemeGmv
+		allSales += v.Sales
+		if s, ok := dateMap[v.DistDate]; ok {
+			s.Sales += v.Sales
+			s.Gmv += v.AwemeGmv
+			dateMap[v.DistDate] = s
+		} else {
+			dateMap[v.DistDate] = dy2.DyAwemeProductSale{
+				Gmv:   v.AwemeGmv,
+				Sales: v.Sales,
+			}
+		}
+	}
+	list := make([]dy2.NameValueInt64Chart, 0)
+	lenNum := len(dateMap)
+	for k, v := range dateMap {
+		valueTime, _ := time.ParseInLocation("20060102", k, time.Local)
+		list = append(list, dy2.NameValueInt64Chart{
+			Name:  valueTime.Format("01/02"),
+			Value: v.Sales,
+		})
+	}
+	receiver.SuccReturn(map[string]interface{}{
+		"count": map[string]interface{}{
+			"gmv":   allGmv,
+			"sales": allSales,
+		},
+		"list":  list,
+		"total": lenNum,
 	})
 	return
 }

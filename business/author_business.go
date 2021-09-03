@@ -576,11 +576,19 @@ func (a *AuthorBusiness) GetAuthorProductAnalyse(authorId, keyword, firstCate, s
 		} else if shopType == 2 && v.ShopId == shopId && shopId != "" {
 			continue
 		}
+		v.AwemePredictGmv = 0
+		v.AwemePredictSales = 0
+		v.LivePredictGmv = 0
+		v.LivePredictSales = 0
 		for _, l := range v.AwemeList {
 			videoIdMap[l.AwemeId] = l.AwemeId
+			v.AwemePredictGmv += l.PredictGmv
+			v.AwemePredictSales += l.PredictSales
 		}
 		for _, l := range v.RoomList {
 			liveIdMap[l.RoomId] = l.RoomId
+			v.LivePredictGmv += l.PredictGmv
+			v.LivePredictSales += l.PredictSales
 		}
 		//数据累加
 		v.Gmv = v.AwemePredictGmv + v.LivePredictGmv

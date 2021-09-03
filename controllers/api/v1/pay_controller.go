@@ -77,10 +77,13 @@ func (receiver *PayController) CreateDyOrder() {
 	if subExpiration.Before(time.Now()) {
 		subExpiration = time.Now()
 	}
-	surplusDay := (userVip.Expiration.Unix() - subExpiration.Unix()) / 86400
-	if surplusDay == 0 {
-		receiver.FailReturn(global.NewMsgError("协同账号到期时间与账户会员时间一致，不需要续费～"))
-		return
+	var surplusDay int64 = 0
+	if userVip.Expiration.Before(time.Now()) {
+		surplusDay = (userVip.Expiration.Unix() - subExpiration.Unix()) / 86400
+		if surplusDay == 0 {
+			receiver.FailReturn(global.NewMsgError("协同账号到期时间与账户会员时间一致，不需要续费～"))
+			return
+		}
 	}
 	payBusiness := business.NewPayBusiness()
 	var surplusValue float64 = 0
