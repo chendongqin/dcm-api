@@ -230,23 +230,22 @@ func (receiver *CommonController) RedAuthorRoom() {
 	authorBusiness := business.NewAuthorBusiness()
 	authorCacheKey := cache.GetCacheKey(cache.RedAuthorMapCache, utils.Md5_encode(strings.Join(authorIds, "")))
 	authorCacheData := global.Cache.Get(authorCacheKey)
-	var authorDataMap = map[string]entity.DyAuthor{}
+	var authorDataMap = map[string]entity.DyAuthorSimple{}
 	if authorCacheData != "" {
 		authorCacheData = utils.DeserializeData(authorCacheData)
 		_ = jsoniter.Unmarshal([]byte(authorCacheData), &authorDataMap)
 	} else {
-		authorDataMap = authorBusiness.GetAuthorFormPool(authorIds, 10)
+		authorMap := authorBusiness.GetAuthorFormPool(authorIds, 10)
+		utils.MapToStruct(authorMap, &authorDataMap)
 		_ = global.Cache.Set(authorCacheKey, utils.SerializeData(authorDataMap), 600)
 	}
 	if listType == "advance" {
 		data := make([]dy2.RedAuthorRoom, 0)
 		today := time.Now().Format("20060102")
 		for _, v := range list {
-			authorData := entity.DyAuthor{}
+			authorData := entity.DyAuthorSimple{}
 			if a, ok := authorDataMap[v.AuthorId]; ok {
 				authorData = a
-			} else {
-				authorData, _ = hbase.GetAuthor(v.AuthorId)
 			}
 			if authorData.RoomId != "" && v.LivingTime.Format("2006012") == today {
 				continue
@@ -272,12 +271,6 @@ func (receiver *CommonController) RedAuthorRoom() {
 	data := make([]dy2.RedAuthorRoomBox, 0)
 	total := 0
 	if len(list) > 0 {
-		//authorIds := make([]string, 0)
-		//for _, v := range list {
-		//	authorIds = append(authorIds, v.AuthorId)
-		//}
-		//authorBusiness := business.NewAuthorBusiness()
-		//authorDataMap := authorBusiness.GetAuthorFormPool(authorIds, 10)
 		start, _ := time.ParseInLocation("20060102", time.Now().Format("20060102"), time.Local)
 		for i := 0; i < 7; i++ {
 			dateTime := start.AddDate(0, 0, -i)

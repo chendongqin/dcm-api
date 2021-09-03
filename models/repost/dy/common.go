@@ -31,6 +31,12 @@ type NameValueInt64Chart struct {
 	Value int64  `json:"value"`
 }
 
+type NameValueInt64ChartWithData struct {
+	Name  string   `json:"name"`
+	Value int64    `json:"value"`
+	Data  []string `json:"data"`
+}
+
 type NameValueFloat64Chart struct {
 	Name  string  `json:"name"`
 	Value float64 `json:"value"`
