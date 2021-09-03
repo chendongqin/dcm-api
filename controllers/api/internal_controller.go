@@ -4,7 +4,10 @@ import (
 	"dongchamao/business"
 	"dongchamao/business/es"
 	"dongchamao/global"
+	"dongchamao/global/cache"
 	"dongchamao/services/dyimg"
+	"strconv"
+	"strings"
 )
 
 type InternalController struct {
@@ -109,5 +112,50 @@ func (receiver *InternalController) ChangeProductCate() {
 		return
 	}
 	receiver.SuccReturn(nil)
+	return
+}
+
+//删除缓存
+func (receiver *InternalController) ClearCache() {
+	input := receiver.InputFormat()
+	cacheType := input.GetString("cacheType", "")
+	if cacheType == "" {
+		receiver.FailReturn(global.NewError(4000))
+		return
+	}
+	val := input.GetString("val", "")
+	if val == "" {
+		receiver.FailReturn(global.NewError(4000))
+		return
+	}
+	var cacheKey string
+	switch cacheType {
+	case "userInfo":
+		{
+			userId, _ := strconv.Atoi(val)
+			cacheKey = cache.GetCacheKey(cache.UserInfo, userId)
+			break
+		}
+	case "userLevel":
+		{
+			println(val)
+			arr := strings.Split(val, ",")
+			if len(arr) < 2 {
+				receiver.FailReturn(global.NewError(4000))
+				return
+			}
+			level, _ := strconv.Atoi(arr[0])
+			userId, _ := strconv.Atoi(arr[1])
+			cacheKey = cache.GetCacheKey(cache.UserLevel, userId, level)
+			break
+		}
+	case "configKey":
+		{
+			cacheKey = cache.GetCacheKey(cache.ConfigKeyCache, val)
+			break
+		}
+	}
+	data := global.Cache.Get(cacheKey)
+	receiver.SuccReturn(data)
 	return
 }
