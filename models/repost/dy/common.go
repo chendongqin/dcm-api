@@ -47,3 +47,10 @@ type DyIntCate struct {
 	Num     int      `json:"num"`
 	SonCate []DyCate `json:"son_cate"`
 }
+
+type AppVersion struct {
+	Version string `json:"version"`
+	Info    string `json:"info"`
+	Force   int    `json:"force"`
+	Url     string `json:"url"`
+}

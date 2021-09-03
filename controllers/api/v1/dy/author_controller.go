@@ -687,19 +687,35 @@ func (receiver *AuthorController) AuthorFansAnalyse() {
 			data["province"][k].DistributionPer = float64(v.DistributionValue) / float64(countPro)
 		}
 	}
+	var countHour int64 = 0
+	var countWeek int64 = 0
 	data["active_day"] = []entity.XtDistributionsList{}
 	for _, v := range authorData.HourCreateTimeNum {
+		value := utils.ToInt64(v.HourCreateTimeNum)
+		countHour += value
 		data["active_day"] = append(data["active_day"], entity.XtDistributionsList{
 			DistributionKey:   v.HourCreateTime,
-			DistributionValue: utils.ToInt64(v.HourCreateTimeNum),
+			DistributionValue: value,
 		})
 	}
 	data["active_week"] = []entity.XtDistributionsList{}
 	for _, v := range authorData.WeekCreateTimeNum {
+		value := utils.ToInt64(v.WeekCreateTimeNum)
+		countWeek += value
 		data["active_week"] = append(data["active_week"], entity.XtDistributionsList{
 			DistributionKey:   v.WeekCreateTime,
 			DistributionValue: utils.ToInt64(v.WeekCreateTimeNum),
 		})
+	}
+	if countHour > 0 {
+		for k, v := range data["active_day"] {
+			data["active_day"][k].DistributionPer = float64(v.DistributionValue) / float64(countHour)
+		}
+	}
+	if countWeek > 0 {
+		for k, v := range data["active_week"] {
+			data["active_week"][k].DistributionPer = float64(v.DistributionValue) / float64(countWeek)
+		}
 	}
 	receiver.SuccReturn(data)
 	return
