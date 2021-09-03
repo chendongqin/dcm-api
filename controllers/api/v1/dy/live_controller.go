@@ -417,14 +417,15 @@ func (receiver *LiveController) LiveProductList() {
 	}
 	countList := make([]dy2.LiveRoomProductCount, 0)
 	if len(list) > 0 {
-		productIds := make([]string, 0)
-		for _, v := range list {
-			productIds = append(productIds, v.ProductID)
-		}
 		liveBusiness := business.NewLiveBusiness()
 		//curMap := liveBusiness.RoomCurProductByIds(roomId, productIds)
 		//pmtMap := liveBusiness.RoomPmtProductByIds(roomId, productIds)
 		for _, v := range list {
+			curCount, pmtStatus, pv, err1 := liveBusiness.RoomCurAndPmtProductById(roomId, v.ProductID)
+			v.Pv = pv
+			if pv > 0 {
+				v.BuyRate = v.PredictSales / float64(pv)
+			}
 			item := dy2.LiveRoomProductCount{
 				ProductInfo: v,
 				ProductStartSale: dy2.RoomProductSaleChart{
@@ -436,7 +437,6 @@ func (receiver *LiveController) LiveProductList() {
 					Sales:     []int64{},
 				},
 			}
-			curCount, pmtStatus, err1 := liveBusiness.RoomCurAndPmtProductById(roomId, v.ProductID)
 			if err1 == nil {
 				for _, s1 := range pmtStatus {
 					item.ProductStartSale.Timestamp = append(item.ProductStartSale.Timestamp, s1.StartTime)
@@ -698,12 +698,13 @@ func (receiver *LiveController) LivingProduct() {
 		}
 		list[k].Cover = dyimg.Product(v.Cover)
 		list[k].PredictSales = math.Floor(v.PredictSales)
-		if v.Pv > 0 {
-			list[k].BuyRate = v.PredictSales / float64(v.Pv)
-		}
 		list[k].CurList = []dy2.LiveCurProduct{}
-		curCount, pmtStatus, err := liveBusiness.RoomCurAndPmtProductById(roomId, v.ProductID)
+		curCount, pmtStatus, pv, err := liveBusiness.RoomCurAndPmtProductById(roomId, v.ProductID)
 		if err == nil {
+			v.Pv = pv
+			if v.Pv > 0 {
+				list[k].BuyRate = v.PredictSales / float64(v.Pv)
+			}
 			list[k].CurSecond = curCount.CurSecond
 			pmtStatusLen := len(pmtStatus)
 			if pmtStatusLen > 0 {
