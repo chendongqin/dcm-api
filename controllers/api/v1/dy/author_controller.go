@@ -16,6 +16,7 @@ import (
 	jsoniter "github.com/json-iterator/go"
 	"math"
 	"sort"
+	"strings"
 	"time"
 )
 
@@ -132,9 +133,16 @@ func (receiver *AuthorController) BaseSearch() {
 		return
 	}
 	authorId := ""
+	if strings.Index(keyword, "http://") > 0 || strings.Index(keyword, "https://") > 0 {
+		keyword = strings.Replace(keyword, "在抖音，记录美好生活！ ", "", 1)
+	}
 	if utils.CheckType(keyword, "url") {
 		shortUrl, _ := business.ParseDyShortUrl(keyword)
-		authorId = utils.ParseDyAuthorUrl(shortUrl)
+		if shortUrl == "" {
+			receiver.FailReturn(global.NewError(4000))
+			return
+		}
+		authorId = utils.ParseDyAuthorUrl(shortUrl) // 获取authorId
 		keyword = ""
 	} else {
 		keyword = utils.MatchDouyinNewText(keyword)
