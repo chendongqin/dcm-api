@@ -151,7 +151,7 @@ func (receiver *InternalController) ClearCache() {
 			break
 		}
 	}
-	data := global.Cache.Delete(cacheKey)
-	receiver.SuccReturn(data)
+	global.Cache.Delete(cacheKey)
+	receiver.SuccReturn(nil)
 	return
 }
