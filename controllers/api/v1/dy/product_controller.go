@@ -312,7 +312,10 @@ func (receiver *ProductController) ProductBase() {
 	if shopName == "" {
 		shopName = productInfo.TbNick
 	}
-	label := brandInfo.DcmLevelFirst
+	label := productInfo.DcmLevelFirst
+	if productInfo.PlatformLabel == "小店" {
+		label = brandInfo.DcmLevelFirst
+	}
 	if label == "" {
 		label = "其他"
 	}
@@ -484,19 +487,23 @@ func (receiver *ProductController) ProductLiveRoomList() {
 		liveBusiness := business.NewLiveBusiness()
 		authorBusiness := business.NewAuthorBusiness()
 		curMap := map[string]dy2.LiveCurProductCount{}
+		pvMap := map[string]int64{}
 		pmtMap := map[string][]dy2.LiveRoomProductSaleStatus{}
 		curChan := make(chan map[string]dy2.LiveCurProductCount, 0)
 		pmtChan := make(chan map[string][]dy2.LiveRoomProductSaleStatus, 0)
 		authorChan := make(chan map[string]entity.DyAuthorData, 0)
+		pvChan := make(chan map[string]int64, 0)
 		authorMap := map[string]entity.DyAuthorData{}
 		for _, v := range list {
-			go func(curCh chan map[string]dy2.LiveCurProductCount, pmtCh chan map[string][]dy2.LiveRoomProductSaleStatus, authorCh chan map[string]entity.DyAuthorData, roomId, productId, authorId string) {
-				curCount, pmtStatus, err1 := liveBusiness.RoomCurAndPmtProductById(roomId, productId)
+			go func(curCh chan map[string]dy2.LiveCurProductCount, pmtCh chan map[string][]dy2.LiveRoomProductSaleStatus, authorCh chan map[string]entity.DyAuthorData, pvChan chan map[string]int64, roomId, productId, authorId string) {
+				curCount, pmtStatus, pv, err1 := liveBusiness.RoomCurAndPmtProductById(roomId, productId)
 				authorData, _ := authorBusiness.HbaseGetAuthor(authorId)
 				authorMapTmp := map[string]entity.DyAuthorData{}
+				pvMapTmp := map[string]int64{}
 				roomProductCurMap := map[string]dy2.LiveCurProductCount{}
 				roomProductPmtMap := map[string][]dy2.LiveRoomProductSaleStatus{}
 				if err1 == nil {
+					pvMapTmp[roomId] = pv
 					roomProductCurMap[roomId] = curCount
 					roomProductPmtMap[roomId] = pmtStatus
 				}
@@ -504,7 +511,8 @@ func (receiver *ProductController) ProductLiveRoomList() {
 				curCh <- roomProductCurMap
 				pmtCh <- roomProductPmtMap
 				authorChan <- authorMapTmp
-			}(curChan, pmtChan, authorChan, v.RoomID, v.ProductID, v.AuthorID)
+				pvChan <- pvMapTmp
+			}(curChan, pmtChan, authorChan, pvChan, v.RoomID, v.ProductID, v.AuthorID)
 		}
 		for i := 0; i < len(list); i++ {
 			cur, ok := <-curChan
@@ -533,6 +541,15 @@ func (receiver *ProductController) ProductLiveRoomList() {
 				authorMap[k] = v
 			}
 		}
+		for i := 0; i < len(list); i++ {
+			pMap, ok := <-pvChan
+			if !ok {
+				break
+			}
+			for k, v := range pMap {
+				pvMap[k] = v
+			}
+		}
 		for _, v := range list {
 			if author, ok := authorMap[v.AuthorID]; ok {
 				v.AuthorRoomID = author.RoomID
@@ -541,6 +558,12 @@ func (receiver *ProductController) ProductLiveRoomList() {
 			if v.RoomCover == "" {
 				liveInfo, _ := hbase.GetLiveInfo(v.RoomID)
 				v.RoomCover = dyimg.Fix(liveInfo.Cover)
+			}
+			if pv, ok := pvMap[v.RoomID]; ok {
+				v.Pv = pv
+				if pv > 0 {
+					v.BuyRate = v.PredictSales / float64(pv)
+				}
 			}
 			item := dy2.LiveRoomProductCount{
 				ProductInfo: v,
@@ -781,7 +804,7 @@ func (receiver *ProductController) ProductRoomsRangeDate() {
 	page := receiver.GetPage("page")
 	pageSize := receiver.GetPageSize("page_size", 5, 10)
 	authorBusiness := business.NewAuthorBusiness()
-	list, total, comErr := authorBusiness.GetAuthorProductRooms("", productId, startTime, endTime, page, pageSize, "predict_gmv", "desc")
+	list, total, comErr := authorBusiness.GetAuthorProductRooms("", productId, startTime, endTime, page, pageSize, "live_create_time", "desc")
 	if comErr != nil {
 		receiver.FailReturn(comErr)
 		return
@@ -809,7 +832,7 @@ func (receiver *ProductController) ProductAwemeSalesTrend() {
 	chartList := make([]dy2.ProductSalesTrendChart, 0)
 	dateChart := make([]int64, 0)
 	dateChartTmp := make([]string, 0)
-	for k, _ := range hbaseDataList {
+	for k := range hbaseDataList {
 		dateChartTmp = append(dateChartTmp, k)
 	}
 	sort.Strings(dateChartTmp)

@@ -38,6 +38,7 @@ func GetAuthor(authorId string) (data entity.DyAuthor, comErr global.CommonError
 	if data.Data.UniqueID == "0" || data.Data.UniqueID == "" {
 		data.Data.UniqueID = data.Data.ShortID
 	}
+	data.Data.CrawlTime = data.CrawlTime
 	return
 }
 

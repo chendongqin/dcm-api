@@ -209,9 +209,9 @@ func (receiver *EsLiveBusiness) RoomProductByRoomId(roomInfo entity.DyLiveInfo, 
 		//} else {
 		list[k].PredictSales = math.Floor(v.PredictSales)
 		//}
-		if v.Pv > 0 {
-			list[k].BuyRate = v.PredictSales / float64(v.Pv)
-		}
+		//if v.Pv > 0 {
+		//	list[k].BuyRate = v.PredictSales / float64(v.Pv)
+		//}
 	}
 	total = esMultiQuery.Count
 	return
@@ -512,9 +512,9 @@ func (receiver *EsLiveBusiness) SearchProductRooms(productId, keyword, sortStr, 
 		if v.IsReturn == 1 && v.StartTime == v.ShelfTime {
 			list[k].IsReturn = 0
 		}
-		if v.Pv > 0 {
-			list[k].BuyRate = v.PredictSales / float64(v.Pv)
-		}
+		//if v.Pv > 0 {
+		//	list[k].BuyRate = v.PredictSales / float64(v.Pv)
+		//}
 	}
 	total = esMultiQuery.Count
 	return
@@ -632,13 +632,18 @@ func (receiver *EsLiveBusiness) SearchLiveRooms(keyword, category, firstName, se
 
 func (receiver *EsLiveBusiness) KeywordSearch(keyword string) (list []es.EsDyLiveInfo) {
 	esQuery, esMultiQuery := elasticsearch.NewElasticQueryGroup()
-	esTable := GetESTableByTime(es.DyLiveInfoBaseTable, time.Now().AddDate(0, 0, -89), time.Now())
-	esQuery.SetMultiMatch([]string{"display_id", "short_id", "title^10", "nickname", "product_title"}, keyword)
+	startTime := time.Now().AddDate(0, 0, -89)
+	esTable := GetESTableByTime(es.DyLiveInfoBaseTable, startTime, time.Now())
+	esQuery.SetMultiMatch([]string{"display_id.keyword", "short_id.keyword", "title.keyword", "nickname.keyword", "product_title.keyword"}, keyword)
+	esQuery.SetRange("create_time", map[string]interface{}{
+		"gte": startTime.Unix(),
+		"lt":  time.Now().Unix(),
+	})
 	results := esMultiQuery.
 		SetTable(esTable).
 		SetCache(60).
 		AddMust(esQuery.Condition).
-		SetOrderBy(elasticsearch.NewElasticOrder().Add("create_time", "desc").Order).
+		SetOrderBy(elasticsearch.NewElasticOrder().Add("max_user_count", "desc").Order).
 		SetLimit(0, 5).
 		SetMultiQuery().
 		Query()

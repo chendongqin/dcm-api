@@ -247,10 +247,15 @@ func (receiver *AwemeController) AwemeProductAnalyseChart() {
 	var allSales int64 = 0
 	var productMap = map[string]string{}
 	dateMap := map[string]dy2.DyAwemeProductSale{}
+	dateProductsMap := map[string]map[string]string{}
 	for _, v := range hbaseList {
 		if _, ok := productMap[v.ProductId]; !ok {
 			productMap[v.ProductId] = v.ProductId
 		}
+		if _, ok := dateProductsMap[v.DistDate]; !ok {
+			dateProductsMap[v.DistDate] = map[string]string{}
+		}
+		dateProductsMap[v.DistDate][v.ProductId] = v.ProductId
 		allGmv += v.AwemeGmv
 		allSales += v.Sales
 		if s, ok := dateMap[v.DistDate]; ok {
@@ -264,12 +269,27 @@ func (receiver *AwemeController) AwemeProductAnalyseChart() {
 			}
 		}
 	}
-	list := make([]dy2.NameValueInt64Chart, 0)
+	infoMap := map[string]entity.DyProduct{}
+	for k := range productMap {
+		productInfo, _ := hbase.GetProductInfo(k)
+		infoMap[k] = productInfo
+	}
+	list := make([]dy2.NameValueInt64ChartWithData, 0)
 	for k, v := range dateMap {
+		data := make([]string, 0)
+		if p, ok := dateProductsMap[k]; ok {
+			for k1 := range p {
+				if _, ok1 := infoMap[k1]; ok1 {
+					title := infoMap[k1].Title
+					data = append(data, title)
+				}
+			}
+		}
 		valueTime, _ := time.ParseInLocation("20060102", k, time.Local)
-		list = append(list, dy2.NameValueInt64Chart{
+		list = append(list, dy2.NameValueInt64ChartWithData{
 			Name:  valueTime.Format("01/02"),
 			Value: v.Sales,
+			Data:  data,
 		})
 	}
 	sort.Slice(list, func(i, j int) bool {

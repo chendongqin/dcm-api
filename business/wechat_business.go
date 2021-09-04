@@ -5,6 +5,7 @@ import (
 	"dongchamao/models/dcm"
 	"github.com/pkg/errors"
 	"github.com/silenceper/wechat/v2/officialaccount/basic"
+	"github.com/silenceper/wechat/v2/officialaccount/message"
 	"github.com/silenceper/wechat/v2/officialaccount/user"
 	"time"
 )
@@ -36,6 +37,36 @@ func (receiver *WechatBusiness) GetInfoByOpenId(openId string) (*user.Info, erro
 	} else {
 		return userWechat, nil
 	}
+}
+
+//获取用户微信基本信息
+func (receiver *WechatBusiness) SendMsg(openId, templateID, url string, Data map[string]*message.TemplateDataItem) error {
+	//map[string]*message.TemplateDataItem{
+	//	"first": {
+	//		Value: "如故，欢迎您~",
+	//		Color: "",
+	//	},
+	//	"keyword1": {
+	//		Value: time.Now().Format("2006-01-02 15:04:05"),
+	//		Color: "",
+	//	},
+	//	"keyword2": {
+	//		Value: "127.0.0.1",
+	//		Color: "",
+	//	},
+	//	"remark": {
+	//		Value: "如有非本人操作，请及时修改密码~",
+	//		Color: "red",
+	//	},
+	//},
+	msg := &message.TemplateMessage{
+		ToUser:     openId,
+		TemplateID: templateID, // 必须, 模版ID
+		URL:        url,
+		Data:       Data,
+	}
+	_, err := global.WxOfficial.GetTemplate().Send(msg)
+	return err
 }
 
 func (receiver *WechatBusiness) SubscribeOfficial(userWechat *user.Info) error {
