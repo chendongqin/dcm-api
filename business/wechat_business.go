@@ -3,8 +3,11 @@ package business
 import (
 	"dongchamao/global"
 	"dongchamao/models/dcm"
+	jsoniter "github.com/json-iterator/go"
 	"github.com/pkg/errors"
 	"github.com/silenceper/wechat/v2/officialaccount/basic"
+	"github.com/silenceper/wechat/v2/officialaccount/material"
+	"github.com/silenceper/wechat/v2/officialaccount/menu"
 	"github.com/silenceper/wechat/v2/officialaccount/message"
 	"github.com/silenceper/wechat/v2/officialaccount/user"
 	"time"
@@ -169,3 +172,27 @@ func (receiver *WechatBusiness) SubscribeApp(userWechat *user.Info) error {
 }
 
 func (receiver *WechatBusiness) BindWechat(userId int64, unionId string) {}
+
+//菜单处理
+func (receiver *WechatBusiness) GetMenus() (resMenu menu.ResMenu, err error) {
+	return global.WxOfficial.GetMenu().GetMenu()
+}
+
+func (receiver *WechatBusiness) UpdateMenus(menuMap map[string]interface{}) error {
+	menuByte, _ := jsoniter.Marshal(menuMap)
+	return global.WxOfficial.GetMenu().SetMenuByJSON(string(menuByte))
+}
+
+//素材处理
+func (receiver *WechatBusiness) GetMediaList(mediaType material.PermanentMaterialType, from, to int64) material.ArticleList {
+	res, _ := global.WxOfficial.GetMaterial().BatchGetMaterial(mediaType, from, to)
+	return res
+}
+
+func (receiver *WechatBusiness) AddMedia(mediaType material.MediaType, filename string) (string, string, error) {
+	return global.WxOfficial.GetMaterial().AddMaterial(mediaType, filename)
+}
+
+func (receiver *WechatBusiness) DelMedia(mediaId string) error {
+	return global.WxOfficial.GetMaterial().DeleteMaterial(mediaId)
+}
