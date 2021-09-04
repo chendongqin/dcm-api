@@ -66,6 +66,13 @@ func (receiver *CommonController) Sms() {
 	//	receiver.FailReturn(global.NewError(4211))
 	//	return
 	//}
+	if grantType == "bind_mobile" {
+		exist, _ := dcm.GetBy("username", mobile, new(dcm.DcUser))
+		if exist {
+			receiver.FailReturn(global.NewError(4215))
+			return
+		}
+	}
 	limitMobileKey := cache.GetCacheKey(cache.SmsCodeLimitBySome, grantType, "mobile", mobile)
 	verifyData := global.Cache.Get(limitMobileKey)
 	if verifyData != "" {
