@@ -383,7 +383,6 @@ func (receiver *ProductBusiness) ProductAwemeAuthorAnalysis(productId, keyword, 
 	allList := make([]entity.DyProductAwemeAuthorAnalysis, 0)
 	cacheKey := cache.GetCacheKey(cache.ProductAwemeAuthorAllList, startRowKey, stopRowKey)
 	cacheStr := global.Cache.Get(cacheKey)
-	cacheStr = ""
 	if cacheStr != "" {
 		cacheStr = utils.DeserializeData(cacheStr)
 		_ = jsoniter.Unmarshal([]byte(cacheStr), &allList)
@@ -427,7 +426,6 @@ func (receiver *ProductBusiness) ProductAwemeAuthorAnalysis(productId, keyword, 
 	cacheAuthorKey := cache.GetCacheKey(cache.ProductAwemeAuthorAllMap, startRowKey, stopRowKey)
 	cacheAuthorStr := global.Cache.Get(cacheAuthorKey)
 	authorDataMap := map[string]entity.DyAuthor{}
-	cacheAuthorStr = ""
 	if cacheAuthorStr != "" {
 		cacheAuthorStr = utils.DeserializeData(cacheAuthorStr)
 		_ = jsoniter.Unmarshal([]byte(cacheAuthorStr), &authorDataMap)
