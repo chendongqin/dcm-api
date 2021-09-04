@@ -561,7 +561,9 @@ func (receiver *ProductController) ProductLiveRoomList() {
 			}
 			if pv, ok := pvMap[v.RoomID]; ok {
 				v.Pv = pv
-				v.BuyRate = v.PredictSales / float64(pv)
+				if pv > 0 {
+					v.BuyRate = v.PredictSales / float64(pv)
+				}
 			}
 			item := dy2.LiveRoomProductCount{
 				ProductInfo: v,

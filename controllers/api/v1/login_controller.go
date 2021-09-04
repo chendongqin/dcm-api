@@ -39,7 +39,7 @@ func (receiver *LoginController) Login() {
 	} else if grantType == "sms" {
 		username := InputData.GetString("username", "")
 		code := InputData.GetString("code", "")
-		abstractId := InputData.GetString("unionid", "")
+		abstractId := business.IdDecrypt(InputData.GetString("unionid", ""))
 		user, authToken, expTime, isNew, comErr = userBusiness.SmsLogin(username, code, abstractId, appId)
 		if isNew == 0 && user.SetPassword == 0 {
 			setPassword = 1
