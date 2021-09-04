@@ -651,6 +651,64 @@ func (receiver *ProductController) ProductLiveAuthorAnalysisCount() {
 	return
 }
 
+func (receiver *ProductController) ProductAwemeAuthorAnalysis() {
+	productId := business.IdDecrypt(receiver.Ctx.Input.Param(":product_id"))
+	startTime, endTime, comErr := receiver.GetRangeDate()
+	if comErr != nil {
+		receiver.FailReturn(comErr)
+		return
+	}
+	keyword := receiver.GetString("keyword", "")
+	tag := receiver.GetString("tag", "")
+	minFollow, _ := receiver.GetInt64("min_follow", 0)
+	maxFollow, _ := receiver.GetInt64("max_follow", 0)
+	scoreType, _ := receiver.GetInt("score_type", 5)
+	page := receiver.GetPage("page")
+	pageSize := receiver.GetPageSize("page_size", 10, 50)
+	productBusiness := business.NewProductBusiness()
+	list, total, comErr := productBusiness.ProductAwemeAuthorAnalysis(productId, keyword, tag, startTime, endTime, minFollow, maxFollow, scoreType, page, pageSize)
+	if comErr != nil {
+		receiver.FailReturn(comErr)
+		return
+	}
+	for k, v := range list {
+		authorInfo, _ := hbase.GetAuthor(v.AuthorId)
+		list[k].AuthorId = business.IdEncrypt(v.AuthorId)
+		list[k].ProductId = business.IdEncrypt(v.ProductId)
+		list[k].Nickname = authorInfo.Data.Nickname
+	}
+	maxTotal := total
+	if total > business.EsMaxShowNum {
+		maxTotal = business.EsMaxShowNum
+	}
+	receiver.SuccReturn(map[string]interface{}{
+		"list":           list,
+		"total":          total,
+		"max_show_total": maxTotal,
+	})
+	return
+}
+
+func (receiver *ProductController) ProductAwemeAuthorAnalysisCount() {
+	productId := business.IdDecrypt(receiver.Ctx.Input.Param(":product_id"))
+	startTime, endTime, comErr := receiver.GetRangeDate()
+	if comErr != nil {
+		receiver.FailReturn(comErr)
+		return
+	}
+	keyword := receiver.GetString("keyword", "")
+	productBusiness := business.NewProductBusiness()
+	countList, comErr := productBusiness.ProductAwemeAuthorAnalysisCount(productId, keyword, startTime, endTime)
+	if comErr != nil {
+		receiver.FailReturn(comErr)
+		return
+	}
+	receiver.SuccReturn(map[string]interface{}{
+		"list": countList,
+	})
+	return
+}
+
 func (receiver *ProductController) ProductAuthorLiveRooms() {
 	productId := business.IdDecrypt(receiver.Ctx.Input.Param(":product_id"))
 	authorId := business.IdDecrypt(receiver.Ctx.Input.Param(":author_id"))
@@ -672,6 +730,34 @@ func (receiver *ProductController) ProductAuthorLiveRooms() {
 			endLiveTime = time.Now().Unix()
 		}
 		list[k].LiveSecond = endLiveTime - v.StartTs
+	}
+	maxTotal := total
+	if total > business.EsMaxShowNum {
+		maxTotal = business.EsMaxShowNum
+	}
+	receiver.SuccReturn(map[string]interface{}{
+		"list":           list,
+		"total":          total,
+		"max_show_total": maxTotal,
+	})
+}
+
+func (receiver *ProductController) ProductAuthorAwemes() {
+	productId := business.IdDecrypt(receiver.Ctx.Input.Param(":product_id"))
+	authorId := business.IdDecrypt(receiver.Ctx.Input.Param(":author_id"))
+	startTime, endTime, comErr := receiver.GetRangeDate()
+	if comErr != nil {
+		receiver.FailReturn(comErr)
+		return
+	}
+	page := receiver.GetPage("page")
+	pageSize := receiver.GetPageSize("page_size", 5, 10)
+	sortStr := receiver.GetString("sort", "aweme_gmv")
+	orderBy := receiver.GetString("order_by", "desc")
+	list, total := business.NewProductBusiness().ProductAuthorAwemes(productId, authorId, startTime, endTime, sortStr, orderBy, page, pageSize)
+	for k, v := range list {
+		list[k].AwemeCover = dyimg.Fix(v.AwemeCover)
+		list[k].AwemeId = business.IdEncrypt(v.AwemeId)
 	}
 	maxTotal := total
 	if total > business.EsMaxShowNum {

@@ -134,6 +134,30 @@ func (i *EsProductBusiness) SearchRangeDateList(productId, authorId string, star
 	return
 }
 
+func (i *EsProductBusiness) SearchAwemeRangeDateList(productId, authorId string, startTime, endTime time.Time, page, pageSize int) (list []es.DyProductAwemeAuthorAnalysis, total int, comErr global.CommonError) {
+	esTable := GetESTableByTime(es.DyProductAwemeAuthorAnalysisTable, startTime, endTime)
+	esQuery, esMultiQuery := elasticsearch.NewElasticQueryGroup()
+	esQuery.SetTerm("productId", productId)
+	esQuery.SetRange("createSdf.keyword", map[string]interface{}{
+		"gte": startTime.Format("20060102"),
+		"lte": endTime.Format("20060102"),
+	})
+	if authorId != "" {
+		esQuery.SetTerm("authorId", authorId)
+	}
+	results := esMultiQuery.
+		SetTable(esTable).
+		SetFields("productId", "authorId", "createSdf").
+		AddMust(esQuery.Condition).
+		SetLimit((page-1)*pageSize, pageSize).
+		SetOrderBy(elasticsearch.NewElasticOrder().Add("_id", "desc").Order).
+		SetMultiQuery().
+		Query()
+	utils.MapToStruct(results, &list)
+	total = esMultiQuery.Count
+	return
+}
+
 func (i *EsProductBusiness) SearchRangeDateRowKey(productId, keyword string, startTime, endTime time.Time) (startRow es.DyProductAuthorAnalysis, stopRow es.DyProductAuthorAnalysis, total int, comErr global.CommonError) {
 	esTable := GetESTableByTime(es.DyProductAuthorAnalysisTable, startTime, endTime)
 	esQuery, esMultiQuery := elasticsearch.NewElasticQueryGroup()
