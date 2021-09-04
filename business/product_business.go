@@ -10,6 +10,7 @@ import (
 	"dongchamao/models/entity"
 	"dongchamao/models/repost/dy"
 	"dongchamao/services"
+	"encoding/json"
 	"fmt"
 	jsoniter "github.com/json-iterator/go"
 	"io/ioutil"
@@ -312,6 +313,246 @@ func (receiver *ProductBusiness) ProductAuthorAnalysisCount(productId, keyword s
 			v.ShopTags = "其他"
 		}
 		shopTags := strings.Split(v.ShopTags, "_")
+		for _, s := range shopTags {
+			if _, ok := tagsMap[s]; ok {
+				tagsMap[s] += 1
+			} else {
+				tagsMap[s] = 1
+			}
+		}
+		if _, ok := levelMap[v.Level]; ok {
+			levelMap[v.Level] += 1
+		} else {
+			levelMap[v.Level] = 1
+		}
+		authorMap[v.AuthorId] = v.AuthorId
+	}
+	otherTags := 0
+	otherLevel := 0
+	for k, v := range tagsMap {
+		if k == "其他" {
+			otherTags = v
+			continue
+		}
+		countList.Tags = append(countList.Tags, dy.DyCate{
+			Name: k,
+			Num:  v,
+		})
+	}
+	if otherTags > 0 {
+		countList.Tags = append(countList.Tags, dy.DyCate{
+			Name: "其他",
+			Num:  otherTags,
+		})
+	}
+	for k, v := range levelMap {
+		if k == 0 {
+			otherLevel = v
+			continue
+		}
+		countList.Level = append(countList.Level, dy.DyIntCate{
+			Name: k,
+			Num:  v,
+		})
+	}
+	if otherLevel > 0 {
+		countList.Level = append(countList.Level, dy.DyIntCate{
+			Name: 0,
+			Num:  otherLevel,
+		})
+	}
+	if keyword == "" && (len(countList.Tags) > 0 || len(countList.Level) > 0) {
+		countJson := utils.SerializeData(countList)
+		_ = global.Cache.Set(cKey, countJson, 300)
+	}
+	return
+}
+
+func (receiver *ProductBusiness) ProductAwemeAuthorAnalysis(productId, keyword, tag string, startTime, endTime time.Time, minFollow, maxFollow int64, scoreType, page, pageSize int) (list []entity.DyProductAwemeAuthorAnalysis, total int, comErr global.CommonError) {
+	list = []entity.DyProductAwemeAuthorAnalysis{}
+	esProductBusiness := es.NewEsProductBusiness()
+	startRow, stopRow, total, comErr := esProductBusiness.SearchRangeDateRowKey(productId, keyword, startTime, endTime)
+	if comErr != nil {
+		return
+	}
+	if startRow.ProductId == "" || stopRow.ProductId == "" {
+		return
+	}
+	startRowKey := startRow.ProductId + "_" + startRow.CreateSdf + "_" + startRow.AuthorId
+	stopRowKey := stopRow.ProductId + "_" + stopRow.CreateSdf + "_" + stopRow.AuthorId
+	allList := make([]entity.DyProductAwemeAuthorAnalysis, 0)
+	cacheKey := cache.GetCacheKey(cache.ProductAwemeAuthorAllList, startRowKey, stopRowKey)
+	cacheStr := global.Cache.Get(cacheKey)
+	if cacheStr != "" {
+		cacheStr = utils.DeserializeData(cacheStr)
+		_ = jsoniter.Unmarshal([]byte(cacheStr), &allList)
+	} else {
+		allList, _ = hbase.GetProductAwemeAuthorAnalysisRange(startRowKey, stopRowKey)
+		lastRow, err := hbase.GetProductAwemeAuthorAnalysis(stopRowKey)
+		if err == nil {
+			allList = append(allList, lastRow)
+		}
+		_ = global.Cache.Set(cacheKey, utils.SerializeData(allList), 300)
+	}
+	authorMap := map[string]entity.DyProductAwemeAuthorAnalysis{}
+	authorIds := make([]string, 0)
+	for _, v := range allList {
+		if scoreType != 5 && scoreType != v.Level {
+			continue
+		}
+		if tag == "其他" {
+			if v.FirstName != "" && strings.Index(v.FirstName, tag) < 0 {
+				continue
+			}
+		} else {
+			if tag != "" {
+				if strings.Index(v.FirstName, tag) < 0 {
+					continue
+				}
+			}
+		}
+		if keyword != "" {
+			if strings.Index(v.Nickname, keyword) < 0 && v.DisplayId != keyword && v.ShortId != keyword {
+				continue
+			}
+		}
+		if d, ok := authorMap[v.AuthorId]; ok {
+			authorMap[v.AuthorId] = d
+		} else {
+			authorMap[v.AuthorId] = v
+			authorIds = append(authorIds, v.AuthorId)
+		}
+	}
+	cacheAuthorKey := cache.GetCacheKey(cache.ProductAwemeAuthorAllMap, startRowKey, stopRowKey)
+	cacheAuthorStr := global.Cache.Get(cacheAuthorKey)
+	authorDataMap := map[string]entity.DyAuthor{}
+	if cacheAuthorStr != "" {
+		cacheAuthorStr = utils.DeserializeData(cacheAuthorStr)
+		_ = jsoniter.Unmarshal([]byte(cacheAuthorStr), &authorDataMap)
+	} else {
+		authorDataMap = NewAuthorBusiness().GetAuthorFormPool(authorIds, 10)
+		if tag == "" && minFollow == 0 && maxFollow == 0 && scoreType == 5 {
+			_ = global.Cache.Set(cacheAuthorKey, utils.SerializeData(authorDataMap), 300)
+		}
+	}
+	for _, v := range authorMap {
+		if a, ok := authorDataMap[v.AuthorId]; ok {
+			if v.DisplayId == "" {
+				v.DisplayId = a.Data.UniqueID
+				v.ShortId = a.Data.ShortID
+			}
+		} else {
+			a, _ := hbase.GetAuthor(v.AuthorId)
+			if v.DisplayId == "" {
+				v.DisplayId = a.Data.UniqueID
+				v.ShortId = a.Data.ShortID
+			}
+		}
+		list = append(list, v)
+	}
+	sort.Slice(list, func(i, j int) bool {
+		return list[i].Sales > list[j].Sales
+	})
+	total = len(list)
+	start := (page - 1) * pageSize
+	end := start + pageSize
+	if total < end {
+		end = total
+	}
+	list = list[start:end]
+	return
+}
+
+func (receiver *ProductBusiness) ProductAuthorAwemes(productId, authorId string, startTime, endTime time.Time, sortStr, orderBy string, page, pageSize int) (list []entity.DyProductAuthorRelatedAweme, total int) {
+	esProductBusiness := es.NewEsProductBusiness()
+	allList, _, _ := esProductBusiness.SearchAwemeRangeDateList(productId, authorId, startTime, endTime, 1, 1000)
+	list = []entity.DyProductAuthorRelatedAweme{}
+	for _, v := range allList {
+		rowKey := v.ProductId + "_" + v.CreateSdf + "_" + v.AuthorId
+		data, err := hbase.GetProductAwemeAuthorAnalysis(rowKey)
+		var awemeList []entity.DyProductAuthorRelatedAweme
+		json.Unmarshal([]byte(data.RelatedAwemes), &awemeList)
+		if err == nil {
+			list = append(list, awemeList...)
+		}
+	}
+	sort.Slice(list, func(i, j int) bool {
+		switch sortStr {
+		case "sales":
+			if orderBy == "desc" {
+				return list[i].Sales > list[j].Sales
+			} else {
+				return list[j].Sales > list[i].Sales
+			}
+		case "aweme_gmv":
+			if orderBy == "desc" {
+				return list[i].AwemeGmv > list[j].AwemeGmv
+			} else {
+				return list[j].AwemeGmv > list[i].AwemeGmv
+			}
+		default:
+			if orderBy == "desc" {
+				return list[i].AwemeId > list[j].AwemeId
+			} else {
+				return list[j].AwemeId > list[i].AwemeId
+			}
+		}
+	})
+	total = len(list)
+	start := (page - 1) * pageSize
+	end := start + pageSize
+	if total < end {
+		end = total
+	}
+	list = list[start:end]
+	return
+}
+
+func (receiver *ProductBusiness) ProductAwemeAuthorAnalysisCount(productId, keyword string, startTime, endTime time.Time) (countList dy.DyProductAwemeCount, comErr global.CommonError) {
+	countList = dy.DyProductAwemeCount{
+		Tags:  []dy.DyCate{},
+		Level: []dy.DyIntCate{},
+	}
+	cKey := cache.GetCacheKey(cache.ProductAwemeAuthorCount, productId, startTime.Format("20060102"), endTime.Format("20060102"))
+	if keyword == "" {
+		countJson := global.Cache.Get(cKey)
+		if countJson != "" {
+			countJson = utils.DeserializeData(countJson)
+			_ = jsoniter.Unmarshal([]byte(countJson), &countList)
+			return
+		}
+	}
+	esProductBusiness := es.NewEsProductBusiness()
+	startRow, stopRow, _, comErr := esProductBusiness.SearchRangeDateRowKey(productId, keyword, startTime, endTime)
+	if startRow.ProductId == "" || stopRow.ProductId == "" {
+		return
+	}
+	if comErr != nil {
+		return
+	}
+	startRowKey := startRow.ProductId + "_" + startRow.CreateSdf + "_" + startRow.AuthorId
+	stopRowKey := stopRow.ProductId + "_" + stopRow.CreateSdf + "_" + stopRow.AuthorId
+	allList, _ := hbase.GetProductAwemeAuthorAnalysisRange(startRowKey, stopRowKey)
+	lastRow, err := hbase.GetProductAwemeAuthorAnalysis(stopRowKey)
+	if err == nil {
+		allList = append(allList, lastRow)
+	}
+	tagsMap := map[string]int{}
+	levelMap := map[int]int{}
+	authorMap := map[string]string{}
+	for _, v := range allList {
+		if _, ok := authorMap[v.AuthorId]; ok {
+			continue
+		}
+		if keyword != "" {
+			if strings.Index(v.Nickname, keyword) < 0 && v.DisplayId != keyword && v.ShortId != keyword {
+				continue
+			}
+		}
+		if v.FirstName == "" || v.FirstName == "null" {
+			v.FirstName = "其他"
+		}
+		shopTags := strings.Split(v.FirstName, "_")
 		for _, s := range shopTags {
 			if _, ok := tagsMap[s]; ok {
 				tagsMap[s] += 1

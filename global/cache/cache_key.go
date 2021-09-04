@@ -28,13 +28,16 @@ const (
 	LiveRoomProductCount KeyName = "dcm:live:room:product:count:%s"
 	ProductAuthorCount   KeyName = "dcm:product:author:%s:%s:%s"
 	//商品达人数据缓存
-	ProductAuthorAllList     KeyName = "dcm:product:author:row:%s:%s"
-	ProductAuthorAllMap      KeyName = "dcm:product:author:info:%s:%s"
-	AuthorProductAllList     KeyName = "dcm:author:product:row:%s:%s"
-	AuthorViewProductAllList KeyName = "dcm:author:view:product:%s:%s:%s"
-	RedAuthorRooms           KeyName = "dcm:red:author:room:%s"
-	RedAuthorLivingRooms     KeyName = "dcm:red:author:living:room"
-	RedAuthorMapCache        KeyName = "dcm:red:author:map:%s"
+	ProductAuthorAllList      KeyName = "dcm:product:author:row:%s:%s"
+	ProductAuthorAllMap       KeyName = "dcm:product:author:info:%s:%s"
+	ProductAwemeAuthorCount   KeyName = "dcm:product:aweme:author:%s:%s:%s"
+	ProductAwemeAuthorAllList KeyName = "dcm:product:aweme:author:row:%s:%s"
+	ProductAwemeAuthorAllMap  KeyName = "dcm:product:aweme:author:info:%s:%s"
+	AuthorProductAllList      KeyName = "dcm:author:product:row:%s:%s"
+	AuthorViewProductAllList  KeyName = "dcm:author:view:product:%s:%s:%s"
+	RedAuthorRooms            KeyName = "dcm:red:author:room:%s"
+	RedAuthorLivingRooms      KeyName = "dcm:red:author:living:room"
+	RedAuthorMapCache         KeyName = "dcm:red:author:map:%s"
 	//视频商品列表
 	AwemeProductByDate KeyName = "dcm:aweme:product:%s:%s:%s"
 	//榜单数据缓存
