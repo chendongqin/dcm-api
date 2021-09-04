@@ -10,7 +10,6 @@ import (
 	"dongchamao/models/entity"
 	"dongchamao/models/repost/dy"
 	"dongchamao/services"
-	"encoding/json"
 	"fmt"
 	jsoniter "github.com/json-iterator/go"
 	"io/ioutil"
@@ -136,7 +135,9 @@ func (receiver *ProductBusiness) ProductAuthorAnalysis(productId, keyword, tag s
 		cacheStr = utils.DeserializeData(cacheStr)
 		_ = jsoniter.Unmarshal([]byte(cacheStr), &allList)
 	} else {
-		allList, _ = hbase.GetProductAuthorAnalysisRange(startRowKey, stopRowKey)
+		if startRowKey != stopRowKey {
+			allList, _ = hbase.GetProductAuthorAnalysisRange(startRowKey, stopRowKey)
+		}
 		lastRow, err := hbase.GetProductAuthorAnalysis(stopRowKey)
 		if err == nil {
 			allList = append(allList, lastRow)
@@ -387,7 +388,9 @@ func (receiver *ProductBusiness) ProductAwemeAuthorAnalysis(productId, keyword, 
 		cacheStr = utils.DeserializeData(cacheStr)
 		_ = jsoniter.Unmarshal([]byte(cacheStr), &allList)
 	} else {
-		allList, _ = hbase.GetProductAwemeAuthorAnalysisRange(startRowKey, stopRowKey)
+		if startRowKey != stopRowKey {
+			allList, _ = hbase.GetProductAwemeAuthorAnalysisRange(startRowKey, stopRowKey)
+		}
 		lastRow, err := hbase.GetProductAwemeAuthorAnalysis(stopRowKey)
 		if err == nil {
 			allList = append(allList, lastRow)
@@ -470,10 +473,8 @@ func (receiver *ProductBusiness) ProductAuthorAwemes(productId, authorId string,
 	for _, v := range allList {
 		rowKey := v.ProductId + "_" + v.CreateSdf + "_" + v.AuthorId
 		data, err := hbase.GetProductAwemeAuthorAnalysis(rowKey)
-		var awemeList []entity.DyProductAuthorRelatedAweme
-		json.Unmarshal([]byte(data.RelatedAwemes), &awemeList)
 		if err == nil {
-			list = append(list, awemeList...)
+			list = append(list, data.RelatedAwemes...)
 		}
 	}
 	sort.Slice(list, func(i, j int) bool {

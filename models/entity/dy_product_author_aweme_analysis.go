@@ -13,27 +13,27 @@ var DyProductAwemeAuthorAnalysisMap = HbaseEntity{
 	"second_name":    {String, "second_name"},
 	"avatar":         {String, "avatar"},
 	"follow_count":   {Long, "follow_count"},
-	"related_awemes": {String, "related_awemes"},
+	"related_awemes": {AJson, "related_awemes"},
 	"sales":          {Long, "sales"},
 	"gmv":            {Double, "gmv"},
 }
 
 type DyProductAwemeAuthorAnalysis struct {
-	ProductId     string  `json:"product_id"`
-	AuthorId      string  `json:"author_id"`
-	Nickname      string  `json:"nickname"`
-	CreateSdf     string  `json:"create_sdf"`
-	DisplayId     string  `json:"display_id"`
-	ShortId       string  `json:"short_id"`
-	Score         float64 `json:"score"`
-	Level         int     `json:"level"`
-	FirstName     string  `json:"first_name"`
-	SecondName    string  `json:"second_name"`
-	Avatar        string  `json:"avatar"`
-	FollowCount   float64 `json:"follow_count"`
-	RelatedAwemes string  `json:"related_awemes"`
-	Sales         float64 `json:"sales"`
-	Gmv           float64 `json:"gmv"`
+	ProductId     string                        `json:"product_id"`
+	AuthorId      string                        `json:"author_id"`
+	Nickname      string                        `json:"nickname"`
+	CreateSdf     string                        `json:"create_sdf"`
+	DisplayId     string                        `json:"display_id"`
+	ShortId       string                        `json:"short_id"`
+	Score         float64                       `json:"score"`
+	Level         int                           `json:"level"`
+	FirstName     string                        `json:"first_name"`
+	SecondName    string                        `json:"second_name"`
+	Avatar        string                        `json:"avatar"`
+	FollowCount   float64                       `json:"follow_count"`
+	RelatedAwemes []DyProductAuthorRelatedAweme `json:"related_awemes"`
+	Sales         float64                       `json:"sales"`
+	Gmv           float64                       `json:"gmv"`
 }
 
 type DyProductAuthorRelatedAweme struct {
