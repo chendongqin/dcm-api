@@ -234,11 +234,11 @@ func (receiver *UserBusiness) WechatLogin(unionid, source string, appId int) (us
 			comErr = global.NewError(5000)
 			return
 		}
-	}
-	err = receiver.AddOrUpdateUniqueToken(user.Id, appId, tokenString)
-	if err != nil {
-		comErr = global.NewError(5000)
-		return
+		err = receiver.AddOrUpdateUniqueToken(user.Id, appId, tokenString)
+		if err != nil {
+			comErr = global.NewError(5000)
+			return
+		}
 	}
 	return userModel, tokenString, expire, nil
 }
