@@ -362,8 +362,12 @@ func (receiver *UserBusiness) GetCacheUserLevel(userId, levelType int, enableCac
 }
 
 //获取抖音收藏
-func (receiver *UserBusiness) GetDyCollect(tagId, collectType int, keywords, label string, userId, page, pageSize int) (data []repost.CollectRet, total int64, comErr global.CommonError) {
-	var collects []dcm.DcUserDyCollect
+func (receiver *UserBusiness) GetDyCollect(tagId, collectType int, keywords, label string, userId, page, pageSize int) (interface{}, int64, global.CommonError) {
+	var (
+		total    int64
+		comErr   global.CommonError
+		collects []dcm.DcUserDyCollect
+	)
 	dbCollect := dcm.GetDbSession()
 	defer dbCollect.Close()
 	var query string
@@ -381,19 +385,37 @@ func (receiver *UserBusiness) GetDyCollect(tagId, collectType int, keywords, lab
 	err := dbCollect.Table(dcm.DcUserDyCollect{}).Where(query).Limit(pageSize, (page-1)*pageSize).Find(&collects)
 	if total, err = dbCollect.Table(dcm.DcUserDyCollect{}).Where(query).Count(); err != nil {
 		comErr = global.NewError(5000)
-		return
+		return nil, total, comErr
 	}
-	data = make([]repost.CollectRet, len(collects))
-	for k, v := range collects {
-		data[k].DcUserDyCollect = v
-		data[k].DcUserDyCollect.CollectId = IdEncrypt(v.CollectId)
-		dyAuthor, _ := hbase.GetAuthor(v.CollectId)
-		basicData, _ := hbase.GetAuthorBasic(v.CollectId, time.Now().AddDate(0, 0, -1).Format("20060102"))
-		data[k].FollowerCount = dyAuthor.Data.Fans.Douyin.Count
-		data[k].FollowerIncreCount = dyAuthor.FollowerCount - basicData.FollowerCount
-		data[k].Avatar = dyimg.Avatar(dyAuthor.Data.Avatar)
+	switch collectType {
+	case 1:
+		data := make([]repost.CollectAuthorRet, len(collects))
+		for k, v := range collects {
+			data[k].DcUserDyCollect = v
+			data[k].DcUserDyCollect.CollectId = IdEncrypt(v.CollectId)
+			dyAuthor, _ := hbase.GetAuthor(v.CollectId)
+			basicData, _ := hbase.GetAuthorBasic(v.CollectId, time.Now().AddDate(0, 0, -1).Format("20060102"))
+			data[k].FollowerCount = dyAuthor.Data.Fans.Douyin.Count
+			data[k].FollowerIncreCount = dyAuthor.FollowerCount - basicData.FollowerCount
+			data[k].Avatar = dyimg.Avatar(dyAuthor.Data.Avatar)
+		}
+		return data, total, nil
+	case 2:
+		data := make([]repost.CollectProductRet, len(collects))
+		for k, v := range collects {
+			data[k].DcUserDyCollect = v
+			data[k].DcUserDyCollect.CollectId = IdEncrypt(v.CollectId)
+		}
+		return data, total, nil
+	case 3:
+		data := make([]repost.CollectAwemeRet, len(collects))
+		for k, v := range collects {
+			data[k].DcUserDyCollect = v
+			data[k].DcUserDyCollect.CollectId = IdEncrypt(v.CollectId)
+		}
+		return data, total, nil
 	}
-	return
+	return nil, 0, nil
 }
 
 //获取分组收藏数量

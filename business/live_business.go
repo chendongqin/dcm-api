@@ -12,8 +12,6 @@ import (
 	"time"
 )
 
-const LiveShareUrl = "https://www.iesdouyin.com/share/live/"
-
 type LiveBusiness struct {
 }
 
