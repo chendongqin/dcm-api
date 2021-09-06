@@ -5,6 +5,7 @@ import (
 	"dongchamao/business/es"
 	"dongchamao/global"
 	"dongchamao/global/cache"
+	"dongchamao/models/dcm"
 	"dongchamao/models/repost"
 	"dongchamao/services/dyimg"
 	"encoding/json"
@@ -153,5 +154,47 @@ func (receiver *InternalController) ClearCache() {
 	}
 	global.Cache.Delete(cacheKey)
 	receiver.SuccReturn(nil)
+	return
+}
+
+func (receiver *InternalController) GetConfig() {
+	var configJson dcm.DcConfigJson
+	keyName := receiver.GetString(":key_name")
+	exist, err := dcm.GetBy("key_name", keyName, &configJson)
+	if !exist || err != nil {
+		receiver.FailReturn(global.NewError(5000))
+		return
+	}
+	if configJson.Auth == 0 {
+		receiver.FailReturn(global.NewError(4000))
+		return
+	}
+	var data map[string]interface{}
+	if err := json.Unmarshal([]byte(configJson.Value), &data); err != nil {
+		receiver.FailReturn(global.NewError(5000))
+		return
+	}
+	receiver.SuccReturn(data)
+	return
+}
+
+func (receiver *InternalController) GetWeChatMenu() {
+	data, err := business.NewWechatBusiness().GetMenus()
+	if err != nil {
+		return
+	}
+	receiver.SuccReturn(data.Menu)
+	return
+}
+
+func (receiver *InternalController) SetWeChatMenu() {
+	input := receiver.InputFormat()
+	menu := input.GetString("menu", "")
+	if menu == "" {
+		receiver.FailReturn(global.NewError(5000))
+		return
+	}
+	println(menu)
+	receiver.SuccReturn(menu)
 	return
 }
