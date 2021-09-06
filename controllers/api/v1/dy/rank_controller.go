@@ -310,7 +310,7 @@ func (receiver *RankController) DyLiveShareWeekRank() {
 		receiver.FailReturn(global.NewError(4000))
 		return
 	}
-	if end.Day()-start.Day() != 6 {
+	if start.AddDate(0, 0, 6) != end {
 		receiver.FailReturn(global.NewError(4000))
 		return
 	}
