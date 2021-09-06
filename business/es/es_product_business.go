@@ -174,16 +174,54 @@ func (i *EsProductBusiness) SearchRangeDateRowKey(productId, keyword string, sta
 			if length <= 3 {
 				slop = 2
 			}
-			esMultiQuery.AddMust(elasticsearch.Query().
-				SetMatchPhraseWithParams("nickname", keyword, alias.M{
-					"slop": slop,
-				}).Condition)
-			esMultiQuery2.AddMust(elasticsearch.Query().
-				SetMatchPhraseWithParams("nickname", keyword, alias.M{
-					"slop": slop,
-				}).Condition)
+			esQuery.SetMatchPhraseWithParams("nickname.keyword", keyword, alias.M{
+				"slop": slop,
+			})
 		} else {
 			esQuery.SetMultiMatch([]string{"displayId", "shortId"}, keyword)
+		}
+	}
+	result := esMultiQuery.
+		SetTable(esTable).
+		SetFields("productId", "authorId", "createSdf").
+		AddMust(esQuery.Condition).
+		SetOrderBy(elasticsearch.NewElasticOrder().Add("_id", "asc").Order).
+		SetMultiQuery().
+		QueryOne()
+	utils.MapToStruct(result, &startRow)
+	result2 := esMultiQuery2.
+		SetTable(esTable).
+		SetFields("productId", "authorId", "createSdf").
+		AddMust(esQuery.Condition).
+		SetOrderBy(elasticsearch.NewElasticOrder().Add("_id", "desc").Order).
+		SetMultiQuery().
+		QueryOne()
+	utils.MapToStruct(result2, &stopRow)
+	total = esMultiQuery.Count
+	return
+}
+
+func (i *EsProductBusiness) SearchAwemeRangeDateRowKey(productId, keyword string, startTime, endTime time.Time) (startRow es.DyProductAuthorAnalysis, stopRow es.DyProductAuthorAnalysis, total int, comErr global.CommonError) {
+	esTable := GetESTableByTime(es.DyProductAwemeAuthorAnalysisTable, startTime, endTime)
+	esQuery, esMultiQuery := elasticsearch.NewElasticQueryGroup()
+	_, esMultiQuery2 := elasticsearch.NewElasticQueryGroup()
+	esQuery.SetTerm("productId", productId)
+	esQuery.SetRange("createSdf.keyword", map[string]interface{}{
+		"gte": startTime.Format("20060102"),
+		"lte": endTime.Format("20060102"),
+	})
+	if keyword != "" {
+		if utils.HasChinese(keyword) {
+			slop := 100
+			length := len([]rune(keyword))
+			if length <= 3 {
+				slop = 2
+			}
+			esQuery.SetMatchPhraseWithParams("nickname.keyword", keyword, alias.M{
+				"slop": slop,
+			})
+		} else {
+			esQuery.SetMultiMatch([]string{"displayId.keyword", "shortId.keyword"}, keyword)
 		}
 	}
 	result := esMultiQuery.

@@ -150,7 +150,7 @@ func (receiver *ProductBusiness) ProductAuthorView(productId string, startTime, 
 		_ = global.Cache.Set(cacheKey, utils.SerializeData(allLiveList), 300)
 	}
 	//视频达人
-	startRow, stopRow, _, comErr = esProductBusiness.SearchRangeDateRowKey(productId, "", startTime, endTime)
+	startRow, stopRow, _, comErr = esProductBusiness.SearchAwemeRangeDateRowKey(productId, "", startTime, endTime)
 	if comErr != nil {
 		return
 	}
@@ -532,7 +532,7 @@ func (receiver *ProductBusiness) ProductAuthorAnalysisCount(productId, keyword s
 func (receiver *ProductBusiness) ProductAwemeAuthorAnalysis(productId, keyword, tag string, startTime, endTime time.Time, minFollow, maxFollow int64, scoreType, page, pageSize int) (list []entity.DyProductAwemeAuthorAnalysis, total int, comErr global.CommonError) {
 	list = []entity.DyProductAwemeAuthorAnalysis{}
 	esProductBusiness := es.NewEsProductBusiness()
-	startRow, stopRow, total, comErr := esProductBusiness.SearchRangeDateRowKey(productId, keyword, startTime, endTime)
+	startRow, stopRow, total, comErr := esProductBusiness.SearchAwemeRangeDateRowKey(productId, keyword, startTime, endTime)
 	if comErr != nil {
 		return
 	}
@@ -697,7 +697,7 @@ func (receiver *ProductBusiness) ProductAwemeAuthorAnalysisCount(productId, keyw
 		}
 	}
 	esProductBusiness := es.NewEsProductBusiness()
-	startRow, stopRow, _, comErr := esProductBusiness.SearchRangeDateRowKey(productId, keyword, startTime, endTime)
+	startRow, stopRow, _, comErr := esProductBusiness.SearchAwemeRangeDateRowKey(productId, keyword, startTime, endTime)
 	if startRow.ProductId == "" || stopRow.ProductId == "" {
 		return
 	}
