@@ -413,7 +413,7 @@ func (receiver *ProductController) ProductBase() {
 	return
 }
 
-//商品销量趋势
+//商品直播销量趋势
 func (receiver *ProductController) ProductLiveChart() {
 	productId := business.IdDecrypt(receiver.GetString(":product_id", ""))
 	if productId == "" {
@@ -613,6 +613,24 @@ func (receiver *ProductController) ProductLiveRoomList() {
 	return
 }
 
+//商品达人概览
+func (receiver *ProductController) ProductAuthorView() {
+	productId := business.IdDecrypt(receiver.Ctx.Input.Param(":product_id"))
+	startTime, endTime, comErr := receiver.GetRangeDate()
+	if comErr != nil {
+		receiver.FailReturn(comErr)
+		return
+	}
+	salesTop3, liveSalesTop3, awemeSalesTop3, comErr := business.NewProductBusiness().ProductAuthorView(productId, startTime, endTime)
+	receiver.SuccReturn(map[string]interface{}{
+		"sales_top3":       salesTop3,
+		"live_sales_top3":  liveSalesTop3,
+		"aweme_sales_top3": awemeSalesTop3,
+	})
+	return
+}
+
+//商品直播达人分析
 func (receiver *ProductController) ProductLiveAuthorAnalysis() {
 	productId := business.IdDecrypt(receiver.Ctx.Input.Param(":product_id"))
 	startTime, endTime, comErr := receiver.GetRangeDate()
