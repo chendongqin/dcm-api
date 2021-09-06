@@ -177,3 +177,24 @@ func (receiver *InternalController) GetConfig() {
 	receiver.SuccReturn(data)
 	return
 }
+
+func (receiver *InternalController) GetWeChatMenu() {
+	data, err := business.NewWechatBusiness().GetMenus()
+	if err != nil {
+		return
+	}
+	receiver.SuccReturn(data.Menu)
+	return
+}
+
+func (receiver *InternalController) SetWeChatMenu() {
+	input := receiver.InputFormat()
+	menu := input.GetString("menu", "")
+	if menu == "" {
+		receiver.FailReturn(global.NewError(5000))
+		return
+	}
+	println(menu)
+	receiver.SuccReturn(menu)
+	return
+}
