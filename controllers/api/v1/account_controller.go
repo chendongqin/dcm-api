@@ -291,12 +291,12 @@ func (receiver *AccountController) DyUserSearchList() {
 
 func (receiver *AccountController) AddCollect() {
 	//platform：1抖音
-	platform, err := receiver.GetInt("platform")
+	platform, err := receiver.GetInt("platform", 1)
 	if err != nil {
 		receiver.FailReturn(global.NewError(4000))
 		return
 	}
-	tagId, err := receiver.GetInt("tag_id")
+	tagId, err := receiver.GetInt("tag_id", 0)
 	if err != nil {
 		receiver.FailReturn(global.NewError(4000))
 		return

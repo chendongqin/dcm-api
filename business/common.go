@@ -34,6 +34,11 @@ const (
 	DyRankMinShowNum      = 5
 )
 
+const (
+	AwemeUrl     = "https://www.douyin.com/video/"
+	LiveShareUrl = "https://www.iesdouyin.com/share/live/"
+)
+
 type AuthorCate struct {
 	First  map[string]string   `json:"first"`
 	Second []map[string]string `json:"second"`

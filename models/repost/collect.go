@@ -2,13 +2,22 @@ package repost
 
 import "dongchamao/models/dcm"
 
-type CollectRet struct {
+type CollectAuthorRet struct {
 	dcm.DcUserDyCollect
 	FollowerCount      int64
 	FollowerIncreCount int64
 	Predict7Gmv        float64
 	Predict7Digg       float64
 	Avatar             string
+}
+
+type CollectProductRet struct {
+	dcm.DcUserDyCollect
+	ProductId string `json:"product_id"`
+}
+
+type CollectAwemeRet struct {
+	dcm.DcUserDyCollect
 }
 
 type CollectTagRet struct {

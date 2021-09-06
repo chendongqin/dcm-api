@@ -800,6 +800,7 @@ func (receiver *ProductController) ProductAuthorAwemes() {
 	for k, v := range list {
 		list[k].AwemeCover = dyimg.Fix(v.AwemeCover)
 		list[k].AwemeId = business.IdEncrypt(v.AwemeId)
+		list[k].AwemeUrl = business.AwemeUrl + v.AwemeId
 	}
 	maxTotal := total
 	if total > business.EsMaxShowNum {
