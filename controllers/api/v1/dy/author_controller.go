@@ -930,3 +930,29 @@ func (receiver *AuthorController) AuthorIncome() {
 	logs.Info("[收入达人结果]：", ret)
 	return
 }
+
+//达人搜索
+func (receiver *AuthorController) AuthorSearch() {
+	keyword := receiver.GetString("keyword", "")
+	page := receiver.GetPage("page")
+	pageSize := receiver.GetPageSize("page_size", 10, 100)
+	list, total, comErr := es.NewEsAuthorBusiness().SimpleSearch("", keyword, "", "", page, pageSize)
+	if comErr != nil {
+		receiver.FailReturn(comErr)
+		return
+	}
+	for k, v := range list {
+		list[k].Avatar = dyimg.Fix(v.Avatar)
+		if v.UniqueId == "" || v.UniqueId == "0" {
+			list[k].UniqueId = v.ShortId
+		}
+	}
+	if total > 10000 {
+		total = 10000
+	}
+	receiver.SuccReturn(map[string]interface{}{
+		"list":  list,
+		"total": total,
+	})
+	return
+}
