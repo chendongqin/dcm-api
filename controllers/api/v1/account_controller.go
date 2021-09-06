@@ -402,8 +402,10 @@ func (receiver *AccountController) GetDyCollectTags() {
 		receiver.FailReturn(comErr)
 		return
 	}
+	var total int64
 	var countMap = make(map[int]int64, len(collectCount))
 	for _, v := range collectCount {
+		total += v.Count
 		countMap[v.TagId] = v.Count
 	}
 	var countRet = make([]repost.CollectTagRet, len(data))
@@ -411,7 +413,7 @@ func (receiver *AccountController) GetDyCollectTags() {
 		countRet[k].DcUserDyCollectTag = v
 		countRet[k].Count = countMap[v.Id]
 	}
-	receiver.SuccReturn(countRet)
+	receiver.SuccReturn(map[string]interface{}{"totaol": total, "list": countRet})
 	return
 }
 
