@@ -361,6 +361,7 @@ func (receiver *UserBusiness) GetCacheUserLevel(userId, levelType int, enableCac
 	return vipLevel.Level
 }
 
+//获取抖音收藏
 func (receiver *UserBusiness) GetDyCollect(tagId, collectType int, keywords, label string, userId, page, pageSize int) (data []repost.CollectRet, total int64, comErr global.CommonError) {
 	var collects []dcm.DcUserDyCollect
 	dbCollect := dcm.GetDbSession()
@@ -395,20 +396,22 @@ func (receiver *UserBusiness) GetDyCollect(tagId, collectType int, keywords, lab
 	return
 }
 
+//获取分组收藏数量
 func (receiver *UserBusiness) GetDyCollectCount(userId int) (data []repost.CollectCount, comErr global.CommonError) {
 	dbCollect := dcm.GetDbSession()
 	defer dbCollect.Close()
-	if err := dbCollect.Table(dcm.DcUserDyCollect{}).Where("user_id=?", userId).Select("tag_id,count(collect_id) as count").Find(&data); err != nil {
+	if err := dbCollect.Table(dcm.DcUserDyCollect{}).Where("user_id=? AND status=1", userId).Select("tag_id,count(collect_id) as count").Find(&data); err != nil {
 		comErr = global.NewError(5000)
 		return
 	}
 	return
 }
 
+//获取已收藏达人标签
 func (receiver *UserBusiness) GetDyCollectLabel(userId int) (data []string, comErr global.CommonError) {
 	dbCollect := dcm.GetDbSession()
 	defer dbCollect.Close()
-	if err := dbCollect.Table(dcm.DcUserDyCollect{}).Where("user_id=? and label<>''", userId).Select("label").Find(&data); err != nil {
+	if err := dbCollect.Table(dcm.DcUserDyCollect{}).Where("user_id=? AND label<>'' AND status=1", userId).Select("label").Find(&data); err != nil {
 		comErr = global.NewError(5000)
 		return
 	}
