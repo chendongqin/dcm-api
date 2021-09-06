@@ -239,12 +239,21 @@ func (receiver *ProductBusiness) ProductAuthorView(productId string, startTime, 
 	if len(awemeTop3) > 3 {
 		awemeTop3 = awemeTop3[0:3]
 	}
+	otherSales := totalSales
 	if totalSales > 0 {
 		for k, v := range allTop3 {
 			author, _ := hbase.GetAuthor(v.Name)
 			allTop3[k].Name = author.Data.Nickname
 			allTop3[k].Percent = float64(v.Value) / float64(totalSales)
+			otherSales -= v.Value
 		}
+	}
+	if otherSales > 0 {
+		allTop3 = append(allTop3, dy.NameValueInt64PercentChart{
+			Name:    "其他",
+			Value:   otherSales,
+			Percent: float64(otherSales) / float64(totalSales),
+		})
 	}
 	if liveTotalSales > 0 {
 		for k, v := range liveTop3 {
