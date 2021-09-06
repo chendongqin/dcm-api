@@ -19,6 +19,9 @@ func init() {
 		beego.NSNamespace("/system",
 			beego.NSRouter("/cache/clear", &controllers.InternalController{}, "post:ClearCache"),
 		),
+		beego.NSNamespace("/config",
+			beego.NSRouter("/:key_name", &controllers.InternalController{}, "get:GetConfig"),
+		),
 	)
 	// 注册路由组
 	beego.AddNamespace(ns)
