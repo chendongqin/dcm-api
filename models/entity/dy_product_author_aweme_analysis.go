@@ -34,6 +34,7 @@ type DyProductAwemeAuthorAnalysis struct {
 	RelatedAwemes []DyProductAuthorRelatedAweme `json:"related_awemes"`
 	Sales         int64                         `json:"sales"`
 	Gmv           float64                       `json:"gmv"`
+	DiggCount     int64                         `json:"digg_count"`
 }
 
 type DyProductAuthorRelatedAweme struct {
