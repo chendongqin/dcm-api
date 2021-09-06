@@ -579,9 +579,13 @@ func (receiver *ProductBusiness) ProductAwemeAuthorAnalysis(productId, keyword, 
 				continue
 			}
 		}
+		for _, aweme := range v.RelatedAwemes {
+			v.DiggCount += aweme.DiggCount
+		}
 		if d, ok := authorMap[v.AuthorId]; ok {
 			d.Gmv += v.Gmv
 			d.Sales += v.Sales
+			d.DiggCount += v.DiggCount
 			d.RelatedAwemes = append(d.RelatedAwemes, v.RelatedAwemes...)
 			if v.CreateSdf > d.CreateSdf {
 				d.FollowCount = v.FollowCount
