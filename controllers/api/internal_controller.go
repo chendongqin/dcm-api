@@ -179,10 +179,13 @@ func (receiver *InternalController) GetConfig() {
 }
 
 func (receiver *InternalController) GetWeChatMenu() {
-	data, err := business.NewWechatBusiness().GetMenus()
-	if err != nil {
-		return
-	}
+	data, _ := business.NewWechatBusiness().GetMenus()
+	//fmt.Printf("data:%+v\n",data)
+	//if err != nil {
+	//	receiver.FailReturn(global.NewError(5000))
+	//}
+	str := "{\n    \"button\": [\n        {\n            \"name\": \"抖音数据\",\n            \"sub_button\": [\n                {\n                    \"type\": \"view\",\n                    \"name\": \"搜索\",\n                    \"url\": \"https://douyin.dongchamao.com\"\n                },\n                {\n                    \"type\": \"view\",\n                    \"name\": \"行业成交大盘\",\n                    \"url\": \"https://douyin.dongchamao.com\"\n                },\n                {\n                    \"type\": \"view\",\n                    \"name\": \"直播带货榜\",\n                    \"url\": \"https://douyin.dongchamao.com/#/talent/ranking/commerce\"\n                },\n                {\n                    \"type\": \"view\",\n                    \"name\": \"红人直播\",\n                    \"url\": \"https://douyin.dongchamao.com/#/report/\"\n                },\n                {\n                    \"type\": \"view\",\n                    \"name\": \"APP下载\",\n                    \"url\": \"https://douyin.dongchamao.com\"\n                }\n           ]\n        },\n        {\n            \"name\": \"资源图书馆\",\n            \"sub_button\": [\n                {\n                    \"type\": \"click\",\n                    \"name\": \"功能上新\",\n                    \"key\": \"new_function\"\n                },\n                {\n                    \"type\": \"view_limited\",\n                    \"name\": \"运营干货\",\n                    \"media_id\": \"UQotsct61iSBt9RSogbMYyLZ60ZbdETWeWv5kzX5ML0\"\n                }\n            ]\n        },\n        {\n            \"name\": \"资源合作\",\n            \"sub_button\": [\n                {\n                    \"type\": \"click\",\n                    \"name\": \"免费试用\",\n                    \"key\": \"try_use\"\n                },\n                {\n                    \"type\": \"click\",\n                    \"name\": \"商务合作\",\n                    \"key\": \"business\"\n                }\n            ]\n        }\n    ]\n}"
+	json.Unmarshal([]byte(str), &data.Menu)
 	receiver.SuccReturn(data.Menu)
 	return
 }

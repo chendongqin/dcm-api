@@ -24,8 +24,6 @@ func init() {
 		),
 		beego.NSNamespace("/wechat",
 			beego.NSRouter("/menu", &controllers.InternalController{}, "get:GetWeChatMenu"),
-		),
-		beego.NSNamespace("/wechat",
 			beego.NSRouter("/menu/set", &controllers.InternalController{}, "post:SetWeChatMenu"),
 		),
 	)
