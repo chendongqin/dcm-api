@@ -116,6 +116,153 @@ func (receiver *ProductBusiness) GetProductUrl(platform, productId string) strin
 	return url
 }
 
+//达人概览
+func (receiver *ProductBusiness) ProductAuthorView(productId string, startTime, endTime time.Time) (
+	allTop3 []dy.NameValueInt64PercentChart, liveTop3 []dy.NameValueInt64PercentChart, awemeTop3 []dy.NameValueInt64PercentChart, comErr global.CommonError) {
+	allTop3 = []dy.NameValueInt64PercentChart{}
+	liveTop3 = []dy.NameValueInt64PercentChart{}
+	awemeTop3 = []dy.NameValueInt64PercentChart{}
+	esProductBusiness := es.NewEsProductBusiness()
+	//直播达人
+	startRow, stopRow, _, comErr := esProductBusiness.SearchRangeDateRowKey(productId, "", startTime, endTime)
+	if comErr != nil {
+		return
+	}
+	if startRow.ProductId == "" || stopRow.ProductId == "" {
+		return
+	}
+	startRowKey := startRow.ProductId + "_" + startRow.CreateSdf + "_" + startRow.AuthorId
+	stopRowKey := stopRow.ProductId + "_" + stopRow.CreateSdf + "_" + stopRow.AuthorId
+	cacheKey := cache.GetCacheKey(cache.ProductAuthorAllList, startRowKey, stopRowKey)
+	cacheStr := global.Cache.Get(cacheKey)
+	allLiveList := make([]entity.DyProductAuthorAnalysis, 0)
+	if cacheStr != "" {
+		cacheStr = utils.DeserializeData(cacheStr)
+		_ = jsoniter.Unmarshal([]byte(cacheStr), &allLiveList)
+	} else {
+		if startRowKey != stopRowKey {
+			allLiveList, _ = hbase.GetProductAuthorAnalysisRange(startRowKey, stopRowKey)
+		}
+		lastRow, err := hbase.GetProductAuthorAnalysis(stopRowKey)
+		if err == nil {
+			allLiveList = append(allLiveList, lastRow)
+		}
+		_ = global.Cache.Set(cacheKey, utils.SerializeData(allLiveList), 300)
+	}
+	//视频达人
+	startRow, stopRow, _, comErr = esProductBusiness.SearchRangeDateRowKey(productId, "", startTime, endTime)
+	if comErr != nil {
+		return
+	}
+	if startRow.ProductId == "" || stopRow.ProductId == "" {
+		return
+	}
+	startRowKey2 := startRow.ProductId + "_" + startRow.CreateSdf + "_" + startRow.AuthorId
+	stopRowKey2 := stopRow.ProductId + "_" + stopRow.CreateSdf + "_" + stopRow.AuthorId
+	allAwemeList := make([]entity.DyProductAwemeAuthorAnalysis, 0)
+	cacheAwemeKey := cache.GetCacheKey(cache.ProductAwemeAuthorAllList, startRowKey2, stopRowKey2)
+	cacheAwemeStr := global.Cache.Get(cacheKey)
+	if cacheAwemeStr != "" {
+		cacheAwemeStr = utils.DeserializeData(cacheAwemeStr)
+		_ = jsoniter.Unmarshal([]byte(cacheAwemeStr), &allAwemeList)
+	} else {
+		if startRowKey != stopRowKey {
+			allAwemeList, _ = hbase.GetProductAwemeAuthorAnalysisRange(startRowKey, stopRowKey)
+		}
+		lastRow, err := hbase.GetProductAwemeAuthorAnalysis(stopRowKey)
+		if err == nil {
+			allAwemeList = append(allAwemeList, lastRow)
+		}
+		_ = global.Cache.Set(cacheAwemeKey, utils.SerializeData(allAwemeList), 300)
+	}
+	allSales := map[string]int64{}
+	liveSales := map[string]int64{}
+	awemeSales := map[string]int64{}
+	var liveTotalSales int64 = 0
+	var awemeTotalSales int64 = 0
+	for _, v := range allLiveList {
+		if _, ok := allSales[v.AuthorId]; !ok {
+			allSales[v.AuthorId] = 0
+		}
+		if _, ok := liveSales[v.AuthorId]; !ok {
+			liveSales[v.AuthorId] = 0
+		}
+		liveSales[v.AuthorId] += v.Sales
+		allSales[v.AuthorId] += v.Sales
+		liveTotalSales += v.Sales
+	}
+	for _, v := range allAwemeList {
+		if _, ok := allSales[v.AuthorId]; !ok {
+			allSales[v.AuthorId] = 0
+		}
+		if _, ok := awemeSales[v.AuthorId]; !ok {
+			awemeSales[v.AuthorId] = 0
+		}
+		awemeSales[v.AuthorId] += v.Sales
+		allSales[v.AuthorId] += v.Sales
+		awemeTotalSales += v.Sales
+	}
+	totalSales := liveTotalSales + awemeTotalSales
+	for k, v := range allSales {
+		allTop3 = append(allTop3, dy.NameValueInt64PercentChart{
+			Name:  k,
+			Value: v,
+		})
+	}
+	for k, v := range liveSales {
+		liveTop3 = append(liveTop3, dy.NameValueInt64PercentChart{
+			Name:  k,
+			Value: v,
+		})
+	}
+	for k, v := range awemeSales {
+		awemeTop3 = append(awemeTop3, dy.NameValueInt64PercentChart{
+			Name:  k,
+			Value: v,
+		})
+	}
+	sort.Slice(allTop3, func(i, j int) bool {
+		return allTop3[i].Value > allTop3[j].Value
+	})
+	sort.Slice(liveTop3, func(i, j int) bool {
+		return liveTop3[i].Value > liveTop3[j].Value
+	})
+	sort.Slice(awemeTop3, func(i, j int) bool {
+		return awemeTop3[i].Value > awemeTop3[j].Value
+	})
+	if len(allTop3) > 3 {
+		allTop3 = allTop3[0:3]
+	}
+	if len(liveTop3) > 3 {
+		liveTop3 = liveTop3[0:3]
+	}
+	if len(awemeTop3) > 3 {
+		awemeTop3 = awemeTop3[0:3]
+	}
+	if totalSales > 0 {
+		for k, v := range allTop3 {
+			author, _ := hbase.GetAuthor(v.Name)
+			allTop3[k].Name = author.Data.Nickname
+			allTop3[k].Percent = float64(v.Value) / float64(totalSales)
+		}
+	}
+	if liveTotalSales > 0 {
+		for k, v := range liveTop3 {
+			author, _ := hbase.GetAuthor(v.Name)
+			liveTop3[k].Name = author.Data.Nickname
+			liveTop3[k].Percent = float64(v.Value) / float64(liveTotalSales)
+		}
+	}
+	if awemeTotalSales > 0 {
+		for k, v := range awemeTop3 {
+			author, _ := hbase.GetAuthor(v.Name)
+			awemeTop3[k].Name = author.Data.Nickname
+			awemeTop3[k].Percent = float64(v.Value) / float64(awemeTotalSales)
+		}
+	}
+	return
+}
+
 func (receiver *ProductBusiness) ProductAuthorAnalysis(productId, keyword, tag string, startTime, endTime time.Time, minFollow, maxFollow int64, scoreType, page, pageSize int) (list []entity.DyProductAuthorAnalysis, total int, comErr global.CommonError) {
 	list = []entity.DyProductAuthorAnalysis{}
 	esProductBusiness := es.NewEsProductBusiness()
@@ -170,6 +317,10 @@ func (receiver *ProductBusiness) ProductAuthorAnalysis(productId, keyword, tag s
 			d.Gmv += v.Gmv
 			d.Sales += v.Sales
 			d.RelatedRooms = append(d.RelatedRooms, v.RelatedRooms...)
+			if v.Date > d.Date {
+				d.FollowCount = v.FollowCount
+				d.Date = v.Date
+			}
 			authorMap[v.AuthorId] = d
 		} else {
 			authorMap[v.AuthorId] = v
@@ -177,34 +328,34 @@ func (receiver *ProductBusiness) ProductAuthorAnalysis(productId, keyword, tag s
 		}
 	}
 	//开启任务处理
-	cacheAuthorKey := cache.GetCacheKey(cache.ProductAuthorAllMap, startRowKey, stopRowKey)
-	cacheAuthorStr := global.Cache.Get(cacheAuthorKey)
-	authorDataMap := map[string]entity.DyAuthorSimple{}
-	if cacheAuthorStr != "" {
-		cacheAuthorStr = utils.DeserializeData(cacheAuthorStr)
-		_ = jsoniter.Unmarshal([]byte(cacheAuthorStr), &authorDataMap)
-	} else {
-		authorTmpMap := NewAuthorBusiness().GetAuthorFormPool(authorIds, 10)
-		utils.MapToStruct(authorTmpMap, &authorTmpMap)
-		if tag == "" && minFollow == 0 && maxFollow == 0 && scoreType == 5 {
-			_ = global.Cache.Set(cacheAuthorKey, utils.SerializeData(authorDataMap), 300)
-		}
-	}
+	//cacheAuthorKey := cache.GetCacheKey(cache.ProductAuthorAllMap, startRowKey, stopRowKey)
+	//cacheAuthorStr := global.Cache.Get(cacheAuthorKey)
+	//authorDataMap := map[string]entity.DyAuthorSimple{}
+	//if cacheAuthorStr != "" {
+	//	cacheAuthorStr = utils.DeserializeData(cacheAuthorStr)
+	//	_ = jsoniter.Unmarshal([]byte(cacheAuthorStr), &authorDataMap)
+	//} else {
+	//	authorTmpMap := NewAuthorBusiness().GetAuthorFormPool(authorIds, 10)
+	//	utils.MapToStruct(authorTmpMap, &authorTmpMap)
+	//	if tag == "" && minFollow == 0 && maxFollow == 0 && scoreType == 5 {
+	//		_ = global.Cache.Set(cacheAuthorKey, utils.SerializeData(authorDataMap), 300)
+	//	}
+	//}
 	for _, v := range authorMap {
-		if a, ok := authorDataMap[v.AuthorId]; ok {
-			v.FollowCount = a.FollowerCount
-			if v.DisplayId == "" {
-				v.DisplayId = a.Data.UniqueID
-				v.ShortId = a.Data.ShortID
-			}
-		} else {
-			a, _ := hbase.GetAuthor(v.AuthorId)
-			v.FollowCount = a.FollowerCount
-			if v.DisplayId == "" {
-				v.DisplayId = a.Data.UniqueID
-				v.ShortId = a.Data.ShortID
-			}
-		}
+		//if a, ok := authorDataMap[v.AuthorId]; ok {
+		//	v.FollowCount = a.FollowerCount
+		//	if v.DisplayId == "" {
+		//		v.DisplayId = a.Data.UniqueID
+		//		v.ShortId = a.Data.ShortID
+		//	}
+		//} else {
+		//	a, _ := hbase.GetAuthor(v.AuthorId)
+		//	v.FollowCount = a.FollowerCount
+		//	if v.DisplayId == "" {
+		//		v.DisplayId = a.Data.UniqueID
+		//		v.ShortId = a.Data.ShortID
+		//	}
+		//}
 		if minFollow > 0 && v.FollowCount < minFollow {
 			continue
 		}
@@ -420,36 +571,49 @@ func (receiver *ProductBusiness) ProductAwemeAuthorAnalysis(productId, keyword, 
 			}
 		}
 		if d, ok := authorMap[v.AuthorId]; ok {
+			d.Gmv += v.Gmv
+			d.Sales += v.Sales
+			d.RelatedAwemes = append(d.RelatedAwemes, v.RelatedAwemes...)
+			if v.CreateSdf > d.CreateSdf {
+				d.FollowCount = v.FollowCount
+				d.CreateSdf = v.CreateSdf
+			}
 			authorMap[v.AuthorId] = d
 		} else {
 			authorMap[v.AuthorId] = v
 			authorIds = append(authorIds, v.AuthorId)
 		}
 	}
-	cacheAuthorKey := cache.GetCacheKey(cache.ProductAwemeAuthorAllMap, startRowKey, stopRowKey)
-	cacheAuthorStr := global.Cache.Get(cacheAuthorKey)
-	authorDataMap := map[string]entity.DyAuthor{}
-	if cacheAuthorStr != "" {
-		cacheAuthorStr = utils.DeserializeData(cacheAuthorStr)
-		_ = jsoniter.Unmarshal([]byte(cacheAuthorStr), &authorDataMap)
-	} else {
-		authorDataMap = NewAuthorBusiness().GetAuthorFormPool(authorIds, 10)
-		if tag == "" && minFollow == 0 && maxFollow == 0 && scoreType == 5 {
-			_ = global.Cache.Set(cacheAuthorKey, utils.SerializeData(authorDataMap), 300)
-		}
-	}
+	//cacheAuthorKey := cache.GetCacheKey(cache.ProductAwemeAuthorAllMap, startRowKey, stopRowKey)
+	//cacheAuthorStr := global.Cache.Get(cacheAuthorKey)
+	//authorDataMap := map[string]entity.DyAuthor{}
+	//if cacheAuthorStr != "" {
+	//	cacheAuthorStr = utils.DeserializeData(cacheAuthorStr)
+	//	_ = jsoniter.Unmarshal([]byte(cacheAuthorStr), &authorDataMap)
+	//} else {
+	//	authorDataMap = NewAuthorBusiness().GetAuthorFormPool(authorIds, 10)
+	//	if tag == "" && minFollow == 0 && maxFollow == 0 && scoreType == 5 {
+	//		_ = global.Cache.Set(cacheAuthorKey, utils.SerializeData(authorDataMap), 300)
+	//	}
+	//}
 	for _, v := range authorMap {
-		if a, ok := authorDataMap[v.AuthorId]; ok {
-			if v.DisplayId == "" {
-				v.DisplayId = a.Data.UniqueID
-				v.ShortId = a.Data.ShortID
-			}
-		} else {
-			a, _ := hbase.GetAuthor(v.AuthorId)
-			if v.DisplayId == "" {
-				v.DisplayId = a.Data.UniqueID
-				v.ShortId = a.Data.ShortID
-			}
+		//if a, ok := authorDataMap[v.AuthorId]; ok {
+		//	if v.DisplayId == "" {
+		//		v.DisplayId = a.Data.UniqueID
+		//		v.ShortId = a.Data.ShortID
+		//	}
+		//} else {
+		//	a, _ := hbase.GetAuthor(v.AuthorId)
+		//	if v.DisplayId == "" {
+		//		v.DisplayId = a.Data.UniqueID
+		//		v.ShortId = a.Data.ShortID
+		//	}
+		//}
+		if minFollow > 0 && v.FollowCount < minFollow {
+			continue
+		}
+		if maxFollow > 0 && v.FollowCount >= maxFollow {
+			continue
 		}
 		list = append(list, v)
 	}

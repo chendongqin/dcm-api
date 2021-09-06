@@ -30,9 +30,9 @@ type DyProductAwemeAuthorAnalysis struct {
 	FirstName     string                        `json:"first_name"`
 	SecondName    string                        `json:"second_name"`
 	Avatar        string                        `json:"avatar"`
-	FollowCount   float64                       `json:"follow_count"`
+	FollowCount   int64                         `json:"follow_count"`
 	RelatedAwemes []DyProductAuthorRelatedAweme `json:"related_awemes"`
-	Sales         float64                       `json:"sales"`
+	Sales         int64                         `json:"sales"`
 	Gmv           float64                       `json:"gmv"`
 }
 
@@ -40,7 +40,7 @@ type DyProductAuthorRelatedAweme struct {
 	CommentCount int64   `json:"comment_count"`
 	AwemeTitle   string  `json:"aweme_title"`
 	AwemeId      string  `json:"aweme_id"`
-	Sales        float64 `json:"sales"`
+	Sales        int64   `json:"sales"`
 	AwemeGmv     float64 `json:"aweme_gmv"`
 	DiggCount    int64   `json:"digg_count"`
 	ForwardCount int64   `json:"forward_count"`

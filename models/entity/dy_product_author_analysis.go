@@ -32,6 +32,7 @@ type DyProductAuthorAnalysis struct {
 	Level        int                          `json:"level"`
 	ShopTags     string                       `json:"shop_tags"`
 	ShortId      string                       `json:"short_id"`
+	Date         string                       `json:"date"`
 }
 
 type DyProductAuthorRelatedRoom struct {
