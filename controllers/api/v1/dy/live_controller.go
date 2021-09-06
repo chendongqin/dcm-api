@@ -124,6 +124,7 @@ func (receiver *LiveController) SearchRoom() {
 	if maxTotal > total {
 		maxTotal = total
 	}
+	business.NewUserBusiness().KeywordsRecord(keyword)
 	receiver.SuccReturn(map[string]interface{}{
 		"list":       list,
 		"total":      total,
