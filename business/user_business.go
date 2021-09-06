@@ -400,7 +400,7 @@ func (receiver *UserBusiness) GetDyCollect(tagId, collectType int, keywords, lab
 func (receiver *UserBusiness) GetDyCollectCount(userId int) (data []repost.CollectCount, comErr global.CommonError) {
 	dbCollect := dcm.GetDbSession()
 	defer dbCollect.Close()
-	if err := dbCollect.Table(dcm.DcUserDyCollect{}).Where("user_id=? AND status=1", userId).Select("tag_id,count(collect_id) as count").Find(&data); err != nil {
+	if err := dbCollect.Table(dcm.DcUserDyCollect{}).Where("user_id=? AND status=1", userId).Select("tag_id,count(collect_id) as count").GroupBy("tag_id").Find(&data); err != nil {
 		comErr = global.NewError(5000)
 		return
 	}
