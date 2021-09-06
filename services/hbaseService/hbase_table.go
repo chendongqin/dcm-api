@@ -16,7 +16,7 @@ const (
 	HbaseDyAweme                        = "dy_aweme"                            //抖音视频
 	HbaseDyAuthorAwemeAgg               = "dy_author_aweme_agg"                 //达人抖音视频
 	HbaseDyAwemeDiggCommentForwardCount = "dy_aweme_digg_comment_forward_count" //达人抖音视频
-	HbaseDyProductAwemeSalesTrend       = "dy_product_aweme_sales_trend"        //达人抖音视频
+	HbaseDyProductAwemeSalesTrend       = "dy_product_aweme_sales_trend"        //商品视频分销趋势
 
 	HbaseDyAuthor                = "dy_author"                  //抖音用户信息
 	HbaseDyAuthorBasic           = "dy_author_basic"            //抖音用户基本数据信息

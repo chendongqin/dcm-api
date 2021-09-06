@@ -15,6 +15,7 @@ func init() {
 			beego.NSRouter("/live/chart/:product_id/:start/:end", &v1dy.ProductController{}, "get:ProductLiveChart"),
 			beego.NSRouter("/live/room/:product_id/:start/:end", &v1dy.ProductController{}, "get:ProductLiveRoomList"),
 			beego.NSRouter("/author/:product_id/:start/:end", &v1dy.ProductController{}, "get:ProductLiveAuthorAnalysis"),
+			beego.NSRouter("/author/view/:product_id/:start/:end", &v1dy.ProductController{}, "get:ProductAuthorView"),
 			beego.NSRouter("/author/aweme/:product_id/:start/:end", &v1dy.ProductController{}, "get:ProductAwemeAuthorAnalysis"),
 			beego.NSRouter("/author/aweme/count/:product_id/:start/:end", &v1dy.ProductController{}, "get:ProductAwemeAuthorAnalysisCount"),
 			beego.NSRouter("/author/aweme/list/:product_id/:author_id/:start/:end", &v1dy.ProductController{}, "get:ProductAuthorAwemes"),

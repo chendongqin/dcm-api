@@ -171,9 +171,14 @@ func GetProductAuthorAnalysisRange(startRowKey, stopRowKey string) (data []entit
 		return
 	}
 	for _, v := range results {
+		rowKey := string(v.GetRow())
+		rowArr := strings.Split(rowKey, "_")
 		dataMap := hbaseService.HbaseFormat(v, entity.DyProductAuthorAnalysisMap)
 		hData := entity.DyProductAuthorAnalysis{}
 		utils.MapToStruct(dataMap, &hData)
+		if len(rowArr) == 3 {
+			hData.Date = rowArr[1]
+		}
 		data = append(data, hData)
 	}
 	return
