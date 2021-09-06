@@ -413,7 +413,7 @@ func (receiver *AccountController) GetDyCollectTags() {
 		countRet[k].DcUserDyCollectTag = v
 		countRet[k].Count = countMap[v.Id]
 	}
-	receiver.SuccReturn(map[string]interface{}{"totaol": total, "list": countRet})
+	receiver.SuccReturn(map[string]interface{}{"total": total, "list": countRet})
 	return
 }
 
