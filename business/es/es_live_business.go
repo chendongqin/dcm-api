@@ -217,6 +217,24 @@ func (receiver *EsLiveBusiness) RoomProductByRoomId(roomInfo entity.DyLiveInfo, 
 	return
 }
 
+//获取直播间全部商品
+func (receiver *EsLiveBusiness) GetProductByRoomId(roomInfo entity.DyLiveInfo) (list []es.EsAuthorLiveProduct, total int, comErr global.CommonError) {
+	date := time.Unix(roomInfo.DiscoverTime, 0).Format("20060102")
+	esTable := fmt.Sprintf(es.DyRoomProductRecordsTable, date)
+	esQuery, esMultiQuery := elasticsearch.NewElasticQueryGroup()
+	esQuery.SetTerm("room_id", roomInfo.RoomID)
+	result := esMultiQuery.
+		SetTable(esTable).
+		AddMust(esQuery.Condition).
+		SetOrderBy(elasticsearch.NewElasticOrder().Add("_id", "desc").Order).
+		SetLimit(0, 5000).
+		SetMultiQuery().
+		Query()
+	total = esMultiQuery.Count
+	utils.MapToStruct(result, &list)
+	return
+}
+
 func (receiver *EsLiveBusiness) ScanProductByRoomId(roomInfo entity.DyLiveInfo) (startRowKey, stopRowKey string, comErr global.CommonError) {
 	date := time.Unix(roomInfo.DiscoverTime, 0).Format("20060102")
 	esTable := fmt.Sprintf(es.DyRoomProductRecordsTable, date)
@@ -375,6 +393,7 @@ func (receiver *EsLiveBusiness) AllRoomProductCateByRoomId(roomInfo entity.DyLiv
 		secondCateMap[v.FirstCname][v.SecondCname] = true
 	}
 	productCount.CateList = []dy.DyCate{}
+	otherData := dy.DyCate{}
 	for k, v := range firstCateMap {
 		secondCateList := make([]dy.DyCate, 0)
 		for ck, _ := range v {
@@ -407,8 +426,13 @@ func (receiver *EsLiveBusiness) AllRoomProductCateByRoomId(roomInfo entity.DyLiv
 		if len(secondCateList) > 0 {
 			item.SonCate = secondCateList
 		}
+		if k == "其他" {
+			otherData = item
+			continue
+		}
 		productCount.CateList = append(productCount.CateList, item)
 	}
+	productCount.CateList = append(productCount.CateList, otherData)
 	var timeout time.Duration = 60
 	if roomInfo.FinishTime <= (time.Now().Unix() - 3600) {
 		timeout = 1800

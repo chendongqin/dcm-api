@@ -25,8 +25,10 @@ const (
 	UserPlatformUniqueToken KeyName = "dcm:user:unique:token:%d:%d" //userId, platformId
 	UserActionLockKey       KeyName = "dcm:user:action:lock:%d"     //userId
 	//直播间商品分类数据缓存
-	LiveRoomProductCount KeyName = "dcm:live:room:product:count:%s"
-	ProductAuthorCount   KeyName = "dcm:product:author:%s:%s:%s"
+	LiveRoomProductCount     KeyName = "dcm:live:room:product:count:%s"
+	ProductAuthorCount       KeyName = "dcm:product:author:%s:%s:%s"
+	LivePromotionsDetailList KeyName = "dcm:live:promotions:detail:%s:%s"
+	LiveRoomProductList      KeyName = "dcm:live:product:list:%s"
 	//商品达人数据缓存
 	ProductAuthorAllList      KeyName = "dcm:product:author:row:%s:%s"
 	ProductAuthorAllMap       KeyName = "dcm:product:author:info:%s:%s"

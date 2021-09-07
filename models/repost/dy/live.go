@@ -182,3 +182,15 @@ type LiveCurProduct struct {
 	StartSales   int64 `json:"start_sales"`
 	EndSales     int64 `json:"end_sales"`
 }
+
+type ProductPvChartMap struct {
+	Pv  int64                        `json:"pv"`
+	Son map[string]ProductPvChartMap `json:"son"`
+}
+
+type ProductPvChart struct {
+	LabelName string           `json:"label_name"`
+	Pv        int64            `json:"pv"`
+	Percent   float64          `json:"percent"`
+	LabelSon  []ProductPvChart `json:"label_son"`
+}

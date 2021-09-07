@@ -52,7 +52,7 @@ type DyLiveInfo struct {
 	DiscoverTime         int64                      `json:"discover_time"`   //发现时间
 	FansClubCount        int64                      `json:"fans_club_count"` //粉丝团数目
 	FinishTime           int64                      `json:"finish_time"`     //结束时间
-	FollowCount          int64                      `json:"follow_count"`    //粉丝数
+	FollowCount          int64                      `json:"follow_count"`    //直播间涨粉人数
 	GiftUvCount          int64                      `json:"gift_uv_count"`   //送礼人数
 	HourRank             DyLiveInfoRank             `json:"hour_rank"`       //小时榜排行
 	HourSalesRank        DyLiveInfoRank             `json:"hour_sales_rank"` //带货小时榜
