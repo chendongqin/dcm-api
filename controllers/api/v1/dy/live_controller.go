@@ -602,7 +602,7 @@ func (receiver *LiveController) LiveFanAnalyse() {
 	}
 	info, _ := hbase.GetDyLiveRoomUserInfo(roomId)
 	var roomUserTotal int64 = 0
-	var roomAgePopleTotal int64 = 0
+	var roomAgePeopleTotal int64 = 0
 	var roomGenderTotal int64 = 0
 	var roomAgeTotal int64 = 0
 	var roomCityTotal int64 = 0
@@ -629,7 +629,7 @@ func (receiver *LiveController) LiveFanAnalyse() {
 		})
 	}
 	for k, v := range info.AgeDistrinbution {
-		roomAgePopleTotal += v
+		roomAgePeopleTotal += v
 		if k == "" {
 			continue
 		}
@@ -705,7 +705,7 @@ func (receiver *LiveController) LiveFanAnalyse() {
 	}
 	receiver.SuccReturn(map[string]interface{}{
 		"total_people":       roomUserTotal,
-		"age_people":         roomAgePopleTotal,
+		"age_people":         roomAgePeopleTotal,
 		"total_user":         liveInfo.TotalUser,
 		"barrage_count":      liveInfo.BarrageCount,
 		"barrage_user_count": liveInfo.BarrageUserCount,
