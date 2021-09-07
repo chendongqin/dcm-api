@@ -45,23 +45,6 @@ func GetRoomProductInfo(rowKey string) (data entity.DyRoomProduct, comErr global
 	return
 }
 
-//直播间粉丝
-func GetDyLiveRoomUserInfo(roomId string) (data entity.DyLiveRoomUserInfo, comErr global.CommonError) {
-	query := hbasehelper.NewQuery()
-	result, err := query.SetTable(hbaseService.HbaseDyLiveRoomUserInfo).GetByRowKey([]byte(roomId))
-	if err != nil {
-		comErr = global.NewMsgError(err.Error())
-		return
-	}
-	if result.Row == nil {
-		comErr = global.NewError(4040)
-		return
-	}
-	infoMap := hbaseService.HbaseFormat(result, entity.DyLiveRoomUserInfoMap)
-	utils.MapToStruct(infoMap, &data)
-	return
-}
-
 func GetRoomProductInfoRangDate(startRowKey, stopRowKey string) (data map[string]entity.DyRoomProduct, comErr global.CommonError) {
 	query := hbasehelper.NewQuery()
 	results, err := query.
@@ -86,6 +69,23 @@ func GetRoomProductInfoRangDate(startRowKey, stopRowKey string) (data map[string
 		utils.MapToStruct(dataMap, &detail)
 		data[productId] = detail
 	}
+	return
+}
+
+//直播间粉丝
+func GetDyLiveRoomUserInfo(roomId string) (data entity.DyLiveRoomUserInfo, comErr global.CommonError) {
+	query := hbasehelper.NewQuery()
+	result, err := query.SetTable(hbaseService.HbaseDyLiveRoomUserInfo).GetByRowKey([]byte(roomId))
+	if err != nil {
+		comErr = global.NewMsgError(err.Error())
+		return
+	}
+	if result.Row == nil {
+		comErr = global.NewError(4040)
+		return
+	}
+	infoMap := hbaseService.HbaseFormat(result, entity.DyLiveRoomUserInfoMap)
+	utils.MapToStruct(infoMap, &data)
 	return
 }
 

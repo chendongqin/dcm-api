@@ -5,11 +5,13 @@ import (
 	"dongchamao/business/es"
 	controllers "dongchamao/controllers/api"
 	"dongchamao/global"
+	"dongchamao/global/cache"
 	"dongchamao/global/utils"
 	"dongchamao/hbase"
 	"dongchamao/models/entity"
 	dy2 "dongchamao/models/repost/dy"
 	"dongchamao/services/dyimg"
+	jsoniter "github.com/json-iterator/go"
 	"math"
 	"sort"
 	"time"
@@ -266,6 +268,16 @@ func (receiver *LiveController) LivePromotions() {
 		PromotionList: [][]dy2.DyLivePromotion{},
 	}
 	startRowKey, stopRowKey, err := es.NewEsLiveBusiness().ScanProductByRoomId(liveInfo)
+	cacheKey := cache.GetCacheKey(cache.LivePromotionsDetailList, startRowKey, stopRowKey)
+	cacheStr := global.Cache.Get(cacheKey)
+	if cacheStr != "" {
+		cacheStr = utils.DeserializeData(cacheStr)
+		_ = jsoniter.Unmarshal([]byte(cacheStr), &promotionsList)
+		receiver.SuccReturn(map[string]interface{}{
+			"promotions_list": promotionsList,
+		})
+		return
+	}
 	if err == nil {
 		promotionsMap := map[string][]entity.DyLivePromotion{}
 		promotionsSalesMap := map[string]int64{}
@@ -339,10 +351,16 @@ func (receiver *LiveController) LivePromotions() {
 			StartTime:     dates,
 			PromotionList: dyLivePromotions,
 		}
+		var cacheTime time.Duration = 60
+		if liveInfo.RoomStatus == 4 {
+			cacheTime = 1800
+		}
+		_ = global.Cache.Set(cacheKey, utils.SerializeData(promotionsList), cacheTime)
 	}
 	receiver.SuccReturn(map[string]interface{}{
 		"promotions_list": promotionsList,
 	})
+	return
 }
 
 //直播榜单排名趋势
@@ -707,6 +725,7 @@ func (receiver *LiveController) LiveFanAnalyse() {
 		"total_people":       roomUserTotal,
 		"age_people":         roomAgePeopleTotal,
 		"total_user":         liveInfo.TotalUser,
+		"inc_fans":           liveInfo.FollowCount,
 		"barrage_count":      liveInfo.BarrageCount,
 		"barrage_user_count": liveInfo.BarrageUserCount,
 		"barrage_rate":       barrageRate,
@@ -717,6 +736,136 @@ func (receiver *LiveController) LiveFanAnalyse() {
 		"province_chart":     provinceChart,
 	})
 	return
+}
+
+//直播商品分类意向
+func (receiver *LiveController) LiveProductPvAnalyse() {
+	roomId := business.IdDecrypt(receiver.Ctx.Input.Param(":room_id"))
+	liveInfo, comErr := hbase.GetLiveInfo(roomId)
+	if comErr != nil {
+		receiver.FailReturn(comErr)
+		return
+	}
+	cateChart := make([]dy2.ProductPvChart, 0)
+	cacheKey := cache.GetCacheKey(cache.LiveRoomProductList, roomId)
+	cacheStr := global.Cache.Get(cacheKey)
+	if cacheStr != "" {
+		cacheStr = utils.DeserializeData(cacheStr)
+		_ = jsoniter.Unmarshal([]byte(cacheStr), &cateChart)
+		receiver.SuccReturn(map[string]interface{}{
+			"list": cateChart,
+		})
+		return
+	}
+	list, total, comErr := es.NewEsLiveBusiness().GetProductByRoomId(liveInfo)
+	cateMap := map[string]dy2.ProductPvChartMap{}
+	var totalPv int64 = 0
+	if total > 0 {
+		stopRowKey := list[0].RoomID + "_" + list[0].ProductID
+		startRowKey := list[total-1].RoomID + "_" + list[total-1].ProductID
+		mapData := map[string]entity.DyRoomProduct{}
+		if startRowKey != stopRowKey {
+			mapData, _ = hbase.GetRoomProductInfoRangDate(startRowKey, stopRowKey)
+		}
+		stopData, err := hbase.GetRoomProductInfo(stopRowKey)
+		if err == nil {
+			mapData[list[total-1].ProductID] = stopData
+		}
+		for _, v := range list {
+			var ptmPv int64 = 0
+			if productData, ok := mapData[v.ProductID]; ok {
+				for _, p := range productData.PtmPromotion {
+					if p.FinalPv > 0 {
+						ptmPv += p.FinalPv - p.InitialPv
+					} else {
+						ptmPv += p.Pv - p.InitialPv
+					}
+				}
+				totalPv += ptmPv
+			}
+			if v.DcmLevelFirst == "" {
+				v.DcmLevelFirst = "其他"
+			}
+			if c, ok := cateMap[v.DcmLevelFirst]; !ok {
+				cateMap[v.DcmLevelFirst] = dy2.ProductPvChartMap{
+					Pv:  ptmPv,
+					Son: map[string]dy2.ProductPvChartMap{},
+				}
+			} else {
+				c.Pv += ptmPv
+				cateMap[v.DcmLevelFirst] = c
+			}
+			if v.DcmLevelFirst == "其他" {
+				continue
+			}
+			if c, ok := cateMap[v.DcmLevelFirst].Son[v.FirstCname]; !ok {
+				cateMap[v.DcmLevelFirst].Son[v.FirstCname] = dy2.ProductPvChartMap{
+					Pv:  ptmPv,
+					Son: map[string]dy2.ProductPvChartMap{},
+				}
+			} else {
+				c.Pv += ptmPv
+				cateMap[v.DcmLevelFirst].Son[v.FirstCname] = c
+			}
+			if c, ok := cateMap[v.DcmLevelFirst].Son[v.FirstCname].Son[v.SecondCname]; !ok {
+				cateMap[v.DcmLevelFirst].Son[v.FirstCname].Son[v.SecondCname] = dy2.ProductPvChartMap{
+					Pv:  ptmPv,
+					Son: map[string]dy2.ProductPvChartMap{},
+				}
+			} else {
+				c.Pv += ptmPv
+				cateMap[v.DcmLevelFirst].Son[v.FirstCname].Son[v.SecondCname] = c
+			}
+		}
+	}
+	cateChart = receiver.getSon(cateMap, totalPv)
+	cateChart = receiver.sortSon(cateChart)
+	var cacheTime time.Duration = 60
+	if liveInfo.RoomStatus == 4 {
+		cacheTime = 1800
+	}
+	_ = global.Cache.Set(cacheKey, utils.SerializeData(cateChart), cacheTime)
+	receiver.SuccReturn(map[string]interface{}{
+		"list": cateChart,
+	})
+	return
+}
+
+//循环遍历
+func (receiver *LiveController) getSon(son map[string]dy2.ProductPvChartMap, pv int64) []dy2.ProductPvChart {
+	data := make([]dy2.ProductPvChart, 0)
+	for k, v := range son {
+		item := dy2.ProductPvChart{
+			LabelName: k,
+			Pv:        v.Pv,
+			LabelSon:  []dy2.ProductPvChart{},
+		}
+		if pv > 0 {
+			item.Percent = float64(item.Pv) / float64(pv)
+		}
+		if len(v.Son) > 0 {
+			item.LabelSon = receiver.getSon(v.Son, v.Pv)
+		} else {
+			item.LabelSon = []dy2.ProductPvChart{}
+		}
+		data = append(data, item)
+	}
+	return data
+}
+
+func (receiver *LiveController) sortSon(data []dy2.ProductPvChart) []dy2.ProductPvChart {
+	sort.Slice(data, func(i, j int) bool {
+		return data[i].Pv > data[j].Pv
+	})
+	if len(data) > 5 {
+		data = data[:5]
+	}
+	for k, v := range data {
+		if len(v.LabelSon) > 0 {
+			data[k].LabelSon = receiver.sortSon(v.LabelSon)
+		}
+	}
+	return data
 }
 
 //数据大屏基础数据
