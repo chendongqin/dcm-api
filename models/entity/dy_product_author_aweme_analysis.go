@@ -38,12 +38,13 @@ type DyProductAwemeAuthorAnalysis struct {
 }
 
 type DyProductAuthorRelatedAweme struct {
-	CommentCount int64   `json:"comment_count"`
-	AwemeTitle   string  `json:"aweme_title"`
-	AwemeId      string  `json:"aweme_id"`
-	Sales        int64   `json:"sales"`
-	AwemeGmv     float64 `json:"aweme_gmv"`
-	DiggCount    int64   `json:"digg_count"`
-	ForwardCount int64   `json:"forward_count"`
-	AwemeCover   string  `json:"aweme_cover"`
+	CommentCount    int64   `json:"comment_count"`
+	AwemeCreateTime int64   `json:"aweme_create_time"`
+	AwemeTitle      string  `json:"aweme_title"`
+	AwemeId         string  `json:"aweme_id"`
+	Sales           int64   `json:"sales"`
+	AwemeGmv        float64 `json:"aweme_gmv"`
+	DiggCount       int64   `json:"digg_count"`
+	ForwardCount    int64   `json:"forward_count"`
+	AwemeCover      string  `json:"aweme_cover"`
 }

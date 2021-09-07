@@ -591,6 +591,134 @@ func (receiver *LiveController) LiveFansTrends() {
 	return
 }
 
+//直播粉丝分析
+func (receiver *LiveController) LiveFanAnalyse() {
+	roomType := receiver.Ctx.Input.Param(":type")
+	roomId := business.IdDecrypt(receiver.Ctx.Input.Param(":room_id"))
+	liveInfo, comErr := hbase.GetLiveInfo(roomId)
+	if comErr != nil {
+		receiver.FailReturn(comErr)
+		return
+	}
+	info, _ := hbase.GetDyLiveRoomUserInfo(roomId)
+	var roomUserTotal int64 = 0
+	var roomAgePopleTotal int64 = 0
+	var roomGenderTotal int64 = 0
+	var roomAgeTotal int64 = 0
+	var roomCityTotal int64 = 0
+	var roomProvinceTotal int64 = 0
+	genderChart := make([]dy2.NameValueInt64PercentChart, 0)
+	ageChart := make([]dy2.NameValueInt64PercentChart, 0)
+	cityChart := make([]dy2.NameValueInt64PercentChart, 0)
+	provinceChart := make([]dy2.NameValueInt64PercentChart, 0)
+	wordChart := make([]dy2.NameValueInt64Chart, 0)
+	for k, v := range info.Gender {
+		roomUserTotal += v
+		name := ""
+		if k == "男" {
+			name = "male"
+		} else if k == "女" {
+			name = "female"
+		} else {
+			continue
+		}
+		roomGenderTotal += v
+		genderChart = append(genderChart, dy2.NameValueInt64PercentChart{
+			Name:  name,
+			Value: v,
+		})
+	}
+	for k, v := range info.AgeDistrinbution {
+		roomAgePopleTotal += v
+		if k == "" {
+			continue
+		}
+		roomAgeTotal += v
+		ageChart = append(ageChart, dy2.NameValueInt64PercentChart{
+			Name:  k,
+			Value: v,
+		})
+	}
+	for k, v := range info.City {
+		if k == "" {
+			continue
+		}
+		roomCityTotal += v
+		cityChart = append(cityChart, dy2.NameValueInt64PercentChart{
+			Name:  k,
+			Value: v,
+		})
+	}
+	for k, v := range info.Province {
+		if k == "" {
+			continue
+		}
+		roomProvinceTotal += v
+		provinceChart = append(provinceChart, dy2.NameValueInt64PercentChart{
+			Name:  k,
+			Value: v,
+		})
+	}
+	if roomType != "ing" {
+		for k, v := range info.Word {
+			if k == "" {
+				continue
+			}
+			wordChart = append(wordChart, dy2.NameValueInt64Chart{
+				Name:  k,
+				Value: v,
+			})
+		}
+		sort.Slice(wordChart, func(i, j int) bool {
+			return wordChart[i].Value > wordChart[j].Value
+		})
+	}
+	sort.Slice(cityChart, func(i, j int) bool {
+		return cityChart[i].Value > cityChart[j].Value
+	})
+	sort.Slice(provinceChart, func(i, j int) bool {
+		return provinceChart[i].Value > provinceChart[j].Value
+	})
+	if roomGenderTotal > 0 {
+		for k, v := range genderChart {
+			genderChart[k].Percent = float64(v.Value) / float64(roomGenderTotal)
+		}
+	}
+	if roomAgeTotal > 0 {
+		for k, v := range ageChart {
+			ageChart[k].Percent = float64(v.Value) / float64(roomAgeTotal)
+		}
+	}
+	if roomCityTotal > 0 {
+		for k, v := range cityChart {
+			cityChart[k].Percent = float64(v.Value) / float64(roomCityTotal)
+		}
+	}
+	if roomProvinceTotal > 0 {
+		for k, v := range provinceChart {
+			provinceChart[k].Percent = float64(v.Value) / float64(roomProvinceTotal)
+		}
+	}
+	var barrageRate float64 = 0
+	if liveInfo.TotalUser > 0 {
+		barrageRate = float64(liveInfo.BarrageCount) / float64(liveInfo.TotalUser)
+	}
+	receiver.SuccReturn(map[string]interface{}{
+		"total_people":       roomUserTotal,
+		"age_people":         roomAgePopleTotal,
+		"total_user":         liveInfo.TotalUser,
+		"barrage_count":      liveInfo.BarrageCount,
+		"barrage_user_count": liveInfo.BarrageUserCount,
+		"barrage_rate":       barrageRate,
+		"word_chart":         wordChart,
+		"gender_chart":       genderChart,
+		"age_chart":          ageChart,
+		"city_chart":         cityChart,
+		"province_chart":     provinceChart,
+	})
+	return
+}
+
 //数据大屏基础数据
 func (receiver *LiveController) LivingBaseData() {
 	roomId := business.IdDecrypt(receiver.Ctx.Input.Param(":room_id"))

@@ -161,13 +161,13 @@ func (receiver *ProductBusiness) ProductAuthorView(productId string, startTime, 
 	stopRowKey2 := stopRow.ProductId + "_" + stopRow.CreateSdf + "_" + stopRow.AuthorId
 	allAwemeList := make([]entity.DyProductAwemeAuthorAnalysis, 0)
 	cacheAwemeKey := cache.GetCacheKey(cache.ProductAwemeAuthorAllList, startRowKey2, stopRowKey2)
-	cacheAwemeStr := global.Cache.Get(cacheKey)
+	cacheAwemeStr := global.Cache.Get(cacheAwemeKey)
 	if cacheAwemeStr != "" {
 		cacheAwemeStr = utils.DeserializeData(cacheAwemeStr)
 		_ = jsoniter.Unmarshal([]byte(cacheAwemeStr), &allAwemeList)
 	} else {
-		if startRowKey != stopRowKey {
-			allAwemeList, _ = hbase.GetProductAwemeAuthorAnalysisRange(startRowKey, stopRowKey)
+		if startRowKey2 != stopRowKey2 {
+			allAwemeList, _ = hbase.GetProductAwemeAuthorAnalysisRange(startRowKey2, stopRowKey2)
 		}
 		lastRow, err := hbase.GetProductAwemeAuthorAnalysis(stopRowKey)
 		if err == nil {
@@ -181,6 +181,9 @@ func (receiver *ProductBusiness) ProductAuthorView(productId string, startTime, 
 	var liveTotalSales int64 = 0
 	var awemeTotalSales int64 = 0
 	for _, v := range allLiveList {
+		if v.Sales == 0 {
+			continue
+		}
 		if _, ok := allSales[v.AuthorId]; !ok {
 			allSales[v.AuthorId] = 0
 		}
@@ -192,6 +195,9 @@ func (receiver *ProductBusiness) ProductAuthorView(productId string, startTime, 
 		liveTotalSales += v.Sales
 	}
 	for _, v := range allAwemeList {
+		if v.Sales == 0 {
+			continue
+		}
 		if _, ok := allSales[v.AuthorId]; !ok {
 			allSales[v.AuthorId] = 0
 		}
@@ -578,9 +584,6 @@ func (receiver *ProductBusiness) ProductAwemeAuthorAnalysis(productId, keyword, 
 			if strings.Index(v.Nickname, keyword) < 0 && v.DisplayId != keyword && v.ShortId != keyword {
 				continue
 			}
-		}
-		for _, aweme := range v.RelatedAwemes {
-			v.DiggCount += aweme.DiggCount
 		}
 		if d, ok := authorMap[v.AuthorId]; ok {
 			d.Gmv += v.Gmv

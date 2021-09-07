@@ -110,7 +110,7 @@ func (this *ApiBaseController) IsIOS() (bool, string) {
 
 func (this *ApiBaseController) CheckIp() {
 	//获得IP白名单，IP黑名单配置
-	//this.Ip = this.Ctx.Input.IP()
+	this.Ip = this.Ctx.Input.IP()
 	//whitelists := apiv1models.NewConfigModel().GetConfig("ip_whitelists", true)
 	//blacklists := apiv1models.NewConfigModel().GetConfig("ip_blacklists", true)
 
