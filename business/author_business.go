@@ -604,6 +604,7 @@ func (a *AuthorBusiness) GetAuthorProductAnalyse(authorId, keyword, firstCate, s
 			p.LivePredictSales += math.Floor(v.LivePredictSales)
 			p.RoomCount += v.RoomCount
 			p.AwemeCount += v.AwemeCount
+			productMapList[v.ProductId] = p
 		} else {
 			total++
 			productMapList[v.ProductId] = v
