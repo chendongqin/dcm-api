@@ -68,3 +68,45 @@ func (e *EsVideoBusiness) SearchAwemeByProduct(productId, keyword, sortStr, orde
 	total = esMultiQuery.Count
 	return
 }
+
+func (e *EsVideoBusiness) SearchByAuthor(authorId, keyword, sortStr, orderBy string, hasProduct, page, pageSize int, startTime, endTime time.Time) (list []es.DyAweme, total int, comErr global.CommonError) {
+	if orderBy == "" {
+		orderBy = "desc"
+	}
+	if sortStr == "" {
+		sortStr = "aweme_create_time"
+	}
+	if !utils.InArrayString(orderBy, []string{"desc", "asc"}) {
+		comErr = global.NewError(4000)
+		return
+	}
+	if !utils.InArrayString(sortStr, []string{"aweme_create_time", "digg_count", "comment_count", "share_count", "aweme_gmv", "sales"}) {
+		comErr = global.NewError(4000)
+		return
+	}
+	esTable := GetESTableByMonthTime(es.DyVideoTable, startTime, endTime)
+	esQuery, esMultiQuery := elasticsearch.NewElasticQueryGroup()
+	esQuery.SetTerm("author_id", authorId)
+	esQuery.SetExist("field", "aweme_title")
+	esQuery.SetRange("aweme_create_time", map[string]interface{}{
+		"gte": startTime.Unix(),
+		"lt":  endTime.AddDate(0, 0, 1).Unix(),
+	})
+	if keyword != "" {
+		esQuery.SetMatchPhrase("aweme_title.keyword", keyword)
+	}
+	if hasProduct == 1 {
+		esQuery.SetExist("field", "product_ids")
+	}
+	result := esMultiQuery.
+		SetTable(esTable).
+		SetCache(180).
+		AddMust(esQuery.Condition).
+		SetOrderBy(elasticsearch.NewElasticOrder().Add(sortStr, orderBy).Order).
+		SetLimit((page-1)*pageSize, pageSize).
+		SetMultiQuery().
+		Query()
+	utils.MapToStruct(result, &list)
+	total = esMultiQuery.Count
+	return
+}
