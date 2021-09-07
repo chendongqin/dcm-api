@@ -531,35 +531,44 @@ func (receiver *AuthorController) Reputation() {
 //达人视频概览
 func (receiver *AuthorController) AuthorAwemesByDay() {
 	authorId := business.IdDecrypt(receiver.Ctx.Input.Param(":author_id"))
-	startDay := receiver.Ctx.Input.Param(":start")
-	endDay := receiver.Ctx.Input.Param(":end")
-	if authorId == "" || startDay == "" {
-		receiver.FailReturn(global.NewError(4000))
+	startDay, endDay, comErr := receiver.GetRangeDate()
+	if comErr != nil {
+		receiver.FailReturn(comErr)
 		return
-	}
-	if endDay == "" {
-		endDay = time.Now().Format("2006-01-02")
 	}
 	aABusiness := business.NewAuthorAwemeBusiness()
-	pslTime := "2006-01-02"
-	t1, err := time.ParseInLocation(pslTime, startDay, time.Local)
-	if err != nil {
-		receiver.FailReturn(global.NewError(4000))
-		return
-	}
-	t2, err := time.ParseInLocation(pslTime, endDay, time.Local)
-	if err != nil {
-		receiver.FailReturn(global.NewError(4000))
-		return
-	}
-	//时间限制
-	if t1.After(t2) || t2.After(t1.AddDate(0, 0, 90)) || t2.After(time.Now()) {
-		receiver.FailReturn(global.NewError(4000))
-		return
-	}
-	videoOverview := aABusiness.HbaseGetVideoAggRangeDate(authorId, t1, t2)
+	videoOverview := aABusiness.HbaseGetVideoAggRangeDate(authorId, startDay, endDay)
 	receiver.SuccReturn(map[string]interface{}{
 		"video_overview": videoOverview,
+	})
+	return
+}
+
+//达人视频列表
+func (receiver *AuthorController) AuthorAwemes() {
+	authorId := business.IdDecrypt(receiver.Ctx.Input.Param(":author_id"))
+	startTime, endTime, comErr := receiver.GetRangeDate()
+	if comErr != nil {
+		receiver.FailReturn(comErr)
+		return
+	}
+	hasProduct, _ := receiver.GetInt("has_product", 0)
+	keyword := receiver.GetString("keyword", "")
+	sortStr := receiver.GetString("sort", "")
+	orderBy := receiver.GetString("order_by", "")
+	page := receiver.GetPage("page")
+	pageSize := receiver.GetPageSize("page_size", 10, 30)
+	list, total, comErr := es.NewEsVideoBusiness().SearchByAuthor(authorId, keyword, sortStr, orderBy, hasProduct, page, pageSize, startTime, endTime)
+	if comErr != nil {
+		receiver.FailReturn(comErr)
+		return
+	}
+	for k, v := range list {
+		list[k].AwemeCover = dyimg.Fix(v.AwemeCover)
+	}
+	receiver.SuccReturn(map[string]interface{}{
+		"list":  list,
+		"total": total,
 	})
 	return
 }

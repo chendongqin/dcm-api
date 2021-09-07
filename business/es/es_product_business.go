@@ -244,7 +244,7 @@ func (i *EsProductBusiness) SearchAwemeRangeDateRowKey(productId, keyword string
 	return
 }
 
-func (i *EsProductBusiness) InternalSearch(productId, title, dcmLevelFirst, firstCname, secondCname, thirdCname string, page, pageSize int) (list []es.DyProduct, total int, comErr global.CommonError) {
+func (i *EsProductBusiness) InternalSearch(productId, title, platformLabel, dcmLevelFirst, firstCname, secondCname, thirdCname string, page, pageSize int) (list []es.DyProduct, total int, comErr global.CommonError) {
 	esTable := es.DyProductTable
 	esQuery, esMultiQuery := elasticsearch.NewElasticQueryGroup()
 	if productId != "" {
@@ -253,17 +253,20 @@ func (i *EsProductBusiness) InternalSearch(productId, title, dcmLevelFirst, firs
 	if title != "" {
 		esQuery.SetMatchPhrase("title", title)
 	}
+	if platformLabel != "" {
+		esQuery.SetTerm("platform_label.keyword", platformLabel)
+	}
 	if dcmLevelFirst != "" {
-		esQuery.SetMatchPhrase("dcm_level_first", dcmLevelFirst)
+		esQuery.SetTerm("dcm_level_first.keyword", dcmLevelFirst)
 	}
 	if firstCname != "" {
-		esQuery.SetMatchPhrase("first_cname", firstCname)
+		esQuery.SetTerm("first_cname.keyword", firstCname)
 	}
 	if secondCname != "" {
-		esQuery.SetMatchPhrase("second_cname", secondCname)
+		esQuery.SetTerm("second_cname.keyword", secondCname)
 	}
 	if thirdCname != "" {
-		esQuery.SetMatchPhrase("third_cname", thirdCname)
+		esQuery.SetTerm("third_cname.keyword", thirdCname)
 	}
 	results := esMultiQuery.
 		SetTable(esTable).

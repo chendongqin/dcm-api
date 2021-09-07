@@ -128,7 +128,7 @@ func (receiver *EsAuthorBusiness) BaseSearch(
 					{
 						"bool": map[string]interface{}{
 							"must_not": map[string]interface{}{
-								"exist": map[string]interface{}{
+								"exists": map[string]interface{}{
 									"field": "is_delivery",
 								},
 							},

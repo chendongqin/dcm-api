@@ -607,11 +607,11 @@ func (receiver *LiveController) LiveFanAnalyse() {
 	var roomAgeTotal int64 = 0
 	var roomCityTotal int64 = 0
 	var roomProvinceTotal int64 = 0
-	genderChart := make([]dy2.NameValueInt64PercentChart, 0)
-	ageChart := make([]dy2.NameValueInt64PercentChart, 0)
-	cityChart := make([]dy2.NameValueInt64PercentChart, 0)
-	provinceChart := make([]dy2.NameValueInt64PercentChart, 0)
-	wordChart := make([]dy2.NameValueInt64Chart, 0)
+	genderChart := make([]entity.XtDistributionsList, 0)
+	ageChart := make([]entity.XtDistributionsList, 0)
+	cityChart := make([]entity.XtDistributionsList, 0)
+	provinceChart := make([]entity.XtDistributionsList, 0)
+	wordChart := make([]entity.XtDistributionsList, 0)
 	for k, v := range info.Gender {
 		roomUserTotal += v
 		name := ""
@@ -623,9 +623,9 @@ func (receiver *LiveController) LiveFanAnalyse() {
 			continue
 		}
 		roomGenderTotal += v
-		genderChart = append(genderChart, dy2.NameValueInt64PercentChart{
-			Name:  name,
-			Value: v,
+		genderChart = append(genderChart, entity.XtDistributionsList{
+			DistributionKey:   name,
+			DistributionValue: v,
 		})
 	}
 	for k, v := range info.AgeDistrinbution {
@@ -634,9 +634,9 @@ func (receiver *LiveController) LiveFanAnalyse() {
 			continue
 		}
 		roomAgeTotal += v
-		ageChart = append(ageChart, dy2.NameValueInt64PercentChart{
-			Name:  k,
-			Value: v,
+		ageChart = append(ageChart, entity.XtDistributionsList{
+			DistributionKey:   k,
+			DistributionValue: v,
 		})
 	}
 	for k, v := range info.City {
@@ -644,9 +644,9 @@ func (receiver *LiveController) LiveFanAnalyse() {
 			continue
 		}
 		roomCityTotal += v
-		cityChart = append(cityChart, dy2.NameValueInt64PercentChart{
-			Name:  k,
-			Value: v,
+		cityChart = append(cityChart, entity.XtDistributionsList{
+			DistributionKey:   k,
+			DistributionValue: v,
 		})
 	}
 	for k, v := range info.Province {
@@ -654,9 +654,9 @@ func (receiver *LiveController) LiveFanAnalyse() {
 			continue
 		}
 		roomProvinceTotal += v
-		provinceChart = append(provinceChart, dy2.NameValueInt64PercentChart{
-			Name:  k,
-			Value: v,
+		provinceChart = append(provinceChart, entity.XtDistributionsList{
+			DistributionKey:   k,
+			DistributionValue: v,
 		})
 	}
 	if roomType != "ing" {
@@ -664,39 +664,39 @@ func (receiver *LiveController) LiveFanAnalyse() {
 			if k == "" {
 				continue
 			}
-			wordChart = append(wordChart, dy2.NameValueInt64Chart{
-				Name:  k,
-				Value: v,
+			wordChart = append(wordChart, entity.XtDistributionsList{
+				DistributionKey:   k,
+				DistributionValue: v,
 			})
 		}
 		sort.Slice(wordChart, func(i, j int) bool {
-			return wordChart[i].Value > wordChart[j].Value
+			return wordChart[i].DistributionValue > wordChart[j].DistributionValue
 		})
 	}
 	sort.Slice(cityChart, func(i, j int) bool {
-		return cityChart[i].Value > cityChart[j].Value
+		return cityChart[i].DistributionValue > cityChart[j].DistributionValue
 	})
 	sort.Slice(provinceChart, func(i, j int) bool {
-		return provinceChart[i].Value > provinceChart[j].Value
+		return provinceChart[i].DistributionValue > provinceChart[j].DistributionValue
 	})
 	if roomGenderTotal > 0 {
 		for k, v := range genderChart {
-			genderChart[k].Percent = float64(v.Value) / float64(roomGenderTotal)
+			genderChart[k].DistributionPer = float64(v.DistributionValue) / float64(roomGenderTotal)
 		}
 	}
 	if roomAgeTotal > 0 {
 		for k, v := range ageChart {
-			ageChart[k].Percent = float64(v.Value) / float64(roomAgeTotal)
+			ageChart[k].DistributionPer = float64(v.DistributionValue) / float64(roomAgeTotal)
 		}
 	}
 	if roomCityTotal > 0 {
 		for k, v := range cityChart {
-			cityChart[k].Percent = float64(v.Value) / float64(roomCityTotal)
+			cityChart[k].DistributionPer = float64(v.DistributionValue) / float64(roomCityTotal)
 		}
 	}
 	if roomProvinceTotal > 0 {
 		for k, v := range provinceChart {
-			provinceChart[k].Percent = float64(v.Value) / float64(roomProvinceTotal)
+			provinceChart[k].DistributionPer = float64(v.DistributionValue) / float64(roomProvinceTotal)
 		}
 	}
 	var barrageRate float64 = 0
