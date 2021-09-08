@@ -42,6 +42,7 @@ type DyProductAuthorRelatedAweme struct {
 	AwemeCreateTime int64   `json:"aweme_create_time"`
 	AwemeTitle      string  `json:"aweme_title"`
 	AwemeId         string  `json:"aweme_id"`
+	AwemeUrl        string  `json:"aweme_url"`
 	Sales           int64   `json:"sales"`
 	AwemeGmv        float64 `json:"aweme_gmv"`
 	DiggCount       int64   `json:"digg_count"`
