@@ -59,7 +59,8 @@ func (this *ApiBaseController) InitApiController() {
 	this.CheckSign()
 	this.InitUserToken()
 	//todo 上线白名单过滤
-	if this.AppId < 20000 {
+	//if this.AppId < 20000 {
+	if this.AppId <= 10000 {
 		if !utils.InArrayString(this.TrueUri, []string{"/v1/user/login", "/v1/config/list", "/v1/sms/verify", "/v1/sms/code",
 			"/v1/wechat/phone",
 			"/v1/account/logout", "/v1/wechat/check", "/v1/wechat/qrcode", "/v1/account/password", "/v1/callback/wechat"}) {
