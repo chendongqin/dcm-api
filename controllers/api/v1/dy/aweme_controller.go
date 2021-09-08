@@ -187,6 +187,7 @@ func (receiver *AwemeController) AwemeProductAnalyse() {
 			productInfo, _ := hbase.GetProductInfo(v.ProductId)
 			productMap[v.ProductId] = dy2.DyAwemeProductSale{
 				AwemeId:       v.AwemeId,
+				ProductId:     v.ProductId,
 				Gmv:           v.AwemeGmv,
 				Sales:         v.Sales,
 				Price:         v.Price,

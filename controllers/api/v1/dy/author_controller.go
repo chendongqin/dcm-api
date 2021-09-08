@@ -566,6 +566,9 @@ func (receiver *AuthorController) AuthorAwemes() {
 	for k, v := range list {
 		list[k].AwemeCover = dyimg.Fix(v.AwemeCover)
 		list[k].Avatar = dyimg.Fix(v.Avatar)
+		if v.UniqueId == "" || v.UniqueId == "0" {
+			list[k].UniqueId = v.ShortId
+		}
 	}
 	maxTotal := total
 	if total > business.EsMaxShowNum {
