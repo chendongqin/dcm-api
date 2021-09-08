@@ -565,10 +565,16 @@ func (receiver *AuthorController) AuthorAwemes() {
 	}
 	for k, v := range list {
 		list[k].AwemeCover = dyimg.Fix(v.AwemeCover)
+		list[k].Avatar = dyimg.Fix(v.Avatar)
+	}
+	maxTotal := total
+	if total > business.EsMaxShowNum {
+		maxTotal = business.EsMaxShowNum
 	}
 	receiver.SuccReturn(map[string]interface{}{
-		"list":  list,
-		"total": total,
+		"list":           list,
+		"total":          total,
+		"max_show_total": maxTotal,
 	})
 	return
 }
