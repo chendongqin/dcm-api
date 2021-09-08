@@ -122,9 +122,9 @@ func (receiver *InternalController) ChangeProductCate() {
 		return
 	}
 	dcmLevelFirst := receiver.InputFormat().GetString("dcm_level_first", "")
-	firstCate := receiver.InputFormat().GetString("first_cate", "")
-	secondCate := receiver.InputFormat().GetString("second_cate", "")
-	thirdCate := receiver.InputFormat().GetString("third_cate", "")
+	firstCate := receiver.InputFormat().GetString("first_cname", "")
+	secondCate := receiver.InputFormat().GetString("second_cname", "")
+	thirdCate := receiver.InputFormat().GetString("third_cname", "")
 	if dcmLevelFirst == "" {
 		receiver.FailReturn(global.NewError(4000))
 		return
