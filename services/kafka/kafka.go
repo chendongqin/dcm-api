@@ -84,9 +84,9 @@ func NewProductCateChangeMsg(productId string) *sarama.ProducerMessage {
 	msg := &sarama.ProducerMessage{
 		Topic: "dy-product-cate-change",
 		Value: sarama.StringEncoder(pack(alias.M{
-			"author_id": productId,
-			"type":      "product_cate_change",
-			"time":      time.Now().Format("2006-01-02 15:04:05"),
+			"product_id": productId,
+			"type":       "product_cate_change",
+			"time":       time.Now().Format("2006-01-02 15:04:05"),
 		})),
 	}
 	return msg
