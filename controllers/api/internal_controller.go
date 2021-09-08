@@ -5,11 +5,17 @@ import (
 	"dongchamao/business/es"
 	"dongchamao/global"
 	"dongchamao/global/cache"
+	utils2 "dongchamao/global/utils"
 	"dongchamao/models/dcm"
 	"dongchamao/models/repost"
 	"dongchamao/services/dyimg"
 	"encoding/json"
+	"github.com/aliyun/alibaba-cloud-sdk-go/sdk/utils"
+	"github.com/silenceper/wechat/v2/officialaccount/material"
+	"os"
 	"strconv"
+	"strings"
+	"time"
 )
 
 type InternalController struct {
@@ -179,13 +185,10 @@ func (receiver *InternalController) GetConfig() {
 }
 
 func (receiver *InternalController) GetWeChatMenu() {
-	data, _ := business.NewWechatBusiness().GetMenus()
-	//fmt.Printf("data:%+v\n",data)
-	//if err != nil {
-	//	receiver.FailReturn(global.NewError(5000))
-	//}
-	str := "{\n    \"button\": [\n        {\n            \"name\": \"抖音数据\",\n            \"sub_button\": [\n                {\n                    \"type\": \"view\",\n                    \"name\": \"搜索\",\n                    \"url\": \"https://douyin.dongchamao.com\"\n                },\n                {\n                    \"type\": \"view\",\n                    \"name\": \"行业成交大盘\",\n                    \"url\": \"https://douyin.dongchamao.com\"\n                },\n                {\n                    \"type\": \"view\",\n                    \"name\": \"直播带货榜\",\n                    \"url\": \"https://douyin.dongchamao.com/#/talent/ranking/commerce\"\n                },\n                {\n                    \"type\": \"view\",\n                    \"name\": \"红人直播\",\n                    \"url\": \"https://douyin.dongchamao.com/#/report/\"\n                },\n                {\n                    \"type\": \"view\",\n                    \"name\": \"APP下载\",\n                    \"url\": \"https://douyin.dongchamao.com\"\n                }\n           ]\n        },\n        {\n            \"name\": \"资源图书馆\",\n            \"sub_button\": [\n                {\n                    \"type\": \"click\",\n                    \"name\": \"功能上新\",\n                    \"key\": \"new_function\"\n                },\n                {\n                    \"type\": \"view_limited\",\n                    \"name\": \"运营干货\",\n                    \"media_id\": \"UQotsct61iSBt9RSogbMYyLZ60ZbdETWeWv5kzX5ML0\"\n                }\n            ]\n        },\n        {\n            \"name\": \"资源合作\",\n            \"sub_button\": [\n                {\n                    \"type\": \"click\",\n                    \"name\": \"免费试用\",\n                    \"key\": \"try_use\"\n                },\n                {\n                    \"type\": \"click\",\n                    \"name\": \"商务合作\",\n                    \"key\": \"business\"\n                }\n            ]\n        }\n    ]\n}"
-	json.Unmarshal([]byte(str), &data.Menu)
+	data, err := business.NewWechatBusiness().GetMenus()
+	if err != nil {
+		receiver.FailReturn(global.NewError(5000))
+	}
 	receiver.SuccReturn(data.Menu)
 	return
 }
@@ -194,10 +197,57 @@ func (receiver *InternalController) SetWeChatMenu() {
 	input := receiver.InputFormat()
 	menu := input.GetString("menu", "")
 	if menu == "" {
+		receiver.FailReturn(global.NewError(4000))
+		return
+	}
+	var menuMap map[string]interface{}
+	if err := json.Unmarshal([]byte(menu), &menuMap); err != nil {
 		receiver.FailReturn(global.NewError(5000))
 		return
 	}
-	println(menu)
-	receiver.SuccReturn(menu)
+	if err := business.NewWechatBusiness().UpdateMenus(menuMap); err != nil {
+		receiver.FailReturn(global.NewError(5000))
+		return
+	}
+	receiver.SuccReturn(nil)
 	return
+}
+
+func (receiver *InternalController) UploadWeChatMedia() {
+	file, fileHeader, err := receiver.GetFile("file")
+	var buff = make([]byte, fileHeader.Size)
+	if _, err = file.Read(buff); err != nil {
+		receiver.FailReturn(global.NewError(5000))
+		return
+	}
+	s := strings.Split(fileHeader.Filename, ".")
+	tag := s[len(s)-1]
+	fileName := time.Now().Format("20060102101020") + utils.RandStringBytes(6) + "." + tag
+	localDir := "./temp"
+	_, err = os.Stat(localDir)
+	if os.IsNotExist(err) {
+		utils2.MakeDir(localDir)
+	}
+	path := localDir + "/" + fileName
+	osFile, err := os.Create(path)
+	if err != nil {
+		receiver.FailReturn(global.NewError(5000))
+		return
+	}
+	//移除临时文件
+	defer os.Remove(path)
+	if _, err := osFile.Write(buff); err != nil {
+		receiver.FailReturn(global.NewError(5000))
+		return
+	}
+	mediaID, url, err := business.NewWechatBusiness().AddMedia(material.MediaTypeImage, path)
+	if err != nil {
+		receiver.FailReturn(global.NewError(5000))
+		return
+	}
+	if comErr := business.NewFileBusiness().InsertFile(fileName, url, tag, mediaID); comErr != nil {
+		receiver.FailReturn(global.NewError(5000))
+		return
+	}
+	receiver.SuccReturn(nil)
 }

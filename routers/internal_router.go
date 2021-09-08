@@ -25,6 +25,7 @@ func init() {
 		beego.NSNamespace("/wechat",
 			beego.NSRouter("/menu", &controllers.InternalController{}, "get:GetWeChatMenu"),
 			beego.NSRouter("/menu/set", &controllers.InternalController{}, "post:SetWeChatMenu"),
+			beego.NSRouter("/media/upload", &controllers.InternalController{}, "post:UploadWeChatMedia"),
 		),
 	)
 	// 注册路由组

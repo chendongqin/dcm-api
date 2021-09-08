@@ -37,6 +37,7 @@ import (
 	"net"
 	"net/http"
 	"net/url"
+	"os"
 	"reflect"
 	"regexp"
 	"runtime"
@@ -1860,5 +1861,22 @@ func ToStringE(i interface{}) (string, error) {
 		return s.Error(), nil
 	default:
 		return "", fmt.Errorf("unable to cast %#v of type %T to string", i, i)
+	}
+}
+
+func MakeDir(path string) {
+	var (
+		dir string
+	)
+	for _, v := range strings.Split(path, "/") {
+		if v == "." {
+			dir += v
+			continue
+		}
+		dir += "/" + v
+		_, err := os.Stat(dir)
+		if os.IsNotExist(err) {
+			os.Mkdir(dir, os.ModePerm)
+		}
 	}
 }
