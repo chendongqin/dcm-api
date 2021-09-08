@@ -17,6 +17,8 @@ func init() {
 			beego.NSRouter("/promotion/chart/:room_id", &v1dy.LiveController{}, "get:LivePromotions"),
 			beego.NSRouter("/rank/chart/:room_id", &v1dy.LiveController{}, "get:LiveRankTrends"),
 			beego.NSRouter("/fans/chart/:room_id", &v1dy.LiveController{}, "get:LiveFansTrends"),
+			beego.NSRouter("/fans/data/:type/:room_id", &v1dy.LiveController{}, "get:LiveFanAnalyse"),
+			beego.NSRouter("/fans/product/:room_id", &v1dy.LiveController{}, "get:LiveProductPvAnalyse"),
 		),
 		beego.NSNamespace("/living",
 			beego.NSRouter("/base/:room_id", &v1dy.LiveController{}, "get:LivingBaseData"),

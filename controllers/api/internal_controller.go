@@ -5,6 +5,8 @@ import (
 	"dongchamao/business/es"
 	"dongchamao/global"
 	"dongchamao/global/cache"
+	"dongchamao/hbase"
+	"dongchamao/models/entity"
 	utils2 "dongchamao/global/utils"
 	"dongchamao/models/dcm"
 	"dongchamao/models/repost"
@@ -50,6 +52,19 @@ func (receiver *InternalController) AuthorSearch() {
 	return
 }
 
+func (receiver *InternalController) AuthorInfo() {
+	authorId := receiver.Ctx.Input.Param(":author_id")
+	data, err := hbase.GetAuthor(authorId)
+	if err != nil {
+		receiver.FailReturn(err)
+		return
+	}
+	authorData := entity.DyAuthorSimple{}
+	utils2.MapToStruct(data, &authorData)
+	receiver.SuccReturn(authorData)
+	return
+}
+
 //修改达人分类
 func (receiver *InternalController) ChangeAuthorCate() {
 	authorId := receiver.Ctx.Input.Param(":author_id")
@@ -77,13 +92,14 @@ func (receiver *InternalController) ChangeAuthorCate() {
 func (receiver *InternalController) ProductSearch() {
 	productId := receiver.GetString("product_id")
 	title := receiver.GetString("title")
+	platformLabel := receiver.GetString("platform_label")
 	dcmLevelFirst := receiver.GetString("dcm_level_first", "")
 	firstCname := receiver.GetString("first_cname", "")
 	secondCname := receiver.GetString("second_cname", "")
 	thirdCname := receiver.GetString("third_cname", "")
 	page := receiver.GetPage("page")
 	pageSize := receiver.GetPageSize("page_size", 10, 100)
-	list, total, comErr := es.NewEsProductBusiness().InternalSearch(productId, title, dcmLevelFirst, firstCname, secondCname, thirdCname, page, pageSize)
+	list, total, comErr := es.NewEsProductBusiness().InternalSearch(productId, title, platformLabel, dcmLevelFirst, firstCname, secondCname, thirdCname, page, pageSize)
 	if comErr != nil {
 		receiver.FailReturn(comErr)
 		return

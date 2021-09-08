@@ -8,6 +8,7 @@ const (
 	HbaseDyAuthorLiveSalesData      = "dy_author_live_sales_data" //直播间带货数据
 	HbaseDyLivePmt                  = "dy_live_pmt"               //直播pmt(直播商品列表)
 	HbaseDyLiveCurProduct           = "dy_live_cur_product"
+	HbaseDyLiveRoomUserInfo         = "dy_live_room_user_info"         //直播粉丝数据
 	HbaseDyRoomProduct              = "dy_room_product"                //直播间商品全网销量
 	HbaseDyLiveRankTrend            = "dy_live_rank_trend"             //直播间榜单排名数据
 	HbaseDyReputation               = "dy_reputation"                  //带货口碑

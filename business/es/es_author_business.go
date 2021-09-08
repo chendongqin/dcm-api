@@ -117,7 +117,26 @@ func (receiver *EsAuthorBusiness) BaseSearch(
 	if isDelivery == 1 {
 		esQuery.SetTerm("is_delivery", 1)
 	} else if isDelivery == 2 {
-		esQuery.SetTerm("is_delivery", 0)
+		esQuery.AddCondition(map[string]interface{}{
+			"bool": map[string]interface{}{
+				"should": []map[string]interface{}{
+					{
+						"term": map[string]interface{}{
+							"is_delivery": 0,
+						},
+					},
+					{
+						"bool": map[string]interface{}{
+							"must_not": map[string]interface{}{
+								"exists": map[string]interface{}{
+									"field": "is_delivery",
+								},
+							},
+						},
+					},
+				},
+			},
+		})
 	}
 	if isBrand == 1 {
 		esQuery.SetTerm("brand", 1)

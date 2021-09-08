@@ -72,6 +72,23 @@ func GetRoomProductInfoRangDate(startRowKey, stopRowKey string) (data map[string
 	return
 }
 
+//直播间粉丝
+func GetDyLiveRoomUserInfo(roomId string) (data entity.DyLiveRoomUserInfo, comErr global.CommonError) {
+	query := hbasehelper.NewQuery()
+	result, err := query.SetTable(hbaseService.HbaseDyLiveRoomUserInfo).GetByRowKey([]byte(roomId))
+	if err != nil {
+		comErr = global.NewMsgError(err.Error())
+		return
+	}
+	if result.Row == nil {
+		comErr = global.NewError(4040)
+		return
+	}
+	infoMap := hbaseService.HbaseFormat(result, entity.DyLiveRoomUserInfoMap)
+	utils.MapToStruct(infoMap, &data)
+	return
+}
+
 //直播间信息
 func GetLiveInfo(roomId string) (data entity.DyLiveInfo, comErr global.CommonError) {
 	query := hbasehelper.NewQuery()

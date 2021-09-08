@@ -1,6 +1,7 @@
 package es
 
 import (
+	"dongchamao/global/utils"
 	"fmt"
 	"strings"
 	"time"
@@ -11,11 +12,10 @@ func GetESTableByTime(table string, start, stop time.Time) string {
 		return fmt.Sprintf(table, start.Format("20060102"))
 	}
 	esTableArr := make([]string, 0)
-	begin := start
+	begin, _ := time.ParseInLocation("20060102", start.Format("200601")+"01", time.Local)
 	endMonth := stop.Month()
-	if begin.Month() > endMonth {
-		endMonth += 12
-	}
+	year := utils.ToInt(stop.Format("2006")) - utils.ToInt(start.Format("2006"))
+	endMonth += 12 * time.Month(year)
 	beginMonth := begin.Month()
 	for {
 		if beginMonth > endMonth {
@@ -44,19 +44,18 @@ func GetESTableByDayTime(table string, start, stop time.Time) string {
 
 func GetESTableByMonthTime(table string, start, stop time.Time) string {
 	esTableArr := make([]string, 0)
-	begin := start
+	begin, _ := time.ParseInLocation("20060102", start.Format("200601")+"01", time.Local)
 	endMonth := stop.Month()
-	if begin.Month() > endMonth {
-		endMonth += 12
-	}
+	year := utils.ToInt(stop.Format("2006")) - utils.ToInt(start.Format("2006"))
+	endMonth += 12 * time.Month(year)
 	beginMonth := begin.Month()
 	for {
 		if beginMonth > endMonth {
 			break
 		}
 		esTableArr = append(esTableArr, fmt.Sprintf(table, begin.Format("200601")))
-		begin = begin.AddDate(0, 1, 0)
 		beginMonth += 1
+		begin = begin.AddDate(0, 1, 0)
 	}
 	return strings.Join(esTableArr, ",")
 }
