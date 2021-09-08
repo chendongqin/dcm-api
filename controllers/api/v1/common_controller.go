@@ -166,19 +166,24 @@ func (receiver *CommonController) Test() {
 }
 
 func (receiver *CommonController) GetConfig() {
-	var configJson dcm.DcConfigJson
 	keyName := receiver.GetString(":key_name")
-	exist, err := dcm.GetBy("key_name", keyName, &configJson)
-	if !exist || err != nil {
-		receiver.FailReturn(global.NewError(5000))
-		return
-	}
-	if configJson.Auth == 0 {
-		receiver.FailReturn(global.NewError(4000))
-		return
+	cacheKey := cache.GetCacheKey(cache.ConfigKeyCache, keyName)
+	cacheData := global.Cache.Get(cacheKey)
+	if cacheData == "" {
+		var configJson dcm.DcConfigJson
+		exist, err := dcm.GetBy("key_name", keyName, &configJson)
+		if !exist || err != nil {
+			receiver.FailReturn(global.NewError(5000))
+			return
+		}
+		if configJson.Auth == 0 {
+			receiver.FailReturn(global.NewError(4000))
+			return
+		}
+		cacheData = configJson.Value
 	}
 	var data map[string]interface{}
-	if err := json.Unmarshal([]byte(configJson.Value), &data); err != nil {
+	if err := json.Unmarshal([]byte(cacheData), &data); err != nil {
 		receiver.FailReturn(global.NewError(5000))
 		return
 	}
