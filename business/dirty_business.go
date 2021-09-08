@@ -39,8 +39,8 @@ func (receiver *DirtyBusiness) ChangeAuthorCate(authorId, tags, tagsTow string) 
 	if err != nil {
 		return global.NewError(5000)
 	}
-	//ret, _ := NewSpiderBusiness().SpiderSpeedUp("author", authorId)
-	//logs.Info("达人分类修改，爬虫推送结果：", ret)
+	ret, _ := NewSpiderBusiness().SpiderSpeedUp("author", authorId)
+	logs.Info("达人分类修改，爬虫推送结果：", ret)
 	kafka.SendAuthorCateChange(authorId)
 	return nil
 }
