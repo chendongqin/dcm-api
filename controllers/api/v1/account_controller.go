@@ -302,6 +302,10 @@ func (receiver *AccountController) AddCollect() {
 		return
 	}
 	collectId := receiver.GetString("collect_id")
+	if collectId == "" {
+		receiver.FailReturn(global.NewError(4000))
+		return
+	}
 	collectType, err := receiver.GetInt("collect_type", 1)
 	if err != nil {
 		receiver.FailReturn(global.NewError(5000))
