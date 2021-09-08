@@ -89,6 +89,7 @@ func (e *EsVideoBusiness) SearchByAuthor(authorId, keyword, sortStr, orderBy str
 	esQuery, esMultiQuery := elasticsearch.NewElasticQueryGroup()
 	esQuery.SetTerm("author_id", authorId)
 	esQuery.SetExist("field", "aweme_title")
+	esQuery.SetTerm("exist", 1)
 	esQuery.SetRange("aweme_create_time", map[string]interface{}{
 		"gte": startTime.Unix(),
 		"lt":  endTime.AddDate(0, 0, 1).Unix(),
