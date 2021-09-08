@@ -472,3 +472,22 @@ func (receiver *AccountController) DyCollectLabel() {
 	receiver.SuccReturn(utils.UniqueStringSlice(ret))
 	return
 }
+
+//收藏达人备注
+func (receiver *AccountController) DyCollectRemark() {
+	InputData := receiver.InputFormat()
+	id := InputData.GetInt("id", 0)
+	var collect dcm.DcUserDyCollect
+	_, err := dcm.Get(id, &collect)
+	if err != nil || collect.Id == 0 {
+		receiver.FailReturn(global.NewError(4000))
+		return
+	}
+	remark := InputData.GetString("remark", "")
+	if _, err := dcm.UpdateInfo(dcm.GetDbSession(), id, map[string]interface{}{"remark": remark}, new(dcm.DcUserDyCollect)); err != nil {
+		receiver.FailReturn(global.NewError(5000))
+		return
+	}
+	receiver.SuccReturn(nil)
+	return
+}
