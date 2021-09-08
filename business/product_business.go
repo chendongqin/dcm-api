@@ -147,6 +147,9 @@ func (receiver *ProductBusiness) ProductAuthorView(productId string, startTime, 
 		if err == nil {
 			allLiveList = append(allLiveList, lastRow)
 		}
+		sort.Slice(allLiveList, func(i, j int) bool {
+			return allLiveList[i].Date > allLiveList[j].Date
+		})
 		_ = global.Cache.Set(cacheKey, utils.SerializeData(allLiveList), 300)
 	}
 	//视频达人
@@ -173,6 +176,9 @@ func (receiver *ProductBusiness) ProductAuthorView(productId string, startTime, 
 		if err == nil {
 			allAwemeList = append(allAwemeList, lastRow)
 		}
+		sort.Slice(allAwemeList, func(i, j int) bool {
+			return allAwemeList[i].CreateSdf > allAwemeList[j].CreateSdf
+		})
 		_ = global.Cache.Set(cacheAwemeKey, utils.SerializeData(allAwemeList), 300)
 	}
 	allSales := map[string]int64{}
@@ -304,11 +310,20 @@ func (receiver *ProductBusiness) ProductAuthorAnalysis(productId, keyword, tag s
 		if err == nil {
 			allList = append(allList, lastRow)
 		}
+		sort.Slice(allList, func(i, j int) bool {
+			return allList[i].Date > allList[j].Date
+		})
 		_ = global.Cache.Set(cacheKey, utils.SerializeData(allList), 300)
 	}
 	authorMap := map[string]entity.DyProductAuthorAnalysis{}
 	authorIds := make([]string, 0)
+	authorTagMap := map[string]string{}
 	for _, v := range allList {
+		if at, ok := authorTagMap[v.AuthorId]; ok {
+			v.ShopTags = at
+		} else {
+			authorTagMap[v.AuthorId] = v.ShopTags
+		}
 		if keyword != "" {
 			if strings.Index(v.Nickname, keyword) < 0 && v.DisplayId != keyword && v.ShortId != keyword {
 				continue
@@ -332,10 +347,15 @@ func (receiver *ProductBusiness) ProductAuthorAnalysis(productId, keyword, tag s
 			d.Gmv += v.Gmv
 			d.Sales += v.Sales
 			d.RelatedRooms = append(d.RelatedRooms, v.RelatedRooms...)
-			if v.Date > d.Date {
-				d.FollowCount = v.FollowCount
-				d.Date = v.Date
-			}
+			//if v.Date > d.Date {
+			//	d.FollowCount = v.FollowCount
+			//	d.Date = v.Date
+			//	d.Nickname = v.Nickname
+			//	d.Avatar = v.Avatar
+			//	d.ShopTags = v.ShopTags
+			//	d.DisplayId = v.DisplayId
+			//	d.ShortId = v.ShortId
+			//}
 			authorMap[v.AuthorId] = d
 		} else {
 			authorMap[v.AuthorId] = v
@@ -459,17 +479,37 @@ func (receiver *ProductBusiness) ProductAuthorAnalysisCount(productId, keyword s
 	}
 	startRowKey := startRow.ProductId + "_" + startRow.CreateSdf + "_" + startRow.AuthorId
 	stopRowKey := stopRow.ProductId + "_" + stopRow.CreateSdf + "_" + stopRow.AuthorId
-	allList, _ := hbase.GetProductAuthorAnalysisRange(startRowKey, stopRowKey)
-	lastRow, err := hbase.GetProductAuthorAnalysis(stopRowKey)
-	if err == nil {
-		allList = append(allList, lastRow)
+	cacheKey := cache.GetCacheKey(cache.ProductAuthorAllList, startRowKey, stopRowKey)
+	cacheStr := global.Cache.Get(cacheKey)
+	allList := make([]entity.DyProductAuthorAnalysis, 0)
+	if cacheStr != "" {
+		cacheStr = utils.DeserializeData(cacheStr)
+		_ = jsoniter.Unmarshal([]byte(cacheStr), &allList)
+	} else {
+		if startRowKey != stopRowKey {
+			allList, _ = hbase.GetProductAuthorAnalysisRange(startRowKey, stopRowKey)
+		}
+		lastRow, err := hbase.GetProductAuthorAnalysis(stopRowKey)
+		if err == nil {
+			allList = append(allList, lastRow)
+		}
+		sort.Slice(allList, func(i, j int) bool {
+			return allList[i].Date > allList[j].Date
+		})
+		_ = global.Cache.Set(cacheKey, utils.SerializeData(allList), 300)
 	}
 	tagsMap := map[string]int{}
 	levelMap := map[int]int{}
 	authorMap := map[string]string{}
+	authorTagMap := map[string]string{}
 	for _, v := range allList {
 		if _, ok := authorMap[v.AuthorId]; ok {
 			continue
+		}
+		if at, ok := authorTagMap[v.AuthorId]; ok {
+			v.ShopTags = at
+		} else {
+			authorTagMap[v.AuthorId] = v.ShopTags
 		}
 		if keyword != "" {
 			if strings.Index(v.Nickname, keyword) < 0 && v.DisplayId != keyword && v.ShortId != keyword {
@@ -561,13 +601,22 @@ func (receiver *ProductBusiness) ProductAwemeAuthorAnalysis(productId, keyword, 
 		if err == nil {
 			allList = append(allList, lastRow)
 		}
+		sort.Slice(allList, func(i, j int) bool {
+			return allList[i].CreateSdf > allList[j].CreateSdf
+		})
 		_ = global.Cache.Set(cacheKey, utils.SerializeData(allList), 300)
 	}
 	authorMap := map[string]entity.DyProductAwemeAuthorAnalysis{}
 	authorIds := make([]string, 0)
+	authorTagMap := map[string]string{}
 	for _, v := range allList {
 		if scoreType != 5 && scoreType != v.Level {
 			continue
+		}
+		if at, ok := authorTagMap[v.AuthorId]; ok {
+			v.FirstName = at
+		} else {
+			authorTagMap[v.AuthorId] = v.FirstName
 		}
 		if tag == "其他" {
 			if v.FirstName != "" && strings.Index(v.FirstName, tag) < 0 {
@@ -590,10 +639,15 @@ func (receiver *ProductBusiness) ProductAwemeAuthorAnalysis(productId, keyword, 
 			d.Sales += v.Sales
 			d.DiggCount += v.DiggCount
 			d.RelatedAwemes = append(d.RelatedAwemes, v.RelatedAwemes...)
-			if v.CreateSdf > d.CreateSdf {
-				d.FollowCount = v.FollowCount
-				d.CreateSdf = v.CreateSdf
-			}
+			//if v.CreateSdf > d.CreateSdf {
+			//	d.FollowCount = v.FollowCount
+			//	d.CreateSdf = v.CreateSdf
+			//	d.FirstName = v.FirstName
+			//	d.SecondName = v.SecondName
+			//	d.ShortId = v.ShortId
+			//	d.Avatar = v.Avatar
+			//	d.Nickname = v.Nickname
+			//}
 			authorMap[v.AuthorId] = d
 		} else {
 			authorMap[v.AuthorId] = v
@@ -713,17 +767,37 @@ func (receiver *ProductBusiness) ProductAwemeAuthorAnalysisCount(productId, keyw
 	}
 	startRowKey := startRow.ProductId + "_" + startRow.CreateSdf + "_" + startRow.AuthorId
 	stopRowKey := stopRow.ProductId + "_" + stopRow.CreateSdf + "_" + stopRow.AuthorId
-	allList, _ := hbase.GetProductAwemeAuthorAnalysisRange(startRowKey, stopRowKey)
-	lastRow, err := hbase.GetProductAwemeAuthorAnalysis(stopRowKey)
-	if err == nil {
-		allList = append(allList, lastRow)
+	allList := make([]entity.DyProductAwemeAuthorAnalysis, 0)
+	cacheKey := cache.GetCacheKey(cache.ProductAwemeAuthorAllList, startRowKey, stopRowKey)
+	cacheStr := global.Cache.Get(cacheKey)
+	if cacheStr != "" {
+		cacheStr = utils.DeserializeData(cacheStr)
+		_ = jsoniter.Unmarshal([]byte(cacheStr), &allList)
+	} else {
+		if startRowKey != stopRowKey {
+			allList, _ = hbase.GetProductAwemeAuthorAnalysisRange(startRowKey, stopRowKey)
+		}
+		lastRow, err := hbase.GetProductAwemeAuthorAnalysis(stopRowKey)
+		if err == nil {
+			allList = append(allList, lastRow)
+		}
+		sort.Slice(allList, func(i, j int) bool {
+			return allList[i].CreateSdf > allList[j].CreateSdf
+		})
+		_ = global.Cache.Set(cacheKey, utils.SerializeData(allList), 300)
 	}
 	tagsMap := map[string]int{}
 	levelMap := map[int]int{}
 	authorMap := map[string]string{}
+	authorTagMap := map[string]string{}
 	for _, v := range allList {
 		if _, ok := authorMap[v.AuthorId]; ok {
 			continue
+		}
+		if at, ok := authorTagMap[v.AuthorId]; ok {
+			v.FirstName = at
+		} else {
+			authorTagMap[v.AuthorId] = v.FirstName
 		}
 		if keyword != "" {
 			if strings.Index(v.Nickname, keyword) < 0 && v.DisplayId != keyword && v.ShortId != keyword {
