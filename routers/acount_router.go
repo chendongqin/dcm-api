@@ -21,6 +21,7 @@ func init() {
 			beego.NSRouter("/collect/label/get", &v1.AccountController{}, "Get:DyCollectLabel"),
 			beego.NSRouter("/collect/tag/upd/:id/:tag_id", &v1.AccountController{}, "put:UpdCollectTag"),
 			beego.NSRouter("/collect/del/:id", &v1.AccountController{}, "delete:DelCollect"),
+			beego.NSRouter("/collect/dy/remark", &v1.AccountController{}, "put:DyCollectRemark"),
 			beego.NSRouter("/collect/dy/tag/list", &v1.AccountController{}, "get:GetDyCollectTags"),
 			beego.NSRouter("/collect/dy/tag/add", &v1.AccountController{}, "put:AddDyCollectTag"),
 			beego.NSRouter("/collect/dy/tag/upd/:id", &v1.AccountController{}, "put:UpdDyCollectTag"),
