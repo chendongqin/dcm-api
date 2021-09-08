@@ -202,7 +202,7 @@ func (receiver *CommonController) GetConfigList() {
 		return
 	}
 	for _, v := range configList {
-		if v.ContentType == 0 {
+		if v.ContentType != 1 {
 			var jsonMap map[string]interface{}
 			if err := json.Unmarshal([]byte(v.Value), &jsonMap); err != nil {
 				receiver.FailReturn(global.NewError(5000))
