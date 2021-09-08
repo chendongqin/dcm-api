@@ -80,6 +80,7 @@ func SendMessage(message *sarama.ProducerMessage) {
 	producer.Input() <- message
 }
 
+//修改商品分类
 func NewProductCateChangeMsg(productId string) *sarama.ProducerMessage {
 	msg := &sarama.ProducerMessage{
 		Topic: "dy-product-cate-change",
@@ -92,6 +93,23 @@ func NewProductCateChangeMsg(productId string) *sarama.ProducerMessage {
 	return msg
 }
 
+//修改达人分类
+func NewAuthorCateChangeMsg(authorId string) *sarama.ProducerMessage {
+	msg := &sarama.ProducerMessage{
+		Topic: "dy-author-cate-change",
+		Value: sarama.StringEncoder(pack(alias.M{
+			"author_id": authorId,
+			"type":      "author-cate-change",
+			"time":      time.Now().Format("2006-01-02 15:04:05"),
+		})),
+	}
+	return msg
+}
+
 func SendProductCateChange(productId string) {
 	SendMessage(NewProductCateChangeMsg(productId))
+}
+
+func SendAuthorCateChange(authorId string) {
+	SendMessage(NewAuthorCateChangeMsg(authorId))
 }

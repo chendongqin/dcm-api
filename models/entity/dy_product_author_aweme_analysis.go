@@ -13,6 +13,7 @@ var DyProductAwemeAuthorAnalysisMap = HbaseEntity{
 	"second_name":    {String, "second_name"},
 	"avatar":         {String, "avatar"},
 	"follow_count":   {Long, "follow_count"},
+	"digg_count":     {Long, "digg_count"},
 	"related_awemes": {AJson, "related_awemes"},
 	"sales":          {Long, "sales"},
 	"gmv":            {Double, "gmv"},
@@ -32,9 +33,9 @@ type DyProductAwemeAuthorAnalysis struct {
 	Avatar        string                        `json:"avatar"`
 	FollowCount   int64                         `json:"follow_count"`
 	RelatedAwemes []DyProductAuthorRelatedAweme `json:"related_awemes"`
+	DiggCount     int64                         `json:"digg_count"`
 	Sales         int64                         `json:"sales"`
 	Gmv           float64                       `json:"gmv"`
-	DiggCount     int64                         `json:"digg_count"`
 }
 
 type DyProductAuthorRelatedAweme struct {

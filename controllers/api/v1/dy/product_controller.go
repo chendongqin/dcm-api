@@ -714,10 +714,12 @@ func (receiver *ProductController) ProductAwemeAuthorAnalysis() {
 		return
 	}
 	for k, v := range list {
-		authorInfo, _ := hbase.GetAuthor(v.AuthorId)
 		list[k].AuthorId = business.IdEncrypt(v.AuthorId)
 		list[k].ProductId = business.IdEncrypt(v.ProductId)
-		list[k].Nickname = authorInfo.Data.Nickname
+		list[k].Avatar = dyimg.Fix(v.Avatar)
+		if v.DisplayId == "" || v.DisplayId == "0" {
+			list[k].DisplayId = v.ShortId
+		}
 	}
 	maxTotal := total
 	if total > business.EsMaxShowNum {
