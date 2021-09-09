@@ -121,7 +121,7 @@ func (receiver *WechatController) Receive() {
 					_ = global.Cache.Set("unionid:"+msg.EventKey, userWechat.UnionID, 1800)
 					return &message.Reply{MsgType: message.MsgTypeText, MsgData: text}
 				}
-				//default:
+			default:
 				return &message.Reply{MsgType: message.MsgTypeText, MsgData: text}
 			}
 		}

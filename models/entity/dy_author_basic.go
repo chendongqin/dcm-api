@@ -24,5 +24,4 @@ type DyAuthorBasic struct {
 	CommentCountBefore   int64 `json:"comment_count_before"`
 	ForwardCount         int64 `json:"forward_count"`
 	ForwardCountBefore   int64 `json:"forward_count_before"`
-	IsCollect            int   `json:"is_collect"`
 }
