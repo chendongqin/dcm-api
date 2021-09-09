@@ -294,7 +294,7 @@ func (receiver *AwemeController) AwemeProductAnalyseChart() {
 		})
 	}
 	sort.Slice(list, func(i, j int) bool {
-		return list[i].Name > list[i].Name
+		return list[i].Name < list[i].Name
 	})
 	receiver.SuccReturn(map[string]interface{}{
 		"count": map[string]interface{}{

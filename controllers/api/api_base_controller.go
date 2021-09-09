@@ -44,11 +44,6 @@ type ApiBaseController struct {
 	controllers.BaseController
 }
 
-type AppData struct {
-	appId     int
-	appSecret string
-}
-
 func (this *ApiBaseController) Prepare() {
 	this.InitApiController()
 }
@@ -58,11 +53,6 @@ func (this *ApiBaseController) InitApiController() {
 	this.AsfCheck()
 	this.CheckSign()
 	this.InitUserToken()
-	if global.JsonResEncrypt() {
-		if utils.InArrayInt(this.AppId, []int{10000, 10001, 10002, 10003, 10004, 10005}) {
-			this.JsonEncrypt = true
-		}
-	}
 	//todo 上线白名单过滤
 	//if this.AppId < 20000 {
 	if this.AppId <= 10000 {
@@ -235,11 +225,14 @@ func (this *ApiBaseController) CheckSign() {
 		appId = "10000"
 	}
 	this.AppId = utils.ToInt(appId)
-	if utils.InArrayString(appId, []string{"10000", "10001", "10002", "10003", "10004", "10005"}) {
-		if global.IsDev() {
+	if utils.InArrayInt(this.AppId, []int{10000, 10001, 10002, 10003, 10004, 10005}) {
+		if authBusiness.AuthSignWhiteUri(this.TrueUri) {
 			return
 		}
-		if authBusiness.AuthSignWhiteUri(this.TrueUri) {
+		if global.JsonResEncrypt() {
+			this.JsonEncrypt = true
+		}
+		if global.IsDev() {
 			return
 		}
 		timestamp := this.Ctx.Input.Header("TIMESTAMP")
