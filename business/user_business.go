@@ -1,11 +1,13 @@
 package business
 
 import (
+	"dongchamao/business/es"
 	"dongchamao/global"
 	"dongchamao/global/cache"
 	"dongchamao/global/utils"
 	"dongchamao/hbase"
 	"dongchamao/models/dcm"
+	es2 "dongchamao/models/es"
 	"dongchamao/models/repost"
 	"dongchamao/services/dyimg"
 	"dongchamao/services/mutex"
@@ -15,6 +17,7 @@ import (
 	"github.com/gomodule/redigo/redis"
 	jsoniter "github.com/json-iterator/go"
 	"strconv"
+	"strings"
 	"time"
 )
 
@@ -402,11 +405,34 @@ func (receiver *UserBusiness) GetDyCollect(tagId, collectType int, keywords, lab
 		return data, total, nil
 	case 2:
 		data := make([]repost.CollectProductRet, len(collects))
+		var productIds []string
 		for k, v := range collects {
+			v.CollectId = IdEncrypt(v.CollectId)
 			data[k].DcUserDyCollect = v
-			data[k].DcUserDyCollect.CollectId = IdEncrypt(v.CollectId)
+			productIds = append(productIds, v.CollectId)
 		}
-		return data, total, nil
+		products, _, commonError := es.NewEsProductBusiness().SearchProducts(productIds)
+		var productMap = make(map[string]es2.DyProduct, len(products))
+		for _, v := range products {
+			v.ProductId = IdEncrypt(v.ProductId)
+			v.Image = dyimg.Fix(v.Image)
+			productMap[v.ProductId] = v
+		}
+		for k, v := range data {
+			productInfo := productMap[v.CollectId]
+			data[k].ProductId = productInfo.ProductId
+			data[k].Image = productInfo.Image
+			data[k].Title = productInfo.Title
+			data[k].Price = productInfo.Price
+			data[k].CouponPrice = productInfo.CouponPrice
+			data[k].Pv = productInfo.Pv
+			data[k].OrderAccount = productInfo.OrderAccount
+			data[k].WeekOrderAccount = productInfo.WeekOrderAccount
+			data[k].PlatformLabel = productInfo.PlatformLabel
+			//todo 近七天热推达人
+			//data[k].WeekRelateAuthor = productInfo.WeekRelateAuthor
+		}
+		return data, total, commonError
 	case 3:
 		data := make([]repost.CollectAwemeRet, len(collects))
 		for k, v := range collects {
@@ -464,9 +490,10 @@ func (receiver *UserBusiness) AddDyCollect(collectId string, collectType, tagId,
 		if comErr != nil {
 			return comErr
 		}
-		collect.Label = author.Tags
+		collect.Label = strings.Replace(author.Tags, "|", ",", -1)
 		collect.UniqueId = author.Data.UniqueID
 		collect.Nickname = author.Data.Nickname
+		break
 	}
 	if exist {
 		if _, err := dbCollect.ID(collect.Id).Update(&collect); err != nil {

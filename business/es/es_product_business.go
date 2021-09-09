@@ -421,3 +421,22 @@ func (i *EsProductBusiness) LiveProductSalesTopDayRank(day, fCate, sCate, tCate,
 	total = esMultiQuery.Count
 	return
 }
+
+func (i *EsProductBusiness) SearchProducts(productIds []string) (list []es.DyProduct, total int, comErr global.CommonError) {
+	list = []es.DyProduct{}
+	if len(productIds) == 0 {
+		return
+	}
+	esTable := es.DyProductTable
+	esQuery, esMultiQuery := elasticsearch.NewElasticQueryGroup()
+	esQuery.SetTerms("product_id", productIds)
+	results := esMultiQuery.
+		SetTable(esTable).
+		AddMust(esQuery.Condition).
+		SetOrderBy(elasticsearch.NewElasticOrder().Order).
+		SetMultiQuery().
+		Query()
+	utils.MapToStruct(results, &list)
+	total = esMultiQuery.Count
+	return
+}
