@@ -315,6 +315,10 @@ func (receiver *InternalController) SpiderLiveSpeedUp() {
 		receiver.FailReturn(err)
 		return
 	}
+	if global.IsDev() {
+		receiver.SuccReturn(nil)
+		return
+	}
 	business.NewSpiderBusiness().AddLive(authorId, author.FollowerCount, business.AddLiveTopStar)
 	receiver.SuccReturn(nil)
 	return
