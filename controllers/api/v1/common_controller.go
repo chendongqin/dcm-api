@@ -128,21 +128,6 @@ func (receiver *CommonController) CheckSmsCode() {
 	return
 }
 
-func (receiver *CommonController) IdEncryptDecrypt() {
-	id := receiver.Ctx.Input.Param(":id")
-	id1 := ""
-	if strings.Index(id, "=") < 0 {
-		id1 = business.IdEncrypt(id)
-	}
-	id2 := business.IdDecrypt(id)
-	receiver.SuccReturn(map[string]string{
-		"id":      id,
-		"encrypt": id1,
-		"decrypt": id2,
-	})
-	return
-}
-
 func (receiver *CommonController) Test() {
 	InputData := receiver.InputFormat()
 	sig := InputData.GetString("sig", "")

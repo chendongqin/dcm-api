@@ -295,7 +295,13 @@ func IdDecrypt(id string) string {
 
 //json加密
 func JsonEncrypt(jsonData interface{}) string {
-	jsonByte, _ := jsoniter.Marshal(jsonData)
+	jsonByte := []byte{}
+	switch result := jsonData.(type) {
+	case string:
+		jsonByte = []byte(result)
+	default:
+		jsonByte, _ = jsoniter.Marshal(jsonData)
+	}
 	if len(jsonByte) == 0 {
 		return ""
 	}

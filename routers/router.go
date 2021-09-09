@@ -40,5 +40,4 @@ func init() {
 	// 注册路由组
 	beego.AddNamespace(ns)
 	beego.Router("/v1/test", &v1.CommonController{}, "get:Test")
-	beego.Router("/v1/id/:id", &v1.CommonController{}, "get:IdEncryptDecrypt")
 }
