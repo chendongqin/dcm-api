@@ -281,6 +281,7 @@ func (receiver *InternalController) DelWeChatMedia() {
 	return
 }
 
+//id加解密
 func (receiver *InternalController) IdEncryptDecrypt() {
 	id := receiver.Ctx.Input.Param(":id")
 	id1 := ""
@@ -303,5 +304,18 @@ func (receiver *InternalController) JsonDecrypt() {
 	receiver.SuccReturn(map[string]interface{}{
 		"decrypt_str": decryptStr,
 	})
+	return
+}
+
+//红人看板加速
+func (receiver *InternalController) SpiderLiveSpeedUp() {
+	authorId := receiver.Ctx.Input.Param(":author_id")
+	author, err := hbase.GetAuthor(authorId)
+	if err != nil {
+		receiver.FailReturn(err)
+		return
+	}
+	business.NewSpiderBusiness().AddLive(authorId, author.FollowerCount, business.AddLiveTopStar)
+	receiver.SuccReturn(nil)
 	return
 }
