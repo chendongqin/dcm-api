@@ -256,14 +256,27 @@ func (receiver *InternalController) UploadWeChatMedia() {
 		receiver.FailReturn(global.NewError(5000))
 		return
 	}
-	mediaID, url, err := business.NewWechatBusiness().AddMedia(material.MediaTypeImage, path)
+	_, _, err = business.NewWechatBusiness().AddMedia(material.MediaTypeImage, path)
 	if err != nil {
 		receiver.FailReturn(global.NewError(5000))
 		return
 	}
-	if comErr := business.NewFileBusiness().InsertFile(fileName, url, tag, mediaID); comErr != nil {
-		receiver.FailReturn(global.NewError(5000))
-		return
-	}
 	receiver.SuccReturn(nil)
+}
+
+func (receiver *InternalController) GetWeChatMediaList() {
+	mediaType := receiver.GetString("media_type")
+	page := receiver.GetPage("page")
+	pageSize := receiver.GetPageSize("page_size", 10, 100)
+	from := int64((page - 1) * pageSize)
+	to := int64(page*pageSize - 1)
+	list := business.NewWechatBusiness().GetMediaList(material.PermanentMaterialType(mediaType), from, to)
+	receiver.SuccReturn(map[string]interface{}{"list": list.Item, "page": page, "pageSize": pageSize, "total": list.TotalCount})
+	return
+}
+
+func (receiver *InternalController) DelWeChatMedia() {
+	mediaId := receiver.GetString("media_id")
+	receiver.SuccReturn(business.NewWechatBusiness().DelMedia(mediaId))
+	return
 }
