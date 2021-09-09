@@ -124,7 +124,7 @@ func (receiver *WechatController) Receive() {
 				}
 			case message.EventClick:
 				click, _ := business.NewWechatBusiness().GetMenuClick(msg.EventKey)
-				logs.Error("click.Key:%s  click.Type:%s", click.Key, message.MsgType(click.Type))
+				logs.Error("msg.EventKey:%s,click.Key:%s  click.Type:%s", msg.EventKey, click.Key, message.MsgType(click.Type))
 				var msgData interface{}
 				if click.Key != "" {
 					switch message.MsgType(click.Type) {
