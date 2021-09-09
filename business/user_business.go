@@ -494,6 +494,13 @@ func (receiver *UserBusiness) AddDyCollect(collectId string, collectType, tagId,
 		collect.UniqueId = author.Data.UniqueID
 		collect.Nickname = author.Data.Nickname
 		break
+	case 2:
+		info, comErr := hbase.GetProductInfo(collectId)
+		if comErr != nil {
+			return comErr
+		}
+		collect.Nickname = info.Title
+		collect.Label = info.DcmLevelFirst
 	}
 	if exist {
 		if _, err := dbCollect.ID(collect.Id).Update(&collect); err != nil {
