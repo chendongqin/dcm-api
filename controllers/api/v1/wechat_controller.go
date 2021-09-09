@@ -84,6 +84,7 @@ func (receiver *WechatController) Receive() {
 		text = message.NewText("扫码登录成功!!") //TODO 事件推送返回信息 可以抽象出来 也可以后台配置
 		//msg.EventKey 返回场景基本都是qrscene_你自己定义场景key
 		if msg.MsgType == message.MsgTypeEvent {
+			logs.Error("MsgType:%s,Event:%s", msg.MsgType, msg.Event)
 			switch msg.Event {
 			case message.EventSubscribe:
 				//自定义evnet_key 解析
@@ -123,21 +124,27 @@ func (receiver *WechatController) Receive() {
 				}
 			case message.EventClick:
 				click, _ := business.NewWechatBusiness().GetMenuClick(msg.EventKey)
+				logs.Error("click.Key:%s  click.Type:%s", click.Key, message.MsgType(click.Type))
 				var msgData interface{}
-				switch message.MsgType(click.Type) {
-				case message.MsgTypeText:
-					msgData = text
-					break
-				case message.MsgTypeImage:
-					msgData = message.NewImage(click.MediaId)
-					break
-				case message.MsgTypeVoice:
-					msgData = message.NewVoice(click.MediaId)
-					break
-				case message.MsgTypeVideo:
-					msgData = message.NewVideo(click.MediaId, click.Title, click.Description)
-					break
+				if click.Key != "" {
+					switch message.MsgType(click.Type) {
+					case message.MsgTypeText:
+						msgData = message.NewText(click.Content)
+						break
+					case message.MsgTypeImage:
+						msgData = message.NewImage(click.MediaId)
+						break
+					case message.MsgTypeVoice:
+						msgData = message.NewVoice(click.MediaId)
+						break
+					case message.MsgTypeVideo:
+						msgData = message.NewVideo(click.MediaId, click.Title, click.Description)
+						break
+					}
+				} else {
+					msgData = message.NewText("消息未知")
 				}
+				logs.Error("msgData:%s", msgData)
 				return &message.Reply{MsgType: message.MsgType(click.Type), MsgData: msgData}
 			default:
 				return &message.Reply{MsgType: message.MsgTypeText, MsgData: "消息未知"}
