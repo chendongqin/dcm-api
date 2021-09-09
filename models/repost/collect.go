@@ -15,15 +15,15 @@ type CollectAuthorRet struct {
 
 type CollectProductRet struct {
 	dcm.DcUserDyCollect
-	ProductId        string  `json:"product_id"`
-	Image            string  `json:"image"`
-	Price            float64 `json:"price"`
-	CouponPrice      float64 `json:"coupon_price"`
-	Pv               int64   `json:"pv"`
-	OrderAccount     int64   `json:"order_account"` //昨日订单量
-	WeekRelateAuthor int     `json:"week_relate_author"`
-	WeekOrderAccount int64   `json:"week_order_account"`
-	PlatformLabel    string  `json:"platform_label"`
+	ProductId        string
+	Image            string
+	Price            float64
+	CouponPrice      float64
+	Pv               int64
+	OrderAccount     int64 //昨日订单量
+	WeekRelateAuthor int
+	WeekOrderAccount int64
+	PlatformLabel    string
 }
 
 type CollectAwemeRet struct {
