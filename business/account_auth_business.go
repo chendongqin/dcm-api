@@ -34,11 +34,9 @@ var LoginWitheUri = []string{
 }
 
 var SignWitheUri = []string{
-	"/v1/id",
 	"/v1/pay/notify/wechat",
 	"/v1/pay/notify/alipay",
 	"/v1/callback/wechat",
-	"/v1/wechat/qrcode",
 }
 
 var AuthDyWitheUriMap = []string{}

@@ -187,6 +187,7 @@ func (receiver *AwemeController) AwemeProductAnalyse() {
 			productInfo, _ := hbase.GetProductInfo(v.ProductId)
 			productMap[v.ProductId] = dy2.DyAwemeProductSale{
 				AwemeId:       v.AwemeId,
+				ProductId:     v.ProductId,
 				Gmv:           v.AwemeGmv,
 				Sales:         v.Sales,
 				Price:         v.Price,
@@ -293,7 +294,7 @@ func (receiver *AwemeController) AwemeProductAnalyseChart() {
 		})
 	}
 	sort.Slice(list, func(i, j int) bool {
-		return list[i].Name > list[i].Name
+		return list[i].Name < list[i].Name
 	})
 	receiver.SuccReturn(map[string]interface{}{
 		"count": map[string]interface{}{

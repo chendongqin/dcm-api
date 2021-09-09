@@ -32,6 +32,7 @@ var DyAuthorMap = HbaseEntity{
 	"other_total_favorited":    {Long, "total_favorited"},
 	"other_comment_count":      {Long, "comment_count"},
 	"other_forward_count":      {Long, "forward_count"},
+	"other_artificial_data":    {Json, "artificial_data"},
 	//粉丝数据
 	"gender":               {AJson, "gender"},
 	"province":             {AJson, "province"},
@@ -42,39 +43,40 @@ var DyAuthorMap = HbaseEntity{
 }
 
 type DyAuthor struct {
-	AuthorID         string          `json:"author_id"`
-	Collection       int             `json:"collection"`
-	CrawlTime        int64           `json:"crawl_time"`
-	Data             DyAuthorData    `json:"data"`
-	Tags             string          `json:"tags"`
-	TagsLevelTwo     string          `json:"tags_level_two"`
-	AwemeList        []DyAuthorAweme `json:"aweme_list"`
-	RoomList         []DyAuthorRoom  `json:"room_list"`
-	LiveCount        int             `json:"live_count"`
-	RoomId           string          `json:"room_id"`
-	RoomStatus       int             `json:"room_status"`
-	LiveDuration     string          `json:"live_duration"`
-	AgeLiveDuration  int64           `json:"avg_live_duration"`
-	MedWatchCnt      int64           `json:"med_watch_cnt"`
-	InteractionRate  float64         `json:"interaction_rate"`
-	Predict30Gmv     float64         `json:"predict_30_gmv"`
-	Real30Gmv        float64         `json:"real_30_gmv"`
-	Predict30Sales   float64         `json:"predict_30_sales"`
-	Real30Sales      float64         `json:"real_30_sales"`
-	AwemeCount       int             `json:"aweme_count"`
-	DiggCount        int64           `json:"digg_count"`
-	DiggFollowerRate float64         `json:"digg_follower_rate"`
-	Duration         int64           `json:"duration"`
-	MedDigg          int64           `json:"med_digg"`
-	ProductCount     int             `json:"product_count"`
-	FirstLiveTime    int64           `json:"first_live_time"`
-	FirstAwemeTime   int64           `json:"first_aweme_time"`
-	FirstProductTime int64           `json:"first_product_time"`
-	TotalFansCount   int64           `json:"total_fans_count"`
-	FollowerCount    int64           `json:"follower_count"`
-	TotalFavorited   int64           `json:"total_favorited"`
-	CommentCount     int64           `json:"comment_count"`
-	ForwardCount     int64           `json:"forward_count"`
+	AuthorID         string                    `json:"author_id"`
+	Collection       int                       `json:"collection"`
+	CrawlTime        int64                     `json:"crawl_time"`
+	Data             DyAuthorData              `json:"data"`
+	Tags             string                    `json:"tags"`
+	TagsLevelTwo     string                    `json:"tags_level_two"`
+	AwemeList        []DyAuthorAweme           `json:"aweme_list"`
+	RoomList         []DyAuthorRoom            `json:"room_list"`
+	LiveCount        int                       `json:"live_count"`
+	RoomId           string                    `json:"room_id"`
+	RoomStatus       int                       `json:"room_status"`
+	LiveDuration     string                    `json:"live_duration"`
+	AgeLiveDuration  int64                     `json:"avg_live_duration"`
+	MedWatchCnt      int64                     `json:"med_watch_cnt"`
+	InteractionRate  float64                   `json:"interaction_rate"`
+	Predict30Gmv     float64                   `json:"predict_30_gmv"`
+	Real30Gmv        float64                   `json:"real_30_gmv"`
+	Predict30Sales   float64                   `json:"predict_30_sales"`
+	Real30Sales      float64                   `json:"real_30_sales"`
+	AwemeCount       int                       `json:"aweme_count"`
+	DiggCount        int64                     `json:"digg_count"`
+	DiggFollowerRate float64                   `json:"digg_follower_rate"`
+	Duration         int64                     `json:"duration"`
+	MedDigg          int64                     `json:"med_digg"`
+	ProductCount     int                       `json:"product_count"`
+	FirstLiveTime    int64                     `json:"first_live_time"`
+	FirstAwemeTime   int64                     `json:"first_aweme_time"`
+	FirstProductTime int64                     `json:"first_product_time"`
+	TotalFansCount   int64                     `json:"total_fans_count"`
+	FollowerCount    int64                     `json:"follower_count"`
+	TotalFavorited   int64                     `json:"total_favorited"`
+	CommentCount     int64                     `json:"comment_count"`
+	ForwardCount     int64                     `json:"forward_count"`
+	ArtificialData   DyAuthorTagArtificialData `json:"artificial_data"`
 	//粉丝分析
 	Gender            []DyAuthorFansGender     `json:"gender"`
 	Province          []DyAuthorFansProvince   `json:"province"`
@@ -88,6 +90,11 @@ type DyAuthorRoom struct {
 	RoomId     string `json:"room_id"`
 	CreateTime int64  `json:"create_time"`
 	FinishTime int64  `json:"finish_time"`
+}
+
+type DyAuthorTagArtificialData struct {
+	Tags         string `json:"tags"`
+	TagsLevelTow string `json:"tags_level_tow"`
 }
 
 type DyAuthorAweme struct {

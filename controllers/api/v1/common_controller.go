@@ -128,21 +128,6 @@ func (receiver *CommonController) CheckSmsCode() {
 	return
 }
 
-func (receiver *CommonController) IdEncryptDecrypt() {
-	id := receiver.Ctx.Input.Param(":id")
-	id1 := ""
-	if strings.Index(id, "=") < 0 {
-		id1 = business.IdEncrypt(id)
-	}
-	id2 := business.IdDecrypt(id)
-	receiver.SuccReturn(map[string]string{
-		"id":      id,
-		"encrypt": id1,
-		"decrypt": id2,
-	})
-	return
-}
-
 func (receiver *CommonController) Test() {
 	InputData := receiver.InputFormat()
 	sig := InputData.GetString("sig", "")
@@ -166,19 +151,24 @@ func (receiver *CommonController) Test() {
 }
 
 func (receiver *CommonController) GetConfig() {
-	var configJson dcm.DcConfigJson
 	keyName := receiver.GetString(":key_name")
-	exist, err := dcm.GetBy("key_name", keyName, &configJson)
-	if !exist || err != nil {
-		receiver.FailReturn(global.NewError(5000))
-		return
-	}
-	if configJson.Auth == 0 {
-		receiver.FailReturn(global.NewError(4000))
-		return
+	cacheKey := cache.GetCacheKey(cache.ConfigKeyCache, keyName)
+	cacheData := global.Cache.Get(cacheKey)
+	if cacheData == "" {
+		var configJson dcm.DcConfigJson
+		exist, err := dcm.GetBy("key_name", keyName, &configJson)
+		if !exist || err != nil {
+			receiver.FailReturn(global.NewError(5000))
+			return
+		}
+		if configJson.Auth == 0 {
+			receiver.FailReturn(global.NewError(4000))
+			return
+		}
+		cacheData = configJson.Value
 	}
 	var data map[string]interface{}
-	if err := json.Unmarshal([]byte(configJson.Value), &data); err != nil {
+	if err := json.Unmarshal([]byte(cacheData), &data); err != nil {
 		receiver.FailReturn(global.NewError(5000))
 		return
 	}

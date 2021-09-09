@@ -30,6 +30,10 @@ func init() {
 			beego.NSRouter("/media/list", &controllers.InternalController{}, "get:GetWeChatMediaList"),
 			beego.NSRouter("/media/del", &controllers.InternalController{}, "get:DelWeChatMedia"),
 		),
+		beego.NSNamespace("/decrypt",
+			beego.NSRouter("/id/:id", &controllers.InternalController{}, "get:IdEncryptDecrypt"),
+			beego.NSRouter("/json", &controllers.InternalController{}, "post:JsonDecrypt"),
+		),
 	)
 	// 注册路由组
 	beego.AddNamespace(ns)

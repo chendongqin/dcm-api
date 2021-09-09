@@ -1,25 +1,27 @@
 package controllers
 
 import (
+	"dongchamao/business"
 	"dongchamao/global"
 	"github.com/astaxie/beego"
 )
 
 type BaseController struct {
+	JsonEncrypt bool
 	beego.Controller
 }
 
 func (this *BaseController) SuccReturn(retData interface{}) {
 	retJson := map[string]interface{}{
-		"code": 0,
+		"code":   0,
 		"status": true,
-		"msg":  "ok",
-		"data": retData,
+		"msg":    "ok",
+		"data":   retData,
 	}
 	if retData == nil {
 		retJson["data"] = []int{}
 	}
-	this.Data["json"] = retJson
+	this.setData(retJson)
 	this.ServeJSON()
 	//this.Abort("200")
 }
@@ -33,31 +35,40 @@ func (this *BaseController) FailReturn(err global.CommonError) {
 		retJson["code"], retJson["msg"] = err.Error()
 	}
 	this.Data["status"] = false
-	this.Data["json"] = retJson
+	this.setData(retJson)
 	this.ServeJSON()
 }
 func (this *BaseController) FailReturnWithData(ErrorCode int, retData interface{}) {
 	retJson := map[string]interface{}{
-		"code": ErrorCode,
-		"msg":  "ok",
-		"status":  false,
-		"data": retData,
+		"code":   ErrorCode,
+		"msg":    "ok",
+		"status": false,
+		"data":   retData,
 	}
-	this.Data["json"] = retJson
+	this.setData(retJson)
 	this.ServeJSON()
 }
 
 func (this *BaseController) SuccReturnWithData(code int, retData interface{}) {
 	retJson := map[string]interface{}{
-		"code": code,
+		"code":   code,
 		"status": true,
-		"msg":  "ok",
-		"data": retData,
+		"msg":    "ok",
+		"data":   retData,
 	}
 
 	if retData == nil {
 		retJson["data"] = []int{}
 	}
-	this.Data["json"] = retJson
+	this.setData(retJson)
 	this.ServeJSON()
+}
+
+//是否加密解密
+func (this *BaseController) setData(retJson map[string]interface{}) {
+	if this.JsonEncrypt {
+		this.Data["json"] = business.JsonEncrypt(retJson)
+	} else {
+		this.Data["json"] = retJson
+	}
 }

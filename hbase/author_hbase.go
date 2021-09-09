@@ -39,6 +39,10 @@ func GetAuthor(authorId string) (data entity.DyAuthor, comErr global.CommonError
 		data.Data.UniqueID = data.Data.ShortID
 	}
 	data.Data.CrawlTime = data.CrawlTime
+	if data.ArtificialData.Tags != "" {
+		data.Tags = data.ArtificialData.Tags
+		data.TagsLevelTwo = data.ArtificialData.TagsLevelTow
+	}
 	return
 }
 
