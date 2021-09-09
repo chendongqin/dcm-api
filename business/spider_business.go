@@ -21,13 +21,13 @@ import (
 
 const (
 	AddLiveTopDefault        = 0
-	AddLiveTopStar           = 2
-	AddLiveTopMonitored      = 4
-	AddLiveTopConcerned      = 8
-	AddLiveTopAfanti         = 16
-	AddLiveTopAfantiPolling  = 32
-	AddLiveTopHighLevelStar  = 64
-	AddLiveTopSuperLevelStar = 128
+	AddLiveTopStar           = 2   //红人
+	AddLiveTopMonitored      = 4   //监控
+	AddLiveTopConcerned      = 8   //加速
+	AddLiveTopAfanti         = 16  //这不用管
+	AddLiveTopAfantiPolling  = 32  //这不用管
+	AddLiveTopHighLevelStar  = 64  //这不用管
+	AddLiveTopSuperLevelStar = 128 //这不用管
 	BaseSpiderUrl            = "http://api.spider.dongchamao.cn/"
 	LiveSpiderUrl            = "http://dy-live.spider.dongchamao.cn/"
 	ZHIMASpiderUrl           = "http://zhima-proxy.spider.dongchamao.cn/"
