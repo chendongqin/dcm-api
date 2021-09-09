@@ -121,8 +121,26 @@ func (receiver *WechatController) Receive() {
 					_ = global.Cache.Set("unionid:"+msg.EventKey, userWechat.UnionID, 1800)
 					return &message.Reply{MsgType: message.MsgTypeText, MsgData: text}
 				}
+			case message.EventClick:
+				click, _ := business.NewWechatBusiness().GetMenuClick(msg.EventKey)
+				var msgData interface{}
+				switch message.MsgType(click.Type) {
+				case message.MsgTypeText:
+					msgData = text
+					break
+				case message.MsgTypeImage:
+					msgData = message.NewImage(click.MediaId)
+					break
+				case message.MsgTypeVoice:
+					msgData = message.NewVoice(click.MediaId)
+					break
+				case message.MsgTypeVideo:
+					msgData = message.NewVideo(click.MediaId, click.Title, click.Description)
+					break
+				}
+				return &message.Reply{MsgType: message.MsgType(click.Type), MsgData: msgData}
 			default:
-				return &message.Reply{MsgType: message.MsgTypeText, MsgData: text}
+				return &message.Reply{MsgType: message.MsgTypeText, MsgData: "消息未知"}
 			}
 		}
 		return &message.Reply{MsgType: message.MsgTypeText, MsgData: text}

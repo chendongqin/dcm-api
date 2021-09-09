@@ -196,3 +196,8 @@ func (receiver *WechatBusiness) AddMedia(mediaType material.MediaType, filename 
 func (receiver *WechatBusiness) DelMedia(mediaId string) error {
 	return global.WxOfficial.GetMaterial().DeleteMaterial(mediaId)
 }
+
+func (receiver *WechatBusiness) GetMenuClick(key string) (click dcm.DcWechatMenuClick, err error) {
+	_, err = dcm.GetDbSession().Table(dcm.DcWechatMenuClick{}).Where("key=?", key).Get(&click)
+	return
+}

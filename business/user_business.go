@@ -516,7 +516,7 @@ func (receiver *UserBusiness) DyCollectExist(collectId string, collectType, user
 	collect := dcm.DcUserDyCollect{}
 	dbCollect := dcm.GetDbSession().Table(collect)
 	defer dbCollect.Close()
-	_, _ = dbCollect.Where("user_id=? AND collect_type=? AND collect_id=?", userId, collectType, collectId).Get(&collect)
+	_, _ = dbCollect.Where("user_id=? AND collect_type=? AND collect_id=? AND status=1", userId, collectType, collectId).Get(&collect)
 	return collect.Id
 }
 
