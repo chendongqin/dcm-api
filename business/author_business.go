@@ -55,6 +55,54 @@ func (a *AuthorBusiness) GetCacheAuthorLiveTags(enableCache bool) []string {
 	return tags
 }
 
+func (a *AuthorBusiness) GetCacheAuthorCate(enableCache bool) []dy.DyCate {
+	cacheKey := cache.GetCacheKey(cache.LongTimeConfigKeyCache)
+	redisService := services.NewRedisService()
+	pCate := make([]dy.DyCate, 0)
+	if enableCache == true {
+		jsonStr := redisService.Hget(cacheKey, "author_cate")
+		if jsonStr != "" {
+			jsonData := utils.DeserializeData(jsonStr)
+			_ = jsoniter.Unmarshal([]byte(jsonData), &pCate)
+			return pCate
+		}
+	}
+	allList := make([]dcm.DcAuthorCate, 0)
+	_ = dcm.GetSlaveDbSession().Desc("weight").Asc("id").Find(&allList)
+	firstList := make([]dcm.DcAuthorCate, 0)
+	secondMap := map[int][]dcm.DcAuthorCate{}
+	for _, v := range allList {
+		if v.Level == 2 {
+			if _, ok := secondMap[v.ParentId]; !ok {
+				secondMap[v.ParentId] = []dcm.DcAuthorCate{}
+			}
+			secondMap[v.ParentId] = append(secondMap[v.ParentId], v)
+		} else if v.Level == 1 {
+			firstList = append(firstList, v)
+		}
+	}
+	for _, v := range firstList {
+		item := dy.DyCate{
+			Name:    v.Name,
+			SonCate: []dy.DyCate{},
+		}
+		if s, ok := secondMap[v.Id]; ok {
+			for _, s1 := range s {
+				item.SonCate = append(item.SonCate, dy.DyCate{
+					Name:    s1.Name,
+					SonCate: []dy.DyCate{},
+				})
+			}
+		}
+		pCate = append(pCate, item)
+	}
+	if len(pCate) > 0 {
+		jsonData := utils.SerializeData(pCate)
+		_ = redisService.Hset(cacheKey, "author_cate", jsonData)
+	}
+	return pCate
+}
+
 //粉丝｜粉丝团趋势数据
 func (a *AuthorBusiness) HbaseGetFansRangDate(authorId, startDate, endDate string) (data map[string]dy.DateChart, comErr global.CommonError) {
 	data = map[string]dy.DateChart{}
