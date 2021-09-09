@@ -17,6 +17,7 @@ type EsAuthorLiveProduct struct {
 	ShelfTime      int64   `json:"shelf_time"`
 	LiveCreateTime int64   `json:"live_create_time"`
 	Pv             int64   `json:"pv"`
+	GPM            float64 `json:"gpm"`
 	Price          float64 `json:"price"`
 	IsReturn       int     `json:"is_return"` //是否返场
 	DcmLevelFirst  string  `json:"dcm_level_first"`
