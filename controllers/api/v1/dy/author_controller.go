@@ -197,6 +197,7 @@ func (receiver *AuthorController) AuthorBaseData() {
 		CommentCountBefore:   basicBefore.CommentCount,
 		ForwardCount:         authorBase.ForwardCount,
 		ForwardCountBefore:   basicBefore.ForwardCount,
+		IsCollect:            business.NewUserBusiness().DyCollectExist(authorId, 1, receiver.UserId),
 	}
 	returnMap := map[string]interface{}{
 		"author_base": authorBase.Data,

@@ -27,6 +27,8 @@ func init() {
 			beego.NSRouter("/menu", &controllers.InternalController{}, "get:GetWeChatMenu"),
 			beego.NSRouter("/menu/set", &controllers.InternalController{}, "post:SetWeChatMenu"),
 			beego.NSRouter("/media/upload", &controllers.InternalController{}, "post:UploadWeChatMedia"),
+			beego.NSRouter("/media/list", &controllers.InternalController{}, "get:GetWeChatMediaList"),
+			beego.NSRouter("/media/del", &controllers.InternalController{}, "get:DelWeChatMedia"),
 		),
 		beego.NSNamespace("/decrypt",
 			beego.NSRouter("/id/:id", &controllers.InternalController{}, "get:IdEncryptDecrypt"),
