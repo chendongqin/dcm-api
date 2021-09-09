@@ -43,6 +43,7 @@ type DySimpleAweme struct {
 
 type DyAwemeProductSale struct {
 	AwemeId       string  `json:"aweme_id"`
+	ProductId     string  `json:"product_id"`
 	Gmv           float64 `json:"gmv"`
 	Sales         int64   `json:"sales"`
 	Price         float64 `json:"price"`

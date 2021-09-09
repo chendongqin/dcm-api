@@ -8,7 +8,6 @@ import (
 	"dongchamao/global/cache"
 	"dongchamao/global/utils"
 	"dongchamao/hbase"
-	"dongchamao/models/dcm"
 	"dongchamao/models/entity"
 	dy2 "dongchamao/models/repost/dy"
 	"dongchamao/services/dyimg"
@@ -32,33 +31,7 @@ func (receiver *AuthorController) Prepare() {
 
 //达人分类
 func (receiver *AuthorController) AuthorCate() {
-	var cateList []dy2.DyCate
-	var cateFirst []dcm.DcAuthorCate
-	var cateSecond []dcm.DcAuthorCate
-	db := dcm.GetDbSession().Table(dcm.DcAuthorCate{})
-	if err := db.Where("level=?", 1).Find(&cateFirst); err != nil {
-		panic(err)
-		return
-	}
-	if err := db.Where("level=?", 2).Find(&cateSecond); err != nil {
-		panic(err)
-		return
-	}
-	for _, v := range cateFirst {
-		var cate = dy2.DyCate{
-			Name:    v.Name,
-			SonCate: []dy2.DyCate{},
-		}
-		for _, vv := range cateSecond {
-			if vv.ParentId == v.Id {
-				cate.SonCate = append(cate.SonCate, dy2.DyCate{
-					Name:    vv.Name,
-					SonCate: []dy2.DyCate{},
-				})
-			}
-		}
-		cateList = append(cateList, cate)
-	}
+	cateList := business.NewAuthorBusiness().GetCacheAuthorCate(true)
 	receiver.SuccReturn(cateList)
 	return
 }
@@ -224,6 +197,7 @@ func (receiver *AuthorController) AuthorBaseData() {
 		CommentCountBefore:   basicBefore.CommentCount,
 		ForwardCount:         authorBase.ForwardCount,
 		ForwardCountBefore:   basicBefore.ForwardCount,
+		IsCollect:            business.NewUserBusiness().DyCollectExist(authorId, 1, receiver.UserId),
 	}
 	returnMap := map[string]interface{}{
 		"author_base": authorBase.Data,
@@ -566,6 +540,9 @@ func (receiver *AuthorController) AuthorAwemes() {
 	for k, v := range list {
 		list[k].AwemeCover = dyimg.Fix(v.AwemeCover)
 		list[k].Avatar = dyimg.Fix(v.Avatar)
+		if v.UniqueId == "" || v.UniqueId == "0" {
+			list[k].UniqueId = v.ShortId
+		}
 	}
 	maxTotal := total
 	if total > business.EsMaxShowNum {

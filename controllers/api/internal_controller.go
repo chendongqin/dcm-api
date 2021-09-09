@@ -122,9 +122,9 @@ func (receiver *InternalController) ChangeProductCate() {
 		return
 	}
 	dcmLevelFirst := receiver.InputFormat().GetString("dcm_level_first", "")
-	firstCate := receiver.InputFormat().GetString("first_cate", "")
-	secondCate := receiver.InputFormat().GetString("second_cate", "")
-	thirdCate := receiver.InputFormat().GetString("third_cate", "")
+	firstCate := receiver.InputFormat().GetString("first_cname", "")
+	secondCate := receiver.InputFormat().GetString("second_cname", "")
+	thirdCate := receiver.InputFormat().GetString("third_cname", "")
 	if dcmLevelFirst == "" {
 		receiver.FailReturn(global.NewError(4000))
 		return
@@ -256,14 +256,52 @@ func (receiver *InternalController) UploadWeChatMedia() {
 		receiver.FailReturn(global.NewError(5000))
 		return
 	}
-	mediaID, url, err := business.NewWechatBusiness().AddMedia(material.MediaTypeImage, path)
+	_, _, err = business.NewWechatBusiness().AddMedia(material.MediaTypeImage, path)
 	if err != nil {
 		receiver.FailReturn(global.NewError(5000))
 		return
 	}
-	if comErr := business.NewFileBusiness().InsertFile(fileName, url, tag, mediaID); comErr != nil {
-		receiver.FailReturn(global.NewError(5000))
-		return
-	}
 	receiver.SuccReturn(nil)
+}
+
+func (receiver *InternalController) GetWeChatMediaList() {
+	mediaType := receiver.GetString("media_type")
+	page := receiver.GetPage("page")
+	pageSize := receiver.GetPageSize("page_size", 10, 100)
+	from := int64((page - 1) * pageSize)
+	to := int64(page*pageSize - 1)
+	list := business.NewWechatBusiness().GetMediaList(material.PermanentMaterialType(mediaType), from, to)
+	receiver.SuccReturn(map[string]interface{}{"list": list.Item, "page": page, "pageSize": pageSize, "total": list.TotalCount})
+	return
+}
+
+func (receiver *InternalController) DelWeChatMedia() {
+	mediaId := receiver.GetString("media_id")
+	receiver.SuccReturn(business.NewWechatBusiness().DelMedia(mediaId))
+	return
+}
+
+func (receiver *InternalController) IdEncryptDecrypt() {
+	id := receiver.Ctx.Input.Param(":id")
+	id1 := ""
+	if strings.Index(id, "=") < 0 {
+		id1 = business.IdEncrypt(id)
+	}
+	id2 := business.IdDecrypt(id)
+	receiver.SuccReturn(map[string]string{
+		"id":      id,
+		"encrypt": id1,
+		"decrypt": id2,
+	})
+	return
+}
+
+//json解密
+func (receiver *InternalController) JsonDecrypt() {
+	str := receiver.InputFormat().GetString("str", "")
+	decryptStr := business.JsonDecrypt(str)
+	receiver.SuccReturn(map[string]interface{}{
+		"decrypt_str": decryptStr,
+	})
+	return
 }

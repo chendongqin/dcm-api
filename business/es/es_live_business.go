@@ -114,7 +114,7 @@ func (receiver *EsLiveBusiness) RoomProductByRoomId(roomInfo entity.DyLiveInfo, 
 	if orderBy == "" {
 		orderBy = "desc"
 	}
-	if !utils.InArrayString(sortStr, []string{"shelf_time", "predict_sales", "predict_gmv"}) {
+	if !utils.InArrayString(sortStr, []string{"shelf_time", "predict_sales", "predict_gmv", "gpm"}) {
 		comErr = global.NewError(4000)
 		return
 	}
@@ -490,7 +490,7 @@ func (receiver *EsLiveBusiness) SearchProductRooms(productId, keyword, sortStr, 
 	if orderBy == "" {
 		orderBy = "desc"
 	}
-	if !utils.InArrayString(sortStr, []string{"shelf_time", "predict_gmv", "predict_sales"}) {
+	if !utils.InArrayString(sortStr, []string{"shelf_time", "predict_gmv", "predict_sales", "gpm"}) {
 		comErr = global.NewError(4000)
 		return
 	}

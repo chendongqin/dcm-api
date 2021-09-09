@@ -326,6 +326,13 @@ func _initWxOfficialAccount() {
 	WxOfficial = wc.GetOfficialAccount(cfg)
 }
 
+func JsonResEncrypt() bool {
+	if Cfg.String("json_encrypt") == "true" {
+		return true
+	}
+	return false
+}
+
 func IsDev() bool {
 	if beego.BConfig.RunMode != "prod" {
 		return true

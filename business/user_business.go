@@ -512,6 +512,14 @@ func (receiver *UserBusiness) AddDyCollect(collectId string, collectType, tagId,
 	return
 }
 
+func (receiver *UserBusiness) DyCollectExist(collectId string, collectType, userId int) (exist int) {
+	collect := dcm.DcUserDyCollect{}
+	dbCollect := dcm.GetDbSession().Table(collect)
+	defer dbCollect.Close()
+	_, _ = dbCollect.Where("user_id=? AND collect_type=? AND collect_id=?", userId, collectType, collectId).Get(&collect)
+	return collect.Status
+}
+
 //取消收藏
 func (receiver *UserBusiness) CancelDyCollect(id, userId int) (comErr global.CommonError) {
 	dbCollect := dcm.GetDbSession().Table(dcm.DcUserDyCollect{})

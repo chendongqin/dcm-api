@@ -135,7 +135,7 @@ func (i *EsProductBusiness) SearchRangeDateList(productId, authorId string, star
 }
 
 func (i *EsProductBusiness) SearchAwemeRangeDateList(productId, authorId string, startTime, endTime time.Time, page, pageSize int) (list []es.DyProductAwemeAuthorAnalysis, total int, comErr global.CommonError) {
-	esTable := GetESTableByTime(es.DyProductAwemeAuthorAnalysisTable, startTime, endTime)
+	esTable := GetESTableByMonthTime(es.DyProductAwemeAuthorAnalysisTable, startTime, endTime)
 	esQuery, esMultiQuery := elasticsearch.NewElasticQueryGroup()
 	esQuery.SetTerm("productId", productId)
 	esQuery.SetRange("createSdf.keyword", map[string]interface{}{
@@ -202,7 +202,7 @@ func (i *EsProductBusiness) SearchRangeDateRowKey(productId, keyword string, sta
 }
 
 func (i *EsProductBusiness) SearchAwemeRangeDateRowKey(productId, keyword string, startTime, endTime time.Time) (startRow es.DyProductAuthorAnalysis, stopRow es.DyProductAuthorAnalysis, total int, comErr global.CommonError) {
-	esTable := GetESTableByTime(es.DyProductAwemeAuthorAnalysisTable, startTime, endTime)
+	esTable := GetESTableByMonthTime(es.DyProductAwemeAuthorAnalysisTable, startTime, endTime)
 	esQuery, esMultiQuery := elasticsearch.NewElasticQueryGroup()
 	_, esMultiQuery2 := elasticsearch.NewElasticQueryGroup()
 	esQuery.SetTerm("productId", productId)

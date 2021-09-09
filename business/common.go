@@ -195,6 +195,20 @@ func DealAuthorLiveTags() {
 	return
 }
 
+func GetConfig(keyName string) string {
+	cacheKey := cache.GetCacheKey(cache.ConfigKeyCache, keyName)
+	cacheData := global.Cache.Get(cacheKey)
+	if cacheData == "" {
+		var configJson dcm.DcConfigJson
+		exist, err := dcm.GetBy("key_name", keyName, &configJson)
+		if exist && err == nil {
+			cacheData = configJson.Value
+		}
+		_ = global.Cache.Set(cacheKey, cacheData, 1800)
+	}
+	return cacheData
+}
+
 func UserActionLock(active string, userData string, lockTime time.Duration) bool {
 	memberKey := cache.GetCacheKey(cache.UserActionLock, active, userData)
 	if global.Cache.Get(memberKey) != "" {
@@ -269,6 +283,45 @@ func IdDecrypt(id string) string {
 	//restful路由避免错误
 	id = strings.ReplaceAll(id, "*", "/")
 	s, err := base64.StdEncoding.DecodeString(id)
+	if err != nil {
+		return ""
+	}
+	str, err := utils.AesDecrypt(s, key)
+	if err != nil {
+		return ""
+	}
+	return string(str)
+}
+
+//json加密
+func JsonEncrypt(jsonData interface{}) string {
+	jsonByte := []byte{}
+	switch result := jsonData.(type) {
+	case string:
+		jsonByte = []byte(result)
+	default:
+		jsonByte, _ = jsoniter.Marshal(jsonData)
+	}
+	if len(jsonByte) == 0 {
+		return ""
+	}
+	key := []byte("LFROPI0K0w5JVauUBLEexvvDTHxaxCZL")
+	str, err := utils.AesEncrypt(jsonByte, key)
+	if err != nil {
+		return ""
+	}
+	//restful路由避免错误
+	return base64.StdEncoding.EncodeToString(str)
+}
+
+//json解密
+func JsonDecrypt(json string) string {
+	if json == "" {
+		return ""
+	}
+	key := []byte("LFROPI0K0w5JVauUBLEexvvDTHxaxCZL")
+	//restful路由避免错误
+	s, err := base64.StdEncoding.DecodeString(json)
 	if err != nil {
 		return ""
 	}
