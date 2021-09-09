@@ -422,15 +422,27 @@ func (receiver *UserBusiness) GetDyCollect(tagId, collectType int, keywords, lab
 			productInfo := productMap[v.CollectId]
 			data[k].ProductId = productInfo.ProductId
 			data[k].Image = productInfo.Image
-			data[k].Title = productInfo.Title
+			data[k].Nickname = productInfo.Title
 			data[k].Price = productInfo.Price
 			data[k].CouponPrice = productInfo.CouponPrice
 			data[k].Pv = productInfo.Pv
 			data[k].OrderAccount = productInfo.OrderAccount
 			data[k].WeekOrderAccount = productInfo.WeekOrderAccount
 			data[k].PlatformLabel = productInfo.PlatformLabel
-			//todo 近七天热推达人
-			//data[k].WeekRelateAuthor = productInfo.WeekRelateAuthor
+			yesterdayDate := time.Now().AddDate(0, 0, -1).Format("20060102")
+			yesterdayTime, _ := time.ParseInLocation("20060102", yesterdayDate, time.Local)
+			startTime := yesterdayTime.AddDate(0, 0, -30)
+			relatedInfo, _ := hbase.GetProductDailyRangDate(v.CollectId, startTime, yesterdayTime)
+			authorMap := map[string]string{}
+			for _, v := range relatedInfo {
+				for _, a := range v.AwemeAuthorList {
+					authorMap[a.AuthorId] = a.AuthorId
+				}
+				for _, a := range v.LiveAuthorList {
+					authorMap[a.AuthorId] = a.AuthorId
+				}
+			}
+			data[k].WeekRelateAuthor = len(authorMap)
 		}
 		return data, total, commonError
 	case 3:
@@ -494,6 +506,13 @@ func (receiver *UserBusiness) AddDyCollect(collectId string, collectType, tagId,
 		collect.UniqueId = author.Data.UniqueID
 		collect.Nickname = author.Data.Nickname
 		break
+	case 2:
+		info, comErr := hbase.GetProductInfo(collectId)
+		if comErr != nil {
+			return comErr
+		}
+		collect.Nickname = info.Title
+		collect.Label = info.DcmLevelFirst
 	}
 	if exist {
 		if _, err := dbCollect.ID(collect.Id).Update(&collect); err != nil {
