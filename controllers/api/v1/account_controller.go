@@ -476,7 +476,7 @@ func (receiver *AccountController) DyCollectLabel() {
 	}
 	var ret []string
 	for _, v := range collectLabel {
-		ret = append(ret, strings.Split(v, "|")...)
+		ret = append(ret, strings.Split(v, ",")...)
 	}
 	receiver.SuccReturn(utils.UniqueStringSlice(ret))
 	return
