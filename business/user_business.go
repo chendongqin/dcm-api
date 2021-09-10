@@ -448,8 +448,24 @@ func (receiver *UserBusiness) GetDyCollect(tagId, collectType int, keywords, lab
 	case 3:
 		data := make([]repost.CollectAwemeRet, len(collects))
 		for k, v := range collects {
+			awemeBase, comErr := hbase.GetVideo(v.CollectId)
+			if comErr != nil {
+				return nil, 0, comErr
+			}
+			awemeAuthor, comErr := hbase.GetAuthor(awemeBase.Data.AuthorID)
+			if comErr != nil {
+				return nil, 0, comErr
+			}
+			v.CollectId = IdEncrypt(v.CollectId)
 			data[k].DcUserDyCollect = v
-			data[k].DcUserDyCollect.CollectId = IdEncrypt(v.CollectId)
+			data[k].AwemeAuthorID = IdEncrypt(awemeBase.Data.AuthorID)
+			data[k].AwemeCover = awemeBase.Data.AwemeCover
+			data[k].AwemeTitle = awemeBase.AwemeTitle
+			data[k].AwemeCreateTime = awemeBase.Data.AwemeCreateTime
+			data[k].AwemeURL = awemeBase.Data.AwemeURL
+			data[k].DiggCount = awemeBase.Data.DiggCount
+			data[k].AuthorAvatar = awemeAuthor.Data.Avatar
+			data[k].AuthorNickname = awemeAuthor.Data.Nickname
 		}
 		return data, total, nil
 	}
@@ -498,6 +514,7 @@ func (receiver *UserBusiness) AddDyCollect(collectId string, collectType, tagId,
 	collect.UpdateTime = time.Now()
 	switch collectType {
 	case 1:
+		//达人
 		author, comErr := hbase.GetAuthor(collectId)
 		if comErr != nil {
 			return comErr
@@ -507,12 +524,15 @@ func (receiver *UserBusiness) AddDyCollect(collectId string, collectType, tagId,
 		collect.Nickname = author.Data.Nickname
 		break
 	case 2:
+		//商品
 		info, comErr := hbase.GetProductInfo(collectId)
 		if comErr != nil {
 			return comErr
 		}
 		collect.Nickname = info.Title
 		collect.Label = info.DcmLevelFirst
+	case 3:
+		//视频
 	}
 	if exist {
 		if _, err := dbCollect.ID(collect.Id).Update(&collect); err != nil {

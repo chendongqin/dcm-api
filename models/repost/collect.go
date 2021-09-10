@@ -28,6 +28,14 @@ type CollectProductRet struct {
 
 type CollectAwemeRet struct {
 	dcm.DcUserDyCollect
+	AwemeAuthorID   string `json:"author_id"`
+	AwemeCover      string `json:"aweme_cover"`
+	AwemeTitle      string `json:"aweme_title"`
+	AwemeCreateTime int64  `json:"aweme_create_time"`
+	AwemeURL        string `json:"aweme_url"`
+	DiggCount       int64  `json:"digg_count"`
+	AuthorAvatar    string `json:"avatar"`
+	AuthorNickname  string `json:"nickname"`
 }
 
 type CollectTagRet struct {
