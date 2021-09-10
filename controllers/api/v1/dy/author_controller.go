@@ -404,6 +404,9 @@ func (receiver *AuthorController) AuthorViewData() {
 		}
 	}
 	productCount.ProductNum = authorBase.ProductCount
+	videoSumData := es.NewEsVideoBusiness().SumDataByAuthor(authorId, startTime, yesterday)
+	productCount.Predict30Gmv = authorBase.Predict30Gmv + videoSumData.Gmv
+	productCount.Predict30Sales = authorBase.Predict30Sales + float64(videoSumData.Sales)
 	data := dy2.DyAuthorBaseCount{
 		LiveCount: dy2.DyAuthorBaseLiveCount{
 			RoomCount:      int64(authorBase.LiveCount),
@@ -418,8 +421,8 @@ func (receiver *AuthorController) AuthorViewData() {
 			VideoCount:       int64(authorBase.AwemeCount),
 			AvgDigg:          authorBase.DiggCount,
 			DiggFollowerRate: authorBase.DiggFollowerRate,
-			Predict30Sales:   0,
-			Predict30Gmv:     0,
+			Predict30Sales:   float64(videoSumData.Sales),
+			Predict30Gmv:     videoSumData.Gmv,
 			AgeDuration:      authorBase.Duration / 1000,
 		},
 		ProductCount: productCount,
@@ -542,6 +545,7 @@ func (receiver *AuthorController) AuthorAwemes() {
 		if v.UniqueId == "" || v.UniqueId == "0" {
 			list[k].UniqueId = v.ShortId
 		}
+		list[k].AwemeUrl = business.AwemeUrl + v.AwemeId
 	}
 	maxTotal := total
 	if total > business.EsMaxShowNum {
