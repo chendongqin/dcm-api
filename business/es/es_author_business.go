@@ -79,16 +79,12 @@ func (receiver *EsAuthorBusiness) BaseSearch(
 					"should": []map[string]interface{}{
 						{
 							"term": map[string]interface{}{
-								"tags.keyword": map[string]interface{}{
-									"query": "",
-								},
+								"tags.keyword": "",
 							},
 						},
 						{
 							"term": map[string]interface{}{
-								"tags.keyword": map[string]interface{}{
-									"query": "0",
-								},
+								"tags.keyword": "0",
 							},
 						},
 						{
@@ -254,16 +250,12 @@ func (receiver *EsAuthorBusiness) SimpleSearch(
 					"should": []map[string]interface{}{
 						{
 							"term": map[string]interface{}{
-								"tags.keyword": map[string]interface{}{
-									"query": "",
-								},
+								"tags.keyword": "",
 							},
 						},
 						{
 							"term": map[string]interface{}{
-								"tags.keyword": map[string]interface{}{
-									"query": "0",
-								},
+								"tags.keyword": "0",
 							},
 						},
 						{
