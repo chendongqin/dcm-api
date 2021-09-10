@@ -36,6 +36,7 @@ const (
 	ProductAwemeAuthorAllList KeyName = "dcm:product:aweme:author:row:%s:%s"
 	ProductAwemeAuthorAllMap  KeyName = "dcm:product:aweme:author:info:%s:%s"
 	AuthorProductAllList      KeyName = "dcm:author:product:row:%s:%s"
+	ProductAuthorAwemesList   KeyName = "dcm:product:author:awemes:%s:%s"
 	AuthorViewProductAllList  KeyName = "dcm:author:view:product:%s:%s:%s"
 	RedAuthorRooms            KeyName = "dcm:red:author:room:%s"
 	RedAuthorLivingRooms      KeyName = "dcm:red:author:living:room"
