@@ -484,10 +484,10 @@ func (receiver *UserBusiness) GetDyCollectCount(userId int) (data []repost.Colle
 }
 
 //获取已收藏达人标签
-func (receiver *UserBusiness) GetDyCollectLabel(userId int) (data []string, comErr global.CommonError) {
+func (receiver *UserBusiness) GetDyCollectLabel(userId, collectType int) (data []string, comErr global.CommonError) {
 	dbCollect := dcm.GetDbSession()
 	defer dbCollect.Close()
-	if err := dbCollect.Table(dcm.DcUserDyCollect{}).Where("user_id=? AND label<>'' AND status=1", userId).Select("label").Find(&data); err != nil {
+	if err := dbCollect.Table(dcm.DcUserDyCollect{}).Where("user_id=? AND label<>'' AND status=1 AND collect_type=?", userId, collectType).Select("label").Find(&data); err != nil {
 		comErr = global.NewError(5000)
 		return
 	}
