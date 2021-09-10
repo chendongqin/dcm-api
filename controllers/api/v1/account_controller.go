@@ -461,10 +461,15 @@ func (receiver *AccountController) DelDyCollectTag() {
 	return
 }
 
-//达人标签列表
+//标签列表
 func (receiver *AccountController) DyCollectLabel() {
 	userBusiness := business.NewUserBusiness()
-	collectLabel, comErr := userBusiness.GetDyCollectLabel(receiver.UserId)
+	collectType, err := receiver.GetInt("collect_type", 1)
+	if err != nil {
+		receiver.FailReturn(global.NewError(5000))
+		return
+	}
+	collectLabel, comErr := userBusiness.GetDyCollectLabel(receiver.UserId, collectType)
 	if comErr != nil {
 		receiver.FailReturn(comErr)
 		return
