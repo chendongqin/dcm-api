@@ -29,9 +29,11 @@ func (receiver *InternalController) AuthorSearch() {
 	keyword := receiver.GetString("keyword", "")
 	tags := receiver.GetString("tags", "")
 	secondTags := receiver.GetString("second_tags", "")
+	minFollower, _ := receiver.GetInt64("min_follower", 0)
+	maxFollower, _ := receiver.GetInt64("max_follower", 0)
 	page := receiver.GetPage("page")
 	pageSize := receiver.GetPageSize("page_size", 10, 100)
-	list, total, comErr := es.NewEsAuthorBusiness().SimpleSearch(nickname, keyword, tags, secondTags, page, pageSize)
+	list, total, comErr := es.NewEsAuthorBusiness().SimpleSearch(nickname, keyword, tags, secondTags, minFollower, maxFollower, page, pageSize)
 	if comErr != nil {
 		receiver.FailReturn(comErr)
 		return
@@ -97,9 +99,11 @@ func (receiver *InternalController) ProductSearch() {
 	firstCname := receiver.GetString("first_cname", "")
 	secondCname := receiver.GetString("second_cname", "")
 	thirdCname := receiver.GetString("third_cname", "")
+	minPrice, _ := receiver.GetFloat("min_price", 0)
+	maxPrice, _ := receiver.GetFloat("max_price", 0)
 	page := receiver.GetPage("page")
 	pageSize := receiver.GetPageSize("page_size", 10, 100)
-	list, total, comErr := es.NewEsProductBusiness().InternalSearch(productId, title, platformLabel, dcmLevelFirst, firstCname, secondCname, thirdCname, page, pageSize)
+	list, total, comErr := es.NewEsProductBusiness().SimpleSearch(productId, title, platformLabel, dcmLevelFirst, firstCname, secondCname, thirdCname, minPrice, maxPrice, page, pageSize)
 	if comErr != nil {
 		receiver.FailReturn(comErr)
 		return
@@ -320,6 +324,12 @@ func (receiver *InternalController) SpiderLiveSpeedUp() {
 		return
 	}
 	business.NewSpiderBusiness().AddLive(authorId, author.FollowerCount, business.AddLiveTopStar)
+	_, _ = dcm.Insert(nil, &dcm.DcLiveSpiderLogs{
+		AuthorId:   authorId,
+		Top:        business.AddLiveTopStar,
+		AddLog:     "red_author",
+		CreateTime: time.Now(),
+	})
 	receiver.SuccReturn(nil)
 	return
 }

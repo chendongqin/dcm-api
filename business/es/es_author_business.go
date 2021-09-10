@@ -78,29 +78,29 @@ func (receiver *EsAuthorBusiness) BaseSearch(
 				"bool": map[string]interface{}{
 					"should": []map[string]interface{}{
 						{
-							"match_phrase": map[string]interface{}{
-								"tags": map[string]interface{}{
+							"term": map[string]interface{}{
+								"tags.keyword": map[string]interface{}{
 									"query": "",
 								},
 							},
 						},
 						{
-							"match_phrase": map[string]interface{}{
-								"tags": map[string]interface{}{
+							"term": map[string]interface{}{
+								"tags.keyword": map[string]interface{}{
 									"query": "0",
 								},
 							},
 						},
 						{
 							"term": map[string]interface{}{
-								"tags": category,
+								"tags.keyword": category,
 							},
 						},
 					},
 				},
 			})
 		} else {
-			esQuery.SetTerm("tags.keyword", category)
+			esQuery.SetMatchPhrase("tags.keyword", category)
 		}
 	}
 	if sellTags != "" {
@@ -226,7 +226,7 @@ func (receiver *EsAuthorBusiness) BaseSearch(
 //达人库查询
 func (receiver *EsAuthorBusiness) SimpleSearch(
 	nickname, keyword, tags, secondTags string,
-	page, pageSize int) (list []es.DyAuthor, total int, comErr global.CommonError) {
+	minFollower, maxFollower int64, page, pageSize int) (list []es.DyAuthor, total int, comErr global.CommonError) {
 	list = []es.DyAuthor{}
 	sortStr := "follower_count"
 	orderBy := "desc"
@@ -237,35 +237,45 @@ func (receiver *EsAuthorBusiness) SimpleSearch(
 	esTable := es.DyAuthorTable
 	esQuery, esMultiQuery := elasticsearch.NewElasticQueryGroup()
 	esQuery.SetTerm("exist", 1)
+	if minFollower > 0 || maxFollower > 0 {
+		rangeMap := map[string]interface{}{}
+		if minFollower > 0 {
+			rangeMap["gte"] = minFollower
+		}
+		if maxFollower > 0 {
+			rangeMap["lt"] = maxFollower
+		}
+		esQuery.SetRange("follower_count", rangeMap)
+	}
 	if tags != "" {
 		if tags == "其他" {
 			esQuery.AddCondition(map[string]interface{}{
 				"bool": map[string]interface{}{
 					"should": []map[string]interface{}{
 						{
-							"match_phrase": map[string]interface{}{
-								"tags": map[string]interface{}{
+							"term": map[string]interface{}{
+								"tags.keyword": map[string]interface{}{
 									"query": "",
 								},
 							},
 						},
 						{
-							"match_phrase": map[string]interface{}{
-								"tags": map[string]interface{}{
+							"term": map[string]interface{}{
+								"tags.keyword": map[string]interface{}{
 									"query": "0",
 								},
 							},
 						},
 						{
 							"term": map[string]interface{}{
-								"tags": tags,
+								"tags.keyword": tags,
 							},
 						},
 					},
 				},
 			})
 		} else {
-			esQuery.SetTerm("tags.keyword", tags)
+			esQuery.SetMatchPhrase("tags.keyword", tags)
 		}
 	}
 	if secondTags != "" {

@@ -878,7 +878,7 @@ func (receiver *AuthorController) AuthorIncomeSearch() {
 	} else {
 		// 如果是keyword形式的，先查es，es没有数据就请求爬虫数据接口
 		list, total, _ := es.NewEsAuthorBusiness().SimpleSearch(
-			"", keyword, "", "",
+			"", keyword, "", "", 0, 0,
 			1, 1)
 		if total == 0 {
 			authorIncome := spiderBusiness.GetAuthorByKeyword(keyword)
@@ -928,7 +928,7 @@ func (receiver *AuthorController) AuthorSearch() {
 	keyword := receiver.GetString("keyword", "")
 	page := receiver.GetPage("page")
 	pageSize := receiver.GetPageSize("page_size", 10, 100)
-	list, total, comErr := es.NewEsAuthorBusiness().SimpleSearch("", keyword, "", "", page, pageSize)
+	list, total, comErr := es.NewEsAuthorBusiness().SimpleSearch("", keyword, "", "", 0, 0, page, pageSize)
 	if comErr != nil {
 		receiver.FailReturn(comErr)
 		return
