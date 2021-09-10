@@ -185,7 +185,6 @@ func (receiver *AuthorController) AuthorBaseData() {
 	fansClub, _ := hbase.GetAuthorFansClub(authorId)
 	basicBefore, _ := hbase.GetAuthorBasic(authorId, time.Now().AddDate(0, 0, -1).Format("20060102"))
 	authorBase.Data.ID = business.IdEncrypt(authorBase.Data.ID)
-	authorBase.Data.IsCollect = business.NewUserBusiness().DyCollectExist(authorId, 1, receiver.UserId)
 	authorBase.Data.RoomID = business.IdEncrypt(authorBase.Data.RoomID)
 	basic := entity.DyAuthorBasic{
 		FollowerCount:        authorBase.FollowerCount,

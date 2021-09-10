@@ -304,6 +304,33 @@ func (receiver *AccountController) DyUserSearchList() {
 	return
 }
 
+//判断是否收藏
+func (receiver *AccountController) IsCollect() {
+	platform, err := receiver.GetInt("platform", 1)
+	if err != nil {
+		receiver.FailReturn(global.NewError(4000))
+		return
+	}
+	collectType, err := receiver.GetInt("collect_type", 1)
+	if err != nil {
+		receiver.FailReturn(global.NewError(4000))
+		return
+	}
+	collectId := receiver.GetString("collect_id")
+	if collectId == "" {
+		receiver.FailReturn(global.NewError(4000))
+		return
+	}
+	var id int
+	switch platform {
+	case 1:
+		id = business.NewUserBusiness().DyCollectExist(collectType, receiver.UserId, collectId)
+	}
+	receiver.SuccReturn(map[string]interface{}{"is_collect": id})
+	return
+}
+
+//添加收藏
 func (receiver *AccountController) AddCollect() {
 	//platform：1抖音
 	platform, err := receiver.GetInt("platform", 1)
@@ -339,6 +366,7 @@ func (receiver *AccountController) AddCollect() {
 	return
 }
 
+//取消收藏
 func (receiver *AccountController) DelCollect() {
 	id, err := receiver.GetInt(":id")
 	if err != nil {
@@ -354,6 +382,7 @@ func (receiver *AccountController) DelCollect() {
 	return
 }
 
+//获取收藏列表
 func (receiver *AccountController) GetCollect() {
 	page := receiver.GetPage("page")
 	pageSize := receiver.GetPageSize("page_size", 10, 50)

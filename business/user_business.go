@@ -551,11 +551,11 @@ func (receiver *UserBusiness) AddDyCollect(collectId string, collectType, tagId,
 	return
 }
 
-func (receiver *UserBusiness) DyCollectExist(collectId string, collectType, userId int) (exist int) {
+func (receiver *UserBusiness) DyCollectExist(collectType, userId int, collectId string) (exist int) {
 	collect := dcm.DcUserDyCollect{}
-	dbCollect := dcm.GetDbSession().Table(collect)
+	dbCollect := dcm.GetDbSession()
 	defer dbCollect.Close()
-	_, _ = dbCollect.Where("user_id=? AND collect_type=? AND collect_id=? AND status=1", userId, collectType, collectId).Get(&collect)
+	_, _ = dbCollect.Table(collect).Where("user_id=? AND collect_type=? AND collect_id=? AND status=1", userId, collectType, collectId).Get(&collect)
 	return collect.Id
 }
 
