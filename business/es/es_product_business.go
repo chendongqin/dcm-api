@@ -290,7 +290,7 @@ func (i *EsProductBusiness) SimpleSearch(productId, title, platformLabel, dcmLev
 			rangeMap["gte"] = minPrice
 		}
 		if maxPrice > 0 {
-			rangeMap["lt"] = minPrice
+			rangeMap["lt"] = maxPrice
 		}
 		esQuery.SetRange("price", rangeMap)
 	}
