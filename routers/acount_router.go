@@ -18,7 +18,7 @@ func init() {
 			beego.NSRouter("/dy/search/:type", &v1.AccountController{}, "get:DyUserSearchList"),
 			beego.NSRouter("/collect/list", &v1.AccountController{}, "get:GetCollect"),
 			beego.NSRouter("/collect/add", &v1.AccountController{}, "put:AddCollect"),
-			beego.NSRouter("/collect/label/get", &v1.AccountController{}, "Get:DyCollectLabel"),
+			beego.NSRouter("/collect/label/get", &v1.AccountController{}, "get:DyCollectLabel"),
 			beego.NSRouter("/collect/tag/upd/:id/:tag_id", &v1.AccountController{}, "put:UpdCollectTag"),
 			beego.NSRouter("/collect/del/:id", &v1.AccountController{}, "delete:DelCollect"),
 			beego.NSRouter("/collect/dy/remark", &v1.AccountController{}, "put:DyCollectRemark"),

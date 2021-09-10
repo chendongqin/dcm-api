@@ -17,6 +17,7 @@ type SimpleDyProduct struct {
 	MinPrice      float64 `json:"min_price"`
 	CosRatio      float64 `json:"cos_ratio"`
 	CosRatioMoney float64 `json:"cos_ratio_money"`
+	IsCollect     int     `json:"is_collect"`
 }
 
 type ProductOrderDaily struct {
