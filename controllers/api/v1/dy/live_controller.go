@@ -678,18 +678,20 @@ func (receiver *LiveController) LiveFanAnalyse() {
 		})
 	}
 	if roomType != "ing" {
-		for k, v := range info.Word {
-			if k == "" {
-				continue
+		if len(info.Word) > 0 {
+			for k, v := range info.Word[0] {
+				if k == "" {
+					continue
+				}
+				wordChart = append(wordChart, entity.XtDistributionsList{
+					DistributionKey:   k,
+					DistributionValue: v,
+				})
 			}
-			wordChart = append(wordChart, entity.XtDistributionsList{
-				DistributionKey:   k,
-				DistributionValue: v,
+			sort.Slice(wordChart, func(i, j int) bool {
+				return wordChart[i].DistributionValue > wordChart[j].DistributionValue
 			})
 		}
-		sort.Slice(wordChart, func(i, j int) bool {
-			return wordChart[i].DistributionValue > wordChart[j].DistributionValue
-		})
 	}
 	sort.Slice(cityChart, func(i, j int) bool {
 		return cityChart[i].DistributionValue > cityChart[j].DistributionValue
