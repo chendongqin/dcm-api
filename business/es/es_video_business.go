@@ -127,6 +127,7 @@ func (e *EsVideoBusiness) SumDataByAuthor(authorId string, startTime, endTime ti
 	countResult := esMultiQuery.
 		SetCache(300).
 		SetTable(esTable).
+		SetMust(esQuery.Condition).
 		RawQuery(map[string]interface{}{
 			"query": map[string]interface{}{
 				"bool": map[string]interface{}{
@@ -171,7 +172,7 @@ func (e *EsVideoBusiness) SumDataByAuthor(authorId string, startTime, endTime ti
 		countData.AvgShare = utils.ToInt64(math.Floor(data.AvgShare.Value))
 		countData.AvgComment = utils.ToInt64(math.Floor(data.AvgComment.Value))
 	}
-	countData.Total = esMultiQuery.Count
+	countData.Total = countResult["hits"].(map[string]interface{})["total"].(int)
 	return
 }
 
@@ -187,5 +188,6 @@ func (e *EsVideoBusiness) CountProductAwemeByAuthor(authorId string, startTime, 
 	esTable := GetESTableByMonthTime(es.DyVideoTable, startTime, endTime)
 	return esMultiQuery.
 		SetCache(300).
+		SetMust(esQuery.Condition).
 		SetTable(esTable).FindCount()
 }
