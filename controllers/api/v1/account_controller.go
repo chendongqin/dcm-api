@@ -180,7 +180,9 @@ func (receiver *AccountController) Info() {
 		}
 	}
 	receiver.SuccReturn(map[string]interface{}{
-		"info": account,
+		"has_auth":  receiver.HasAuth,
+		"has_login": receiver.HasLogin,
+		"info":      account,
 	})
 	return
 }
