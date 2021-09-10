@@ -224,6 +224,7 @@ func (receiver *AuthorController) AuthorViewData() {
 		return
 	}
 	authorBusiness := business.NewAuthorBusiness()
+	esLiveBusiness := es.NewEsLiveBusiness()
 	authorBase, comErr := authorBusiness.HbaseGetAuthor(authorId)
 	if comErr != nil {
 		receiver.FailReturn(comErr)
@@ -239,20 +240,9 @@ func (receiver *AuthorController) AuthorViewData() {
 		nowWeek = 7
 	}
 	lastWeekDay := todayTime.AddDate(0, 0, -(nowWeek - 1))
-	var monthRoom int64 = 0
-	var weekRoom int64 = 0
-	var room30Count int64 = 0
-	for _, v := range authorBase.RoomList {
-		if v.CreateTime >= monthTime.Unix() {
-			monthRoom++
-		}
-		if v.CreateTime >= lastWeekDay.Unix() {
-			weekRoom++
-		}
-		if v.CreateTime >= lastMonthDay.Unix() {
-			room30Count++
-		}
-	}
+	monthRoom := esLiveBusiness.CountDataByAuthor(authorId, monthTime, todayTime)
+	weekRoom := esLiveBusiness.CountDataByAuthor(authorId, lastWeekDay, todayTime)
+	room30Count := esLiveBusiness.CountDataByAuthor(authorId, lastMonthDay, todayTime)
 	productCount := dy2.DyAuthorBaseProductCount{}
 	startTime := time.Now().AddDate(0, 0, -31)
 	yesterday := time.Now().AddDate(0, 0, -1)
@@ -388,9 +378,9 @@ func (receiver *AuthorController) AuthorViewData() {
 				ProductNum30Top3:      topNumCates,
 				Sales30Top3Chart:      topBrandSaleList,
 				ProductNum30Top3Chart: topBrandNumList,
-				Predict30Sales:        totalSales,
-				Predict30Gmv:          totalGmv,
-				Sales30Chart:          []dy2.DyAuthorBaseProductPriceChart{},
+				//Predict30Sales:        totalSales,
+				//Predict30Gmv:          totalGmv,
+				Sales30Chart: []dy2.DyAuthorBaseProductPriceChart{},
 			}
 			for p, v := range priceSaleMap {
 				num := priceNumMap[p]
@@ -405,14 +395,15 @@ func (receiver *AuthorController) AuthorViewData() {
 	}
 	productCount.ProductNum = authorBase.ProductCount
 	videoSumData := es.NewEsVideoBusiness().SumDataByAuthor(authorId, startTime, yesterday)
-	productCount.Predict30Gmv = authorBase.Predict30Gmv + videoSumData.Gmv
-	productCount.Predict30Sales = authorBase.Predict30Sales + float64(videoSumData.Sales)
+	liveSumData := es.NewEsLiveBusiness().SumDataByAuthor(authorId, startTime, yesterday)
+	productCount.Predict30Gmv = liveSumData.TotalGmv.Sum + videoSumData.Gmv
+	productCount.Predict30Sales = utils.ToInt64(math.Floor(liveSumData.TotalSales.Sum)) + videoSumData.Sales
 	data := dy2.DyAuthorBaseCount{
 		LiveCount: dy2.DyAuthorBaseLiveCount{
 			RoomCount:      int64(authorBase.LiveCount),
 			Room30Count:    room30Count,
-			Predict30Sales: math.Floor(authorBase.Predict30Sales),
-			Predict30Gmv:   utils.FriendlyFloat64(authorBase.Predict30Gmv),
+			Predict30Sales: math.Floor(liveSumData.TotalSales.Avg),
+			Predict30Gmv:   utils.FriendlyFloat64(liveSumData.TotalGmv.Avg),
 			AgeDuration:    authorBase.AgeLiveDuration,
 			WeekRoomCount:  weekRoom,
 			MonthRoomCount: monthRoom,

@@ -111,7 +111,11 @@ func (i *EsProductBusiness) BaseSearch(productId, keyword, category, secondCateg
 }
 
 func (i *EsProductBusiness) SearchRangeDateList(productId, authorId string, startTime, endTime time.Time, page, pageSize int) (list []es.DyProductAuthorAnalysis, total int, comErr global.CommonError) {
-	esTable := GetESTableByTime(es.DyProductAuthorAnalysisTable, startTime, endTime)
+	esTable, err := GetESTableByTime(es.DyProductAuthorAnalysisTable, startTime, endTime)
+	if err != nil {
+		comErr = global.NewError(4000)
+		return
+	}
 	esQuery, esMultiQuery := elasticsearch.NewElasticQueryGroup()
 	esQuery.SetTerm("productId", productId)
 	esQuery.SetRange("createSdf.keyword", map[string]interface{}{
@@ -135,7 +139,11 @@ func (i *EsProductBusiness) SearchRangeDateList(productId, authorId string, star
 }
 
 func (i *EsProductBusiness) SearchAwemeRangeDateList(productId, authorId string, startTime, endTime time.Time, page, pageSize int) (list []es.DyProductAwemeAuthorAnalysis, total int, comErr global.CommonError) {
-	esTable := GetESTableByMonthTime(es.DyProductAwemeAuthorAnalysisTable, startTime, endTime)
+	esTable, err := GetESTableByMonthTime(es.DyProductAwemeAuthorAnalysisTable, startTime, endTime)
+	if err != nil {
+		comErr = global.NewError(4000)
+		return
+	}
 	esQuery, esMultiQuery := elasticsearch.NewElasticQueryGroup()
 	esQuery.SetTerm("productId", productId)
 	esQuery.SetRange("createSdf.keyword", map[string]interface{}{
@@ -159,7 +167,11 @@ func (i *EsProductBusiness) SearchAwemeRangeDateList(productId, authorId string,
 }
 
 func (i *EsProductBusiness) SearchRangeDateRowKey(productId, keyword string, startTime, endTime time.Time) (startRow es.DyProductAuthorAnalysis, stopRow es.DyProductAuthorAnalysis, total int, comErr global.CommonError) {
-	esTable := GetESTableByTime(es.DyProductAuthorAnalysisTable, startTime, endTime)
+	esTable, err := GetESTableByTime(es.DyProductAuthorAnalysisTable, startTime, endTime)
+	if err != nil {
+		comErr = global.NewError(4000)
+		return
+	}
 	esQuery, esMultiQuery := elasticsearch.NewElasticQueryGroup()
 	_, esMultiQuery2 := elasticsearch.NewElasticQueryGroup()
 	esQuery.SetTerm("productId", productId)
@@ -202,7 +214,11 @@ func (i *EsProductBusiness) SearchRangeDateRowKey(productId, keyword string, sta
 }
 
 func (i *EsProductBusiness) SearchAwemeRangeDateRowKey(productId, keyword string, startTime, endTime time.Time) (startRow es.DyProductAuthorAnalysis, stopRow es.DyProductAuthorAnalysis, total int, comErr global.CommonError) {
-	esTable := GetESTableByMonthTime(es.DyProductAwemeAuthorAnalysisTable, startTime, endTime)
+	esTable, err := GetESTableByMonthTime(es.DyProductAwemeAuthorAnalysisTable, startTime, endTime)
+	if err != nil {
+		comErr = global.NewError(4000)
+		return
+	}
 	esQuery, esMultiQuery := elasticsearch.NewElasticQueryGroup()
 	_, esMultiQuery2 := elasticsearch.NewElasticQueryGroup()
 	esQuery.SetTerm("productId", productId)
@@ -273,7 +289,7 @@ func (i *EsProductBusiness) SimpleSearch(productId, title, platformLabel, dcmLev
 		if minPrice > 0 {
 			rangeMap["gte"] = minPrice
 		}
-		if minPrice > 0 {
+		if maxPrice > 0 {
 			rangeMap["lt"] = minPrice
 		}
 		esQuery.SetRange("price", rangeMap)
