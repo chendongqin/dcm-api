@@ -28,6 +28,14 @@ type CollectProductRet struct {
 
 type CollectAwemeRet struct {
 	dcm.DcUserDyCollect
+	AwemeAuthorID   string
+	AwemeCover      string
+	AwemeTitle      string
+	AwemeCreateTime int64
+	AwemeURL        string
+	DiggCount       int64
+	AuthorAvatar    string
+	AuthorNickname  string
 }
 
 type CollectTagRet struct {
