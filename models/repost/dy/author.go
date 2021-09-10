@@ -93,7 +93,7 @@ type DyAuthorBaseProductCount struct {
 	ProductNum30Top3      []string                        `json:"product_num_30_top_3"`
 	Sales30Top3Chart      []NameValueInt64Chart           `json:"sales_30_top_3_chart"`
 	ProductNum30Top3Chart []NameValueChart                `json:"product_num_30_top_3_chart"`
-	Predict30Sales        float64                         `json:"predict_30_sales"`
+	Predict30Sales        int64                           `json:"predict_30_sales"`
 	Predict30Gmv          float64                         `json:"predict_30_gmv"`
 	Sales30Chart          []DyAuthorBaseProductPriceChart `json:"sales_30_chart"`
 }

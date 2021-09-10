@@ -334,7 +334,11 @@ func (receiver *EsAuthorBusiness) KeywordSearch(keyword string) (list []es.DyAut
 
 //商品达人分析
 func (receiver *EsAuthorBusiness) AuthorProductAnalysis(authorId, keyword string, startTime, endTime time.Time) (startRow es.EsDyAuthorProductAnalysis, endRow es.EsDyAuthorProductAnalysis, comErr global.CommonError) {
-	esTable := GetESTableByTime(es.DyAuthorProductAnalysisTable, startTime, endTime)
+	esTable, err := GetESTableByTime(es.DyAuthorProductAnalysisTable, startTime, endTime)
+	if err != nil {
+		comErr = global.NewError(4000)
+		return
+	}
 	esQuery, esMultiQuery := elasticsearch.NewElasticQueryGroup()
 	esQuery.SetTerm("author_id", authorId)
 	esQuery.SetRange("shelf_time", map[string]interface{}{
@@ -389,6 +393,7 @@ func (receiver *EsAuthorBusiness) SaleAuthorRankCount(startTime time.Time, dateT
 	var esTable string
 	cacheTime := 600 * time.Second
 	today := time.Now().Format("20060102")
+	var err error
 	switch dateType {
 	case 1:
 		date := startTime.Format("20060102")
@@ -401,9 +406,12 @@ func (receiver *EsAuthorBusiness) SaleAuthorRankCount(startTime time.Time, dateT
 		if endDate.Format("20060102") != today {
 			cacheTime = 86400
 		}
-		esTable = GetESTableByDayTime(es.DyAuthorTakeGoodsTopTable, startTime, endDate)
+		esTable, err = GetESTableByDayTime(es.DyAuthorTakeGoodsTopTable, startTime, endDate)
 	case 3:
 		esTable = fmt.Sprintf(es.DyAuthorTakeGoodsTopTable+"*", startTime.Format("200601"))
+	}
+	if err != nil {
+		return nil, 0, global.NewError(4000)
 	}
 	countResult := elasticsearch.NewElasticMultiQuery().
 		SetCache(cacheTime).

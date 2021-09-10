@@ -44,7 +44,11 @@ func (receiver *EsLiveBusiness) SearchAuthorRooms(authorId, keyword, sortStr, or
 		return
 	}
 	//兼容数据 2021-06-29
-	esTable := GetESTableByTime(es.DyLiveInfoBaseTable, startDate, endDate)
+	esTable, err := GetESTableByTime(es.DyLiveInfoBaseTable, startDate, endDate)
+	if err != nil {
+		comErr = global.NewError(4000)
+		return
+	}
 	esQuery, esMultiQuery := elasticsearch.NewElasticQueryGroup()
 	esQuery.SetTerm("author_id", authorId)
 	esQuery.SetRange("create_time", map[string]interface{}{
@@ -87,8 +91,10 @@ func (receiver *EsLiveBusiness) CountRoomProductByRoomId(roomInfo entity.DyLiveI
 
 //直播间商品统计
 func (receiver *EsLiveBusiness) CountRoomProductByAuthorId(authorId string, startTime, endTime time.Time) int64 {
-
-	esTable := GetESTableByTime(es.DyRoomProductRecordsTable, startTime, endTime)
+	esTable, err := GetESTableByTime(es.DyRoomProductRecordsTable, startTime, endTime)
+	if err != nil {
+		return 0
+	}
 	esQuery, esMultiQuery := elasticsearch.NewElasticQueryGroup()
 	esQuery.SetTerm("author_id", authorId)
 	esQuery.SetRange("start_time", map[string]interface{}{
@@ -444,7 +450,11 @@ func (receiver *EsLiveBusiness) AllRoomProductCateByRoomId(roomInfo entity.DyLiv
 
 //达人直播带货商品直播列表
 func (receiver *EsLiveBusiness) GetAuthorProductSearchRoomIds(authorId, productId string, startTime, stopTime time.Time, page, pageSize int, sortStr, orderBy string) (roomIds []string, total int, comErr global.CommonError) {
-	esTable := GetESTableByTime(es.DyRoomProductRecordsTable, startTime, stopTime)
+	esTable, err := GetESTableByTime(es.DyRoomProductRecordsTable, startTime, stopTime)
+	if err != nil {
+		comErr = global.NewError(4000)
+		return
+	}
 	esQuery, esMultiQuery := elasticsearch.NewElasticQueryGroup()
 	if authorId != "" {
 		esQuery.SetTerm("author_id", authorId)
@@ -502,7 +512,11 @@ func (receiver *EsLiveBusiness) SearchProductRooms(productId, keyword, sortStr, 
 		comErr = global.NewError(4000)
 		return
 	}
-	esTable := GetESTableByTime(es.DyRoomProductRecordsTable, startTime, endTime)
+	esTable, err := GetESTableByTime(es.DyRoomProductRecordsTable, startTime, endTime)
+	if err != nil {
+		comErr = global.NewError(4000)
+		return
+	}
 	esQuery, esMultiQuery := elasticsearch.NewElasticQueryGroup()
 	esQuery.SetTerm("product_id", productId)
 	esQuery.SetRange("live_create_time", map[string]interface{}{
@@ -567,7 +581,11 @@ func (receiver *EsLiveBusiness) SearchLiveRooms(keyword, category, firstName, se
 		comErr = global.NewError(4000)
 		return
 	}
-	esTable := GetESTableByTime(es.DyLiveInfoBaseTable, startTime, endTime)
+	esTable, err := GetESTableByTime(es.DyLiveInfoBaseTable, startTime, endTime)
+	if err != nil {
+		comErr = global.NewError(4000)
+		return
+	}
 	esQuery, esMultiQuery := elasticsearch.NewElasticQueryGroup()
 	esQuery.SetRange("create_time", map[string]interface{}{
 		"gte": startTime.Unix(),
@@ -657,7 +675,10 @@ func (receiver *EsLiveBusiness) SearchLiveRooms(keyword, category, firstName, se
 func (receiver *EsLiveBusiness) KeywordSearch(keyword string) (list []es.EsDyLiveInfo) {
 	esQuery, esMultiQuery := elasticsearch.NewElasticQueryGroup()
 	startTime := time.Now().AddDate(0, 0, -89)
-	esTable := GetESTableByTime(es.DyLiveInfoBaseTable, startTime, time.Now())
+	esTable, err := GetESTableByTime(es.DyLiveInfoBaseTable, startTime, time.Now())
+	if err != nil {
+		return
+	}
 	esQuery.SetMultiMatch([]string{"display_id.keyword", "short_id.keyword", "title.keyword", "nickname.keyword", "product_title.keyword"}, keyword)
 	esQuery.SetRange("create_time", map[string]interface{}{
 		"gte": startTime.Unix(),
@@ -697,4 +718,68 @@ func (receiver *EsLiveBusiness) GetRoomsByAuthorIds(authorIds []string, date str
 		Query()
 	utils.MapToStruct(results, &list)
 	return
+}
+
+//达人直播间统计
+func (receiver *EsLiveBusiness) SumDataByAuthor(authorId string, startTime, endTime time.Time) (data es.DyLiveSumCount) {
+	data = es.DyLiveSumCount{}
+	esTable, err := GetESTableByTime(es.DyLiveInfoBaseTable, startTime, endTime)
+	if err != nil {
+		return
+	}
+	esQuery, esMultiQuery := elasticsearch.NewElasticQueryGroup()
+	esQuery.SetRange("create_time", map[string]interface{}{
+		"gte": startTime.Unix(),
+		"lt":  endTime.AddDate(0, 0, 1).Unix(),
+	})
+	esQuery.SetTerm("author_id", authorId)
+	countResult := esMultiQuery.
+		SetCache(300).
+		SetTable(esTable).
+		SetMust(esQuery.Condition).
+		RawQuery(map[string]interface{}{
+			"query": map[string]interface{}{
+				"bool": map[string]interface{}{
+					"must": esQuery.Condition,
+				},
+			},
+			"size": 0,
+			"aggs": map[string]interface{}{
+				"total_gmv": map[string]interface{}{
+					"stats": map[string]interface{}{
+						"field": "predict_gmv",
+					},
+				},
+				"total_sales": map[string]interface{}{
+					"stats": map[string]interface{}{
+						"field": "predict_sales",
+					},
+				},
+			},
+		})
+
+	if r, ok := countResult["aggregations"]; ok {
+		utils.MapToStruct(r, &data)
+	}
+	return
+}
+
+//统计当前
+func (receiver *EsLiveBusiness) CountDataByAuthor(authorId string, startTime, endTime time.Time) int64 {
+	esTable, err := GetESTableByTime(es.DyLiveInfoBaseTable, startTime, endTime)
+	if err != nil {
+		return 0
+	}
+	esQuery, esMultiQuery := elasticsearch.NewElasticQueryGroup()
+	esQuery.SetRange("create_time", map[string]interface{}{
+		"gte": startTime.Unix(),
+		"lt":  endTime.AddDate(0, 0, 1).Unix(),
+	})
+	esQuery.SetTerm("author_id", authorId)
+	total, _ := esMultiQuery.
+		SetCache(300).
+		SetTable(esTable).
+		SetMust(esQuery.Condition).
+		FindCount()
+	return total
 }
