@@ -464,7 +464,7 @@ func (receiver *UserBusiness) GetDyCollect(tagId, collectType int, keywords, lab
 			data[k].AwemeCreateTime = awemeBase.Data.AwemeCreateTime
 			data[k].AwemeURL = awemeBase.Data.AwemeURL
 			data[k].DiggCount = awemeBase.Data.DiggCount
-			data[k].AuthorAvatar = awemeAuthor.Data.Avatar
+			data[k].AuthorAvatar = dyimg.Fix(awemeAuthor.Data.Avatar)
 			data[k].AuthorNickname = awemeAuthor.Data.Nickname
 		}
 		return data, total, nil
