@@ -33,7 +33,11 @@ func (e *EsVideoBusiness) SearchAwemeByProduct(productId, keyword, sortStr, orde
 		comErr = global.NewError(4000)
 		return
 	}
-	esTable := GetESTableByMonthTime(es.DyProductVideoTable, startTime, endTime)
+	esTable, err := GetESTableByMonthTime(es.DyProductVideoTable, startTime, endTime)
+	if err != nil {
+		comErr = global.NewError(4000)
+		return
+	}
 	esQuery, esMultiQuery := elasticsearch.NewElasticQueryGroup()
 	esQuery.SetTerm("product_id", productId)
 	esQuery.SetRange("aweme_create_time", map[string]interface{}{
@@ -87,7 +91,11 @@ func (e *EsVideoBusiness) SearchByAuthor(authorId, keyword, sortStr, orderBy str
 		comErr = global.NewError(4000)
 		return
 	}
-	esTable := GetESTableByMonthTime(es.DyVideoTable, startTime, endTime)
+	esTable, err := GetESTableByMonthTime(es.DyVideoTable, startTime, endTime)
+	if err != nil {
+		comErr = global.NewError(4000)
+		return
+	}
 	esQuery, esMultiQuery := elasticsearch.NewElasticQueryGroup()
 	esQuery.SetTerm("author_id", authorId)
 	esQuery.SetExist("field", "aweme_title")
@@ -123,7 +131,10 @@ func (e *EsVideoBusiness) SumDataByAuthor(authorId string, startTime, endTime ti
 		"lt":  endTime.AddDate(0, 0, 1).Unix(),
 	})
 	esQuery.SetTerm("author_id", authorId)
-	esTable := GetESTableByMonthTime(es.DyVideoTable, startTime, endTime)
+	esTable, err := GetESTableByMonthTime(es.DyVideoTable, startTime, endTime)
+	if err != nil {
+		return
+	}
 	countResult := esMultiQuery.
 		SetCache(300).
 		SetTable(esTable).
@@ -136,27 +147,27 @@ func (e *EsVideoBusiness) SumDataByAuthor(authorId string, startTime, endTime ti
 			},
 			"size": 0,
 			"aggs": map[string]interface{}{
-				"totalGmv": map[string]interface{}{
+				"total_gmv": map[string]interface{}{
 					"sum": map[string]interface{}{
 						"field": "aweme_gmv",
 					},
 				},
-				"totalSales": map[string]interface{}{
+				"total_sales": map[string]interface{}{
 					"sum": map[string]interface{}{
 						"field": "sales",
 					},
 				},
-				"avgComment": map[string]interface{}{
+				"avg_comment": map[string]interface{}{
 					"avg": map[string]interface{}{
 						"field": "comment_count",
 					},
 				},
-				"avgDigg": map[string]interface{}{
+				"avg_digg": map[string]interface{}{
 					"avg": map[string]interface{}{
 						"field": "digg_count",
 					},
 				},
-				"avgShare": map[string]interface{}{
+				"avg_share": map[string]interface{}{
 					"avg": map[string]interface{}{
 						"field": "share_count",
 					},
@@ -167,7 +178,7 @@ func (e *EsVideoBusiness) SumDataByAuthor(authorId string, startTime, endTime ti
 		data := es.DyAwemeSumCount{}
 		utils.MapToStruct(r, &data)
 		countData.Gmv = data.TotalGmv.Value
-		countData.Sales = utils.ToInt64(data.TotalSales.Value)
+		countData.Sales = utils.ToInt64(math.Floor(data.TotalSales.Value))
 		countData.AvgDigg = utils.ToInt64(math.Floor(data.AvgDigg.Value))
 		countData.AvgShare = utils.ToInt64(math.Floor(data.AvgShare.Value))
 		countData.AvgComment = utils.ToInt64(math.Floor(data.AvgComment.Value))
@@ -185,7 +196,10 @@ func (e *EsVideoBusiness) CountProductAwemeByAuthor(authorId string, startTime, 
 	})
 	esQuery.SetTerm("author_id", authorId)
 	esQuery.SetExist("field", "product_ids")
-	esTable := GetESTableByMonthTime(es.DyVideoTable, startTime, endTime)
+	esTable, err := GetESTableByMonthTime(es.DyVideoTable, startTime, endTime)
+	if err != nil {
+		return 0, err
+	}
 	return esMultiQuery.
 		SetCache(300).
 		SetMust(esQuery.Condition).

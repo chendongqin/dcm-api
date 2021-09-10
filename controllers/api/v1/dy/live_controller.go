@@ -183,7 +183,7 @@ func (receiver *LiveController) LiveInfoData() {
 	//}
 	if liveInfo.TotalUser > 0 {
 		incFansRate = float64(liveInfo.FollowCount) / float64(liveInfo.TotalUser)
-		interactRate = float64(liveInfo.BarrageCount) / float64(liveInfo.TotalUser)
+		interactRate = float64(liveInfo.BarrageUserCount) / float64(liveInfo.TotalUser)
 		liveSale.Uv = (gmv + float64(liveSaleData.TicketCount)/10) / float64(liveInfo.TotalUser)
 		liveSale.SaleRate = sales / float64(liveInfo.TotalUser)
 	}
@@ -719,7 +719,7 @@ func (receiver *LiveController) LiveFanAnalyse() {
 	}
 	var barrageRate float64 = 0
 	if liveInfo.TotalUser > 0 {
-		barrageRate = float64(liveInfo.BarrageCount) / float64(liveInfo.TotalUser)
+		barrageRate = float64(liveInfo.BarrageUserCount) / float64(liveInfo.TotalUser)
 	}
 	receiver.SuccReturn(map[string]interface{}{
 		"total_people":       roomUserTotal,
@@ -929,7 +929,7 @@ func (receiver *LiveController) LivingSaleData() {
 	}
 	if liveInfo.TotalUser > 0 {
 		livingInfo.Uv = (gmv + float64(liveSaleData.TicketCount)/10) / float64(liveInfo.TotalUser)
-		livingInfo.BarrageRate = float64(liveInfo.BarrageCount) / float64(liveInfo.TotalUser)
+		livingInfo.BarrageRate = float64(liveInfo.BarrageUserCount) / float64(liveInfo.TotalUser)
 	}
 	livingInfo.AvgOnlineTime = business.NewLiveBusiness().CountAvgOnlineTime(liveInfo.OnlineTrends, liveInfo.CreateTime, liveInfo.TotalUser)
 	receiver.SuccReturn(livingInfo)

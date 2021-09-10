@@ -72,7 +72,7 @@ type DyLiveInfo struct {
 	UserCountComposition DyLiveUserCountComposition `json:"user_count_composition"` //用户来源
 	WatchCnt             int64                      `json:"watch_cnt"`              //总pv
 	TrendsCrawlTime      int64                      `json:"trends_crawl_time"`      //更新时间
-	BarrageCount         int64                      `json:"barrage_count"`          //弹幕人数
+	BarrageCount         int64                      `json:"barrage_count"`          //弹幕条数
 	BarrageUserCount     int64                      `json:"barrage_user_count"`     //弹幕人数
 	MaxUserCount         int64                      `json:"max_user_count"`         //人气峰值
 	PredictSales         float64                    `json:"predict_sales"`

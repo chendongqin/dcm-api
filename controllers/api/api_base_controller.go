@@ -560,6 +560,10 @@ func (receiver *ApiBaseController) GetRangeDate() (startTime, endTime time.Time,
 		commonError = global.NewError(4000)
 		return
 	}
+	//时间截止至9.1号
+	if startTime.Unix() < 1630425600 {
+		startTime = time.Unix(1630425600, 0)
+	}
 	endTime, err = time.ParseInLocation(pslTime, endDay, time.Local)
 	if err != nil {
 		commonError = global.NewError(4000)
