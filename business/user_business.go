@@ -448,8 +448,24 @@ func (receiver *UserBusiness) GetDyCollect(tagId, collectType int, keywords, lab
 	case 3:
 		data := make([]repost.CollectAwemeRet, len(collects))
 		for k, v := range collects {
+			awemeBase, comErr := hbase.GetVideo(v.CollectId)
+			if comErr != nil {
+				return nil, 0, comErr
+			}
+			awemeAuthor, comErr := hbase.GetAuthor(awemeBase.Data.AuthorID)
+			if comErr != nil {
+				return nil, 0, comErr
+			}
+			v.CollectId = IdEncrypt(v.CollectId)
 			data[k].DcUserDyCollect = v
-			data[k].DcUserDyCollect.CollectId = IdEncrypt(v.CollectId)
+			data[k].AwemeAuthorID = IdEncrypt(awemeBase.Data.AuthorID)
+			data[k].AwemeCover = awemeBase.Data.AwemeCover
+			data[k].AwemeTitle = awemeBase.AwemeTitle
+			data[k].AwemeCreateTime = awemeBase.Data.AwemeCreateTime
+			data[k].AwemeURL = awemeBase.Data.AwemeURL
+			data[k].DiggCount = awemeBase.Data.DiggCount
+			data[k].AuthorAvatar = dyimg.Fix(awemeAuthor.Data.Avatar)
+			data[k].AuthorNickname = awemeAuthor.Data.Nickname
 		}
 		return data, total, nil
 	}
@@ -468,10 +484,10 @@ func (receiver *UserBusiness) GetDyCollectCount(userId int) (data []repost.Colle
 }
 
 //获取已收藏达人标签
-func (receiver *UserBusiness) GetDyCollectLabel(userId int) (data []string, comErr global.CommonError) {
+func (receiver *UserBusiness) GetDyCollectLabel(userId, collectType int) (data []string, comErr global.CommonError) {
 	dbCollect := dcm.GetDbSession()
 	defer dbCollect.Close()
-	if err := dbCollect.Table(dcm.DcUserDyCollect{}).Where("user_id=? AND label<>'' AND status=1", userId).Select("label").Find(&data); err != nil {
+	if err := dbCollect.Table(dcm.DcUserDyCollect{}).Where("user_id=? AND label<>'' AND status=1 AND collect_type=?", userId, collectType).Select("label").Find(&data); err != nil {
 		comErr = global.NewError(5000)
 		return
 	}
@@ -498,6 +514,7 @@ func (receiver *UserBusiness) AddDyCollect(collectId string, collectType, tagId,
 	collect.UpdateTime = time.Now()
 	switch collectType {
 	case 1:
+		//达人
 		author, comErr := hbase.GetAuthor(collectId)
 		if comErr != nil {
 			return comErr
@@ -507,12 +524,15 @@ func (receiver *UserBusiness) AddDyCollect(collectId string, collectType, tagId,
 		collect.Nickname = author.Data.Nickname
 		break
 	case 2:
+		//商品
 		info, comErr := hbase.GetProductInfo(collectId)
 		if comErr != nil {
 			return comErr
 		}
 		collect.Nickname = info.Title
 		collect.Label = info.DcmLevelFirst
+	case 3:
+		//视频
 	}
 	if exist {
 		if _, err := dbCollect.ID(collect.Id).Update(&collect); err != nil {
@@ -531,11 +551,11 @@ func (receiver *UserBusiness) AddDyCollect(collectId string, collectType, tagId,
 	return
 }
 
-func (receiver *UserBusiness) DyCollectExist(collectId string, collectType, userId int) (exist int) {
+func (receiver *UserBusiness) DyCollectExist(collectType, userId int, collectId string) (exist int) {
 	collect := dcm.DcUserDyCollect{}
-	dbCollect := dcm.GetDbSession().Table(collect)
+	dbCollect := dcm.GetDbSession()
 	defer dbCollect.Close()
-	_, _ = dbCollect.Where("user_id=? AND collect_type=? AND collect_id=? AND status=1", userId, collectType, collectId).Get(&collect)
+	_, _ = dbCollect.Table(collect).Where("user_id=? AND collect_type=? AND collect_id=? AND status=1", userId, collectType, collectId).Get(&collect)
 	return collect.Id
 }
 
