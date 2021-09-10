@@ -337,7 +337,6 @@ func (receiver *ProductController) ProductBase() {
 		MinPrice:      productInfo.MinPrice,
 		CosRatio:      productInfo.CosRatio,
 		CosRatioMoney: productInfo.CosRatio / 100 * productInfo.Price,
-		IsCollect:     business.NewUserBusiness().DyCollectExist(productInfo.ProductID, 2, receiver.UserId),
 	}
 	dateChart7 := make([]int64, 0)
 	priceChart7 := make([]float64, 0)

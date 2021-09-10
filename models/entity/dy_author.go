@@ -138,7 +138,6 @@ type DyAuthorData struct {
 	VerifyName            string           `json:"verify_name"`
 	ShareUrl              string           `json:"share_url"`
 	CrawlTime             int64            `json:"crawl_time"`
-	IsCollect             int              `json:"is_collect"`
 }
 
 type DyAuthorInfoFans struct {
