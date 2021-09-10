@@ -244,7 +244,7 @@ func (i *EsProductBusiness) SearchAwemeRangeDateRowKey(productId, keyword string
 	return
 }
 
-func (i *EsProductBusiness) InternalSearch(productId, title, platformLabel, dcmLevelFirst, firstCname, secondCname, thirdCname string, page, pageSize int) (list []es.DyProduct, total int, comErr global.CommonError) {
+func (i *EsProductBusiness) SimpleSearch(productId, title, platformLabel, dcmLevelFirst, firstCname, secondCname, thirdCname string, minPrice, maxPrice float64, page, pageSize int) (list []es.DyProduct, total int, comErr global.CommonError) {
 	esTable := es.DyProductTable
 	esQuery, esMultiQuery := elasticsearch.NewElasticQueryGroup()
 	if productId != "" {
@@ -267,6 +267,16 @@ func (i *EsProductBusiness) InternalSearch(productId, title, platformLabel, dcmL
 	}
 	if thirdCname != "" {
 		esQuery.SetTerm("third_cname.keyword", thirdCname)
+	}
+	if minPrice > 0 || maxPrice > 0 {
+		rangeMap := map[string]interface{}{}
+		if minPrice > 0 {
+			rangeMap["gte"] = minPrice
+		}
+		if minPrice > 0 {
+			rangeMap["lt"] = minPrice
+		}
+		esQuery.SetRange("price", rangeMap)
 	}
 	results := esMultiQuery.
 		SetTable(esTable).
