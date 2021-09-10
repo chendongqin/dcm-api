@@ -133,6 +133,19 @@ func (receiver *AccountController) ChangeMobile() {
 	return
 }
 
+//手机号存在校验
+func (receiver *AccountController) MobileExist() {
+	mobile := receiver.GetString("mobile", "")
+	//新手机号存在校验
+	exist, comErr := business.NewUserBusiness().MobileExist(mobile)
+	if comErr != nil {
+		receiver.FailReturn(global.NewError(5000))
+		return
+	}
+	receiver.SuccReturn(exist)
+	return
+}
+
 //info
 func (receiver *AccountController) Info() {
 	username := receiver.UserInfo.Username
