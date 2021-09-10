@@ -53,3 +53,12 @@ type DyAwemeProductSale struct {
 	CouponInfo    string  `json:"coupon_info"`
 	Image         string  `json:"image"`
 }
+
+type AuthorAwemeSum struct {
+	Total      int     `json:"total"`
+	Gmv        float64 `json:"gmv"`
+	Sales      int64   `json:"sales"`
+	AvgDigg    int64   `json:"avg_digg"`
+	AvgShare   int64   `json:"avg_share"`
+	AvgComment int64   `json:"avg_comment"`
+}

@@ -1,6 +1,7 @@
 package business
 
 import (
+	"dongchamao/business/es"
 	"dongchamao/global"
 	"dongchamao/global/utils"
 	"dongchamao/hbase"
@@ -114,19 +115,26 @@ func (a *AuthorAwemeBusiness) HbaseGetVideoAggRangeDate(authorId string, startTi
 		}
 	}
 	wg.Wait()
-	if videoNum > 0 {
-		data.AvgDiggCount = diggCount / videoNum
-		data.AvgCommentCount = commentCount / videoNum
-		data.AvgForwardCount = forwardCount / videoNum
-	}
+	esVideoBusiness := es.NewEsVideoBusiness()
+	videoSumData := esVideoBusiness.SumDataByAuthor(authorId, startTime, endTime)
+	//if videoNum > 0 {
+	//	data.AvgDiggCount = diggCount / videoNum
+	//	data.AvgCommentCount = commentCount / videoNum
+	//	data.AvgForwardCount = forwardCount / videoNum
+	//}
+	//data.VideoNum = videoNum
+	//data.ProductVideo = productVideo
+	data.ProductVideo, _ = esVideoBusiness.CountProductAwemeByAuthor(authorId, startTime, endTime)
+	data.AvgDiggCount = videoSumData.AvgDigg
+	data.AvgCommentCount = videoSumData.AvgComment
+	data.AvgForwardCount = videoSumData.AvgShare
+	data.VideoNum = int64(videoSumData.Total)
 	data.DiggMax = diggMax
 	data.DiggMin = diggMin
 	data.CommentMax = commentMax
 	data.CommentMin = commentMin
 	data.ForwardMax = forwardMax
 	data.ForwardMin = forwardMin
-	data.VideoNum = videoNum
-	data.ProductVideo = productVideo
 	for k, v := range durationChartMap {
 		data.DurationChart = append(data.DurationChart, dy.VideoChart{
 			Name:  k,
