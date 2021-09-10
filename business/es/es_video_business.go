@@ -165,7 +165,7 @@ func (e *EsVideoBusiness) SumDataByAuthor(authorId string, startTime, endTime ti
 	if r, ok := countResult["aggregations"]; ok {
 		data := es.DyAwemeSumCount{}
 		utils.MapToStruct(r, &data)
-		countData.Gmv = data.TotalSales.Value
+		countData.Gmv = data.TotalGmv.Value
 		countData.Sales = utils.ToInt64(data.TotalSales.Value)
 		countData.AvgDigg = utils.ToInt64(math.Floor(data.AvgDigg.Value))
 		countData.AvgShare = utils.ToInt64(math.Floor(data.AvgShare.Value))
