@@ -727,9 +727,9 @@ func (receiver *ProductBusiness) ProductAuthorAwemes(productId, authorId string,
 			}
 		default:
 			if orderBy == "desc" {
-				return list[i].AwemeId > list[j].AwemeId
+				return list[i].AwemeCreateTime > list[j].AwemeCreateTime
 			} else {
-				return list[j].AwemeId > list[i].AwemeId
+				return list[j].AwemeCreateTime > list[i].AwemeCreateTime
 			}
 		}
 	})
