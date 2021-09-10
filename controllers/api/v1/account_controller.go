@@ -22,6 +22,7 @@ type AccountController struct {
 func (receiver *AccountController) Prepare() {
 	receiver.InitApiController()
 	receiver.CheckToken()
+	receiver.CheckDyUserGroupRight(business.DyJewelBaseMinShowNum, business.DyJewelBaseShowNum)
 }
 
 //重置密码
