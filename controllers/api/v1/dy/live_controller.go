@@ -239,6 +239,11 @@ func (receiver *LiveController) LiveInfoData() {
 		salesChart = append(salesChart, math.Floor(v.PredictSales))
 		//}
 	}
+	salesChart, delKeys := business.DealIncDirtyFloat64Chart(salesChart)
+	for _, key := range delKeys {
+		dateChart = append(dateChart[0:key], dateChart[key+1:]...)
+		gmvChart = append(gmvChart[0:key], gmvChart[key+1:]...)
+	}
 	receiver.SuccReturn(map[string]interface{}{
 		"live_info": returnLiveInfo,
 		"live_sale": liveSale,
@@ -591,6 +596,11 @@ func (receiver *LiveController) LiveFansTrends() {
 	if info.TotalUser > 0 {
 		incFansRate = float64(info.FollowCount) / float64(info.TotalUser)
 	}
+	fansIncTrends, delKeys := business.DealIncDirtyInt64Chart(fansIncTrends)
+	for _, key := range delKeys {
+		fansDate = append(fansDate[0:key], fansDate[key+1:]...)
+		fansTrends = append(fansTrends[0:key], fansTrends[key+1:]...)
+	}
 	receiver.SuccReturn(map[string]interface{}{
 		"fans_chart": map[string]interface{}{
 			"date":  fansDate,
@@ -653,7 +663,7 @@ func (receiver *LiveController) LiveFanAnalyse() {
 		}
 		roomAgeTotal += v
 		ageChart = append(ageChart, entity.XtDistributionsList{
-			DistributionKey:   k,
+			DistributionKey:   receiver.liveFansAgeMap(k),
 			DistributionValue: v,
 		})
 	}
@@ -738,6 +748,21 @@ func (receiver *LiveController) LiveFanAnalyse() {
 		"province_chart":     provinceChart,
 	})
 	return
+}
+
+func (receiver *LiveController) liveFansAgeMap(key string) string {
+	var ageMap = map[string]string{
+		"小于18":  "0-18",
+		"18~23": "18-23",
+		"24~30": "24-30",
+		"31~40": "31-40",
+		"41~50": "41-50",
+		"50+":   "50+",
+	}
+	if s, ok := ageMap[key]; ok {
+		return s
+	}
+	return key
 }
 
 //直播商品分类意向
