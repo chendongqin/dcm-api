@@ -239,11 +239,7 @@ func (receiver *LiveController) LiveInfoData() {
 		salesChart = append(salesChart, math.Floor(v.PredictSales))
 		//}
 	}
-	salesChart, delKeys := business.DealIncDirtyFloat64Chart(salesChart)
-	for _, key := range delKeys {
-		dateChart = append(dateChart[0:key], dateChart[key+1:]...)
-		gmvChart = append(gmvChart[0:key], gmvChart[key+1:]...)
-	}
+	salesChart = business.DealIncDirtyFloat64Chart(salesChart)
 	receiver.SuccReturn(map[string]interface{}{
 		"live_info": returnLiveInfo,
 		"live_sale": liveSale,
@@ -596,11 +592,7 @@ func (receiver *LiveController) LiveFansTrends() {
 	if info.TotalUser > 0 {
 		incFansRate = float64(info.FollowCount) / float64(info.TotalUser)
 	}
-	fansIncTrends, delKeys := business.DealIncDirtyInt64Chart(fansIncTrends)
-	for _, key := range delKeys {
-		fansDate = append(fansDate[0:key], fansDate[key+1:]...)
-		fansTrends = append(fansTrends[0:key], fansTrends[key+1:]...)
-	}
+	fansIncTrends = business.DealIncDirtyInt64Chart(fansIncTrends)
 	receiver.SuccReturn(map[string]interface{}{
 		"fans_chart": map[string]interface{}{
 			"date":  fansDate,
