@@ -361,72 +361,56 @@ func WitheUsername(username string) error {
 }
 
 //处理脏数据
-func DealIncDirtyInt64Chart(chart []int64) ([]int64, []int) {
-	delKeys := make([]int, 0)
+func DealIncDirtyInt64Chart(chart []int64) []int64 {
+	chart = utils.ReverseInt64Arr(chart)
 	lenNum := len(chart)
 	if lenNum == 2 {
-		if chart[0] > chart[1] {
-			chart = chart[0:1]
+		if chart[0] < chart[1] {
+			chart[1] = chart[0]
 		}
 	} else if lenNum > 2 {
 		for k, v := range chart {
 			if k == 0 {
 				continue
 			} else if k == lenNum-1 {
-				if v < chart[k-1] {
-					chart = append(chart[0:k], chart[k+1:]...)
-					delKeys = append(delKeys, k)
-					lenNum--
+				if v > chart[k-1] {
+					chart[k] = chart[k-1]
 				}
 				break
 			}
-			if chart[k-1] > v {
-				chart = append(chart[0:k], chart[k+1:]...)
-				delKeys = append(delKeys, k)
-				lenNum--
-				continue
-			} else if v > chart[k+1] && chart[k-1] < chart[k+1] {
-				chart = append(chart[0:k], chart[k+1:]...)
-				delKeys = append(delKeys, k)
-				lenNum--
+			if chart[k+1] > v && chart[k-1] > chart[k+1] {
+				chart[k] = chart[k-1]
 				continue
 			}
 		}
 	}
-	return chart, delKeys
+	chart = utils.ReverseInt64Arr(chart)
+	return chart
 }
 
-func DealIncDirtyFloat64Chart(chart []float64) ([]float64, []int) {
-	delKeys := make([]int, 0)
+func DealIncDirtyFloat64Chart(chart []float64) []float64 {
+	chart = utils.ReverseFloat64Arr(chart)
 	lenNum := len(chart)
 	if lenNum == 2 {
-		if chart[0] > chart[1] {
-			chart = chart[0:1]
+		if chart[0] < chart[1] {
+			chart[1] = chart[0]
 		}
 	} else if lenNum > 2 {
 		for k, v := range chart {
 			if k == 0 {
 				continue
 			} else if k == lenNum-1 {
-				if v < chart[k-1] {
-					chart = append(chart[0:k], chart[k+1:]...)
-					delKeys = append(delKeys, k)
-					lenNum--
+				if v > chart[k-1] {
+					chart[k] = chart[k-1]
 				}
 				break
 			}
-			if chart[k-1] > v {
-				chart = append(chart[0:k], chart[k+1:]...)
-				delKeys = append(delKeys, k)
-				lenNum--
-				continue
-			} else if v > chart[k+1] && chart[k-1] < chart[k+1] {
-				chart = append(chart[0:k], chart[k+1:]...)
-				delKeys = append(delKeys, k)
-				lenNum--
+			if chart[k+1] > v && chart[k-1] > chart[k+1] {
+				chart[k] = chart[k-1]
 				continue
 			}
 		}
 	}
-	return chart, delKeys
+	chart = utils.ReverseFloat64Arr(chart)
+	return chart
 }
