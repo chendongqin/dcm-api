@@ -239,6 +239,7 @@ func (receiver *LiveController) LiveInfoData() {
 		salesChart = append(salesChart, math.Floor(v.PredictSales))
 		//}
 	}
+	gmvChart = business.DealIncDirtyFloat64Chart(gmvChart)
 	salesChart = business.DealIncDirtyFloat64Chart(salesChart)
 	receiver.SuccReturn(map[string]interface{}{
 		"live_info": returnLiveInfo,
