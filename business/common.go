@@ -378,7 +378,7 @@ func DealIncDirtyInt64Chart(chart []int64) []int64 {
 				}
 				break
 			}
-			if chart[k+1] > v && chart[k-1] > chart[k+1] {
+			if chart[k+1] > v && chart[k-1] >= chart[k+1] {
 				chart[k] = chart[k-1]
 				continue
 			}
@@ -405,10 +405,16 @@ func DealIncDirtyFloat64Chart(chart []float64) []float64 {
 				}
 				break
 			}
-			if chart[k+1] > v && chart[k-1] > chart[k+1] {
-				chart[k] = chart[k-1]
-				continue
+			if chart[k+1] > v {
+				if chart[k-1] >= chart[k+1] {
+					chart[k] = chart[k-1]
+					continue
+				} else {
+					chart[k+1] = v
+					continue
+				}
 			}
+
 		}
 	}
 	chart = utils.ReverseFloat64Arr(chart)
