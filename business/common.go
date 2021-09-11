@@ -410,8 +410,10 @@ func DealIncDirtyFloat64Chart(chart []float64) []float64 {
 					chart[k] = chart[k-1]
 					continue
 				} else {
-					chart[k+1] = v
-					continue
+					if v > 0 {
+						chart[k+1] = v
+						continue
+					}
 				}
 			}
 
