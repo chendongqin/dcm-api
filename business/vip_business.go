@@ -154,7 +154,7 @@ func (this *VipBusiness) AddDyTeamSub(userId, subUserId int) global.CommonError 
 	if int(subCount) >= userVip.SubNum {
 		return global.NewMsgError("人数已满")
 	}
-	if _, err := dcm.UpdateInfo(dbSession, subUserVip.Id, map[string]interface{}{"parent_id": userId, "update_time": time.Now()}, new(dcm.DcUserVip)); err != nil {
+	if _, err := dcm.UpdateInfo(dbSession, subUserVip.Id, map[string]interface{}{"parent_id": userVip.Id, "update_time": time.Now()}, new(dcm.DcUserVip)); err != nil {
 		return global.NewError(5000)
 	}
 	return nil
@@ -168,7 +168,12 @@ func (this *VipBusiness) RemoveDyTeamSub(subUserId int) global.CommonError {
 	return nil
 }
 
-func (this *VipBusiness) GetDyTeam(userId int) (list []dcm.DcUserVip, err error) {
-	err = dcm.GetDbSession().Table(dcm.DcUserVip{}).Where("parent_id=?", userId).Find(&list)
+func (this *VipBusiness) GetDyTeam(parentId int) (list []dcm.DcUserVip, err global.CommonError) {
+	if err := dcm.GetDbSession().Table(dcm.DcUserVip{}).Where("parent_id=?", parentId).Find(&list); err != nil {
+		return nil, global.NewError(5000)
+	}
+	if err != nil {
+		return nil, global.NewError(5000)
+	}
 	return
 }

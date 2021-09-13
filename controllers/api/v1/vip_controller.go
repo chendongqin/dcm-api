@@ -15,7 +15,12 @@ type VipController struct {
 
 //获取抖音团队列表
 func (receiver *VipController) GetDyTeam() {
-	list, err := business.NewVipBusiness().GetDyTeam(receiver.UserId)
+	var userVip dcm.DcUserVip
+	if _, err := dcm.GetDbSession().Where("user_id=? and platform =?", receiver.UserId, 1).Get(&userVip); err != nil {
+		receiver.FailReturn(global.NewError(5000))
+		return
+	}
+	list, err := business.NewVipBusiness().GetDyTeam(userVip.Id)
 	if err != nil {
 		receiver.FailReturn(global.NewError(5000))
 		return
