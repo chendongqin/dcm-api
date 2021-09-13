@@ -184,6 +184,7 @@ func (receiver *AccountController) Info() {
 			SubNum:            v.SubNum,
 			IsSub:             v.IsSub,
 			SubExpirationTime: subExpiration,
+			ParentId:          v.ParentId,
 		}
 		if v.PlatForm == business.VipPlatformDouYin {
 			account.DyLevel = vipLevel

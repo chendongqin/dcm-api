@@ -27,6 +27,7 @@ type RepostAccountVipLevel struct {
 	SubNum            int    `json:"sub_num"`
 	IsSub             int    `json:"is_sub"`
 	SubExpirationTime string `json:"sub_expiration_time"`
+	ParentId          int    `json:"parent_id"`
 }
 
 type AccountVipLevel struct {
@@ -36,4 +37,5 @@ type AccountVipLevel struct {
 	IsSub             int       `json:"is_sub"`
 	ExpirationTime    time.Time `json:"expiration_time"`
 	SubExpirationTime time.Time `json:"sub_expiration_time"`
+	ParentId          int       `json:"parent_id"`
 }

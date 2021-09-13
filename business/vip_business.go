@@ -66,6 +66,7 @@ func (receiver *VipBusiness) GetVipLevels(userId int) []dy.AccountVipLevel {
 			}
 			vipList = append(vipList, dy.AccountVipLevel{
 				PlatForm:          v.Platform,
+				ParentId:          v.ParentId,
 				Level:             level,
 				SubNum:            v.SubNum,
 				IsSub:             isSub,
@@ -98,6 +99,7 @@ func (receiver *VipBusiness) GetVipLevel(userId, appId int) dy.AccountVipLevel {
 	}
 	info := dy.AccountVipLevel{
 		PlatForm:          vip.Platform,
+		ParentId:          vip.ParentId,
 		Level:             level,
 		SubNum:            vip.SubNum,
 		IsSub:             isSub,

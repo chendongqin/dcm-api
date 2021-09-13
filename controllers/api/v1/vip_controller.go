@@ -76,6 +76,7 @@ func (receiver *VipController) AddDyTeamSub() {
 		return
 	}
 	comErr := business.NewVipBusiness().AddDyTeamSub(receiver.UserId, subUser.Id)
+	business.NewUserBusiness().DeleteUserLevelCache(subUser.Id, 1)
 	if comErr != nil {
 		receiver.FailReturn(comErr)
 		return
