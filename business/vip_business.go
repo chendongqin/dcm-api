@@ -1,6 +1,7 @@
 package business
 
 import (
+	"dongchamao/global"
 	"dongchamao/global/logger"
 	"dongchamao/models/dcm"
 	"dongchamao/models/repost/dy"
@@ -126,4 +127,48 @@ func (receiver *VipBusiness) UpdateValidDayOne(userId, platformId int) (int, boo
 		return 0, false
 	}
 	return vipModel.OrderLevel, true
+}
+
+//添加抖音团队成员
+func (this *VipBusiness) AddDyTeamSub(userId, subUserId int) global.CommonError {
+	dbSession := dcm.GetDbSession()
+	defer dbSession.Close()
+	var subUserVip dcm.DcUserVip
+	if _, err := dbSession.Where("user_id=? and platform=1", subUserId).Get(&subUserVip); err != nil {
+		return global.NewError(5000)
+	}
+	if subUserVip.Level != 0 && subUserVip.Expiration.After(time.Now()) {
+		return global.NewMsgError("专业版账号无法添加")
+	}
+	if subUserVip.ParentId != 0 {
+		return global.NewMsgError("已在团队中")
+	}
+	var userVip dcm.DcUserVip
+	if _, err := dbSession.Where("user_id=? and platform=1", userId).Get(&userVip); err != nil {
+		return global.NewError(5000)
+	}
+	subCount, err := dbSession.Table("dc_user_vip").Where("parent_id=?", userId).Count()
+	if err != nil {
+		return global.NewError(5000)
+	}
+	if int(subCount) >= userVip.SubNum {
+		return global.NewMsgError("人数已满")
+	}
+	if _, err := dcm.UpdateInfo(dbSession, subUserVip.Id, map[string]interface{}{"parent_id": userId, "update_time": time.Now()}, new(dcm.DcUserVip)); err != nil {
+		return global.NewError(5000)
+	}
+	return nil
+}
+
+//添加抖音团队成员
+func (this *VipBusiness) RemoveDyTeamSub(subUserId int) global.CommonError {
+	if _, err := dcm.UpdateInfo(dcm.GetDbSession(), subUserId, map[string]interface{}{"parent_id": 0}, new(dcm.DcUserVip)); err != nil {
+		return global.NewError(5000)
+	}
+	return nil
+}
+
+func (this *VipBusiness) GetDyTeam(userId int) (list []dcm.DcUserVip, err error) {
+	err = dcm.GetDbSession().Table(dcm.DcUserVip{}).Where("parent_id=?", userId).Find(&list)
+	return
 }
