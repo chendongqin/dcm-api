@@ -43,12 +43,13 @@ func (receiver *VipController) GetDyTeam() {
 	var ret = make([]repost.DyTeamSubRet, 0, len(userInfoMap))
 	for _, v := range list {
 		ret = append(ret, repost.DyTeamSubRet{
-			UserVipId:  v.Id,
-			Remark:     v.Remark,
-			UpdateTime: v.UpdateTime,
-			Id:         userInfoMap[v.UserId].Id,
-			Username:   userInfoMap[v.UserId].Username,
-			LoginTime:  userInfoMap[v.UserId].LoginTime,
+			UserVipId:     v.Id,
+			Remark:        v.Remark,
+			UpdateTime:    v.UpdateTime,
+			SubExpiration: v.SubExpiration,
+			Id:            userInfoMap[v.UserId].Id,
+			Username:      userInfoMap[v.UserId].Username,
+			LoginTime:     userInfoMap[v.UserId].LoginTime,
 		})
 	}
 	receiver.SuccReturn(map[string]interface{}{"list": ret, "page": page, "pageSize": pageSize, "total": total})
@@ -58,6 +59,7 @@ func (receiver *VipController) GetDyTeam() {
 func (receiver *VipController) AddDyTeamSub() {
 	if receiver.DyLevel == 0 {
 		receiver.FailReturn(global.NewMsgError("非专业版会员无法添加"))
+		return
 	}
 	inputData := receiver.InputFormat()
 	username := inputData.GetString("username", "")
