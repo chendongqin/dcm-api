@@ -168,12 +168,14 @@ func (this *VipBusiness) RemoveDyTeamSub(subUserId int) global.CommonError {
 	return nil
 }
 
-func (this *VipBusiness) GetDyTeam(parentId int) (list []dcm.DcUserVip, err global.CommonError) {
-	if err := dcm.GetDbSession().Table(dcm.DcUserVip{}).Where("parent_id=?", parentId).Find(&list); err != nil {
-		return nil, global.NewError(5000)
-	}
+func (this *VipBusiness) GetDyTeam(parentId, page, pageSize int) (list []dcm.DcUserVip, total int64, comErr global.CommonError) {
+	err := dcm.GetDbSession().Table(dcm.DcUserVip{}).Where("parent_id=?", parentId).Limit(pageSize, (page-1)*pageSize).Find(&list)
 	if err != nil {
-		return nil, global.NewError(5000)
+		return nil, 0, global.NewError(5000)
+	}
+	total, err = dcm.GetDbSession().Table(dcm.DcUserVip{}).Where("parent_id=?", parentId).Count()
+	if err != nil {
+		return nil, 0, global.NewError(5000)
 	}
 	return
 }

@@ -20,7 +20,9 @@ func (receiver *VipController) GetDyTeam() {
 		receiver.FailReturn(global.NewError(5000))
 		return
 	}
-	list, err := business.NewVipBusiness().GetDyTeam(userVip.Id)
+	page := receiver.GetPage("page")
+	pageSize := receiver.GetPageSize("page", 10, 100)
+	list, total, err := business.NewVipBusiness().GetDyTeam(userVip.Id, page, pageSize)
 	if err != nil {
 		receiver.FailReturn(global.NewError(5000))
 		return
@@ -49,7 +51,7 @@ func (receiver *VipController) GetDyTeam() {
 			LoginTime:  userInfoMap[v.UserId].LoginTime,
 		})
 	}
-	receiver.SuccReturn(ret)
+	receiver.SuccReturn(map[string]interface{}{"list": ret, "page": page, "pageSize": pageSize, "total": total})
 }
 
 //添加抖音子账号
