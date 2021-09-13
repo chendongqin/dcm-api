@@ -5,6 +5,7 @@ import (
 	"dongchamao/global/logger"
 	"dongchamao/models/dcm"
 	"dongchamao/models/repost/dy"
+	"log"
 	"time"
 )
 
@@ -85,8 +86,19 @@ func (receiver *VipBusiness) GetVipLevel(userId, appId int) dy.AccountVipLevel {
 	parentId := vip.ParentId
 	expiration := vip.Expiration
 	if parentId != 0 {
-		exist, _ = dcm.Get(vip.ParentId, &vip)
-		expiration = vip.Expiration
+		parentVip := dcm.DcUserVip{}
+		exist, _ = dcm.Get(vip.ParentId, &parentVip)
+		if parentVip.Expiration.After(time.Now()) {
+			expiration = parentVip.Expiration
+			vip = parentVip
+		} else {
+			go func() {
+				if _, err := dcm.UpdateInfo(nil, vip.Id, map[string]interface{}{"parent_id": 0, "remark": ""}, new(dcm.DcUserVip)); err != nil {
+					log.Println("parent_vip_expired:", err.Error())
+					return
+				}
+			}()
+		}
 	}
 	if !exist {
 		vip.UserId = userId
@@ -170,7 +182,7 @@ func (this *VipBusiness) AddDyTeamSub(userId, subUserId int) global.CommonError 
 
 //添加抖音团队成员
 func (this *VipBusiness) RemoveDyTeamSub(subUserId int) global.CommonError {
-	if _, err := dcm.UpdateInfo(dcm.GetDbSession(), subUserId, map[string]interface{}{"parent_id": 0}, new(dcm.DcUserVip)); err != nil {
+	if _, err := dcm.UpdateInfo(dcm.GetDbSession(), subUserId, map[string]interface{}{"parent_id": 0, "remark": ""}, new(dcm.DcUserVip)); err != nil {
 		return global.NewError(5000)
 	}
 	return nil

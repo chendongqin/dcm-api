@@ -392,7 +392,7 @@ func (receiver *UserBusiness) KeywordsRecord(keyword string) (comErr global.Comm
 
 //关键词统计
 func (receiver *UserBusiness) GetUserList(userIds []string) (userList []dcm.DcUser, comErr global.CommonError) {
-	if err := dcm.GetDbSession().Where("id in (?)", strings.Join(userIds, ",")).Find(&userList); err != nil {
+	if err := dcm.GetDbSession().Where("id in (" + strings.Join(userIds, ",") + ")").Find(&userList); err != nil {
 		return nil, global.NewCommonError(err)
 	}
 	return

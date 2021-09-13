@@ -78,27 +78,33 @@ func (receiver *VipController) AddDyTeamSub() {
 		return
 	}
 	comErr := business.NewVipBusiness().AddDyTeamSub(receiver.UserId, subUser.Id)
-	business.NewUserBusiness().DeleteUserLevelCache(subUser.Id, 1)
 	if comErr != nil {
 		receiver.FailReturn(comErr)
 		return
 	}
+	business.NewUserBusiness().DeleteUserLevelCache(subUser.Id, 1)
 	receiver.SuccReturn(nil)
 }
 
 //移除抖音子账号
 func (receiver *VipController) RemoveDyTeam() {
 	inputData := receiver.InputFormat()
-	subUserId := inputData.GetInt("user_vip_id", 0)
-	if subUserId == 0 {
+	userVipId := inputData.GetInt("user_vip_id", 0)
+	if userVipId == 0 {
 		receiver.FailReturn(global.NewError(4000))
 		return
 	}
-	err := business.NewVipBusiness().RemoveDyTeamSub(subUserId)
+	err := business.NewVipBusiness().RemoveDyTeamSub(userVipId)
 	if err != nil {
 		receiver.FailReturn(global.NewError(5000))
 		return
 	}
+	var subUserVip dcm.DcUserVip
+	if _, err := dcm.Get(userVipId, &subUserVip); err != nil {
+		receiver.FailReturn(global.NewError(5000))
+		return
+	}
+	business.NewUserBusiness().DeleteUserLevelCache(subUserVip.UserId, 1)
 	receiver.SuccReturn(nil)
 }
 
