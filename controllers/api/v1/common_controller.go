@@ -147,6 +147,7 @@ func (receiver *CommonController) Test() {
 		receiver.FailReturn(global.NewError(4000))
 		return
 	}
+	receiver.SuccReturn(nil)
 	return
 }
 
