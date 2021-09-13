@@ -320,6 +320,7 @@ func (receiver *UserBusiness) UpdateUserAndClearCache(dbSession *xorm.Session, u
 	affect, err := dcm.UpdateInfo(dbSession, userId, updateData, new(dcm.DcUser))
 	if affect != 0 && err == nil {
 		receiver.DeleteUserInfoCache(userId)
+		receiver.DeleteUserLevelCache(userId, 1)
 	}
 	return affect, err
 }
