@@ -154,10 +154,11 @@ func (this *VipBusiness) AddDyTeamSub(userId, subUserId int) global.CommonError 
 	dbSession := dcm.GetDbSession()
 	defer dbSession.Close()
 	var subUserVip dcm.DcUserVip
+	var now = time.Now().UTC()
 	if _, err := dbSession.Where("user_id=? and platform=1", subUserId).Get(&subUserVip); err != nil {
 		return global.NewError(5000)
 	}
-	if subUserVip.Level != 0 && subUserVip.Expiration.After(time.Now()) {
+	if subUserVip.Level != 0 && subUserVip.Expiration.After(now) {
 		return global.NewMsgError("专业版账号无法添加")
 	}
 	if subUserVip.ParentId != 0 {
@@ -174,7 +175,7 @@ func (this *VipBusiness) AddDyTeamSub(userId, subUserId int) global.CommonError 
 	if int(subCount) >= userVip.SubNum {
 		return global.NewMsgError("人数已满")
 	}
-	if _, err := dcm.UpdateInfo(dbSession, subUserVip.Id, map[string]interface{}{"parent_id": userVip.Id, "update_time": time.Now()}, new(dcm.DcUserVip)); err != nil {
+	if _, err := dcm.UpdateInfo(dbSession, subUserVip.Id, map[string]interface{}{"parent_id": userVip.Id, "update_time": now}, new(dcm.DcUserVip)); err != nil {
 		return global.NewError(5000)
 	}
 	return nil
