@@ -45,11 +45,11 @@ func (receiver *VipController) GetDyTeam() {
 		ret = append(ret, repost.DyTeamSubRet{
 			UserVipId:     v.Id,
 			Remark:        v.Remark,
-			UpdateTime:    v.UpdateTime,
-			SubExpiration: v.SubExpiration,
+			UpdateTime:    v.UpdateTime.Unix(),
+			SubExpiration: v.SubExpiration.Unix(),
 			Id:            userInfoMap[v.UserId].Id,
 			Username:      userInfoMap[v.UserId].Username,
-			LoginTime:     userInfoMap[v.UserId].LoginTime,
+			LoginTime:     userInfoMap[v.UserId].LoginTime.Unix(),
 		})
 	}
 	receiver.SuccReturn(map[string]interface{}{"list": ret, "page": page, "pageSize": pageSize, "total": total})
