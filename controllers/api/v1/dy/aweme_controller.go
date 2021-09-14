@@ -276,25 +276,32 @@ func (receiver *AwemeController) AwemeProductAnalyseChart() {
 		infoMap[k] = productInfo
 	}
 	list := make([]dy2.NameValueInt64ChartWithData, 0)
-	for k, v := range dateMap {
-		data := make([]string, 0)
-		if p, ok := dateProductsMap[k]; ok {
-			for k1 := range p {
-				if _, ok1 := infoMap[k1]; ok1 {
-					title := infoMap[k1].Title
-					data = append(data, title)
+	dateTime := startTime
+	for {
+		if dateTime.After(endTime) {
+			break
+		}
+		parseTime := dateTime.Format("20060102")
+		valueTime, _ := time.ParseInLocation("20060102", parseTime, time.Local)
+		var dateData = dy2.NameValueInt64ChartWithData{Name: valueTime.Format("01/02"), Value: 0, Data: []string{}, Date: valueTime}
+		if dateMap[parseTime].Sales != 0 {
+			data := make([]string, 0)
+			if p, ok := dateProductsMap[parseTime]; ok {
+				for k1 := range p {
+					if _, ok1 := infoMap[k1]; ok1 {
+						title := infoMap[k1].Title
+						data = append(data, title)
+					}
 				}
 			}
+			dateData.Value = dateMap[parseTime].Sales
+			dateData.Data = data
 		}
-		valueTime, _ := time.ParseInLocation("20060102", k, time.Local)
-		list = append(list, dy2.NameValueInt64ChartWithData{
-			Name:  valueTime.Format("01/02"),
-			Value: v.Sales,
-			Data:  data,
-		})
+		list = append(list, dateData)
+		dateTime = dateTime.AddDate(0, 0, 1)
 	}
 	sort.Slice(list, func(i, j int) bool {
-		return list[i].Name < list[i].Name
+		return list[i].Date.Before(list[j].Date)
 	})
 	receiver.SuccReturn(map[string]interface{}{
 		"count": map[string]interface{}{

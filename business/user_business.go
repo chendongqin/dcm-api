@@ -10,7 +10,6 @@ import (
 	"github.com/go-xorm/xorm"
 	"github.com/gomodule/redigo/redis"
 	jsoniter "github.com/json-iterator/go"
-	"strings"
 	"time"
 )
 
@@ -393,7 +392,7 @@ func (receiver *UserBusiness) KeywordsRecord(keyword string) (comErr global.Comm
 
 //关键词统计
 func (receiver *UserBusiness) GetUserList(userIds []string) (userList []dcm.DcUser, comErr global.CommonError) {
-	if err := dcm.GetDbSession().Where("id in (" + strings.Join(userIds, ",") + ")").Find(&userList); err != nil {
+	if err := dcm.GetDbSession().In("id", userIds).Find(&userList); err != nil {
 		return nil, global.NewCommonError(err)
 	}
 	return
