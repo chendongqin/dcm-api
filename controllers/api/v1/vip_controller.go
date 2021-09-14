@@ -7,6 +7,7 @@ import (
 	"dongchamao/models/dcm"
 	"dongchamao/models/repost"
 	"strconv"
+	"time"
 )
 
 type VipController struct {
@@ -45,11 +46,11 @@ func (receiver *VipController) GetDyTeam() {
 		ret = append(ret, repost.DyTeamSubRet{
 			UserVipId:     v.Id,
 			Remark:        v.Remark,
-			UpdateTime:    v.UpdateTime.Unix(),
-			SubExpiration: v.SubExpiration.Unix(),
+			UpdateTime:    v.UpdateTime.In(time.Local).Unix(),
+			SubExpiration: v.SubExpiration.In(time.Local).Unix(),
 			Id:            userInfoMap[v.UserId].Id,
 			Username:      userInfoMap[v.UserId].Username,
-			LoginTime:     userInfoMap[v.UserId].LoginTime.Unix(),
+			LoginTime:     userInfoMap[v.UserId].LoginTime.In(time.Local).Unix(),
 		})
 	}
 	receiver.SuccReturn(map[string]interface{}{"list": ret, "page": page, "pageSize": pageSize, "total": total})
