@@ -21,7 +21,7 @@ func (receiver *VipController) GetDyTeam() {
 		return
 	}
 	page := receiver.GetPage("page")
-	pageSize := receiver.GetPageSize("page", 10, 100)
+	pageSize := receiver.GetPageSize("page_size", 10, 100)
 	list, total, err := business.NewVipBusiness().GetDyTeam(userVip.Id, page, pageSize)
 	if err != nil {
 		receiver.FailReturn(global.NewError(5000))
