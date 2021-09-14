@@ -375,6 +375,7 @@ func (receiver *PayController) OrderList() {
 	}
 	total, _ := dcm.GetSlaveDbSession().
 		Where(sql).
+		Where("status!=-1").
 		Limit(pageSize, start).
 		Desc("create_time").
 		FindAndCount(&vipOrderList)

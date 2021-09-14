@@ -154,7 +154,7 @@ func (this *VipBusiness) AddDyTeamSub(userId, subUserId int) global.CommonError 
 	dbSession := dcm.GetDbSession()
 	defer dbSession.Close()
 	var subUserVip dcm.DcUserVip
-	var now = time.Now().UTC()
+	var now = time.Now()
 	if _, err := dbSession.Where("user_id=? and platform=1", subUserId).Get(&subUserVip); err != nil {
 		return global.NewError(5000)
 	}
