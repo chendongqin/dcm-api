@@ -34,7 +34,7 @@ func (receiver *PayController) CreateDyOrder() {
 	referrer := InputData.GetString("referrer", "")
 	groupPeople := InputData.GetInt("group_people", 0)
 	buyDays := InputData.GetInt("days", 0)
-	if !utils.InArrayInt(buyDays, []int{30, 180, 365}) {
+	if orderType == 1 && !utils.InArrayInt(buyDays, []int{30, 180, 365}) {
 		receiver.FailReturn(global.NewError(4000))
 		return
 	}
