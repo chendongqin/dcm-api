@@ -14,8 +14,15 @@ import (
 	"time"
 )
 
+type CollectBusiness struct {
+}
+
+func NewCollectBusiness() *CollectBusiness {
+	return new(CollectBusiness)
+}
+
 //获取抖音收藏
-func (receiver *UserBusiness) GetDyCollect(tagId, collectType int, keywords, label string, userId, page, pageSize int) (interface{}, int64, global.CommonError) {
+func (receiver *CollectBusiness) GetDyCollect(tagId, collectType int, keywords, label string, userId, page, pageSize int) (interface{}, int64, global.CommonError) {
 	var (
 		total    int64
 		comErr   global.CommonError
@@ -124,7 +131,7 @@ func (receiver *UserBusiness) GetDyCollect(tagId, collectType int, keywords, lab
 }
 
 //获取分组收藏数量
-func (receiver *UserBusiness) GetDyCollectCount(userId int) (data []repost.CollectCount, comErr global.CommonError) {
+func (receiver *CollectBusiness) GetDyCollectCount(userId int) (data []repost.CollectCount, comErr global.CommonError) {
 	dbCollect := dcm.GetDbSession()
 	defer dbCollect.Close()
 	if err := dbCollect.Table(dcm.DcUserDyCollect{}).Where("user_id=? AND status=1", userId).Select("tag_id,count(collect_id) as count").GroupBy("tag_id").Find(&data); err != nil {
@@ -135,7 +142,7 @@ func (receiver *UserBusiness) GetDyCollectCount(userId int) (data []repost.Colle
 }
 
 //获取已收藏达人标签
-func (receiver *UserBusiness) GetDyCollectLabel(userId, collectType int) (data []string, comErr global.CommonError) {
+func (receiver *CollectBusiness) GetDyCollectLabel(userId, collectType int) (data []string, comErr global.CommonError) {
 	dbCollect := dcm.GetDbSession()
 	defer dbCollect.Close()
 	if err := dbCollect.Table(dcm.DcUserDyCollect{}).Where("user_id=? AND label<>'' AND status=1 AND collect_type=?", userId, collectType).Select("label").Find(&data); err != nil {
@@ -146,7 +153,7 @@ func (receiver *UserBusiness) GetDyCollectLabel(userId, collectType int) (data [
 }
 
 //收藏达人
-func (receiver *UserBusiness) AddDyCollect(collectId string, collectType, tagId, userId int) (comErr global.CommonError) {
+func (receiver *CollectBusiness) AddDyCollect(collectId string, collectType, tagId, userId int) (comErr global.CommonError) {
 	collect := dcm.DcUserDyCollect{}
 	dbCollect := dcm.GetDbSession().Table(collect)
 	defer dbCollect.Close()
@@ -202,17 +209,20 @@ func (receiver *UserBusiness) AddDyCollect(collectId string, collectType, tagId,
 	return
 }
 
-//已收藏判断
-func (receiver *UserBusiness) DyCollectExist(collectType, userId int, collectId string) (exist int) {
-	collect := dcm.DcUserDyCollect{}
-	dbCollect := dcm.GetDbSession()
-	defer dbCollect.Close()
-	_, _ = dbCollect.Table(collect).Where("user_id=? AND collect_type=? AND collect_id=? AND status=1", userId, collectType, collectId).Get(&collect)
-	return collect.Id
+func (receiver *CollectBusiness) DyListCollect(collectType int, userId int, ids []string) (collectMap map[string]int, comErr global.CommonError) {
+	var collectList []dcm.DcUserDyCollect
+	if err := dcm.GetDbSession().Where("collect_type=? and user_id=? and status=1", collectType, userId).In("collect_id", ids).Find(&collectList); err != nil {
+		return nil, global.NewCommonError(err)
+	}
+	collectMap = make(map[string]int, len(collectList))
+	for _, v := range collectList {
+		collectMap[v.CollectId] = v.Id
+	}
+	return
 }
 
 //取消收藏
-func (receiver *UserBusiness) CancelDyCollect(id, userId int) (comErr global.CommonError) {
+func (receiver *CollectBusiness) CancelDyCollect(id, userId int) (comErr global.CommonError) {
 	dbCollect := dcm.GetDbSession().Table(dcm.DcUserDyCollect{})
 	defer dbCollect.Close()
 	exist, err := dbCollect.Where("id=? and status=? and user_id=?", id, 1, userId).Exist()
@@ -233,7 +243,7 @@ func (receiver *UserBusiness) CancelDyCollect(id, userId int) (comErr global.Com
 }
 
 //修改收藏分组
-func (receiver *UserBusiness) UpdCollectTag(id, tagId int) (comErr global.CommonError) {
+func (receiver *CollectBusiness) UpdCollectTag(id, tagId int) (comErr global.CommonError) {
 	dbCollect := dcm.GetDbSession().Table(dcm.DcUserDyCollect{})
 	defer dbCollect.Close()
 	affect, err := dcm.UpdateInfo(dbCollect, id, map[string]interface{}{"tag_id": tagId, "update_time": time.Now()}, new(dcm.DcUserDyCollect))
@@ -245,7 +255,7 @@ func (receiver *UserBusiness) UpdCollectTag(id, tagId int) (comErr global.Common
 }
 
 //获取分组列表
-func (receiver *UserBusiness) GetDyCollectTags(userId int) (tags []dcm.DcUserDyCollectTag, comErr global.CommonError) {
+func (receiver *CollectBusiness) GetDyCollectTags(userId int) (tags []dcm.DcUserDyCollectTag, comErr global.CommonError) {
 	db := dcm.GetDbSession().Table(dcm.DcUserDyCollectTag{})
 	if err := db.Where("user_id=? and delete_time is NULL", userId).Find(&tags); err != nil {
 		comErr = global.NewError(5000)
@@ -255,7 +265,7 @@ func (receiver *UserBusiness) GetDyCollectTags(userId int) (tags []dcm.DcUserDyC
 }
 
 //创建分组
-func (receiver *UserBusiness) AddDyCollectTag(userId int, name string) (comErr global.CommonError) {
+func (receiver *CollectBusiness) AddDyCollectTag(userId int, name string) (comErr global.CommonError) {
 	db := dcm.GetDbSession().Table(dcm.DcUserDyCollectTag{})
 	tag := dcm.DcUserDyCollectTag{
 		Name:       name,
@@ -271,7 +281,7 @@ func (receiver *UserBusiness) AddDyCollectTag(userId int, name string) (comErr g
 }
 
 //编辑分组
-func (receiver *UserBusiness) UpdDyCollectTag(id int, name string) (comErr global.CommonError) {
+func (receiver *CollectBusiness) UpdDyCollectTag(id int, name string) (comErr global.CommonError) {
 	db := dcm.GetDbSession().Table(dcm.DcUserDyCollectTag{})
 	if _, err := db.Where("id=?", id).Update(map[string]interface{}{"name": name}); err != nil {
 		comErr = global.NewError(5000)
@@ -281,7 +291,7 @@ func (receiver *UserBusiness) UpdDyCollectTag(id int, name string) (comErr globa
 }
 
 //删除分组
-func (receiver *UserBusiness) DelDyCollectTag(id int) (comErr global.CommonError) {
+func (receiver *CollectBusiness) DelDyCollectTag(id int) (comErr global.CommonError) {
 	db := dcm.GetDbSession().Table(dcm.DcUserDyCollectTag{})
 	if _, err := db.Where("id=?", id).Update(map[string]interface{}{"delete_time": time.Now()}); err != nil {
 		comErr = global.NewError(5000)

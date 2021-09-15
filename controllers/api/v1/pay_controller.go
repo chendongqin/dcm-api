@@ -35,7 +35,7 @@ func (receiver *PayController) DySurplusValue() {
 		receiver.FailReturn(global.NewMsgError("非会员无法扩充团队"))
 	}
 	//当前团队续费金额
-	_, total, err := business.NewVipBusiness().GetDyTeam(business.NewVipBusiness().GetVipLevel(receiver.UserId, 1).Id, 1, 1000)
+	total := business.NewVipBusiness().GetVipLevel(receiver.UserId, 1).SubNum
 	var nowValue float64
 	if total != 0 {
 		//团队过期后续费重新计算时间
@@ -45,9 +45,6 @@ func (receiver *PayController) DySurplusValue() {
 		}
 		nowSurplusDay := vip.Expiration.Sub(startTime).Hours() / 24
 		nowValue, _ = business.NewPayBusiness().GetDySurplusValue(int(math.Ceil(nowSurplusDay)))
-		if err != nil {
-			receiver.FailReturn(global.NewError(4000))
-		}
 	}
 	//扩张团队单人价格
 	value, primeValue := business.NewPayBusiness().GetDySurplusValue(int(math.Ceil(surplusDay)))

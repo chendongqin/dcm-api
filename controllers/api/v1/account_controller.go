@@ -326,7 +326,8 @@ func (receiver *AccountController) IsCollect() {
 	var id int
 	switch platform {
 	case 1:
-		id = business.NewUserBusiness().DyCollectExist(collectType, receiver.UserId, collectId)
+		idMap, _ := business.NewCollectBusiness().DyListCollect(collectType, receiver.UserId, []string{collectId})
+		id = idMap[collectId]
 	}
 	receiver.SuccReturn(map[string]interface{}{"is_collect": id})
 	return
@@ -358,7 +359,7 @@ func (receiver *AccountController) AddCollect() {
 	var comErr global.CommonError
 	switch platform {
 	case 1:
-		comErr = business.NewUserBusiness().AddDyCollect(collectId, collectType, tagId, receiver.UserInfo.Id)
+		comErr = business.NewCollectBusiness().AddDyCollect(collectId, collectType, tagId, receiver.UserInfo.Id)
 	}
 	if comErr != nil {
 		receiver.FailReturn(comErr)
@@ -375,7 +376,7 @@ func (receiver *AccountController) DelCollect() {
 		receiver.FailReturn(global.NewError(5000))
 		return
 	}
-	comErr := business.NewUserBusiness().CancelDyCollect(id, receiver.UserId)
+	comErr := business.NewCollectBusiness().CancelDyCollect(id, receiver.UserId)
 	if comErr != nil {
 		receiver.FailReturn(comErr)
 		return
@@ -407,7 +408,7 @@ func (receiver *AccountController) GetCollect() {
 	keywords := receiver.GetString("keywords")
 	switch platform {
 	case 1:
-		data, total, comErr := business.NewUserBusiness().GetDyCollect(tagId, collectType, keywords, label, receiver.UserId, page, pageSize)
+		data, total, comErr := business.NewCollectBusiness().GetDyCollect(tagId, collectType, keywords, label, receiver.UserId, page, pageSize)
 		if comErr != nil {
 			receiver.FailReturn(comErr)
 			return
@@ -430,7 +431,7 @@ func (receiver *AccountController) UpdCollectTag() {
 		receiver.FailReturn(global.NewError(5000))
 		return
 	}
-	comErr := business.NewUserBusiness().UpdCollectTag(id, tagId)
+	comErr := business.NewCollectBusiness().UpdCollectTag(id, tagId)
 	if comErr != nil {
 		receiver.FailReturn(comErr)
 		return
@@ -441,13 +442,13 @@ func (receiver *AccountController) UpdCollectTag() {
 
 //抖音达人收藏分组
 func (receiver *AccountController) GetDyCollectTags() {
-	userBusiness := business.NewUserBusiness()
-	data, comErr := userBusiness.GetDyCollectTags(receiver.UserId)
+	collectBusiness := business.NewCollectBusiness()
+	data, comErr := collectBusiness.GetDyCollectTags(receiver.UserId)
 	if comErr != nil {
 		receiver.FailReturn(comErr)
 		return
 	}
-	collectCount, comErr := userBusiness.GetDyCollectCount(receiver.UserId)
+	collectCount, comErr := collectBusiness.GetDyCollectCount(receiver.UserId)
 	if comErr != nil {
 		receiver.FailReturn(comErr)
 		return
@@ -471,7 +472,7 @@ func (receiver *AccountController) UpdDyCollectTag() {
 	id, _ := receiver.GetInt(":id")
 	InputData := receiver.InputFormat()
 	name := InputData.GetString("name", "")
-	comErr := business.NewUserBusiness().UpdDyCollectTag(id, name)
+	comErr := business.NewCollectBusiness().UpdDyCollectTag(id, name)
 	if comErr != nil {
 		receiver.FailReturn(comErr)
 		return
@@ -483,7 +484,7 @@ func (receiver *AccountController) UpdDyCollectTag() {
 func (receiver *AccountController) AddDyCollectTag() {
 	InputData := receiver.InputFormat()
 	name := InputData.GetString("name", "")
-	comErr := business.NewUserBusiness().AddDyCollectTag(receiver.UserId, name)
+	comErr := business.NewCollectBusiness().AddDyCollectTag(receiver.UserId, name)
 	if comErr != nil {
 		receiver.FailReturn(comErr)
 		return
@@ -498,7 +499,7 @@ func (receiver *AccountController) DelDyCollectTag() {
 		receiver.FailReturn(global.NewError(5000))
 		return
 	}
-	comErr := business.NewUserBusiness().DelDyCollectTag(id)
+	comErr := business.NewCollectBusiness().DelDyCollectTag(id)
 	if comErr != nil {
 		receiver.FailReturn(comErr)
 		return
@@ -509,13 +510,13 @@ func (receiver *AccountController) DelDyCollectTag() {
 
 //标签列表
 func (receiver *AccountController) DyCollectLabel() {
-	userBusiness := business.NewUserBusiness()
+	collectBusiness := business.NewCollectBusiness()
 	collectType, err := receiver.GetInt("collect_type", 1)
 	if err != nil {
 		receiver.FailReturn(global.NewError(5000))
 		return
 	}
-	collectLabel, comErr := userBusiness.GetDyCollectLabel(receiver.UserId, collectType)
+	collectLabel, comErr := collectBusiness.GetDyCollectLabel(receiver.UserId, collectType)
 	if comErr != nil {
 		receiver.FailReturn(comErr)
 		return
