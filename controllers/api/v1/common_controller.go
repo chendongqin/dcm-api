@@ -67,8 +67,9 @@ func (receiver *CommonController) Sms() {
 	//	return
 	//}
 	if grantType == "bind_mobile" {
-		exist, _ := dcm.GetBy("username", mobile, new(dcm.DcUser))
-		if exist {
+		var user dcm.DcUser
+		exist, _ := dcm.GetBy("username", mobile, &user)
+		if exist && user.Openid != "" {
 			receiver.FailReturn(global.NewError(4215))
 			return
 		}

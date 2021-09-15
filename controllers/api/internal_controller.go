@@ -226,7 +226,7 @@ func (receiver *InternalController) SetWeChatMenu() {
 		return
 	}
 	if err := business.NewWechatBusiness().UpdateMenus(menuMap); err != nil {
-		receiver.FailReturn(global.NewError(5000))
+		receiver.FailReturn(global.NewCommonError(err))
 		return
 	}
 	receiver.SuccReturn(nil)

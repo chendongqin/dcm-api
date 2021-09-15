@@ -19,4 +19,5 @@ type DcUserVip struct {
 	SubNum         int       `xorm:"not null default 0 comment('子账号数') SMALLINT(3)"`
 	SubExpiration  time.Time `xorm:"comment('子账号过期时间') TIMESTAMP"`
 	LiveMonitorNum int       `xorm:"not null default 0 comment('购买的直播监控次数，长期有效') SMALLINT(5)"`
+	Remark        string    `xorm:"not null default '' comment('备注') VARCHAR(30)"`
 }

@@ -29,6 +29,7 @@ type DyAuthor struct {
 	Level              int     `json:"level"`
 	Brand              int     `json:"brand"`
 	IsDelivery         int     `json:"is_delivery"`
+	IsCollect          int     `json:"is_collect"`
 	UniqueId           string  `json:"unique_id"`
 	RoomId             string  `json:"room_id"`
 }

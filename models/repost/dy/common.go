@@ -1,5 +1,7 @@
 package dy
 
+import "time"
+
 type DateChart struct {
 	Date       []string `json:"date"`
 	CountValue []int64  `json:"count_value"`
@@ -38,9 +40,10 @@ type NameValueInt64PercentChart struct {
 }
 
 type NameValueInt64ChartWithData struct {
-	Name  string   `json:"name"`
-	Value int64    `json:"value"`
-	Data  []string `json:"data"`
+	Name  string    `json:"name"`
+	Value int64     `json:"value"`
+	Data  []string  `json:"data"`
+	Date  time.Time `json:"date"`
 }
 
 type NameValueFloat64Chart struct {

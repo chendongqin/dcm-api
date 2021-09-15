@@ -10,6 +10,7 @@ import (
 	"dongchamao/services/payer"
 	"fmt"
 	jsoniter "github.com/json-iterator/go"
+	"math"
 	"net/url"
 	"time"
 )
@@ -21,6 +22,44 @@ type PayController struct {
 func (receiver *PayController) Prepare() {
 	receiver.InitApiController()
 	receiver.CheckToken()
+	receiver.CheckDyUserGroupRight(business.DyJewelBaseMinShowNum, business.DyJewelBaseShowNum)
+}
+
+func (receiver *PayController) DySurplusValue() {
+	var vip dcm.DcUserVip
+	if _, err := dcm.GetDbSession().Where("user_id=? AND platform=1", receiver.UserId).Get(&vip); err != nil {
+		return
+	}
+	surplusDay := vip.Expiration.Sub(time.Now()).Hours() / 24
+	if surplusDay <= 0 || !receiver.HasAuth {
+		receiver.FailReturn(global.NewMsgError("非会员无法扩充团队"))
+	}
+	//当前团队续费金额
+	total := business.NewVipBusiness().GetVipLevel(receiver.UserId, 1).SubNum
+	var nowValue float64
+	var nowSurplusDay float64
+	if total != 0 {
+		//团队过期后续费重新计算时间
+		startTime := vip.SubExpiration
+		if startTime.Before(time.Now()) {
+			startTime = time.Now()
+		}
+		subTime := vip.Expiration.Sub(startTime)
+		nowSurplusDay = subTime.Hours() / 24
+		nowValue, _ = business.NewPayBusiness().GetDySurplusValue(int(math.Ceil(nowSurplusDay)))
+	}
+	//扩张团队单人价格
+	value, primeValue := business.NewPayBusiness().GetDySurplusValue(int(math.Ceil(surplusDay)))
+	//获取价格配置
+	priceConfig, _ := business.NewPayBusiness().GetVipPriceConfig()
+	receiver.SuccReturn(map[string]interface{}{
+		"now_surplus_day": int(math.Ceil(nowSurplusDay)),
+		"now_value":       nowValue * float64(total),
+		"value":           value,
+		"prime_value":     primeValue,
+		"price_config":    priceConfig,
+	})
+	return
 }
 
 //创建抖音订单
@@ -34,7 +73,7 @@ func (receiver *PayController) CreateDyOrder() {
 	referrer := InputData.GetString("referrer", "")
 	groupPeople := InputData.GetInt("group_people", 0)
 	buyDays := InputData.GetInt("days", 0)
-	if !utils.InArrayInt(buyDays, []int{30, 180, 365}) {
+	if orderType == 1 && !utils.InArrayInt(buyDays, []int{30, 180, 365}) {
 		receiver.FailReturn(global.NewError(4000))
 		return
 	}
@@ -377,6 +416,7 @@ func (receiver *PayController) OrderList() {
 	}
 	total, _ := dcm.GetSlaveDbSession().
 		Where(sql).
+		Where("status!=-1").
 		Limit(pageSize, start).
 		Desc("create_time").
 		FindAndCount(&vipOrderList)

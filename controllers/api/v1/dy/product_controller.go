@@ -102,9 +102,20 @@ func (receiver *ProductController) Search() {
 		receiver.FailReturn(comErr)
 		return
 	}
+	var productIds []string
 	for k, v := range list {
 		list[k].Image = dyimg.Fix(v.Image)
+		productIds = append(productIds, v.ProductId)
 		list[k].ProductId = business.IdEncrypt(v.ProductId)
+	}
+	if receiver.HasLogin {
+		collect, comErr := business.NewCollectBusiness().DyListCollect(2, receiver.UserId, productIds)
+		if comErr != nil {
+			receiver.FailReturn(comErr)
+		}
+		for k, v := range list {
+			list[k].IsCollect = collect[v.ProductId]
+		}
 	}
 	totalPage := math.Ceil(float64(total) / float64(pageSize))
 	maxPage := math.Ceil(float64(receiver.MaxTotal) / float64(pageSize))

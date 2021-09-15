@@ -24,6 +24,7 @@ type CollectProductRet struct {
 	WeekRelateAuthor int
 	WeekOrderAccount int64
 	PlatformLabel    string
+	Undercarriage    int
 }
 
 type CollectAwemeRet struct {

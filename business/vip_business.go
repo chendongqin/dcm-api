@@ -1,9 +1,11 @@
 package business
 
 import (
+	"dongchamao/global"
 	"dongchamao/global/logger"
 	"dongchamao/models/dcm"
 	"dongchamao/models/repost/dy"
+	"log"
 	"time"
 )
 
@@ -65,6 +67,7 @@ func (receiver *VipBusiness) GetVipLevels(userId int) []dy.AccountVipLevel {
 			}
 			vipList = append(vipList, dy.AccountVipLevel{
 				PlatForm:          v.Platform,
+				ParentId:          v.ParentId,
 				Level:             level,
 				SubNum:            v.SubNum,
 				IsSub:             isSub,
@@ -80,6 +83,28 @@ func (receiver *VipBusiness) GetVipLevel(userId, appId int) dy.AccountVipLevel {
 	vip := dcm.DcUserVip{}
 	var level = 0
 	exist, _ := dcm.GetSlaveDbSession().Where("user_id=? AND platform=?", userId, appId).Get(&vip)
+	parentId := vip.ParentId
+	expiration := vip.Expiration
+	if parentId != 0 {
+		parentVip := dcm.DcUserVip{}
+		exist, _ = dcm.Get(vip.ParentId, &parentVip)
+		if parentVip.Expiration.After(time.Now()) {
+			expiration = parentVip.Expiration
+			vip = parentVip
+		} else {
+			//父账号团队过期
+			go func() {
+				if _, err := dcm.UpdateInfo(nil, vip.ParentId, map[string]interface{}{"sub_num": 0}, new(dcm.DcUserVip)); err != nil {
+					log.Println("parent_vip_expired:", err.Error())
+					return
+				}
+				if _, err := dcm.UpdateInfo(nil, vip.Id, map[string]interface{}{"parent_id": 0, "remark": ""}, new(dcm.DcUserVip)); err != nil {
+					log.Println("parent_vip_expired_sub:", err.Error())
+					return
+				}
+			}()
+		}
+	}
 	if !exist {
 		vip.UserId = userId
 		vip.Platform = appId
@@ -96,12 +121,14 @@ func (receiver *VipBusiness) GetVipLevel(userId, appId int) dy.AccountVipLevel {
 		isSub = 1
 	}
 	info := dy.AccountVipLevel{
+		Id:                vip.Id,
 		PlatForm:          vip.Platform,
+		ParentId:          parentId,
 		Level:             level,
 		SubNum:            vip.SubNum,
 		IsSub:             isSub,
 		FeeLiveMonitor:    vip.LiveMonitorNum,
-		ExpirationTime:    vip.Expiration,
+		ExpirationTime:    expiration,
 		SubExpirationTime: vip.SubExpiration,
 	}
 	return info
@@ -127,4 +154,56 @@ func (receiver *VipBusiness) UpdateValidDayOne(userId, platformId int) (int, boo
 		return 0, false
 	}
 	return vipModel.OrderLevel, true
+}
+
+//添加抖音团队成员
+func (this *VipBusiness) AddDyTeamSub(userId, subUserId int) global.CommonError {
+	dbSession := dcm.GetDbSession()
+	defer dbSession.Close()
+	var subUserVip dcm.DcUserVip
+	var now = time.Now()
+	if _, err := dbSession.Where("user_id=? and platform=1", subUserId).Get(&subUserVip); err != nil {
+		return global.NewError(5000)
+	}
+	if subUserVip.Level != 0 && subUserVip.Expiration.After(now) {
+		return global.NewMsgError("专业版账号无法添加")
+	}
+	if subUserVip.ParentId != 0 {
+		return global.NewMsgError("已在团队中")
+	}
+	var userVip dcm.DcUserVip
+	if _, err := dbSession.Where("user_id=? and platform=1", userId).Get(&userVip); err != nil {
+		return global.NewError(5000)
+	}
+	subCount, err := dbSession.Table("dc_user_vip").Where("parent_id=?", userId).Count()
+	if err != nil {
+		return global.NewError(5000)
+	}
+	if int(subCount) >= userVip.SubNum {
+		return global.NewMsgError("人数已满")
+	}
+	if _, err := dcm.UpdateInfo(dbSession, subUserVip.Id, map[string]interface{}{"parent_id": userVip.Id, "update_time": now.Format("2006-01-02 15:04:05")}, new(dcm.DcUserVip)); err != nil {
+		return global.NewError(5000)
+	}
+	return nil
+}
+
+//添加抖音团队成员
+func (this *VipBusiness) RemoveDyTeamSub(subUserId int) global.CommonError {
+	if _, err := dcm.UpdateInfo(dcm.GetDbSession(), subUserId, map[string]interface{}{"parent_id": 0, "remark": ""}, new(dcm.DcUserVip)); err != nil {
+		return global.NewError(5000)
+	}
+	return nil
+}
+
+func (this *VipBusiness) GetDyTeam(parentId, page, pageSize int) (list []dcm.DcUserVip, total int64, comErr global.CommonError) {
+	err := dcm.GetDbSession().Table(dcm.DcUserVip{}).Where("parent_id=?", parentId).Limit(pageSize, (page-1)*pageSize).Find(&list)
+	if err != nil {
+		return nil, 0, global.NewError(5000)
+	}
+	total, err = dcm.GetDbSession().Table(dcm.DcUserVip{}).Where("parent_id=?", parentId).Count()
+	if err != nil {
+		return nil, 0, global.NewError(5000)
+	}
+	return
 }

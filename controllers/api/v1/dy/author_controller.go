@@ -133,6 +133,16 @@ func (receiver *AuthorController) BaseSearch() {
 	for _, v := range list {
 		authorIds = append(authorIds, v.AuthorId)
 	}
+	if receiver.HasLogin {
+		collectBusiness := business.NewCollectBusiness()
+		collect, comErr := collectBusiness.DyListCollect(1, receiver.UserId, authorIds)
+		if comErr != nil {
+			receiver.FailReturn(comErr)
+		}
+		for k, v := range list {
+			list[k].IsCollect = collect[v.AuthorId]
+		}
+	}
 	authorMap := business.NewAuthorBusiness().GetAuthorFormPool(authorIds, 10)
 	for k, v := range list {
 		list[k].Avatar = dyimg.Fix(v.Avatar)
