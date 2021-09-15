@@ -1,6 +1,7 @@
 package routers
 
 import (
+	v1 "dongchamao/controllers/api/v1"
 	v1dy "dongchamao/controllers/api/v1/dy"
 	"github.com/astaxie/beego"
 )
@@ -19,6 +20,14 @@ func init() {
 			beego.NSRouter("/fans/chart/:room_id", &v1dy.LiveController{}, "get:LiveFansTrends"),
 			beego.NSRouter("/fans/data/:type/:room_id", &v1dy.LiveController{}, "get:LiveFanAnalyse"),
 			beego.NSRouter("/fans/product/:room_id", &v1dy.LiveController{}, "get:LiveProductPvAnalyse"),
+			beego.NSRouter("/monitor/price", &v1.LiveMonitorController{}, "get:MonitorPrice"),
+			beego.NSRouter("/monitor/add", &v1.LiveMonitorController{}, "put:AddLiveMonitor"),
+			beego.NSRouter("/monitor/calc/:start/:end", &v1.LiveMonitorController{}, "get:LiveMonitorCalcCount"),
+			beego.NSRouter("/monitor/list", &v1.LiveMonitorController{}, "get:LiveMonitorList"),
+			beego.NSRouter("/monitor/:monitor_id", &v1.LiveMonitorController{}, "post:CancelLiveMonitor"),
+			beego.NSRouter("/monitor/read/:monitor_id", &v1.LiveMonitorController{}, "post:ReadLiveMonitor"),
+			beego.NSRouter("/monitor/rooms/:monitor_id", &v1.LiveMonitorController{}, "get:LiveMonitorRooms"),
+			beego.NSRouter("/monitor/:monitor_id", &v1.LiveMonitorController{}, "delete:DeleteLiveMonitor"),
 		),
 		beego.NSNamespace("/living",
 			beego.NSRouter("/base/:room_id", &v1dy.LiveController{}, "get:LivingBaseData"),

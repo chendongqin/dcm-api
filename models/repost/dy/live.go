@@ -29,6 +29,20 @@ type DyLiveInfo struct {
 	ShareUrl            string                            `json:"share_url"`
 }
 
+type DyLiveRoomSimple struct {
+	Cover      string  `json:"cover"`       //封面
+	CreateTime int64   `json:"create_time"` //开播时间
+	FinishTime int64   `json:"finish_time"` //结束时间
+	LiveTime   int64   `json:"live_time"`
+	LikeCount  int64   `json:"like_count"` //点赞数
+	RoomID     string  `json:"room_id"`
+	RoomStatus int     `json:"room_status"` //直播状态 2:在播 4:下播
+	Title      string  `json:"title"`
+	TotalUser  int64   `json:"total_user"` //总pv
+	Gmv        float64 `json:"gmv"`
+	Sales      int64   `json:"sales"`
+}
+
 type DyLiveUserSimple struct {
 	Avatar          string  `json:"avatar"`
 	FollowerCount   int64   `json:"follower_count"`

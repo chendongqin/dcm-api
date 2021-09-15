@@ -398,7 +398,7 @@ func (c *ApiBaseController) HandleError(err error, code ...int) {
 		return
 	}
 	logs.Error("handle err:", err)
-	errCode := 50000
+	errCode := 5000
 	if len(code) > 0 {
 		errCode = code[0]
 	}

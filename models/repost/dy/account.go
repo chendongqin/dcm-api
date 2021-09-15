@@ -32,6 +32,7 @@ type RepostAccountVipLevel struct {
 type AccountVipLevel struct {
 	PlatForm          int       `json:"plat_form"`
 	Level             int       `json:"level"`
+	FeeLiveMonitor    int       `json:"fee_live_monitor"`
 	SubNum            int       `json:"sub_num"`
 	IsSub             int       `json:"is_sub"`
 	ExpirationTime    time.Time `json:"expiration_time"`

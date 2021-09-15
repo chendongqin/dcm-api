@@ -26,15 +26,19 @@ const (
 	VoUserUniqueTokenPlatformWap           = 5
 )
 
+//权限限制
 const (
-	EsMaxShowNum          = 10000
-	DyJewelBaseShowNum    = 5000
-	DyJewelBaseMinShowNum = 10
-	DyJewelRankShowNum    = 1500
-	DyRankMinShowNum      = 5
+	EsMaxShowNum           = 10000 //es展示最大数
+	DyJewelBaseShowNum     = 5000  //库专业版
+	DyJewelBaseMinShowNum  = 10    //库最小数
+	DyJewelRankShowNum     = 1500  //专业版条数
+	DyRankMinShowNum       = 5     //榜单条数
+	LiveMonitorMonthMinNum = 0     //抖音非会员监控次数
+	LiveMonitorMonthMaxNum = 1000  //抖音专业版监控次数
 )
 
 const (
+	DyDcmUrl     = "https://douyin.dongchamao.com"
 	AwemeUrl     = "https://www.douyin.com/video/"
 	LiveShareUrl = "https://www.iesdouyin.com/share/live/"
 )

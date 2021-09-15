@@ -51,3 +51,12 @@ func (receiver *MonitorBusiness) SendMarkDown(title string, content string, atss
 	}
 	_ = ding.SendMarkDown(MonitorPrefix+title, content)
 }
+
+func (receiver *MonitorBusiness) SendErr(title string, content string) {
+	dingdingUrl := global.Cfg.String("ding_ding_error")
+	if dingdingUrl == "" {
+		return
+	}
+	ding := dingding.NewWithTokenUrl(dingdingUrl)
+	_ = ding.SendMarkDown(MonitorPrefix+title, content)
+}

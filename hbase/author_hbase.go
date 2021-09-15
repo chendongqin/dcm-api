@@ -1,15 +1,56 @@
 package hbase
 
 import (
+	"context"
 	"dongchamao/global"
 	"dongchamao/global/utils"
 	"dongchamao/models/entity"
 	"dongchamao/models/repost/dy"
 	"dongchamao/services/hbaseService"
+	"dongchamao/services/hbaseService/hbase"
 	"dongchamao/services/hbaseService/hbasehelper"
 	"strings"
 	"time"
 )
+
+func GetAuthorByIds(authorIds []string) (map[string]entity.DyAuthor, error) {
+	rowKeys := make([]*hbase.TGet, 0)
+	for _, authorId := range authorIds {
+		rowKeys = append(rowKeys, &hbase.TGet{Row: []byte(authorId)})
+	}
+	client := global.HbasePools.Get("default")
+	defer client.Close()
+	results, err := client.GetMultiple(context.Background(), []byte(hbaseService.HbaseDyAuthor), rowKeys)
+	if err != nil {
+		return nil, err
+	}
+	authorMap := map[string]entity.DyAuthor{}
+	for _, v := range results {
+		data := entity.DyAuthor{}
+		detailMap := hbaseService.HbaseFormat(v, entity.DyAuthorMap)
+		utils.MapToStruct(detailMap, &data)
+		data.AuthorID = data.Data.ID
+		if data.Data.RoomID == "0" {
+			data.Data.RoomID = ""
+		}
+		if data.Tags == "0" {
+			data.Tags = ""
+		}
+		if data.TagsLevelTwo == "0" {
+			data.TagsLevelTwo = ""
+		}
+		if data.Data.UniqueID == "0" || data.Data.UniqueID == "" {
+			data.Data.UniqueID = data.Data.ShortID
+		}
+		data.Data.CrawlTime = data.CrawlTime
+		if data.ArtificialData.Tags != "" {
+			data.Tags = data.ArtificialData.Tags
+			data.TagsLevelTwo = data.ArtificialData.TagsLevelTow
+		}
+		authorMap[data.AuthorID] = data
+	}
+	return authorMap, nil
+}
 
 //达人数据
 func GetAuthor(authorId string) (data entity.DyAuthor, comErr global.CommonError) {

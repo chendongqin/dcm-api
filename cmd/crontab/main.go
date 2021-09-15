@@ -1,16 +1,11 @@
 package main
 
 import (
+	"dongchamao/command"
 	"dongchamao/global"
-	"dongchamao/global/utils"
 	"github.com/json-iterator/go/extra"
 	"github.com/urfave/cli"
 	"os"
-)
-
-var (
-	AppVersion           = "2.0"
-	BuildDate, GitCommit string
 )
 
 func init() {
@@ -19,11 +14,7 @@ func init() {
 
 func main() {
 	cliApp := cli.NewApp()
-	cliApp.Name = "dcmcmd"
-	cliApp.Usage = "dcmcmd service"
-	cliApp.Version, _ = utils.FormatAppVersion(AppVersion, GitCommit, BuildDate)
 	cliApp.Commands = getCommands()
-	cliApp.Flags = append(cliApp.Flags, []cli.Flag{}...)
 	cliApp.Run(os.Args)
 }
 
@@ -60,6 +51,12 @@ func runCMD(ctx *cli.Context) {
 		panic("m, ac为必填项")
 	}
 	switch ctx.String("ac") {
+	case "liveRoomMonitor":
+		command.LiveRoomMonitor()
+	case "liveMonitor":
+		command.LiveMonitor()
+	case "updateLiveMonitorStatus":
+		command.UpdateLiveMonitorStatus()
 	default:
 		panic("undefined ac")
 	}

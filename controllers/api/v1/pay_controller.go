@@ -362,11 +362,13 @@ func (receiver *PayController) OrderList() {
 	pageSize := receiver.GetPageSize("page_size", 10, 30)
 	vipOrderList := make([]dcm.DcVipOrder, 0)
 	start := (page - 1) * pageSize
-	sql := fmt.Sprintf("user_id=%d AND platform='%s' AND expiration_time > '%s'", receiver.UserId, platform, time.Now().Format("2021-01-02 15:04:05"))
+	sql := fmt.Sprintf("user_id=%d AND platform='%s'", receiver.UserId, platform)
 	if selectStatus == 1 {
 		sql += " AND pay_status = 1 "
 	} else if selectStatus == 2 {
-		sql += " AND pay_status = 0 "
+		sql += fmt.Sprintf(" AND pay_status = 0 AND expiration_time < '%s'", time.Now().Format("2021-01-02 15:04:05"))
+	} else if selectStatus == 3 {
+		sql += fmt.Sprintf(" AND pay_status = 0 AND expiration_time >= '%s'", time.Now().Format("2021-01-02 15:04:05"))
 	}
 	if invoiceStatus == 1 {
 		sql += " AND invoice_id = 0"

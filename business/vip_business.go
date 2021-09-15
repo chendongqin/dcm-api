@@ -100,6 +100,7 @@ func (receiver *VipBusiness) GetVipLevel(userId, appId int) dy.AccountVipLevel {
 		Level:             level,
 		SubNum:            vip.SubNum,
 		IsSub:             isSub,
+		FeeLiveMonitor:    vip.LiveMonitorNum,
 		ExpirationTime:    vip.Expiration,
 		SubExpirationTime: vip.SubExpiration,
 	}

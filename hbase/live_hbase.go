@@ -1,11 +1,13 @@
 package hbase
 
 import (
+	"context"
 	"dongchamao/global"
 	"dongchamao/global/utils"
 	"dongchamao/models/entity"
 	"dongchamao/services/dyimg"
 	"dongchamao/services/hbaseService"
+	"dongchamao/services/hbaseService/hbase"
 	"dongchamao/services/hbaseService/hbasehelper"
 	"math"
 	"strings"
@@ -87,6 +89,32 @@ func GetDyLiveRoomUserInfo(roomId string) (data entity.DyLiveRoomUserInfo, comEr
 	infoMap := hbaseService.HbaseFormat(result, entity.DyLiveRoomUserInfoMap)
 	utils.MapToStruct(infoMap, &data)
 	return
+}
+
+func GetLiveInfoByIds(roomIds []string) (map[string]entity.DyLiveInfo, error) {
+	rowKeys := make([]*hbase.TGet, 0)
+	for _, roomId := range roomIds {
+		rowKeys = append(rowKeys, &hbase.TGet{Row: []byte(roomId)})
+	}
+	client := global.HbasePools.Get("default")
+	defer client.Close()
+	results, err := client.GetMultiple(context.Background(), []byte(hbaseService.HbaseDyLiveInfo), rowKeys)
+	if err != nil {
+		return nil, err
+	}
+	roomMap := map[string]entity.DyLiveInfo{}
+	for _, v := range results {
+		data := entity.DyLiveInfo{}
+		liveInfoMap := hbaseService.HbaseFormat(v, entity.DyLiveInfoMap)
+		utils.MapToStruct(liveInfoMap, &data)
+		data.Cover = dyimg.Fix(data.Cover)
+		data.User.Avatar = dyimg.Fix(data.User.Avatar)
+		data.RealSales = math.Floor(data.RealSales)
+		data.PredictSales = math.Floor(data.PredictSales)
+		data.RoomID = string(v.Row)
+		roomMap[data.RoomID] = data
+	}
+	return roomMap, nil
 }
 
 //直播间信息
