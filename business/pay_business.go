@@ -113,14 +113,11 @@ func (receiver *PayBusiness) CountDySurplusValue(surplusDay int) float64 {
 	return math.Ceil(value)
 }
 
-//扩充团队价格与原价
-func (receiver *PayBusiness) GetDySurplusValue(surplusDay int) (value float64, primeValue float64) {
+func (receiver *PayBusiness) GetVipPriceConfig() (price dy.VipPriceConfig, primePrice dy.VipPriceConfig) {
 	var configJson dcm.DcConfigJson
 	_, _ = dcm.GetBy("key_name", "vip_price", &configJson)
 	var config dy.VipPrice
-	if err := json.Unmarshal([]byte(configJson.Value), &config); err != nil {
-		return 0, 0
-	}
+	_ = json.Unmarshal([]byte(configJson.Value), &config)
 	priceData := config.VipPrice
 	var priceMap = make(map[int]float64, len(config.VipPrice))
 	var primePriceMap = make(map[int]float64, len(config.VipPrice))
@@ -128,31 +125,37 @@ func (receiver *PayBusiness) GetDySurplusValue(surplusDay int) (value float64, p
 		priceMap[utils.ToInt(v.Days)] = utils.ToFloat64(v.Price)
 		primePriceMap[utils.ToInt(v.Days)] = utils.ToFloat64(v.PrimePriceValue)
 	}
-	yearMoney := priceMap[yearDay]
-	halfYearMoney := priceMap[halfYearDay]
-	monthMoney := priceMap[monthDay]
-	primeYearMoney := primePriceMap[yearDay]
-	primeHalfYearMoney := primePriceMap[halfYearDay]
-	primeMonthMoney := primePriceMap[monthDay]
+	price = dy.VipPriceConfig{
+		Year: priceMap[yearDay], HalfYear: priceMap[halfYearDay], Month: priceMap[monthDay],
+	}
+	primePrice = dy.VipPriceConfig{
+		Year: primePriceMap[yearDay], HalfYear: primePriceMap[halfYearDay], Month: primePriceMap[monthDay],
+	}
+	return
+}
+
+//扩充团队价格与原价
+func (receiver *PayBusiness) GetDySurplusValue(surplusDay int) (value float64, primeValue float64) {
+	price, primePrice := receiver.GetVipPriceConfig()
 	if surplusDay >= yearDay {
-		value = float64(surplusDay) * yearMoney / float64(yearDay)
-		primeValue = float64(surplusDay) * primeYearMoney / float64(yearDay)
+		value = float64(surplusDay) * price.Year / float64(yearDay)
+		primeValue = float64(surplusDay) * primePrice.Year / float64(yearDay)
 		return math.Ceil(value), math.Ceil(primeValue)
 	}
 	//半年剩余价值
 	halfYear := surplusDay / halfYearDay
-	halfYearValue := halfYearMoney * float64(halfYear)
-	primeHalfYearValue := primeHalfYearMoney * float64(halfYear)
+	halfYearValue := price.HalfYear * float64(halfYear)
+	primeHalfYearValue := primePrice.HalfYear * float64(halfYear)
 	surplusDay -= halfYearDay * halfYear
 	//剩余价值计算
 	var dayValue float64 = 0
 	var primeDayValue float64 = 0
 	if surplusDay > monthDay {
-		dayValue = float64(surplusDay) * halfYearMoney / float64(halfYearDay)
-		primeDayValue = float64(surplusDay) * primeHalfYearMoney / float64(halfYearDay)
+		dayValue = float64(surplusDay) * price.HalfYear / float64(halfYearDay)
+		primeDayValue = float64(surplusDay) * primePrice.Month / float64(halfYearDay)
 	} else {
-		dayValue = float64(surplusDay) * monthMoney / float64(monthDay)
-		primeDayValue = float64(surplusDay) * primeMonthMoney / float64(monthDay)
+		dayValue = float64(surplusDay) * price.Month / float64(monthDay)
+		primeDayValue = float64(surplusDay) * primePrice.Month / float64(monthDay)
 	}
 	value = halfYearValue + dayValue
 	primeValue = primeHalfYearValue + primeDayValue

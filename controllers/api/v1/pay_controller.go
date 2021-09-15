@@ -34,22 +34,31 @@ func (receiver *PayController) DySurplusValue() {
 	if surplusDay <= 0 || !receiver.HasAuth {
 		receiver.FailReturn(global.NewMsgError("非会员无法扩充团队"))
 	}
-	startTime := vip.SubExpiration
-	if startTime.Before(time.Now()) {
-		startTime = time.Now()
-	}
-	nowSurplusDay := vip.Expiration.Sub(startTime).Hours() / 24
-	value, primeValue := business.NewPayBusiness().GetDySurplusValue(int(math.Ceil(surplusDay)))
-	nowValue, _ := business.NewPayBusiness().GetDySurplusValue(int(math.Ceil(nowSurplusDay)))
+	//当前团队续费金额
 	_, total, err := business.NewVipBusiness().GetDyTeam(business.NewVipBusiness().GetVipLevel(receiver.UserId, 1).Id, 1, 1000)
-	if err != nil {
-		receiver.FailReturn(global.NewError(4000))
+	var nowValue float64
+	if total != 0 {
+		//团队过期后续费重新计算时间
+		startTime := vip.SubExpiration
+		if startTime.Before(time.Now()) {
+			startTime = time.Now()
+		}
+		nowSurplusDay := vip.Expiration.Sub(startTime).Hours() / 24
+		nowValue, _ = business.NewPayBusiness().GetDySurplusValue(int(math.Ceil(nowSurplusDay)))
+		if err != nil {
+			receiver.FailReturn(global.NewError(4000))
+		}
 	}
+	//扩张团队单人价格
+	value, primeValue := business.NewPayBusiness().GetDySurplusValue(int(math.Ceil(surplusDay)))
+	//获取价格配置
+	priceConfig, _ := business.NewPayBusiness().GetVipPriceConfig()
 	receiver.SuccReturn(map[string]interface{}{
 		"now_surplus_day": int(math.Ceil(surplusDay)),
 		"now_value":       nowValue * float64(total),
 		"value":           value,
 		"prime_value":     primeValue,
+		"price_config":    priceConfig,
 	})
 	return
 }

@@ -11,3 +11,9 @@ type VipPrice struct {
 		PrimePrice      string `json:"prime_price"`
 	} `json:"vip_price"`
 }
+
+type VipPriceConfig struct {
+	Year     float64 `json:"year"`
+	HalfYear float64 `json:"half_year"`
+	Month    float64 `json:"month"`
+}
