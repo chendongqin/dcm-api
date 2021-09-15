@@ -34,10 +34,22 @@ func (receiver *PayController) DySurplusValue() {
 	if surplusDay <= 0 || !receiver.HasAuth {
 		receiver.FailReturn(global.NewMsgError("非会员无法扩充团队"))
 	}
+	startTime := vip.SubExpiration
+	if startTime.Before(time.Now()) {
+		startTime = time.Now()
+	}
+	nowSurplusDay := vip.Expiration.Sub(startTime).Hours() / 24
 	value, primeValue := business.NewPayBusiness().GetDySurplusValue(int(math.Ceil(surplusDay)))
+	nowValue, _ := business.NewPayBusiness().GetDySurplusValue(int(math.Ceil(nowSurplusDay)))
+	_, total, err := business.NewVipBusiness().GetDyTeam(business.NewVipBusiness().GetVipLevel(receiver.UserId, 1).Id, 1, 1000)
+	if err != nil {
+		receiver.FailReturn(global.NewError(4000))
+	}
 	receiver.SuccReturn(map[string]interface{}{
-		"value":       value,
-		"prime_value": primeValue,
+		"now_surplus_day": int(math.Ceil(surplusDay)),
+		"now_value":       nowValue * float64(total),
+		"value":           value,
+		"prime_value":     primeValue,
 	})
 	return
 }

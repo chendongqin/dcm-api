@@ -31,6 +31,7 @@ type RepostAccountVipLevel struct {
 }
 
 type AccountVipLevel struct {
+	Id                int       `json:"id"`
 	PlatForm          int       `json:"plat_form"`
 	Level             int       `json:"level"`
 	SubNum            int       `json:"sub_num"`

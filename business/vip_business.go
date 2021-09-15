@@ -121,6 +121,7 @@ func (receiver *VipBusiness) GetVipLevel(userId, appId int) dy.AccountVipLevel {
 		isSub = 1
 	}
 	info := dy.AccountVipLevel{
+		Id:                vip.Id,
 		PlatForm:          vip.Platform,
 		ParentId:          parentId,
 		Level:             level,
