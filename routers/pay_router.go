@@ -18,6 +18,7 @@ func init() {
 			beego.NSRouter("/order/:order_id", &v1.PayController{}, "get:OrderDetail"),
 			beego.NSRouter("/order/:order_id", &v1.PayController{}, "delete:OrderDel"),
 			beego.NSRouter("/order/list/:platform", &v1.PayController{}, "get:OrderList"),
+			beego.NSRouter("/order/surplus", &v1.PayController{}, "get:DySurplusValue"),
 		),
 	)
 	// 注册路由组

@@ -10,6 +10,7 @@ import (
 	"dongchamao/services/payer"
 	"fmt"
 	jsoniter "github.com/json-iterator/go"
+	"math"
 	"net/url"
 	"time"
 )
@@ -21,6 +22,24 @@ type PayController struct {
 func (receiver *PayController) Prepare() {
 	receiver.InitApiController()
 	receiver.CheckToken()
+	receiver.CheckDyUserGroupRight(business.DyJewelBaseMinShowNum, business.DyJewelBaseShowNum)
+}
+
+func (receiver *PayController) DySurplusValue() {
+	var vip dcm.DcUserVip
+	if _, err := dcm.GetDbSession().Where("user_id=? AND platform=1", receiver.UserId).Get(&vip); err != nil {
+		return
+	}
+	surplusDay := vip.Expiration.Sub(time.Now()).Hours() / 24
+	if surplusDay <= 0 || !receiver.HasAuth {
+		receiver.FailReturn(global.NewMsgError("非会员无法扩充团队"))
+	}
+	value, primeValue := business.NewPayBusiness().GetDySurplusValue(int(math.Ceil(surplusDay)))
+	receiver.SuccReturn(map[string]interface{}{
+		"value":       value,
+		"prime_value": primeValue,
+	})
+	return
 }
 
 //创建抖音订单
