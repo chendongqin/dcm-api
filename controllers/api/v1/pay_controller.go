@@ -37,13 +37,15 @@ func (receiver *PayController) DySurplusValue() {
 	//当前团队续费金额
 	total := business.NewVipBusiness().GetVipLevel(receiver.UserId, 1).SubNum
 	var nowValue float64
+	var nowSurplusDay float64
 	if total != 0 {
 		//团队过期后续费重新计算时间
 		startTime := vip.SubExpiration
 		if startTime.Before(time.Now()) {
 			startTime = time.Now()
 		}
-		nowSurplusDay := vip.Expiration.Sub(startTime).Hours() / 24
+		subTime := vip.Expiration.Sub(startTime)
+		nowSurplusDay = subTime.Hours() / 24
 		nowValue, _ = business.NewPayBusiness().GetDySurplusValue(int(math.Ceil(nowSurplusDay)))
 	}
 	//扩张团队单人价格
@@ -51,7 +53,7 @@ func (receiver *PayController) DySurplusValue() {
 	//获取价格配置
 	priceConfig, _ := business.NewPayBusiness().GetVipPriceConfig()
 	receiver.SuccReturn(map[string]interface{}{
-		"now_surplus_day": int(math.Ceil(surplusDay)),
+		"now_surplus_day": int(math.Ceil(nowSurplusDay)),
 		"now_value":       nowValue * float64(total),
 		"value":           value,
 		"prime_value":     primeValue,
