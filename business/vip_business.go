@@ -92,9 +92,14 @@ func (receiver *VipBusiness) GetVipLevel(userId, appId int) dy.AccountVipLevel {
 			expiration = parentVip.Expiration
 			vip = parentVip
 		} else {
+			//父账号团队过期
 			go func() {
-				if _, err := dcm.UpdateInfo(nil, vip.Id, map[string]interface{}{"parent_id": 0, "remark": ""}, new(dcm.DcUserVip)); err != nil {
+				if _, err := dcm.UpdateInfo(nil, vip.ParentId, map[string]interface{}{"sub_num": 0}, new(dcm.DcUserVip)); err != nil {
 					log.Println("parent_vip_expired:", err.Error())
+					return
+				}
+				if _, err := dcm.UpdateInfo(nil, vip.Id, map[string]interface{}{"parent_id": 0, "remark": ""}, new(dcm.DcUserVip)); err != nil {
+					log.Println("parent_vip_expired_sub:", err.Error())
 					return
 				}
 			}()

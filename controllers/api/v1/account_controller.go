@@ -172,7 +172,7 @@ func (receiver *AccountController) Info() {
 		expiration := "-"
 		subExpiration := "-"
 		if v.ExpirationTime.After(time.Now()) {
-			expiration = v.ExpirationTime.Format("2006-01-02")
+			expiration = v.ExpirationTime.Format("2006-01-02 15:04:05")
 		}
 		if v.SubExpirationTime.After(time.Now()) {
 			subExpiration = v.SubExpirationTime.Format("2006-01-02 15:04:05")

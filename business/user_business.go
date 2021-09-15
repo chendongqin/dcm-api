@@ -354,7 +354,11 @@ func (receiver *UserBusiness) GetCacheUserLevel(userId, levelType int, enableCac
 	vipBusiness := NewVipBusiness()
 
 	vipLevel := vipBusiness.GetVipLevel(userId, levelType)
-	_ = global.Cache.Set(memberKey, utils.ToString(vipLevel.Level), 1800)
+	expireTime := 1800 * time.Second
+	if time.Now().Unix()-vipLevel.ExpirationTime.Unix() < 1800 {
+		expireTime = time.Now().Sub(vipLevel.ExpirationTime)
+	}
+	_ = global.Cache.Set(memberKey, utils.ToString(vipLevel.Level), expireTime)
 	return vipLevel.Level
 }
 
