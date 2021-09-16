@@ -113,59 +113,79 @@ func (receiver *PayBusiness) CountDySurplusValue(surplusDay int) float64 {
 	return math.Ceil(value)
 }
 
-func (receiver *PayBusiness) GetVipPriceConfig() (price dy.VipPriceConfig, initPrice dy.VipPriceConfig) {
+func (receiver *PayBusiness) GetVipPriceConfig() (price dy.VipPriceConfig, primePrice dy.VipPriceConfig) {
+	priceMap, primePriceMap := receiver.GetVipPriceConfigMap()
+	price = dy.VipPriceConfig{
+		Year: priceMap[yearDay], HalfYear: priceMap[halfYearDay], Month: priceMap[monthDay],
+	}
+	primePrice = dy.VipPriceConfig{
+		Year: primePriceMap[yearDay], HalfYear: primePriceMap[halfYearDay], Month: primePriceMap[monthDay],
+	}
+	return
+}
+
+//获取抖音会员价格Map数据
+func (receiver *PayBusiness) GetVipPriceConfigMap() (priceMap map[int]float64, primePriceMap map[int]float64) {
 	var configJson dcm.DcConfigJson
 	_, _ = dcm.GetBy("key_name", "vip_price", &configJson)
 	var config dy.VipPrice
 	_ = json.Unmarshal([]byte(configJson.Value), &config)
 	priceData := config.VipPrice
-	var priceMap = make(map[int]float64, len(config.VipPrice))
-	var initPriceMap = make(map[int]float64, len(config.VipPrice))
+	priceMap = make(map[int]float64, len(config.VipPrice))
+	primePriceMap = make(map[int]float64, len(config.VipPrice))
 	for _, v := range priceData {
 		priceMap[utils.ToInt(v.Days)] = utils.ToFloat64(v.Price)
-		initPriceMap[utils.ToInt(v.Days)] = utils.ToFloat64(v.InitPrice)
-	}
-	//价格
-	price = dy.VipPriceConfig{
-		Year: priceMap[yearDay], HalfYear: priceMap[halfYearDay], Month: priceMap[monthDay],
-	}
-	//原价
-	initPrice = dy.VipPriceConfig{
-		Year: initPriceMap[yearDay], HalfYear: initPriceMap[halfYearDay], Month: initPriceMap[monthDay],
+		primePriceMap[utils.ToInt(v.Days)] = utils.ToFloat64(v.InitPrice)
 	}
 	return
 }
-
 //扩充团队价格与原价
-func (receiver *PayBusiness) GetDySurplusValue(surplusDay int) (value float64, initValue float64) {
-	price, initPrice := receiver.GetVipPriceConfig()
+func (receiver *PayBusiness) GetDySurplusValue(surplusDay int) (value float64, primeValue float64) {
+	price, primePrice := receiver.GetVipPriceConfig()
 	if surplusDay >= yearDay {
 		value = float64(surplusDay) * price.Year / float64(yearDay)
-		initValue = float64(surplusDay) * initPrice.Year / float64(yearDay)
-		return math.Ceil(value), math.Ceil(initValue)
+		primeValue = float64(surplusDay) * primePrice.Year / float64(yearDay)
+		return math.Ceil(value), math.Ceil(primeValue)
 	}
 	//半年剩余价值
 	halfYear := surplusDay / halfYearDay
 	halfYearValue := price.HalfYear * float64(halfYear)
-	initHalfYearValue := initPrice.HalfYear * float64(halfYear)
+	primeHalfYearValue := primePrice.HalfYear * float64(halfYear)
 	surplusDay -= halfYearDay * halfYear
 	//剩余价值计算
 	var dayValue float64 = 0
-	var initDayValue float64 = 0
+	var primeDayValue float64 = 0
 	if surplusDay > monthDay {
 		dayValue = float64(surplusDay) * price.HalfYear / float64(halfYearDay)
-		initDayValue = float64(surplusDay) * initPrice.Month / float64(halfYearDay)
+		primeDayValue = float64(surplusDay) * primePrice.Month / float64(halfYearDay)
 	} else {
 		dayValue = float64(surplusDay) * price.Month / float64(monthDay)
-		initDayValue = float64(surplusDay) * initPrice.Month / float64(monthDay)
+		primeDayValue = float64(surplusDay) * primePrice.Month / float64(monthDay)
 	}
 	value = halfYearValue + dayValue
-	initValue = initHalfYearValue + initDayValue
+	primeValue = primeHalfYearValue + primeDayValue
 	if value < 100 {
 		value = 100
 	}
-	if initValue < 100 {
-		initValue = 100
+	if primeValue < 100 {
+		primeValue = 100
 	}
-	return math.Ceil(value), math.Ceil(initValue)
+	return math.Ceil(value), math.Ceil(primeValue)
+}
+
+//首月首次月销量处理
+func (receiver *PayBusiness) BirthdayMonthPriceActivity(userId int, dyVipValue map[int]float64) map[int]float64 {
+	if time.Now().Unix() >= 1635696000 {
+		return dyVipValue
+	}
+	if userId > 0 {
+		exist, _ := dcm.GetSlaveDbSession().
+			Where("user_id=? AND status>=0 AND expiration_time > ?", userId, time.Now().Format("2006-01-02 15:04:05")).
+			Get(new(dcm.DcVipOrder))
+		if exist {
+			return dyVipValue
+		}
+	}
+	dyVipValue[monthDay] = 99
+	return dyVipValue
 }
