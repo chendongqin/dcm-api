@@ -176,6 +176,7 @@ func (this *ApiBaseController) InitUserToken() (commonErr global.CommonError) {
 		this.UserInfo = userInfo
 		//判断用户状态x
 		if this.UserInfo.Status == 0 {
+			this.RegisterLogout()
 			return global.NewError(4212)
 		}
 		//除bindphone外的接口 没有phone不让访问
