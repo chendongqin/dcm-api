@@ -177,7 +177,9 @@ func (receiver *RankController) DyLiveTopRank() {
 	if !receiver.HasAuth {
 		list := make([]interface{}, 0)
 		utils.MapToStruct(ret["list"], &list)
-		ret["list"] = list[0:receiver.MaxTotal]
+		if len(list) > receiver.MaxTotal {
+			ret["list"] = list[0:receiver.MaxTotal]
+		}
 	}
 	ret["has_login"] = receiver.HasLogin
 	ret["has_auth"] = receiver.HasAuth

@@ -129,9 +129,10 @@ func (receiver *PayController) CreateDyOrder() {
 	vipOrderType := 1
 	if userVip.Level > 0 {
 		vipOrderType = 2
-		surplusValue = payBusiness.CountDySurplusValue(int(surplusDay))
+		surplusValue, _ = payBusiness.GetDySurplusValue(int(surplusDay))
 	}
-	dyVipValue := business.DyVipPayMoney
+	dyVipValue, _ := payBusiness.GetVipPriceConfigMap()
+	dyVipValue = payBusiness.BirthdayMonthPriceActivity(receiver.UserId, dyVipValue)
 	title := fmt.Sprintf("专业版%d天", buyDays)
 	var amount float64 = 0
 	orderInfo := repost.VipOrderInfo{

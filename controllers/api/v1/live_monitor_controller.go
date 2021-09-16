@@ -126,6 +126,20 @@ func (receiver *LiveMonitorController) AddLiveMonitor() {
 	return
 }
 
+//本月剩余价值
+func (receiver *LiveMonitorController) LiveMonitorNum() {
+	liveMonitorBusiness := business.NewLiveMonitorBusiness()
+	// 当前可用次数
+	remainFreeCount, remainPurchaseCount := liveMonitorBusiness.GetRemainingCount(receiver.UserId)
+	currentCount := remainPurchaseCount + remainFreeCount
+	receiver.SuccReturn(alias.M{
+		"current_count":         currentCount,
+		"remain_free_count":     remainFreeCount,
+		"remain_purchase_count": remainPurchaseCount,
+	})
+	return
+}
+
 // 计算需要消耗的次数
 func (receiver *LiveMonitorController) LiveMonitorCalcCount() {
 	startTimestamp := utils.ToInt64(receiver.Ctx.Input.Param(":start"))

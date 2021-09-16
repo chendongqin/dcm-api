@@ -28,6 +28,7 @@ func init() {
 			beego.NSRouter("/monitor/read/:monitor_id", &v1.LiveMonitorController{}, "post:ReadLiveMonitor"),
 			beego.NSRouter("/monitor/rooms/:monitor_id", &v1.LiveMonitorController{}, "get:LiveMonitorRooms"),
 			beego.NSRouter("/monitor/:monitor_id", &v1.LiveMonitorController{}, "delete:DeleteLiveMonitor"),
+			beego.NSRouter("/monitor/number", &v1.LiveMonitorController{}, "get:LiveMonitorNum"),
 		),
 		beego.NSNamespace("/living",
 			beego.NSRouter("/base/:room_id", &v1dy.LiveController{}, "get:LivingBaseData"),
