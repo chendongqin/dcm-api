@@ -109,6 +109,7 @@ func (receiver *LiveMonitorBusiness) checkRoom(monitorRoom dcm.DcLiveMonitorRoom
 	//	}
 	//} else
 	if roomInfo.RoomStatus == 4 { //下播
+		_ = receiver.UpdateLiveRoomMonitor(&roomInfo)
 		//推送下播通知
 		receiver.SendFinishNotice(monitorRoom, roomInfo)
 	}
@@ -337,7 +338,7 @@ func (receiver *LiveMonitorBusiness) foundNewLive(monitor *dcm.DcLiveMonitor, ro
 	defer dbSession.Close()
 	_ = dbSession.Begin()
 	// 新增直播记录
-	if !receiver.AddByMonitor(dbSession, monitor, roomId, roomInfo.RoomStatus) {
+	if !receiver.AddByMonitor(dbSession, monitor, &roomInfo) {
 		_ = dbSession.Rollback()
 		return
 	}
@@ -408,7 +409,7 @@ func (receiver *LiveMonitorBusiness) liveNotice(monitor *dcm.DcLiveMonitor, room
 }
 
 // 新增直播记录
-func (receiver *LiveMonitorBusiness) AddByMonitor(dbSession *xorm.Session, monitor *dcm.DcLiveMonitor, roomId string, status int) bool {
+func (receiver *LiveMonitorBusiness) AddByMonitor(dbSession *xorm.Session, monitor *dcm.DcLiveMonitor, roomInfo *entity.DyLiveInfo) bool {
 	if dbSession == nil {
 		dbSession = dcm.GetDbSession()
 		defer dbSession.Close()
@@ -418,13 +419,18 @@ func (receiver *LiveMonitorBusiness) AddByMonitor(dbSession *xorm.Session, monit
 		MonitorId:    monitor.Id,
 		UserId:       monitor.UserId,
 		AuthorId:     monitor.AuthorId,
-		RoomId:       roomId,
-		Status:       status,
+		RoomId:       roomInfo.RoomID,
+		Status:       roomInfo.RoomStatus,
 		OpenId:       monitor.OpenId,
 		FinishNotice: monitor.FinishNotice,
 		ProductId:    monitor.ProductId,
 		CreateTime:   now,
 		UpdateTime:   now,
+	}
+	if roomInfo.RoomStatus == 4 {
+		room.Gmv = utils.ToString(roomInfo.PredictGmv)
+		room.Sales = utils.ToInt(roomInfo.PredictSales)
+		room.UserTotal = utils.ToInt(roomInfo.TotalUser)
 	}
 	_, err := dbSession.InsertOne(room)
 	if err != nil {
@@ -468,6 +474,21 @@ func (receiver *LiveMonitorBusiness) AddLiveMonitor(liveMonitor *dcm.DcLiveMonit
 	}
 	author, _ := hbase.GetAuthor(liveMonitor.AuthorId)
 	go NewSpiderBusiness().AddLive(liveMonitor.AuthorId, author.FollowerCount, AddLiveTopMonitored, liveMonitor.EndTime.Unix())
+	return
+}
+
+// 更新直播间记录
+func (receiver *LiveMonitorBusiness) UpdateLiveRoomMonitor(roomInfo *entity.DyLiveInfo) (err error) {
+	updateMap := map[string]interface{}{
+		"gmv":        roomInfo.PredictGmv,
+		"sales":      roomInfo.PredictSales,
+		"user_total": roomInfo.TotalUser,
+	}
+	_, err = dcm.GetDbSession().
+		Table(new(dcm.DcLiveMonitorRoom)).
+		Cols("gmv", "sales", "user_total").
+		Where("room_id=?", roomInfo.RoomID).
+		Update(updateMap)
 	return
 }
 
@@ -524,21 +545,34 @@ func (receiver *LiveMonitorBusiness) GetLiveMonitorAuthors(dbSession *xorm.Sessi
 	return finalAuthorsId
 }
 
-func (receiver *LiveMonitorBusiness) LiveMonitorRoomList(userId int, status int, keyword string, page int, size int) (list []dcm.DcLiveMonitor, totalCount int64) {
+//
+func (receiver *LiveMonitorBusiness) LiveMonitorRoomList(userId int, status int, keyword string, page int, size int, start, end string) (list []dcm.DcLiveMonitor, totalCount int64) {
 	dbSession := dcm.GetDbSession()
 	defer dbSession.Close()
-
 	if keyword != "" {
 		authorIds := receiver.GetLiveMonitorAuthors(dbSession, userId, keyword)
 		dbSession.In("author_id", authorIds)
 	}
-
 	pageStart := (page - 1) * size
 	dbSession.Where("user_id = ? AND del_status = 0 AND source = ?", userId, LiveMonitorSourceDcm).
 		Limit(size, pageStart).
 		OrderBy("id desc")
 	if status >= 0 {
 		dbSession.And("status = ?", status)
+	}
+	if start != "" {
+		startTime, err := time.ParseInLocation("2006-01-02", start, time.Local)
+		if err != nil {
+			return
+		}
+		dbSession.And("create_time > ?", startTime.Format("2006-01-02 15:04:05"))
+	}
+	if end != "" {
+		endTime, err := time.ParseInLocation("2006-01-02", end, time.Local)
+		if err != nil {
+			return
+		}
+		dbSession.And("create_time < ?", endTime.AddDate(0, 0, 1).Format("2006-01-02 15:04:05"))
 	}
 	list = make([]dcm.DcLiveMonitor, 0)
 	totalCount, _ = dbSession.FindAndCount(&list)
@@ -556,7 +590,7 @@ func (receiver *LiveMonitorBusiness) LiveMonitorRoomList(userId int, status int,
 	rooms := make([]map[string]interface{}, 0)
 	_ = dbSession.Table(&dcm.DcLiveMonitorRoom{}).
 		In("monitor_id", monitorIds).
-		Select("monitor_id, count(1) as num, max(room_id) as room_id").
+		Select("monitor_id, count(1) as num, max(room_id) as room_id,sum(gmv) as gmv,sum(sales) as sales,sum(user_total) as total_user").
 		GroupBy("monitor_id").
 		Find(&rooms)
 	roomsGroup := make(map[int]alias.M)
@@ -589,6 +623,12 @@ func (receiver *LiveMonitorBusiness) LiveMonitorRoomList(userId int, status int,
 		if roomsInfo, exists := roomsGroup[v.Id]; exists {
 			list[k].RoomId = utils.ToString(roomsInfo["room_id"])
 			list[k].RoomCount = utils.ToInt(roomsInfo["num"])
+			list[k].TotalUser = utils.ToInt64(roomsInfo["total_user"])
+			list[k].Sales = utils.ToInt64(roomsInfo["sales"])
+			list[k].Gmv = utils.ToFloat64(roomsInfo["gmv"])
+			if list[k].TotalUser > 0 {
+				list[k].Uv = list[k].Gmv / float64(list[k].TotalUser)
+			}
 		}
 		// 填充达人信息
 		list[k].CreateTimeString = v.CreateTime.Format("2006-01-02 15:04:05")
@@ -599,7 +639,6 @@ func (receiver *LiveMonitorBusiness) LiveMonitorRoomList(userId int, status int,
 		list[k].UniqueID = finalUniqueId
 		list[k].Avatar = dyimg.Avatar(avatar, dyimg.AvatarLittle)
 	}
-
 	return
 }
 
