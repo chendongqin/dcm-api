@@ -39,6 +39,9 @@ type DySimpleAweme struct {
 	MusicID         string `json:"music_id"`
 	ShareCount      int64  `json:"share_count"`
 	PromotionNum    int    `json:"promotion_num"`
+	DiggInc         int64  `json:"digg_inc"`
+	CommentInc      int64  `json:"comment_inc"`
+	ForwardInc      int64  `json:"forward_inc"`
 }
 
 type DyAwemeProductSale struct {
