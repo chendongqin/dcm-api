@@ -220,7 +220,7 @@ func (receiver *LiveMonitorController) LiveMonitorRooms() {
 			FinishTime: v.FinishTime,
 			LiveTime:   liveTime,
 			LikeCount:  v.LikeCount,
-			RoomID:     v.RoomID,
+			RoomID:     business.IdEncrypt(v.RoomID),
 			RoomStatus: v.RoomStatus,
 			Title:      v.Title,
 			TotalUser:  v.TotalUser,
