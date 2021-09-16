@@ -411,7 +411,7 @@ func (receiver *EsLiveBusiness) AllRoomProductCateByRoomId(roomInfo entity.DyLiv
 					secondCateItem.SonCate = append(secondCateItem.SonCate, dy.DyCate{
 						Name:    tk,
 						Num:     0,
-						SonCate: nil,
+						SonCate: []dy.DyCate{},
 					})
 				}
 				if len(secondCateItem.SonCate) == 0 {
