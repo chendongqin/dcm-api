@@ -355,6 +355,9 @@ func (receiver *EsLiveBusiness) AllRoomProductCateByRoomId(roomInfo entity.DyLiv
 	if productCountJson != "" {
 		productCountJson = utils.DeserializeData(productCountJson)
 		_ = jsoniter.Unmarshal([]byte(productCountJson), &productCount)
+		if len(productCount.CateList) == 0 {
+			productCount.CateList = []dy.DyCate{}
+		}
 		return
 	}
 	date := time.Unix(roomInfo.DiscoverTime, 0).Format("20060102")
