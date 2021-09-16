@@ -81,10 +81,6 @@ func (receiver *LiveMonitorBusiness) getNeedNoticeRooms() (list []dcm.DcLiveMoni
 
 //检查直播间
 func (receiver *LiveMonitorBusiness) checkRoom(monitorRoom dcm.DcLiveMonitorRoom, roomInfo entity.DyLiveInfo) {
-	// 不存在微信openId则不继续推送
-	if monitorRoom.OpenId == "" {
-		return
-	}
 	//在播
 	//if roomInfo.RoomStatus == 2 {
 	//	//检查商品上架
@@ -110,9 +106,14 @@ func (receiver *LiveMonitorBusiness) checkRoom(monitorRoom dcm.DcLiveMonitorRoom
 	//} else
 	if roomInfo.RoomStatus == 4 { //下播
 		_ = receiver.UpdateLiveRoomMonitor(&roomInfo)
+		// 不存在微信openId则不继续推送
+		if monitorRoom.OpenId == "" {
+			return
+		}
 		//推送下播通知
 		receiver.SendFinishNotice(monitorRoom, roomInfo)
 	}
+
 }
 
 //下播微信提醒
@@ -623,8 +624,8 @@ func (receiver *LiveMonitorBusiness) LiveMonitorRoomList(userId int, status int,
 		if roomsInfo, exists := roomsGroup[v.Id]; exists {
 			list[k].RoomId = utils.ToString(roomsInfo["room_id"])
 			list[k].RoomCount = utils.ToInt(roomsInfo["num"])
-			list[k].TotalUser = utils.ToInt64(roomsInfo["total_user"])
-			list[k].Sales = utils.ToInt64(roomsInfo["sales"])
+			list[k].TotalUser = utils.ToInt64(utils.ToFloat64(roomsInfo["total_user"]))
+			list[k].Sales = utils.ToInt64(utils.ToFloat64(roomsInfo["sales"]))
 			list[k].Gmv = utils.ToFloat64(roomsInfo["gmv"])
 			if list[k].TotalUser > 0 {
 				list[k].Uv = list[k].Gmv / float64(list[k].TotalUser)
