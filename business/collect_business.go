@@ -267,6 +267,15 @@ func (receiver *CollectBusiness) GetDyCollectTags(userId int) (tags []dcm.DcUser
 //创建分组
 func (receiver *CollectBusiness) AddDyCollectTag(userId int, name string) (comErr global.CommonError) {
 	db := dcm.GetDbSession().Table(dcm.DcUserDyCollectTag{})
+	by, err := dcm.GetBy("name", name, new(dcm.DcUserDyCollectTag))
+	if err != nil {
+		comErr = global.NewError(5000)
+		return
+	}
+	if by {
+		comErr = global.NewMsgError("分组已存在")
+		return
+	}
 	tag := dcm.DcUserDyCollectTag{
 		Name:       name,
 		UserId:     userId,
