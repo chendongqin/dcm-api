@@ -176,6 +176,7 @@ func (this *ApiBaseController) InitUserToken() (commonErr global.CommonError) {
 		this.UserInfo = userInfo
 		//判断用户状态x
 		if this.UserInfo.Status == 0 {
+			userBusiness.DeleteUserInfoCache(this.UserInfo.Id)
 			this.RegisterLogout()
 			return global.NewError(4212)
 		}
