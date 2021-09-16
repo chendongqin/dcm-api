@@ -282,7 +282,7 @@ func (receiver *AuthorController) AuthorViewData() {
 				}
 				var priceStr string
 				if v.Price > 500 {
-					priceStr = "500-"
+					priceStr = "500+"
 				} else if v.Price > 300 {
 					priceStr = "300-500"
 				} else if v.Price > 100 {
@@ -500,6 +500,11 @@ func (receiver *AuthorController) Reputation() {
 	authorBusiness := business.NewAuthorBusiness()
 	reputation, _ := authorBusiness.HbaseGetAuthorReputation(authorId)
 	reputation.UID = business.IdEncrypt(reputation.UID)
+	lenNum := len(reputation.DtScoreList)
+	if lenNum > 30 {
+		start := lenNum - 30
+		reputation.DtScoreList = reputation.DtScoreList[start:]
+	}
 	receiver.SuccReturn(map[string]interface{}{
 		"reputation": reputation,
 	})
@@ -883,7 +888,7 @@ func (receiver *AuthorController) AuthorIncomeSearch() {
 	} else {
 		// 如果是keyword形式的，先查es，es没有数据就请求爬虫数据接口
 		list, total, _ := es.NewEsAuthorBusiness().SimpleSearch(
-			"", keyword, "", "", 0, 0,
+			"", "", keyword, "", "", 0, 0,
 			1, 1)
 		if total == 0 {
 			authorIncome := spiderBusiness.GetAuthorByKeyword(keyword)
@@ -933,7 +938,22 @@ func (receiver *AuthorController) AuthorSearch() {
 	keyword := receiver.GetString("keyword", "")
 	page := receiver.GetPage("page")
 	pageSize := receiver.GetPageSize("page_size", 10, 100)
-	list, total, comErr := es.NewEsAuthorBusiness().SimpleSearch("", keyword, "", "", 0, 0, page, pageSize)
+	authorId := ""
+	if strings.Index(keyword, "http://") > 0 || strings.Index(keyword, "https://") > 0 {
+		keyword = strings.Replace(keyword, "在抖音，记录美好生活！ ", "", 1)
+	}
+	if utils.CheckType(keyword, "url") {
+		shortUrl, _ := business.ParseDyShortUrl(keyword)
+		if shortUrl == "" {
+			receiver.FailReturn(global.NewError(4000))
+			return
+		}
+		authorId = utils.ParseDyAuthorUrl(shortUrl) // 获取authorId
+		keyword = ""
+	} else {
+		keyword = utils.MatchDouyinNewText(keyword)
+	}
+	list, total, comErr := es.NewEsAuthorBusiness().SimpleSearch(authorId, "", keyword, "", "", 0, 0, page, pageSize)
 	if comErr != nil {
 		receiver.FailReturn(comErr)
 		return

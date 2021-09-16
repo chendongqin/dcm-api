@@ -33,7 +33,7 @@ func (receiver *InternalController) AuthorSearch() {
 	maxFollower, _ := receiver.GetInt64("max_follower", 0)
 	page := receiver.GetPage("page")
 	pageSize := receiver.GetPageSize("page_size", 10, 100)
-	list, total, comErr := es.NewEsAuthorBusiness().SimpleSearch(nickname, keyword, tags, secondTags, minFollower, maxFollower, page, pageSize)
+	list, total, comErr := es.NewEsAuthorBusiness().SimpleSearch("", nickname, keyword, tags, secondTags, minFollower, maxFollower, page, pageSize)
 	if comErr != nil {
 		receiver.FailReturn(comErr)
 		return
@@ -216,6 +216,7 @@ func (receiver *InternalController) GetWeChatMenu() {
 func (receiver *InternalController) SetWeChatMenu() {
 	input := receiver.InputFormat()
 	menu := input.GetString("menu", "")
+	business.NewMonitorBusiness().SendErr("内部接口更新菜单", "SetWeChatMenu")
 	if menu == "" {
 		receiver.FailReturn(global.NewError(4000))
 		return

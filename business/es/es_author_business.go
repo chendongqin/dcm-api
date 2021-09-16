@@ -221,7 +221,7 @@ func (receiver *EsAuthorBusiness) BaseSearch(
 
 //达人库查询
 func (receiver *EsAuthorBusiness) SimpleSearch(
-	nickname, keyword, tags, secondTags string,
+	authorId, nickname, keyword, tags, secondTags string,
 	minFollower, maxFollower int64, page, pageSize int) (list []es.DyAuthor, total int, comErr global.CommonError) {
 	list = []es.DyAuthor{}
 	sortStr := "follower_count"
@@ -233,6 +233,9 @@ func (receiver *EsAuthorBusiness) SimpleSearch(
 	esTable := es.DyAuthorTable
 	esQuery, esMultiQuery := elasticsearch.NewElasticQueryGroup()
 	esQuery.SetTerm("exist", 1)
+	if authorId != "" {
+		esQuery.SetTerm("author_id", authorId)
+	}
 	if minFollower > 0 || maxFollower > 0 {
 		rangeMap := map[string]interface{}{}
 		if minFollower > 0 {

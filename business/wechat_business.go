@@ -3,6 +3,7 @@ package business
 import (
 	"dongchamao/global"
 	"dongchamao/models/dcm"
+	"fmt"
 	jsoniter "github.com/json-iterator/go"
 	"github.com/pkg/errors"
 	"github.com/silenceper/wechat/v2/officialaccount/basic"
@@ -167,8 +168,10 @@ func (receiver *WechatBusiness) GetMenus() (resMenu menu.ResMenu, err error) {
 
 func (receiver *WechatBusiness) UpdateMenus(menuMap map[string]interface{}) error {
 	menuByte, _ := jsoniter.Marshal(menuMap)
-	NewMonitorBusiness().SendErr("更新菜单", string(menuByte))
-	return global.WxOfficial.GetMenu().SetMenuByJSON(string(menuByte))
+	menuOption := global.WxOfficial.GetMenu()
+	token, _ := menuOption.GetAccessToken()
+	NewMonitorBusiness().SendErr("更新菜单", fmt.Sprintf("菜单:%s，token:%s", string(menuByte), token))
+	return menuOption.SetMenuByJSON(string(menuByte))
 }
 
 //素材处理

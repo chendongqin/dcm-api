@@ -186,11 +186,11 @@ func (i *EsProductBusiness) SearchRangeDateRowKey(productId, keyword string, sta
 			if length <= 3 {
 				slop = 2
 			}
-			esQuery.SetMatchPhraseWithParams("nickname.keyword", keyword, alias.M{
+			esQuery.SetMatchPhraseWithParams("nickname", keyword, alias.M{
 				"slop": slop,
 			})
 		} else {
-			esQuery.SetMultiMatch([]string{"displayId", "shortId"}, keyword)
+			esQuery.SetMultiMatch([]string{"nickname", "displayId", "shortId"}, keyword)
 		}
 	}
 	result := esMultiQuery.
@@ -233,11 +233,11 @@ func (i *EsProductBusiness) SearchAwemeRangeDateRowKey(productId, keyword string
 			if length <= 3 {
 				slop = 2
 			}
-			esQuery.SetMatchPhraseWithParams("nickname.keyword", keyword, alias.M{
+			esQuery.SetMatchPhraseWithParams("nickname", keyword, alias.M{
 				"slop": slop,
 			})
 		} else {
-			esQuery.SetMultiMatch([]string{"displayId.keyword", "shortId.keyword"}, keyword)
+			esQuery.SetMultiMatch([]string{"nickname", "displayId", "shortId"}, keyword)
 		}
 	}
 	result := esMultiQuery.
