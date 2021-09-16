@@ -218,37 +218,38 @@ func (receiver *LiveController) LiveInfoData() {
 	if sales > 0 {
 		liveSale.PerPrice = gmv / sales
 	}
-	dateChart := make([]int64, 0)
-	gmvChart := make([]float64, 0)
-	salesChart := make([]float64, 0)
-	salesTrends := liveInfo.SalesTrends
-	//排序
-	sort.Slice(salesTrends, func(i, j int) bool {
-		var left, right int64
-		left = salesTrends[i].CrawlTime
-		right = salesTrends[j].CrawlTime
-		return right > left
-	})
-	for _, v := range salesTrends {
-		dateChart = append(dateChart, v.CrawlTime)
-		//if liveInfo.RealGmv > 0 {
-		//	gmvChart = append(gmvChart, v.RealGmv)
-		//	salesChart = append(salesChart, math.Floor(v.RealSales))
-		//} else {
-		gmvChart = append(gmvChart, v.PredictGmv)
-		salesChart = append(salesChart, math.Floor(v.PredictSales))
-		//}
-	}
-	gmvChart = business.DealIncDirtyFloat64Chart(gmvChart)
-	salesChart = business.DealIncDirtyFloat64Chart(salesChart)
+	//dateChart := make([]int64, 0)
+	//gmvChart := make([]float64, 0)
+	//salesChart := make([]float64, 0)
+	//salesTrends := liveInfo.SalesTrends
+	////排序
+	//sort.Slice(salesTrends, func(i, j int) bool {
+	//	var left, right int64
+	//	left = salesTrends[i].CrawlTime
+	//	right = salesTrends[j].CrawlTime
+	//	return right > left
+	//})
+	//for _, v := range salesTrends {
+	//	dateChart = append(dateChart, v.CrawlTime)
+	//	//if liveInfo.RealGmv > 0 {
+	//	//	gmvChart = append(gmvChart, v.RealGmv)
+	//	//	salesChart = append(salesChart, math.Floor(v.RealSales))
+	//	//} else {
+	//	gmvChart = append(gmvChart, v.PredictGmv)
+	//	salesChart = append(salesChart, math.Floor(v.PredictSales))
+	//	//}
+	//}
+	//gmvChart = business.DealIncDirtyFloat64Chart(gmvChart)
+	//salesChart = business.DealIncDirtyFloat64Chart(salesChart)
 	receiver.SuccReturn(map[string]interface{}{
-		"live_info": returnLiveInfo,
-		"live_sale": liveSale,
-		"sales_chart": map[string]interface{}{
-			"time":  dateChart,
-			"gmv":   gmvChart,
-			"sales": salesChart,
-		},
+		"live_info":              returnLiveInfo,
+		"live_sale":              liveSale,
+		"user_count_composition": liveInfo.UserCountComposition,
+		//"sales_chart": map[string]interface{}{
+		//	"time":  dateChart,
+		//	"gmv":   gmvChart,
+		//	"sales": salesChart,
+		//},
 	})
 	return
 }
