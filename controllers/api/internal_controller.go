@@ -216,6 +216,7 @@ func (receiver *InternalController) GetWeChatMenu() {
 func (receiver *InternalController) SetWeChatMenu() {
 	input := receiver.InputFormat()
 	menu := input.GetString("menu", "")
+	business.NewMonitorBusiness().SendErr("内部接口更新菜单", "SetWeChatMenu")
 	if menu == "" {
 		receiver.FailReturn(global.NewError(4000))
 		return
