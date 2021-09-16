@@ -167,6 +167,7 @@ func (receiver *WechatBusiness) GetMenus() (resMenu menu.ResMenu, err error) {
 
 func (receiver *WechatBusiness) UpdateMenus(menuMap map[string]interface{}) error {
 	menuByte, _ := jsoniter.Marshal(menuMap)
+	NewMonitorBusiness().SendErr("更新菜单", string(menuByte))
 	return global.WxOfficial.GetMenu().SetMenuByJSON(string(menuByte))
 }
 
