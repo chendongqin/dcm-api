@@ -114,22 +114,28 @@ func (receiver *PayBusiness) CountDySurplusValue(surplusDay int) float64 {
 }
 
 func (receiver *PayBusiness) GetVipPriceConfig() (price dy.VipPriceConfig, primePrice dy.VipPriceConfig) {
-	var configJson dcm.DcConfigJson
-	_, _ = dcm.GetBy("key_name", "vip_price", &configJson)
-	var config dy.VipPrice
-	_ = json.Unmarshal([]byte(configJson.Value), &config)
-	priceData := config.VipPrice
-	var priceMap = make(map[int]float64, len(config.VipPrice))
-	var primePriceMap = make(map[int]float64, len(config.VipPrice))
-	for _, v := range priceData {
-		priceMap[utils.ToInt(v.Days)] = utils.ToFloat64(v.Price)
-		primePriceMap[utils.ToInt(v.Days)] = utils.ToFloat64(v.PrimePriceValue)
-	}
+	priceMap, primePriceMap := receiver.GetVipPriceConfigMap()
 	price = dy.VipPriceConfig{
 		Year: priceMap[yearDay], HalfYear: priceMap[halfYearDay], Month: priceMap[monthDay],
 	}
 	primePrice = dy.VipPriceConfig{
 		Year: primePriceMap[yearDay], HalfYear: primePriceMap[halfYearDay], Month: primePriceMap[monthDay],
+	}
+	return
+}
+
+//获取抖音会员价格Map数据
+func (receiver *PayBusiness) GetVipPriceConfigMap() (priceMap map[int]float64, primePriceMap map[int]float64) {
+	var configJson dcm.DcConfigJson
+	_, _ = dcm.GetBy("key_name", "vip_price", &configJson)
+	var config dy.VipPrice
+	_ = json.Unmarshal([]byte(configJson.Value), &config)
+	priceData := config.VipPrice
+	priceMap = make(map[int]float64, len(config.VipPrice))
+	primePriceMap = make(map[int]float64, len(config.VipPrice))
+	for _, v := range priceData {
+		priceMap[utils.ToInt(v.Days)] = utils.ToFloat64(v.Price)
+		primePriceMap[utils.ToInt(v.Days)] = utils.ToFloat64(v.PrimePriceValue)
 	}
 	return
 }
@@ -166,4 +172,21 @@ func (receiver *PayBusiness) GetDySurplusValue(surplusDay int) (value float64, p
 		primeValue = 100
 	}
 	return math.Ceil(value), math.Ceil(primeValue)
+}
+
+//首月首次月销量处理
+func (receiver *PayBusiness) BirthdayMonthPriceActivity(userId int, dyVipValue map[int]float64) map[int]float64 {
+	if time.Now().Unix() >= 1635696000 {
+		return dyVipValue
+	}
+	if userId > 0 {
+		exist, _ := dcm.GetSlaveDbSession().
+			Where("user_id=? AND status>=0 AND expiration_time > ?", userId, time.Now().Format("2006-01-02 15:04:05")).
+			Get(new(dcm.DcVipOrder))
+		if exist {
+			return dyVipValue
+		}
+	}
+	dyVipValue[monthDay] = 99
+	return dyVipValue
 }
