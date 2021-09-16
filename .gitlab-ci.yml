@@ -18,8 +18,11 @@ build jar1:
     - sudo /usr/local/go/bin/go mod tidy
     - sudo /usr/local/go/bin/go mod vendor
     - sudo /usr/local/go/bin/go build -o dcm-api-dev -ldflags "-s -w"
+    - sudo /usr/local/go/bin/go build -o dcm-cmd-dev -ldflags "-s -w" cmd/crontab/main.go
     - supervisorctl stop dcm-api-service
     - sudo cp -f dcm-api-dev /data/runner/dcm/
+    - sudo cp -f dcm-cmd-dev /data/runner/dcm/
+    - chmod 777 /data/runner/dcm/dcm-cmd-dev
     - sudo /data/sh/dcm/dcm-dev.sh
     - supervisorctl restart dcm-api-service
 
