@@ -2,7 +2,6 @@ package command
 
 import (
 	"dongchamao/business"
-	"dongchamao/global"
 	"dongchamao/models/dcm"
 	"dongchamao/services/task"
 	"fmt"
@@ -32,7 +31,7 @@ func UpdateLiveMonitorStatus() {
 
 // 直播间轮询
 func LiveRoomMonitor() {
-	go business.NewLiveMonitorBusiness().ScanLiveRoom()
+	business.NewLiveMonitorBusiness().ScanLiveRoom()
 	return
 }
 
@@ -46,27 +45,22 @@ func LiveMonitor() {
 		logs.Error("[live monitor] 获取直播数失败 err: %s", err)
 		return
 	}
-
-	go func() {
-		defer global.RecoverPanic()
-
-		startTime := time.Now()
-		taskPool := task.NewPool(10, 1024)
-		for _, v := range list {
-			monitor := v
-			job := task.NewJob(func(job *task.Job) {
-				business.NewLiveMonitorBusiness().ScanLive(monitor)
-			})
-			taskPool.Push(job)
-		}
-		taskPool.PushDone()
-		taskPool.Wait()
-		spendTime := time.Since(startTime)
-		recordCount := len(list)
-		if spendTime.Seconds() >= 60 {
-			business.NewMonitorBusiness().SendErr("直播监控超时", fmt.Sprintf("### 提醒\n\n直播监控[%d]条记录，消耗时间%s，需要尝试优化", recordCount, spendTime))
-		}
-		logs.Info("[live monitor] 直播监控记录 [%d] 条，耗时：%s", recordCount, spendTime)
-	}()
+	startTime := time.Now()
+	taskPool := task.NewPool(10, 1024)
+	for _, v := range list {
+		monitor := v
+		job := task.NewJob(func(job *task.Job) {
+			business.NewLiveMonitorBusiness().ScanLive(monitor)
+		})
+		taskPool.Push(job)
+	}
+	taskPool.PushDone()
+	taskPool.Wait()
+	spendTime := time.Since(startTime)
+	recordCount := len(list)
+	if spendTime.Seconds() >= 60 {
+		business.NewMonitorBusiness().SendErr("直播监控超时", fmt.Sprintf("### 提醒\n\n直播监控[%d]条记录，消耗时间%s，需要尝试优化", recordCount, spendTime))
+	}
+	logs.Info("[live monitor] 直播监控记录 [%d] 条，耗时：%s", recordCount, spendTime)
 	return
 }
