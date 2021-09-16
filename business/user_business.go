@@ -173,7 +173,7 @@ func (receiver *UserBusiness) SmsLogin(mobile, code, unionid string, appId int) 
 		user.Entrance = AppIdMap[appId]
 		affect, err := dcm.Insert(nil, &user)
 		if affect == 0 || err != nil {
-			comErr = global.NewError(5000)
+			comErr = global.NewError(5001)
 			return
 		}
 		isNew = 1
