@@ -168,10 +168,12 @@ func (receiver *LiveMonitorController) LiveMonitorCalcCount() {
 // 获取监控列表
 func (receiver *LiveMonitorController) LiveMonitorList() {
 	keyword := receiver.GetString("keyword", "")
+	start := receiver.GetString("start", "")
+	end := receiver.GetString("end", "")
 	page := receiver.GetPage("page")
 	size := receiver.GetPageSize("page_size", 10, 100)
 	status, _ := receiver.GetInt("status", -1)
-	list, totalCount := business.NewLiveMonitorBusiness().LiveMonitorRoomList(receiver.UserId, status, keyword, page, size)
+	list, totalCount := business.NewLiveMonitorBusiness().LiveMonitorRoomList(receiver.UserId, status, keyword, page, size, start, end)
 	receiver.SuccReturn(map[string]interface{}{
 		"list":  list,
 		"total": totalCount,

@@ -17,4 +17,7 @@ type DcLiveMonitorRoom struct {
 	ProductId    string    `xorm:"not null default '' comment('商品ID，逗号分割') VARCHAR(512)"`
 	CreateTime   time.Time `xorm:"not null default 'CURRENT_TIMESTAMP' comment('创建时间') index(CREATED_TIME) TIMESTAMP"`
 	UpdateTime   time.Time `xorm:"not null default 'CURRENT_TIMESTAMP' comment('更新时间') TIMESTAMP"`
+	Gmv          string    `xorm:"not null default 0.00 comment('销售额') DECIMAL(10,2)"`
+	UserTotal    int       `xorm:"not null default 0 comment('观看人次') INT(11)"`
+	Sales        int       `xorm:"not null default 0 comment('销量') INT(11)"`
 }

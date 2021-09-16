@@ -30,6 +30,10 @@ type DcLiveMonitor struct {
 	UpdateTimeString string    `xorm:"-" json:"update_time"`
 	RoomId           string    `xorm:"-" json:"room_id"`
 	RoomCount        int       `xorm:"-" json:"room_count"`
+	Sales            int64     `xorm:"-" json:"sales"`
+	TotalUser        int64     `xorm:"-" json:"total_user"`
+	Uv               float64   `xorm:"-" json:"uv"`
+	Gmv              float64   `xorm:"-" json:"gmv"`
 	Nickname         string    `xorm:"-" json:"nickname"`
 	Avatar           string    `xorm:"-" json:"avatar"`
 	UniqueID         string    `xorm:"-" json:"unique_id"`
