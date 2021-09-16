@@ -8,7 +8,10 @@ import (
 	"dongchamao/services/hbaseService"
 	"dongchamao/services/hbaseService/hbase"
 	"dongchamao/services/hbaseService/hbasehelper"
+	"encoding/json"
 	"math"
+	"sort"
+	"strings"
 	"time"
 )
 
@@ -134,7 +137,8 @@ func GetAuthorVideoCountData(awemeId, date string) (data entity.DyAwemeDiggComme
 }
 
 //获取视频评论列表
-func GetAwemeTopComment(awemeId string) (data entity.DyAwemeCommentTop, comErr global.CommonError) {
+func GetAwemeTopComment(awemeId string, start, end int) (data []entity.DyAwemeCommentTop, comErr global.CommonError) {
+	data = make([]entity.DyAwemeCommentTop, 0)
 	query := hbasehelper.NewQuery()
 	result, err := query.
 		SetTable(hbaseService.HbaseDyAwemeTopComment).
@@ -144,6 +148,15 @@ func GetAwemeTopComment(awemeId string) (data entity.DyAwemeCommentTop, comErr g
 		return
 	}
 	dataMap := hbaseService.HbaseFormat(result, entity.DyAwemeCommentTopMap)
-	utils.MapToStruct(dataMap, &data)
+	var commentStruct entity.DyAwemeCommentTopStruct
+	utils.MapToStruct(dataMap, &commentStruct)
+	if commentStruct.DiggInfo != "" {
+		commentStruct.DiggInfo = "[" + strings.Replace(commentStruct.DiggInfo, "=----=", ",", -1) + "]"
+		_ = json.Unmarshal([]byte(commentStruct.DiggInfo), &data)
+	}
+	sort.Slice(data, func(i, j int) bool {
+		return utils.ToInt(data[j].DiggCount) < utils.ToInt(data[i].DiggCount)
+	})
+	data = data[start:end]
 	return
 }

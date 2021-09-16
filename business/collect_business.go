@@ -42,7 +42,7 @@ func (receiver *CollectBusiness) GetDyCollect(tagId, collectType int, keywords, 
 		query += " AND FIND_IN_SET('" + label + "',label)"
 	}
 	query += " AND user_id=" + strconv.Itoa(userId) + " AND status=1"
-	err := dbCollect.Table(dcm.DcUserDyCollect{}).Where(query).Limit(pageSize, (page-1)*pageSize).Find(&collects)
+	err := dbCollect.Table(dcm.DcUserDyCollect{}).Where(query).Limit(pageSize, (page-1)*pageSize).OrderBy("update_time desc").Find(&collects)
 	if total, err = dbCollect.Table(dcm.DcUserDyCollect{}).Where(query).Count(); err != nil {
 		comErr = global.NewError(5000)
 		return nil, total, comErr
@@ -55,7 +55,7 @@ func (receiver *CollectBusiness) GetDyCollect(tagId, collectType int, keywords, 
 			data[k].DcUserDyCollect.CollectId = IdEncrypt(v.CollectId)
 			dyAuthor, _ := hbase.GetAuthor(v.CollectId)
 			basicData, _ := hbase.GetAuthorBasic(v.CollectId, time.Now().AddDate(0, 0, -1).Format("20060102"))
-			data[k].FollowerCount = dyAuthor.Data.Fans.Douyin.Count
+			data[k].FollowerCount = dyAuthor.Data.Fans.Douyin.Count + dyAuthor.Data.Fans.Toutiao.Count
 			data[k].FollowerIncreCount = dyAuthor.FollowerCount - basicData.FollowerCount
 			data[k].Avatar = dyimg.Avatar(dyAuthor.Data.Avatar)
 		}
@@ -267,6 +267,15 @@ func (receiver *CollectBusiness) GetDyCollectTags(userId int) (tags []dcm.DcUser
 //创建分组
 func (receiver *CollectBusiness) AddDyCollectTag(userId int, name string) (comErr global.CommonError) {
 	db := dcm.GetDbSession().Table(dcm.DcUserDyCollectTag{})
+	by, err := dcm.GetBy("name", name, new(dcm.DcUserDyCollectTag))
+	if err != nil {
+		comErr = global.NewError(5000)
+		return
+	}
+	if by {
+		comErr = global.NewMsgError("分组已存在")
+		return
+	}
 	tag := dcm.DcUserDyCollectTag{
 		Name:       name,
 		UserId:     userId,

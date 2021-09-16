@@ -2,13 +2,11 @@ package dy
 
 type VipPrice struct {
 	VipPrice []struct {
-		Title           string `json:"title"`
-		Desc            string `json:"desc"`
-		Tag             string `json:"tag"`
-		PrimePriceValue string `json:"prime_price_value"`
-		Days            string `json:"days"`
-		Price           string `json:"price"`
-		PrimePrice      string `json:"prime_price"`
+		Unit      string `json:"unit"`
+		Month     string `json:"month"`
+		Days      string `json:"days"`
+		Price     string `json:"price"`
+		InitPrice string `json:"init_price"`
 	} `json:"vip_price"`
 }
 
