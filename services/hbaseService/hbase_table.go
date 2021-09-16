@@ -46,4 +46,6 @@ const (
 	HbaseDyLiveTopRank            = "dy_live_top"
 	HbaseDyLiveShareWeekRank      = "dy_live_share_top"
 	HbaseDyAwemeShareRank         = "dy_aweme_share_top"
+
+	HbaseDyAwemeTopComment = "dws_dy_aweme_ext_topcomment_di"
 )

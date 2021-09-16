@@ -132,3 +132,18 @@ func GetAuthorVideoCountData(awemeId, date string) (data entity.DyAwemeDiggComme
 	utils.MapToStruct(dataMap, &data)
 	return
 }
+
+//获取视频评论列表
+func GetAwemeTopComment(awemeId string) (data entity.DyAwemeCommentTop, comErr global.CommonError) {
+	query := hbasehelper.NewQuery()
+	result, err := query.
+		SetTable(hbaseService.HbaseDyAwemeTopComment).
+		GetByRowKey([]byte(awemeId))
+	if err != nil {
+		comErr = global.NewMsgError(err.Error())
+		return
+	}
+	dataMap := hbaseService.HbaseFormat(result, entity.DyAwemeCommentTopMap)
+	utils.MapToStruct(dataMap, &data)
+	return
+}

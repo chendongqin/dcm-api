@@ -182,6 +182,23 @@ func (receiver *AwemeController) AwemeCommentHotWords() {
 	return
 }
 
+func (receiver *AwemeController) AwemeCommentTop() {
+	awemeId := business.IdDecrypt(receiver.Ctx.Input.Param(":aweme_id"))
+	if awemeId == "" {
+		receiver.FailReturn(global.NewError(4000))
+		return
+	}
+	awemeComment, comErr := hbase.GetAwemeTopComment(awemeId)
+	if comErr != nil {
+		receiver.FailReturn(comErr)
+		return
+	}
+	receiver.SuccReturn(map[string]interface{}{
+		"comment_top": awemeComment,
+	})
+	return
+}
+
 //视频商品数据
 func (receiver *AwemeController) AwemeProductAnalyse() {
 	awemeId := business.IdDecrypt(receiver.Ctx.Input.Param(":aweme_id"))
