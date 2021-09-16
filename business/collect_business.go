@@ -42,7 +42,7 @@ func (receiver *CollectBusiness) GetDyCollect(tagId, collectType int, keywords, 
 		query += " AND FIND_IN_SET('" + label + "',label)"
 	}
 	query += " AND user_id=" + strconv.Itoa(userId) + " AND status=1"
-	err := dbCollect.Table(dcm.DcUserDyCollect{}).Where(query).Limit(pageSize, (page-1)*pageSize).Find(&collects)
+	err := dbCollect.Table(dcm.DcUserDyCollect{}).Where(query).Limit(pageSize, (page-1)*pageSize).OrderBy("update_time desc").Find(&collects)
 	if total, err = dbCollect.Table(dcm.DcUserDyCollect{}).Where(query).Count(); err != nil {
 		comErr = global.NewError(5000)
 		return nil, total, comErr
