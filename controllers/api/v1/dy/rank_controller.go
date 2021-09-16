@@ -5,15 +5,12 @@ import (
 	"dongchamao/business/es"
 	controllers "dongchamao/controllers/api"
 	"dongchamao/global"
-	"dongchamao/global/cache"
 	"dongchamao/global/utils"
 	"dongchamao/hbase"
 	"dongchamao/models/entity"
 	es2 "dongchamao/models/es"
 	"dongchamao/models/repost/dy"
 	"dongchamao/services/dyimg"
-	"fmt"
-	jsoniter "github.com/json-iterator/go"
 	"math"
 	"time"
 )
@@ -89,43 +86,26 @@ func (receiver *RankController) DyLiveHourRank() {
 		return
 	}
 	var ret map[string]interface{}
-	cacheKey := cache.GetCacheKey(cache.DyRankCache, "live_hour", utils.Md5_encode(fmt.Sprintf("%s", dateTime.Format("2006010215"))))
-	cacheStr := global.Cache.Get(cacheKey)
-	if cacheStr != "" {
-		cacheStr = utils.DeserializeData(cacheStr)
-		_ = jsoniter.Unmarshal([]byte(cacheStr), &ret)
-	} else {
-		data, _ := hbase.GetDyLiveHourRank(dateTime.Format("2006010215"))
-		for k, v := range data.Ranks {
-			data.Ranks[k].LiveInfo.User.Id = business.IdEncrypt(v.LiveInfo.User.Id)
-			data.Ranks[k].RoomId = business.IdEncrypt(v.RoomId)
-			data.Ranks[k].LiveInfo.Cover = dyimg.Fix(v.LiveInfo.Cover)
-			data.Ranks[k].LiveInfo.User.Avatar = dyimg.Fix(v.LiveInfo.User.Avatar)
-			if v.LiveInfo.User.DisplayId == "" {
-				data.Ranks[k].LiveInfo.User.DisplayId = v.LiveInfo.User.ShortId
-			}
-			data.Ranks[k].ShareUrl = business.LiveShareUrl + v.RoomId
-			if v.Category == "0" {
-				data.Ranks[k].Category = ""
-			}
+	data, _ := hbase.GetDyLiveHourRank(dateTime.Format("2006010215"))
+	for k, v := range data.Ranks {
+		data.Ranks[k].LiveInfo.User.Id = business.IdEncrypt(v.LiveInfo.User.Id)
+		data.Ranks[k].RoomId = business.IdEncrypt(v.RoomId)
+		data.Ranks[k].LiveInfo.Cover = dyimg.Fix(v.LiveInfo.Cover)
+		data.Ranks[k].LiveInfo.User.Avatar = dyimg.Fix(v.LiveInfo.User.Avatar)
+		if v.LiveInfo.User.DisplayId == "" {
+			data.Ranks[k].LiveInfo.User.DisplayId = v.LiveInfo.User.ShortId
 		}
-		ret = map[string]interface{}{
-			"list":        data.Ranks,
-			"update_time": data.CrawlTime,
+		data.Ranks[k].ShareUrl = business.LiveShareUrl + v.RoomId
+		if v.Category == "0" {
+			data.Ranks[k].Category = ""
 		}
-		var cacheTime time.Duration
-		if dateTime.Format("2006-01-02 15:04") == time.Now().Format("2006-01-02 15:04") {
-			cacheTime = 60
-		} else {
-			cacheTime = 86400
-		}
-		_ = global.Cache.Set(cacheKey, utils.SerializeData(ret), cacheTime)
 	}
+	ret = map[string]interface{}{}
 	if !receiver.HasAuth {
-		list := make([]entity.DyLiveHourRank, 0)
-		utils.MapToStruct(ret["list"], &list)
+		list := data.Ranks
 		ret["list"] = list[0:receiver.MaxTotal]
 	}
+	ret["update_time"] = data.CrawlTime
 	ret["has_login"] = receiver.HasLogin
 	ret["has_auth"] = receiver.HasAuth
 	receiver.SuccReturn(ret)
@@ -141,48 +121,31 @@ func (receiver *RankController) DyLiveTopRank() {
 		receiver.FailReturn(global.NewError(4000))
 		return
 	}
-	var ret map[string]interface{}
-	cacheKey := cache.GetCacheKey(cache.DyRankCache, "live_top", utils.Md5_encode(fmt.Sprintf("%s", dateTime.Format("2006010215"))))
-	cacheStr := global.Cache.Get(cacheKey)
-	if cacheStr != "" {
-		cacheStr = utils.DeserializeData(cacheStr)
-		_ = jsoniter.Unmarshal([]byte(cacheStr), &ret)
-	} else {
-		data, _ := hbase.GetDyLiveTopRank(dateTime.Format("2006010215"))
-		for k, v := range data.Ranks {
-			data.Ranks[k].LiveInfo.User.Id = business.IdEncrypt(v.LiveInfo.User.Id)
-			data.Ranks[k].RoomId = business.IdEncrypt(v.RoomId)
-			data.Ranks[k].LiveInfo.Cover = dyimg.Fix(v.LiveInfo.Cover)
-			data.Ranks[k].LiveInfo.User.Avatar = dyimg.Fix(v.LiveInfo.User.Avatar)
-			if v.LiveInfo.User.DisplayId == "" {
-				data.Ranks[k].LiveInfo.User.DisplayId = v.LiveInfo.User.ShortId
-			}
-			data.Ranks[k].ShareUrl = business.LiveShareUrl + v.RoomId
-			if v.Category == "0" {
-				data.Ranks[k].Category = ""
-			}
+	data, _ := hbase.GetDyLiveTopRank(dateTime.Format("2006010215"))
+	for k, v := range data.Ranks {
+		data.Ranks[k].LiveInfo.User.Id = business.IdEncrypt(v.LiveInfo.User.Id)
+		data.Ranks[k].RoomId = business.IdEncrypt(v.RoomId)
+		data.Ranks[k].LiveInfo.Cover = dyimg.Fix(v.LiveInfo.Cover)
+		data.Ranks[k].LiveInfo.User.Avatar = dyimg.Fix(v.LiveInfo.User.Avatar)
+		if v.LiveInfo.User.DisplayId == "" {
+			data.Ranks[k].LiveInfo.User.DisplayId = v.LiveInfo.User.ShortId
 		}
-		ret = map[string]interface{}{
-			"list":        data.Ranks,
-			"update_time": data.CrawlTime,
+		data.Ranks[k].ShareUrl = business.LiveShareUrl + v.RoomId
+		if v.Category == "0" {
+			data.Ranks[k].Category = ""
 		}
-		var cacheTime time.Duration
-		if dateTime.Format("2006-01-02 15:04") == time.Now().Format("2006-01-02 15:04") {
-			cacheTime = 60
-		} else {
-			cacheTime = 86400
-		}
-		_ = global.Cache.Set(cacheKey, utils.SerializeData(ret), cacheTime)
 	}
 	if !receiver.HasAuth {
-		list := make([]interface{}, 0)
-		utils.MapToStruct(ret["list"], &list)
-		if len(list) > receiver.MaxTotal {
-			ret["list"] = list[0:receiver.MaxTotal]
+		if len(data.Ranks) > receiver.MaxTotal {
+			data.Ranks = data.Ranks[0:receiver.MaxTotal]
 		}
 	}
-	ret["has_login"] = receiver.HasLogin
-	ret["has_auth"] = receiver.HasAuth
+	ret := map[string]interface{}{
+		"list":        data.Ranks,
+		"update_time": data.CrawlTime,
+		"has_login":   receiver.HasLogin,
+		"has_auth":    receiver.HasAuth,
+	}
 	receiver.SuccReturn(ret)
 	return
 }
@@ -196,55 +159,39 @@ func (receiver *RankController) DyLiveHourSellRank() {
 		receiver.FailReturn(global.NewError(4000))
 		return
 	}
+	data, _ := hbase.GetDyLiveHourSellRank(dateTime.Format("2006010215"))
+	for k, v := range data.Ranks {
+		data.Ranks[k].LiveInfo.User.Id = business.IdEncrypt(v.LiveInfo.User.Id)
+		data.Ranks[k].RoomId = business.IdEncrypt(v.RoomId)
+		data.Ranks[k].LiveInfo.Cover = dyimg.Fix(v.LiveInfo.Cover)
+		data.Ranks[k].LiveInfo.User.Avatar = dyimg.Fix(v.LiveInfo.User.Avatar)
+		if v.LiveInfo.User.DisplayId == "" {
+			data.Ranks[k].LiveInfo.User.DisplayId = v.LiveInfo.User.ShortId
+		}
+		shopTags := make([]string, 0)
+		for _, s := range v.ShopTags {
+			if s == "" {
+				continue
+			}
+			shopTags = append(shopTags, s)
+		}
+		data.Ranks[k].ShopTags = shopTags
+		data.Ranks[k].ShareUrl = business.LiveShareUrl + v.RoomId
+		//if v.RealGmv > 0 {
+		//	data.Ranks[k].PredictGmv = v.RealGmv
+		//	data.Ranks[k].PredictSales = v.RealSales
+		//}
+	}
 	var ret map[string]interface{}
-	cacheKey := cache.GetCacheKey(cache.DyRankCache, "live_hour_sell", utils.Md5_encode(fmt.Sprintf("%s", dateTime.Format("2006010215"))))
-	cacheStr := global.Cache.Get(cacheKey)
-	if cacheStr != "" && date+" "+hour != time.Now().Format("2006-01-02 15:00") {
-		cacheStr = utils.DeserializeData(cacheStr)
-		_ = jsoniter.Unmarshal([]byte(cacheStr), &ret)
-	} else {
-		data, _ := hbase.GetDyLiveHourSellRank(dateTime.Format("2006010215"))
-		for k, v := range data.Ranks {
-			data.Ranks[k].LiveInfo.User.Id = business.IdEncrypt(v.LiveInfo.User.Id)
-			data.Ranks[k].RoomId = business.IdEncrypt(v.RoomId)
-			data.Ranks[k].LiveInfo.Cover = dyimg.Fix(v.LiveInfo.Cover)
-			data.Ranks[k].LiveInfo.User.Avatar = dyimg.Fix(v.LiveInfo.User.Avatar)
-			if v.LiveInfo.User.DisplayId == "" {
-				data.Ranks[k].LiveInfo.User.DisplayId = v.LiveInfo.User.ShortId
-			}
-			shopTags := make([]string, 0)
-			for _, s := range v.ShopTags {
-				if s == "" {
-					continue
-				}
-				shopTags = append(shopTags, s)
-			}
-			data.Ranks[k].ShopTags = shopTags
-			data.Ranks[k].ShareUrl = business.LiveShareUrl + v.RoomId
-			//if v.RealGmv > 0 {
-			//	data.Ranks[k].PredictGmv = v.RealGmv
-			//	data.Ranks[k].PredictSales = v.RealSales
-			//}
-		}
-		ret = map[string]interface{}{
-			"list":        data.Ranks,
-			"update_time": data.CrawlTime,
-		}
-		var cacheTime time.Duration
-		if time.Now().Format("2006-01-02 15:04") == dateTime.Format("2006-01-02 15:04") {
-			cacheTime = 60
-		} else {
-			cacheTime = 86400
-		}
-		_ = global.Cache.Set(cacheKey, utils.SerializeData(ret), cacheTime)
+	if !receiver.HasAuth && len(data.Ranks) > receiver.MaxTotal {
+		data.Ranks = data.Ranks[0:receiver.MaxTotal]
 	}
-	list := make([]entity.DyLiveHourSellRank, 0)
-	utils.MapToStruct(ret["list"], &list)
-	if !receiver.HasAuth && len(list) > receiver.MaxTotal {
-		ret["list"] = list[0:receiver.MaxTotal]
+	ret = map[string]interface{}{
+		"list":        data.Ranks,
+		"update_time": data.CrawlTime,
+		"has_login":   receiver.HasLogin,
+		"has_auth":    receiver.HasAuth,
 	}
-	ret["has_login"] = receiver.HasLogin
-	ret["has_auth"] = receiver.HasAuth
 	receiver.SuccReturn(ret)
 	return
 }
@@ -258,45 +205,29 @@ func (receiver *RankController) DyLiveHourPopularityRank() {
 		receiver.FailReturn(global.NewError(4000))
 		return
 	}
-	var ret map[string]interface{}
-	cacheKey := cache.GetCacheKey(cache.DyRankCache, "live_hour_popularity", utils.Md5_encode(fmt.Sprintf("%s", dateTime.Format("2006010215"))))
-	cacheStr := global.Cache.Get(cacheKey)
-	if cacheStr != "" {
-		cacheStr = utils.DeserializeData(cacheStr)
-		_ = jsoniter.Unmarshal([]byte(cacheStr), &ret)
-	} else {
-		data, _ := hbase.GetDyLiveHourPopularityRank(dateTime.Format("2006010215"))
-		for k, v := range data.Ranks {
-			data.Ranks[k].LiveInfo.User.Id = business.IdEncrypt(v.LiveInfo.User.Id)
-			data.Ranks[k].RoomId = business.IdEncrypt(v.RoomId)
-			data.Ranks[k].LiveInfo.Cover = dyimg.Fix(v.LiveInfo.Cover)
-			data.Ranks[k].LiveInfo.User.Avatar = dyimg.Fix(v.LiveInfo.User.Avatar)
-			if v.LiveInfo.User.DisplayId == "" {
-				data.Ranks[k].LiveInfo.User.DisplayId = v.LiveInfo.User.ShortId
-			}
-			data.Ranks[k].ShareUrl = business.LiveShareUrl + v.RoomId
+
+	data, _ := hbase.GetDyLiveHourPopularityRank(dateTime.Format("2006010215"))
+	for k, v := range data.Ranks {
+		data.Ranks[k].LiveInfo.User.Id = business.IdEncrypt(v.LiveInfo.User.Id)
+		data.Ranks[k].RoomId = business.IdEncrypt(v.RoomId)
+		data.Ranks[k].LiveInfo.Cover = dyimg.Fix(v.LiveInfo.Cover)
+		data.Ranks[k].LiveInfo.User.Avatar = dyimg.Fix(v.LiveInfo.User.Avatar)
+		if v.LiveInfo.User.DisplayId == "" {
+			data.Ranks[k].LiveInfo.User.DisplayId = v.LiveInfo.User.ShortId
 		}
-		ret = map[string]interface{}{
-			"list":        data.Ranks,
-			"update_time": data.CrawlTime,
-		}
-		var cacheTime time.Duration
-		if time.Now().Format("2006-01-02 15:04") == dateTime.Format("2006-01-02 15:04") {
-			cacheTime = 60
-		} else {
-			cacheTime = 86400
-		}
-		_ = global.Cache.Set(cacheKey, utils.SerializeData(ret), cacheTime)
+		data.Ranks[k].ShareUrl = business.LiveShareUrl + v.RoomId
 	}
 	if !receiver.HasAuth {
-		list := make([]interface{}, 0)
-		utils.MapToStruct(ret["list"], &list)
-		if len(list) > receiver.MaxTotal {
-			ret["list"] = list[0:receiver.MaxTotal]
+		if len(data.Ranks) > receiver.MaxTotal {
+			data.Ranks = data.Ranks[0:receiver.MaxTotal]
 		}
 	}
-	ret["has_login"] = receiver.HasLogin
-	ret["has_auth"] = receiver.HasAuth
+	var ret = map[string]interface{}{
+		"list":        data.Ranks,
+		"update_time": data.CrawlTime,
+		"has_login":   receiver.HasLogin,
+		"has_auth":    receiver.HasAuth,
+	}
 	receiver.SuccReturn(ret)
 	return
 }
@@ -316,64 +247,53 @@ func (receiver *RankController) DyLiveShareWeekRank() {
 		receiver.FailReturn(global.NewError(4000))
 		return
 	}
-	var ret map[string]interface{}
-	cacheKey := cache.GetCacheKey(cache.DyRankCache, "live_share_week", utils.Md5_encode(fmt.Sprintf("%s", start.Format("20060102")+"_"+end.Format("20060102"))))
-	cacheStr := global.Cache.Get(cacheKey)
-	if cacheStr != "" {
-		cacheStr = utils.DeserializeData(cacheStr)
-		_ = jsoniter.Unmarshal([]byte(cacheStr), &ret)
-	} else {
-		data, _ := hbase.GetLiveShareWeekRank(start.Format("20060102") + "_" + end.Format("20060102"))
-		list := make([]entity.DyLiveShareWeekData, 0)
-		for _, v := range data.Data {
-			var gmv float64 = 0
-			var sales float64 = 0
-			var totalUser int64 = 0
-			for _, r := range v.Rooms {
-				//if r.RealSales > 0 {
-				//	gmv += r.RealGmv
-				//	sales += math.Floor(r.RealSales)
-				//} else {
-				gmv += r.PredictGmv
-				sales += math.Floor(r.PredictSales)
-				//}
-				totalUser += r.TotalUser
-			}
-			uniqueId := v.UniqueId
-			if uniqueId == "" || uniqueId == "0" {
-				uniqueId = v.ShortId
-			}
-			roomNum := len(v.Rooms)
-			list = append(list, entity.DyLiveShareWeekData{
-				AuthorId:   business.IdEncrypt(utils.ToString(v.AuthorId)),
-				Avatar:     dyimg.Avatar(v.Avatar),
-				Category:   v.Category,
-				InitRank:   v.InitRank,
-				Name:       v.Name,
-				RankChange: v.RankChange,
-				Score:      v.Score,
-				UniqueId:   uniqueId,
-				Gmv:        gmv,
-				Sales:      sales,
-				TotalUser:  totalUser / int64(roomNum),
-				RoomNum:    roomNum,
-			})
+	data, _ := hbase.GetLiveShareWeekRank(start.Format("20060102") + "_" + end.Format("20060102"))
+	list := make([]entity.DyLiveShareWeekData, 0)
+	for _, v := range data.Data {
+		var gmv float64 = 0
+		var sales float64 = 0
+		var totalUser int64 = 0
+		for _, r := range v.Rooms {
+			//if r.RealSales > 0 {
+			//	gmv += r.RealGmv
+			//	sales += math.Floor(r.RealSales)
+			//} else {
+			gmv += r.PredictGmv
+			sales += math.Floor(r.PredictSales)
+			//}
+			totalUser += r.TotalUser
 		}
-		ret = map[string]interface{}{
-			"list":        list,
-			"update_time": data.CrawlTime,
+		uniqueId := v.UniqueId
+		if uniqueId == "" || uniqueId == "0" {
+			uniqueId = v.ShortId
 		}
-		_ = global.Cache.Set(cacheKey, utils.SerializeData(ret), 86400)
+		roomNum := len(v.Rooms)
+		list = append(list, entity.DyLiveShareWeekData{
+			AuthorId:   business.IdEncrypt(utils.ToString(v.AuthorId)),
+			Avatar:     dyimg.Avatar(v.Avatar),
+			Category:   v.Category,
+			InitRank:   v.InitRank,
+			Name:       v.Name,
+			RankChange: v.RankChange,
+			Score:      v.Score,
+			UniqueId:   uniqueId,
+			Gmv:        gmv,
+			Sales:      sales,
+			TotalUser:  totalUser / int64(roomNum),
+			RoomNum:    roomNum,
+		})
 	}
 	if !receiver.HasAuth {
-		list := make([]interface{}, 0)
-		utils.MapToStruct(ret["list"], &list)
 		if len(list) > receiver.MaxTotal {
-			ret["list"] = list[0:receiver.MaxTotal]
+			list = list[0:receiver.MaxTotal]
 		}
 	}
-	ret["has_login"] = receiver.HasLogin
-	ret["has_auth"] = receiver.HasAuth
+	var ret = map[string]interface{}{
+		"list":        list,
+		"update_time": data.CrawlTime,
+		"has_login":   receiver.HasLogin,
+		"has_auth":    receiver.HasAuth,
+	}
 	receiver.SuccReturn(ret)
 	return
 }
@@ -391,48 +311,35 @@ func (receiver *RankController) DyAwemeShareRank() {
 		receiver.FailReturn(global.NewError(4000))
 		return
 	}
-	var ret map[string]interface{}
-	cacheKey := cache.GetCacheKey(cache.DyRankCache, "aweme_share", utils.Md5_encode(fmt.Sprintf("%s", dateTime.Format("20060102"))))
-	cacheStr := global.Cache.Get(cacheKey)
-	if cacheStr != "" {
-		cacheStr = utils.DeserializeData(cacheStr)
-		_ = jsoniter.Unmarshal([]byte(cacheStr), &ret)
-	} else {
-		data, _ := hbase.GetAwemeShareRank(dateTime.Format("20060102"))
-		list := make([]entity.DyAwemeShareTopCopy, 0)
-		for _, v := range data.Data {
-			uniqueId := v.UniqueId
-			if uniqueId == "" || uniqueId == "0" {
-				uniqueId = v.ShortId
-			}
-			list = append(list, entity.DyAwemeShareTopCopy{
-				AuthorId:      business.IdEncrypt(utils.ToString(v.AuthorId)),
-				Category:      v.Category,
-				Avatar:        dyimg.Avatar(v.Avatar),
-				InitRank:      v.InitRank,
-				Name:          v.Name,
-				RankChange:    v.RankChange,
-				Score:         v.Score,
-				UniqueId:      uniqueId,
-				FollowerCount: v.FollowerCount,
-				IncDiggCount:  v.IncDiggCount,
-			})
+	data, _ := hbase.GetAwemeShareRank(dateTime.Format("20060102"))
+	list := make([]entity.DyAwemeShareTopCopy, 0)
+	for _, v := range data.Data {
+		uniqueId := v.UniqueId
+		if uniqueId == "" || uniqueId == "0" {
+			uniqueId = v.ShortId
 		}
-		ret = map[string]interface{}{
-			"list":        list,
-			"update_time": data.CrawlTime,
-		}
-		if dateTime.Format("20060102") != time.Now().Format("20060102") {
-			_ = global.Cache.Set(cacheKey, utils.SerializeData(ret), 86400)
-		}
+		list = append(list, entity.DyAwemeShareTopCopy{
+			AuthorId:      business.IdEncrypt(utils.ToString(v.AuthorId)),
+			Category:      v.Category,
+			Avatar:        dyimg.Avatar(v.Avatar),
+			InitRank:      v.InitRank,
+			Name:          v.Name,
+			RankChange:    v.RankChange,
+			Score:         v.Score,
+			UniqueId:      uniqueId,
+			FollowerCount: v.FollowerCount,
+			IncDiggCount:  v.IncDiggCount,
+		})
 	}
-	list := make([]interface{}, 0)
-	utils.MapToStruct(ret["list"], &list)
 	if !receiver.HasAuth && len(list) > receiver.MaxTotal {
-		ret["list"] = list[0:receiver.MaxTotal]
+		list = list[0:receiver.MaxTotal]
 	}
-	ret["has_login"] = receiver.HasLogin
-	ret["has_auth"] = receiver.HasAuth
+	var ret = map[string]interface{}{
+		"list":        list,
+		"update_time": data.CrawlTime,
+		"has_login":   receiver.HasLogin,
+		"has_auth":    receiver.HasAuth,
+	}
 	receiver.SuccReturn(ret)
 	return
 }
@@ -690,42 +597,30 @@ func (receiver *RankController) DyAuthorFollowerRank() {
 		receiver.FailReturn(global.NewError(4000))
 		return
 	}
-	ret := map[string]interface{}{}
-	cacheKey := cache.GetCacheKey(cache.DyRankCache, "author_follower_inc", utils.Md5_encode(fmt.Sprintf("%s%s%s%s%s%d%d%d", dateTime.Format("20060102"), tags, province, city, sortStr, orderBy, isDelivery, page, pageSize)))
-	cacheStr := global.Cache.Get(cacheKey)
-	if cacheStr != "" {
-		cacheStr = utils.DeserializeData(cacheStr)
-		_ = jsoniter.Unmarshal([]byte(cacheStr), &ret)
-	} else {
-		data, total, comErr := es.NewEsAuthorBusiness().DyAuthorFollowerIncRank(dateTime.Format("20060102"), tags, province, city, sortStr, orderBy, isDelivery, page, pageSize)
-		form := (page - 1) * pageSize
-		for k, v := range data {
+	data, total, comErr := es.NewEsAuthorBusiness().DyAuthorFollowerIncRank(dateTime.Format("20060102"), tags, province, city, sortStr, orderBy, isDelivery, page, pageSize)
+	form := (page - 1) * pageSize
+	for k, v := range data {
 
-			data[k].Rank = k + form + 1
-			if data[k].UniqueID == "" {
-				data[k].UniqueID = v.ShortID
-			}
-			data[k].AuthorID = business.IdEncrypt(v.AuthorID)
-			data[k].AuthorCover = dyimg.Fix(v.AuthorCover)
+		data[k].Rank = k + form + 1
+		if data[k].UniqueID == "" {
+			data[k].UniqueID = v.ShortID
 		}
-		if comErr != nil {
-			receiver.FailReturn(global.NewError(4000))
-			return
-		}
-		if total > receiver.MaxTotal {
-			total = receiver.MaxTotal
-		}
-		ret = map[string]interface{}{
-			"list":  data,
-			"total": total,
-		}
-		if dateTime.Format("20060102") != time.Now().Format("20060102") {
-			_ = global.Cache.Set(cacheKey, utils.SerializeData(ret), 86400)
-		}
+		data[k].AuthorID = business.IdEncrypt(v.AuthorID)
+		data[k].AuthorCover = dyimg.Fix(v.AuthorCover)
+	}
+	if comErr != nil {
+		receiver.FailReturn(global.NewError(4000))
+		return
+	}
+	if total > receiver.MaxTotal {
+		total = receiver.MaxTotal
+	}
+	ret := map[string]interface{}{
+		"list": data,
 	}
 	ret["has_login"] = receiver.HasLogin
 	ret["has_auth"] = receiver.HasAuth
-	if !receiver.HasAuth && utils.ToInt(ret["total"]) > receiver.MaxTotal {
+	if !receiver.HasAuth && total > receiver.MaxTotal {
 		ret["total"] = receiver.MaxTotal
 	}
 	receiver.SuccReturn(ret)
