@@ -355,6 +355,9 @@ func (receiver *EsLiveBusiness) AllRoomProductCateByRoomId(roomInfo entity.DyLiv
 	if productCountJson != "" {
 		productCountJson = utils.DeserializeData(productCountJson)
 		_ = jsoniter.Unmarshal([]byte(productCountJson), &productCount)
+		if len(productCount.CateList) == 0 {
+			productCount.CateList = []dy.DyCate{}
+		}
 		return
 	}
 	date := time.Unix(roomInfo.DiscoverTime, 0).Format("20060102")
@@ -411,7 +414,7 @@ func (receiver *EsLiveBusiness) AllRoomProductCateByRoomId(roomInfo entity.DyLiv
 					secondCateItem.SonCate = append(secondCateItem.SonCate, dy.DyCate{
 						Name:    tk,
 						Num:     0,
-						SonCate: nil,
+						SonCate: []dy.DyCate{},
 					})
 				}
 				if len(secondCateItem.SonCate) == 0 {
@@ -438,7 +441,9 @@ func (receiver *EsLiveBusiness) AllRoomProductCateByRoomId(roomInfo entity.DyLiv
 		}
 		productCount.CateList = append(productCount.CateList, item)
 	}
-	productCount.CateList = append(productCount.CateList, otherData)
+	if otherData.Num > 0 {
+		productCount.CateList = append(productCount.CateList, otherData)
+	}
 	var timeout time.Duration = 60
 	if roomInfo.FinishTime <= (time.Now().Unix() - 3600) {
 		timeout = 1800

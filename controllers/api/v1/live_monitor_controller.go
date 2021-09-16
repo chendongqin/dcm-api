@@ -154,7 +154,7 @@ func (receiver *LiveMonitorController) LiveMonitorCalcCount() {
 	}
 	startTime := time.Unix(startTimestamp, 0)
 	endTime := time.Unix(endTimestamp, 0)
-	if startTime.After(endTime) || startTime.Before(time.Now()) {
+	if startTime.After(endTime) || startTime.Before(time.Now().AddDate(0, 0, -1)) {
 		receiver.FailReturn(global.NewError(4000))
 		return
 	}
