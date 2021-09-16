@@ -51,11 +51,11 @@ func runCMD(ctx *cli.Context) {
 		panic("m, ac为必填项")
 	}
 	switch ctx.String("ac") {
-	case "liveRoomMonitor":
+	case "live_room_monitor":
 		command.LiveRoomMonitor()
-	case "liveMonitor":
+	case "live_monitor":
 		command.LiveMonitor()
-	case "updateLiveMonitorStatus":
+	case "update_live_monitor_status":
 		command.UpdateLiveMonitorStatus()
 	default:
 		panic("undefined ac")
