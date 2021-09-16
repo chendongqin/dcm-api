@@ -9,6 +9,7 @@ import (
 	"dongchamao/hbase"
 	"dongchamao/models/entity"
 	dy2 "dongchamao/models/repost/dy"
+	"dongchamao/services/dyimg"
 	jsoniter "github.com/json-iterator/go"
 	"sort"
 	"time"
@@ -51,8 +52,32 @@ func (receiver *AwemeController) AwemeBaseData() {
 		ShareCount:      awemeBase.Data.ShareCount,
 		PromotionNum:    len(awemeBase.Data.DyPromotionID),
 	}
+
+	//昨天与前天的数据差
+	now := time.Now()
+	yesDateTime := now.AddDate(0, 0, -1)
+	beforeDateTime := now.AddDate(0, 0, -2)
+
+	yesData, beforeYesData := entity.DyAwemeDiggCommentForwardCount{}, entity.DyAwemeDiggCommentForwardCount{}
+	yesData, _ = hbase.GetVideoCountData(awemeId, yesDateTime.Format("20060102"))
+	beforeYesData, _ = hbase.GetVideoCountData(awemeId, beforeDateTime.Format("20060102"))
+	awemeSimple.DiggInc = yesData.DiggCount - beforeYesData.DiggCount
+	awemeSimple.CommentInc = yesData.CommentCount - beforeYesData.CommentCount
+	awemeSimple.ForwardInc = yesData.ForwardCount - beforeYesData.ForwardCount
+
+	//会员信息
+	author, _ := hbase.GetAuthor(awemeBase.Data.AuthorID)
+	if author.Data.UniqueID == "" {
+		author.Data.UniqueID = author.Data.ShortID
+	}
+	author.Data.Avatar = dyimg.Fix(author.Data.Avatar)
 	receiver.SuccReturn(map[string]interface{}{
 		"aweme_base": awemeSimple,
+		"author": map[string]interface{}{
+			"follower_count": author.FollowerCount,
+			"nick_name":      author.Data.Nickname,
+			"avatar":         author.Data.Avatar,
+		},
 	})
 	return
 }
