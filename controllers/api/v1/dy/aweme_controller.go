@@ -184,17 +184,24 @@ func (receiver *AwemeController) AwemeCommentHotWords() {
 
 func (receiver *AwemeController) AwemeCommentTop() {
 	awemeId := business.IdDecrypt(receiver.Ctx.Input.Param(":aweme_id"))
+	page := receiver.GetPage("page")
+	pageSize := receiver.GetPageSize("page_size", 10, 100)
 	if awemeId == "" {
 		receiver.FailReturn(global.NewError(4000))
 		return
 	}
-	awemeComment, comErr := hbase.GetAwemeTopComment(awemeId)
+	start := (page - 1) * pageSize
+	end := page * pageSize
+	awemeComment, comErr := hbase.GetAwemeTopComment(awemeId, start, end)
 	if comErr != nil {
 		receiver.FailReturn(comErr)
 		return
 	}
 	receiver.SuccReturn(map[string]interface{}{
-		"comment_top": awemeComment,
+		"total": 1000,
+		"page":  page,
+		"size":  pageSize,
+		"list":  awemeComment,
 	})
 	return
 }

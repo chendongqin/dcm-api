@@ -1,15 +1,18 @@
 package entity
 
 var DyAwemeCommentTopMap = HbaseEntity{
-	"cid":         {String, "cid"},
-	"text":        {String, "text"},
-	"digg_count":  {Long, "digg_count"},
-	"create_time": {String, "create_time"},
+	"aweme_id":  {String, "aweme_id"},
+	"digg_info": {String, "digg_info"},
+}
+
+type DyAwemeCommentTopStruct struct {
+	AwemeId  string `json:"aweme_id"`
+	DiggInfo string `json:"digg_info"`
 }
 
 type DyAwemeCommentTop struct {
+	DiggCount  string `json:"digg_count"`
 	Cid        string `json:"cid"`
 	Text       string `json:"text"`
-	DiggCount  int64  `json:"digg_count"`
 	CreateTime string `json:"create_time"`
 }
