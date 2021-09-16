@@ -441,7 +441,9 @@ func (receiver *EsLiveBusiness) AllRoomProductCateByRoomId(roomInfo entity.DyLiv
 		}
 		productCount.CateList = append(productCount.CateList, item)
 	}
-	productCount.CateList = append(productCount.CateList, otherData)
+	if otherData.Num > 0 {
+		productCount.CateList = append(productCount.CateList, otherData)
+	}
 	var timeout time.Duration = 60
 	if roomInfo.FinishTime <= (time.Now().Unix() - 3600) {
 		timeout = 1800
