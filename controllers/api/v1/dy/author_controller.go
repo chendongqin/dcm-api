@@ -603,6 +603,27 @@ func (receiver *AuthorController) AuthorBasicChart() {
 	return
 }
 
+//达人粉丝团
+func (receiver *AuthorController) AuthorFansList() {
+	authorId := business.IdDecrypt(receiver.Ctx.Input.Param(":author_id"))
+	authorLiveFansClubUser, _ := hbase.GetAuthorLiveFansClubUser(authorId)
+	fans := authorLiveFansClubUser.FansInfos
+	if len(fans) == 0 {
+		fans = []entity.DyLiveFansClubUserInfo{}
+	}
+	sort.Slice(fans, func(i, j int) bool {
+		return fans[i].Intimacy > fans[j].Intimacy
+	})
+	for k, v := range fans {
+		fans[k].Id = business.IdEncrypt(v.Id)
+		fans[k].Avatar = dyimg.Fix(v.Avatar)
+	}
+	receiver.SuccReturn(map[string]interface{}{
+		"list": fans,
+	})
+	return
+}
+
 //粉丝分布分析
 func (receiver *AuthorController) AuthorFansAnalyse() {
 	authorId := business.IdDecrypt(receiver.Ctx.Input.Param(":author_id"))

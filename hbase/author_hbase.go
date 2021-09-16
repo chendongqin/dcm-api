@@ -384,3 +384,19 @@ func GetAuthorProductRangeDate(authorId string, startTime, stopTime time.Time) (
 	}
 	return
 }
+
+func GetAuthorLiveFansClubUser(authorId string) (data entity.DyLiveFansClubUser, comErr global.CommonError) {
+	query := hbasehelper.NewQuery()
+	result, err := query.SetTable(hbaseService.HbaseDyAuthorLiveFansClubUser).GetByRowKey([]byte(authorId))
+	if err != nil {
+		comErr = global.NewMsgError(err.Error())
+		return
+	}
+	if result.Row == nil {
+		comErr = global.NewError(4040)
+		return
+	}
+	detailMap := hbaseService.HbaseFormat(result, entity.DyLiveFansClubUserMap)
+	utils.MapToStruct(detailMap, &data)
+	return
+}
