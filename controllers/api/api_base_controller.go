@@ -124,31 +124,20 @@ func (this *ApiBaseController) CheckIp() {
 	//}
 }
 
-func (this *ApiBaseController) InitUserToken() (commonErr global.CommonError) {
-	//如果已经完成初始化，将上一次初始化的错误直接返回
-	if this.IsInitToken {
-		return this.LastInitTokenErr
-	}
-	defer func() {
-		// 记录初始化状态
-		this.IsInitToken = true
-		// 记录初始化错误
-		this.LastInitTokenErr = commonErr
-	}()
-
+func (this *ApiBaseController) InitUserToken() {
 	tokenString := this.Ctx.Input.Cookie(global.LOGINCOOKIENAME)
 	//cookie没有身份信息  从头部获取
 	if tokenString == "" {
 		tokenString = strings.Replace(this.Ctx.Input.Header("Authorization"), "Bearer ", "", 1)
 	}
 	if tokenString == "" {
-		return global.NewError(4001)
+		return
 	}
 	token, _ := jwt.ParseWithClaims(tokenString, jwt.MapClaims{}, func(token *jwt.Token) (interface{}, error) {
 		return []byte(global.Cfg.String("auth_code")), nil
 	})
 	if token == nil {
-		return global.NewError(4001)
+		return
 	}
 	userBusiness := business.NewUserBusiness()
 	if claims, ok := token.Claims.(jwt.MapClaims); ok && token.Valid {
@@ -156,33 +145,36 @@ func (this *ApiBaseController) InitUserToken() (commonErr global.CommonError) {
 		tokenStruct := &business.TokenData{}
 		err0 = json.Unmarshal(jsonstr, tokenStruct)
 		if err0 != nil {
-			return global.NewError(4001)
+			return
 		}
 		expireTime := tokenStruct.ExpireTime
 		if utils.Time() > expireTime {
-			return global.NewError(4002)
+			return
 		} else {
 			this.UserId = tokenStruct.Id
 		}
 		if this.UserId == 0 {
-			return global.NewError(4001)
+			return
 		}
 		this.AppId = tokenStruct.AppId
 		this.Token = tokenString
 		userInfo, exist := userBusiness.GetCacheUser(this.UserId, true)
 		if !exist {
-			return global.NewError(4001)
+			this.FailReturn(global.NewError(4001))
+			return
 		}
 		this.UserInfo = userInfo
 		//判断用户状态x
 		if this.UserInfo.Status == 0 {
 			userBusiness.DeleteUserInfoCache(this.UserInfo.Id)
 			this.RegisterLogout()
-			return global.NewError(4212)
+			this.FailReturn(global.NewError(4212))
+			return
 		}
 		//除bindphone外的接口 没有phone不让访问
-		if this.UserInfo.Username == "" {
-			return global.NewError(4005)
+		if this.UserId > 0 && this.UserInfo.Username == "" {
+			this.FailReturn(global.NewError(4005))
+			return
 		}
 
 		//处理连续登录次数统计处理
@@ -194,12 +186,14 @@ func (this *ApiBaseController) InitUserToken() (commonErr global.CommonError) {
 		//验证 user Platform token的唯一性
 		uniqueToken, exist := userBusiness.GetUniqueToken(this.UserId, this.AppId, true)
 		if exist == false {
-			return global.NewError(4003)
+			this.FailReturn(global.NewError(4003))
+			return
 		} else {
 			if tokenString != uniqueToken {
 				//cmmlog.LoginLog(this.Ctx.Input.Header("X-Request-Id"), this.Ctx.Input.Header("X-Client-Id"), this.appId, this.UserId, "current:"+tokenString+"|unique:"+uniqueToken, this.Ctx.Input.IP(), this.Ctx.Request.UserAgent(), "unique", "unique_loginout")
 				this.RegisterLogout()
-				return global.NewError(4001)
+				this.FailReturn(global.NewError(4001))
+				return
 			}
 		}
 
@@ -215,7 +209,7 @@ func (this *ApiBaseController) InitUserToken() (commonErr global.CommonError) {
 		this.LogInputOutput("Format", this.ApiDatas)
 		this.HasLogin = true
 	} else {
-		return global.NewError(4001)
+		return
 	}
 	return
 }
