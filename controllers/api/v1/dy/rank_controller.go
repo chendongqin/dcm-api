@@ -100,14 +100,15 @@ func (receiver *RankController) DyLiveHourRank() {
 			data.Ranks[k].Category = ""
 		}
 	}
-	ret = map[string]interface{}{}
-	if !receiver.HasAuth {
-		list := data.Ranks
-		ret["list"] = list[0:receiver.MaxTotal]
+	ret = map[string]interface{}{
+		"update_time": data.CrawlTime,
+		"has_login":   receiver.HasLogin,
+		"has_auth":    receiver.HasAuth,
+		"list":        data.Ranks,
 	}
-	ret["update_time"] = data.CrawlTime
-	ret["has_login"] = receiver.HasLogin
-	ret["has_auth"] = receiver.HasAuth
+	if !receiver.HasAuth && len(data.Ranks) > receiver.MaxTotal {
+		ret["list"] = data.Ranks[0:receiver.MaxTotal]
+	}
 	receiver.SuccReturn(ret)
 	return
 }

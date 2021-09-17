@@ -137,7 +137,7 @@ func GetAuthorVideoCountData(awemeId, date string) (data entity.DyAwemeDiggComme
 }
 
 //获取视频评论列表
-func GetAwemeTopComment(awemeId string, start, end int) (data []entity.DyAwemeCommentTop, comErr global.CommonError) {
+func GetAwemeTopComment(awemeId string, start, end int) (data []entity.DyAwemeCommentTop, total int, comErr global.CommonError) {
 	data = make([]entity.DyAwemeCommentTop, 0)
 	query := hbasehelper.NewQuery()
 	result, err := query.
@@ -156,12 +156,12 @@ func GetAwemeTopComment(awemeId string, start, end int) (data []entity.DyAwemeCo
 		sort.Slice(data, func(i, j int) bool {
 			return utils.ToInt(data[j].DiggCount) < utils.ToInt(data[i].DiggCount)
 		})
-		length := len(data)
-		if start > length {
-			start = length
+		total = len(data)
+		if start > total {
+			start = total
 		}
-		if end > length {
-			end = length
+		if end > total {
+			end = total
 		}
 		data = data[start:end]
 	}
