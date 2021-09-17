@@ -48,4 +48,6 @@ const (
 	//爬虫加速限制频次
 	SpiderSpeedUpLimit KeyName = "dcm:spider:limit:%s:%s" //spidername,authorId
 
+	//脚本锁
+	DyMonitorUpdateRoomLock KeyName = "dcm:cmd:monitor:update:room:%s"
 )
