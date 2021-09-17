@@ -2,6 +2,7 @@ package business
 
 import (
 	"dongchamao/global"
+	"dongchamao/global/logger"
 	hbase2 "dongchamao/hbase"
 	"dongchamao/models/entity"
 	"dongchamao/services/hbaseService"
@@ -36,7 +37,7 @@ func (receiver *DirtyBusiness) ChangeAuthorCate(authorId, tags, tagsTow string) 
 	jsonByte, _ := jsoniter.Marshal(artificialData)
 	columnL := hbaseBusiness.BuildColumnValue("other", "artificial_data", string(jsonByte), entity.String)
 	err := hbaseBusiness.PutByRowKey(hbaseService.HbaseDyAuthor, authorId, []*hbase.TColumnValue{columnL})
-	if err != nil {
+	if logger.CheckError(err) != nil {
 		return global.NewError(5000)
 	}
 	ret, _ := NewSpiderBusiness().SpiderSpeedUp("author", authorId)
@@ -69,7 +70,7 @@ func (receiver *DirtyBusiness) ChangeProductCate(productId, dcmLevelFirst, first
 	columnL := hbaseBusiness.BuildColumnValue("other", "manmade_category", string(jsonByte), entity.String)
 	columnL2 := hbaseBusiness.BuildColumnValue("info", "dcm_level_first", dcmLevelFirst, entity.String)
 	err := hbaseBusiness.PutByRowKey(tableName, productId, []*hbase.TColumnValue{columnL, columnL2})
-	if err != nil {
+	if logger.CheckError(err) != nil {
 		return global.NewError(5000)
 	}
 	ret, _ := NewSpiderBusiness().SpiderSpeedUp("product", productId)
