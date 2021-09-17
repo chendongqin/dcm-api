@@ -169,12 +169,14 @@ func (receiver *ProductController) ProductBaseAnalysis() {
 	orderChart := make([]int64, 0)
 	pvChart := make([]int64, 0)
 	rateChart := make([]float64, 0)
+	gpmChart := make([]float64, 0)
 	orderList := make([]dy2.ProductOrderDaily, 0)
 	countData := dy2.ProductOrderDaily{}
 	beginTime := startTime
 	authorMap := map[string]string{}
 	roomMap := map[string]string{}
 	videoMap := map[string]string{}
+	gpmMap, _ := hbase.GetDyProductGpmRangeDate(productId, beginTime, endTime)
 	for {
 		if beginTime.After(endTime) {
 			break
@@ -190,6 +192,7 @@ func (receiver *ProductController) ProductBaseAnalysis() {
 		var order int64 = 0
 		var pv int64 = 0
 		var rate float64 = 0
+		var gpm float64 = 0
 		if v, ok := info[dateKey]; ok {
 			authors := map[string]string{}
 			for _, a := range v.AwemeAuthorList {
@@ -219,6 +222,16 @@ func (receiver *ProductController) ProductBaseAnalysis() {
 				rate = float64(d.ProductOrderAccount) / float64(d.Pv)
 			}
 		}
+		if d, ok := dailyMapData[dateKey]; ok {
+			order = d.ProductOrderAccount
+			pv = d.Pv
+			if d.Pv > 0 {
+				rate = float64(d.ProductOrderAccount) / float64(d.Pv)
+			}
+		}
+		if p, ok := gpmMap[dateKey]; ok {
+			gpm = p.Gpm
+		}
 		hotAuthorChart = append(hotAuthorChart, authorNum)
 		liveAuthorChart = append(liveAuthorChart, liveAuthorNum)
 		awemeAuthorChart = append(awemeAuthorChart, awemeAuthorNum)
@@ -227,6 +240,7 @@ func (receiver *ProductController) ProductBaseAnalysis() {
 		orderChart = append(orderChart, order)
 		pvChart = append(pvChart, pv)
 		rateChart = append(rateChart, rate)
+		gpmChart = append(gpmChart, gpm)
 		countData.OrderCount += order
 		countData.PvCount += pv
 		orderList = append(orderList, dy2.ProductOrderDaily{
@@ -234,6 +248,7 @@ func (receiver *ProductController) ProductBaseAnalysis() {
 			OrderCount: order,
 			PvCount:    pv,
 			Rate:       rate,
+			Gpm:        gpm,
 			AwemeNum:   awemeNum,
 			RoomNum:    roomNum,
 			AuthorNum:  authorNum,
@@ -266,6 +281,10 @@ func (receiver *ProductController) ProductBaseAnalysis() {
 			OrderCount: orderChart,
 			PvCount:    pvChart,
 			Rate:       rateChart,
+		},
+		"gpm_chart": map[string]interface{}{
+			"date": dateChart,
+			"gpm":  gpmChart,
 		},
 		"daily_list":  orderList,
 		"order_count": countData,

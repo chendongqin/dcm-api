@@ -5,6 +5,7 @@ var DyProductMap = HbaseEntity{
 	"title":                  {String, "title"},
 	"market_price":           {Double, "market_price"},
 	"price":                  {Double, "price"},
+	"gpm":                    {Double, "gpm"},
 	"url":                    {String, "url"},
 	"sales":                  {Long, "sales"},
 	"image":                  {String, "image"},
@@ -47,6 +48,7 @@ type DyProduct struct {
 	Title               string                   `json:"title"`
 	MarketPrice         float64                  `json:"market_price"`
 	Price               float64                  `json:"price"`
+	Gpm                 float64                  `json:"gpm"`
 	URL                 string                   `json:"url"`
 	Sales               int64                    `json:"sales"`
 	Image               string                   `json:"image"`
