@@ -21,12 +21,12 @@ func NewAccountAuthBusiness() *AccountAuthBusiness {
 
 //无参数路由不需登陆白名单
 var LoginWitheUri = []string{
-	"v1/account/collect/dy/tag/list",
 	"/v1/dy/author/live/tags",
 	"/v1/dy/author/cate",
 	"/v1/dy/product/cate",
 	"/v1/dy/author/search",
 	"/v1/dy/product/search",
+	"/v1/wechat/app",
 	"/v1/dy/live/search",
 	"/v1/dy/author/red",
 	//视频基础详情
@@ -36,6 +36,8 @@ var LoginWitheUri = []string{
 	"/v1/dy/author/info",
 	"/v1/dy/author/reputation",
 	"/v1/dy/xt/author/index",
+	//达人收藏
+	"v1/account/collect/dy/tag/list",
 	"/v1/account/collect/exist",
 	"/v1/dy/author/view",
 	"/v1/dy/author/basic/chart",
