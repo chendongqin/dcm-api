@@ -192,13 +192,16 @@ func (receiver *AwemeController) AwemeCommentTop() {
 	}
 	start := (page - 1) * pageSize
 	end := page * pageSize
-	awemeComment, comErr := hbase.GetAwemeTopComment(awemeId, start, end)
+	awemeComment, total, comErr := hbase.GetAwemeTopComment(awemeId, start, end)
 	if comErr != nil {
 		receiver.FailReturn(comErr)
 		return
 	}
+	if total > 1000 {
+		total = 1000
+	}
 	receiver.SuccReturn(map[string]interface{}{
-		"total": 1000,
+		"total": total,
 		"page":  page,
 		"size":  pageSize,
 		"list":  awemeComment,
