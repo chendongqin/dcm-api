@@ -12,6 +12,7 @@ func init() {
 			beego.NSRouter("/search", &v1dy.ProductController{}, "get:Search"),
 			beego.NSRouter("/base/:product_id", &v1dy.ProductController{}, "get:ProductBase"),
 			beego.NSRouter("/analysis/:product_id/:start/:end", &v1dy.ProductController{}, "get:ProductBaseAnalysis"),
+			beego.NSRouter("/fans/analysis/:product_id", &v1dy.ProductController{}, "get:ProductFanAnalyse"),
 			beego.NSRouter("/live/chart/:product_id/:start/:end", &v1dy.ProductController{}, "get:ProductLiveChart"),
 			beego.NSRouter("/live/room/:product_id/:start/:end", &v1dy.ProductController{}, "get:ProductLiveRoomList"),
 			beego.NSRouter("/author/:product_id/:start/:end", &v1dy.ProductController{}, "get:ProductLiveAuthorAnalysis"),
