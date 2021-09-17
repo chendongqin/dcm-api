@@ -63,7 +63,9 @@ func (receiver *LoginController) Login() {
 	}
 	_, _ = userBusiness.UpdateUserAndClearCache(nil, user.Id, updateData)
 	receiver.RegisterLogin(authToken, expTime)
+	receiver.CacheUserVipLevel()
 	receiver.SuccReturn(map[string]interface{}{
+		"vip":          setPassword,
 		"set_password": setPassword,
 		"token_info": dy.RepostAccountToken{
 			UserId:      user.Id,

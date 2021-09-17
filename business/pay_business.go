@@ -53,6 +53,21 @@ func (receiver *PayBusiness) DoPayDyCallback(vipOrder dcm.DcVipOrder) bool {
 	updateMap["value_type"] = 2
 	updateMap["update_time"] = time.Now().Format("2006-01-02 15:04:05")
 	nowTime := time.Now()
+	//直播监控处理
+	if vipOrder.OrderType == 7 {
+		affect, err := dbSession.
+			Table(new(dcm.DcUserVip)).
+			Where("user_id=? AND platform=?", vipOrder.UserId, VipPlatformDouYin).
+			Incr("live_monitor_num", orderInfo.MonitorNum).
+			Update(new(dcm.DcUserVip))
+		if affect == 0 || err != nil {
+			_ = dbSession.Rollback()
+			return false
+		}
+		_ = dbSession.Commit()
+		NewUserBusiness().DeleteUserLevelCache(vipOrder.UserId, VipPlatformDouYin)
+		return true
+	}
 	switch vipOrder.OrderType {
 	case 1, 2:
 		if userLevel.Level == 0 || userLevel.Level < vipOrder.Level {
@@ -61,10 +76,10 @@ func (receiver *PayBusiness) DoPayDyCallback(vipOrder dcm.DcVipOrder) bool {
 			updateMap["expiration"] = userLevel.Expiration.AddDate(0, 0, orderInfo.BuyDays).Format("2006-01-02 15:04:05")
 		}
 	case 3:
-		updateMap["sub_expiration"] = userLevel.Expiration
+		updateMap["sub_expiration"] = userLevel.Expiration.Format("2006-01-02 15:04:05")
 		updateMap["sub_num"] = userLevel.SubNum + orderInfo.People
 	case 4:
-		updateMap["sub_expiration"] = userLevel.Expiration
+		updateMap["sub_expiration"] = userLevel.Expiration.Format("2006-01-02 15:04:05")
 	case 5:
 		expiration := userLevel.Expiration.AddDate(0, 0, orderInfo.BuyDays).Format("2006-01-02 15:04:05")
 		updateMap["expiration"] = expiration
@@ -143,11 +158,11 @@ func (receiver *PayBusiness) GetVipPrice() (priceConfig dy.VipPriceConfig, prime
 	return priceConfig, primePrice
 }
 
-//获取最终支付价格日期map
-func (receiver *PayBusiness) GetVipPriceConfigMap() (priceConfigMap map[int]dy.VipPriceActive) {
-	priceConfig, _ := receiver.GetVipPrice()
-	priceConfigMap[yearDay] = priceConfig.Year
-	priceConfigMap[halfYearDay] = priceConfig.HalfYear
-	priceConfigMap[monthDay] = priceConfig.Month
-	return
+//获取最终支付价格日期
+func (receiver *PayBusiness) GetVipPriceConfigCheckActivity(userId int, checkActivity bool) dy.VipPriceConfig {
+	price, _ := receiver.GetVipPrice()
+	if checkActivity {
+		return NewVipActiveBusiness().CheckDyVipActive(userId, price)
+	}
+	return price
 }

@@ -7,6 +7,7 @@ import (
 	"dongchamao/global/utils"
 	"dongchamao/models/dcm"
 	"dongchamao/models/repost"
+	"dongchamao/models/repost/dy"
 	"dongchamao/services/payer"
 	"fmt"
 	jsoniter "github.com/json-iterator/go"
@@ -63,7 +64,7 @@ func (receiver *PayController) DySurplusValue() {
 	return
 }
 
-//创建抖音订单
+//创建抖音会员订单
 func (receiver *PayController) CreateDyOrder() {
 	if !business.UserActionLock("vip_order", utils.ToString(receiver.UserId), 2) {
 		receiver.FailReturn(global.NewError(4211))
@@ -74,7 +75,7 @@ func (receiver *PayController) CreateDyOrder() {
 	referrer := InputData.GetString("referrer", "")
 	groupPeople := InputData.GetInt("group_people", 0)
 	buyDays := InputData.GetInt("days", 0)
-	if orderType == 1 && !utils.InArrayInt(buyDays, []int{30, 180, 365}) {
+	if utils.InArrayInt(orderType, []int{1, 5}) && !utils.InArrayInt(buyDays, []int{30, 180, 365}) {
 		receiver.FailReturn(global.NewError(4000))
 		return
 	}
@@ -94,10 +95,6 @@ func (receiver *PayController) CreateDyOrder() {
 		receiver.FailReturn(global.NewMsgError("协同子账号只能购买会员业务～"))
 		return
 	}
-	if userVip.Expiration != userVip.SubExpiration && userVip.SubExpiration.After(time.Now()) && orderType == 3 {
-		receiver.FailReturn(global.NewMsgError("请先续费协同子账号才可购买协同子账号～"))
-		return
-	}
 	if userVip.Expiration.Before(time.Now()) {
 		userVip.Level = 0
 	}
@@ -114,8 +111,12 @@ func (receiver *PayController) CreateDyOrder() {
 		return
 	}
 	subExpiration := userVip.SubExpiration
-	if subExpiration.Before(time.Now()) {
+	if orderType == 2 {
 		subExpiration = time.Now()
+	} else {
+		if subExpiration.Before(time.Now()) {
+			subExpiration = time.Now()
+		}
 	}
 	var surplusDay int64 = 0
 	if userVip.Expiration.Before(time.Now()) {
@@ -132,7 +133,21 @@ func (receiver *PayController) CreateDyOrder() {
 		vipOrderType = 2
 		surplusValue, _ = payBusiness.GetDySurplusValue(int(surplusDay))
 	}
-	price := payBusiness.GetVipPriceConfigMap()[buyDays]
+	checkActivity := false
+	if orderType == 1 {
+		checkActivity = true
+	}
+	priceData := payBusiness.GetVipPriceConfigCheckActivity(receiver.UserId, checkActivity)
+	price := dy.VipPriceActive{}
+	if utils.InArrayInt(orderType, []int{1, 5}) {
+		if buyDays == 30 {
+			price = priceData.Month
+		} else if buyDays == 180 {
+			price = priceData.HalfYear
+		} else if buyDays == 365 {
+			price = priceData.Year
+		}
+	}
 	title := fmt.Sprintf("专业版%d天", buyDays)
 	var amount float64 = 0
 	orderInfo := repost.VipOrderInfo{
@@ -147,9 +162,17 @@ func (receiver *PayController) CreateDyOrder() {
 		orderInfo.Title = "会员购买"
 	} else if orderType == 2 { //购买协同账号
 		title = fmt.Sprintf("购买协同账号%d人", groupPeople)
-		amount = utils.FriendlyFloat64(surplusValue * float64(groupPeople))
+		amount = surplusValue * float64(groupPeople)
+		//先续费再购买
+		if userVip.Expiration != userVip.SubExpiration && userVip.SubExpiration.After(time.Now()) && userVip.SubNum > 0 {
+			surplusSubDay := (userVip.Expiration.Unix() - subExpiration.Unix()) / 86400
+			if surplusSubDay > 0 {
+				surplusSubsValue, _ := payBusiness.GetDySurplusValue(int(surplusSubDay))
+				amount += float64(userVip.SubNum) * surplusSubsValue
+			}
+		}
 		orderInfo.BuyDays = int(surplusDay)
-		orderInfo.Amount = amount
+		orderInfo.Amount = utils.FriendlyFloat64(amount)
 		orderInfo.People = groupPeople
 		orderInfo.Title = "协同账号购买"
 		vipOrderType = 3
@@ -162,7 +185,7 @@ func (receiver *PayController) CreateDyOrder() {
 		orderInfo.People = totalPeople
 		orderInfo.Title = "协同账号续费"
 		vipOrderType = 4
-	} else {
+	} else if orderType == 5 {
 		title = "团队成员续费"
 		totalPeople := userVip.SubNum + 1
 		amount = utils.FriendlyFloat64(price.GetPrice() * float64(totalPeople))
@@ -194,6 +217,70 @@ func (receiver *PayController) CreateDyOrder() {
 	}
 	_, err = dcm.Insert(nil, &vipOrder)
 	if vipOrder.Id == 0 {
+		receiver.FailReturn(global.NewError(5000))
+		return
+	}
+	receiver.SuccReturn(map[string]interface{}{
+		"order_id": vipOrder.Id,
+	})
+	return
+}
+
+//创建抖音直播监控订单
+func (receiver *PayController) CreateDyMonitorOrder() {
+	if !business.UserActionLock("monitor_order", utils.ToString(receiver.UserId), 2) {
+		receiver.FailReturn(global.NewError(4211))
+		return
+	}
+	InputData := receiver.InputFormat()
+	referrer := InputData.GetString("referrer", "")
+	number := InputData.GetInt("number", 0)
+	if !utils.InArrayInt(number, []int{10, 100, 500}) {
+		receiver.FailReturn(global.NewError(4000))
+		return
+	}
+	priceString := business.NewConfigBusiness().GetConfigJson("monitor_price", false)
+	priceList := dy.LiveMonitorPriceList{}
+	_ = jsoniter.Unmarshal([]byte(priceString), &priceList)
+	var amount float64 = 0
+	if utils.ToInt(priceList.MonitorPrice.Price10.Monitor) == number {
+		amount = utils.ToFloat64(priceList.MonitorPrice.Price10.Price)
+	} else if utils.ToInt(priceList.MonitorPrice.Price100.Monitor) == number {
+		amount = utils.ToFloat64(priceList.MonitorPrice.Price100.Price)
+	} else if utils.ToInt(priceList.MonitorPrice.Price500.Monitor) == number {
+		amount = utils.ToFloat64(priceList.MonitorPrice.Price500.Price)
+	}
+	if amount == 0 {
+		receiver.FailReturn(global.NewError(5000))
+		return
+	}
+	title := fmt.Sprintf("购买直播监控%d次", number)
+	orderInfo := repost.VipOrderInfo{
+		Title:      title,
+		MonitorNum: number,
+	}
+	uniqueID, _ := utils.Snow.GetSnowflakeId()
+	tradeNo := fmt.Sprintf("%s%d", time.Now().Format("060102"), uniqueID)
+	orderInfoJson, _ := jsoniter.Marshal(orderInfo)
+	vipOrder := dcm.DcVipOrder{
+		UserId:         receiver.UserId,
+		Username:       receiver.UserInfo.Username,
+		TradeNo:        tradeNo,
+		OrderType:      7,
+		Platform:       "douyin",
+		Title:          title,
+		Amount:         utils.ToString(amount),
+		TicketAmount:   "0",
+		Level:          0,
+		BuyDays:        orderInfo.BuyDays,
+		GoodsInfo:      string(orderInfoJson),
+		Referrer:       referrer,
+		ExpirationTime: time.Now().Add(1800 * time.Second),
+		CreateTime:     time.Now(),
+		UpdateTime:     time.Now(),
+	}
+	_, err := dcm.Insert(nil, &vipOrder)
+	if vipOrder.Id == 0 || err != nil {
 		receiver.FailReturn(global.NewError(5000))
 		return
 	}

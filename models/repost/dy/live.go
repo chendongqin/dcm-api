@@ -47,6 +47,7 @@ type DyLiveUserSimple struct {
 	Avatar          string  `json:"avatar"`
 	FollowerCount   int64   `json:"follower_count"`
 	ID              string  `json:"id"`
+	UniqueId        string  `json:"uniqueId"`
 	Nickname        string  `json:"nickname"`
 	WithCommerce    bool    `json:"with_commerce"`
 	ReputationScore float64 `json:"reputation_score"`
