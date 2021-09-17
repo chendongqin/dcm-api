@@ -308,6 +308,10 @@ func (receiver *AccountController) DyUserSearchList() {
 
 //判断是否收藏
 func (receiver *AccountController) IsCollect() {
+	if receiver.UserId == 0 {
+		receiver.SuccReturn(map[string]interface{}{"is_collect": 0})
+		return
+	}
 	platform, err := receiver.GetInt("platform", 1)
 	if err != nil {
 		receiver.FailReturn(global.NewError(4000))
