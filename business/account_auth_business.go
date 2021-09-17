@@ -28,8 +28,16 @@ var LoginWitheUri = []string{
 	"/v1/dy/product/search",
 	"/v1/dy/live/search",
 	"/v1/dy/author/red",
+	//视频基础详情
 	"/v1/dy/aweme/info",
+	"/v1/dy/aweme/chart",
+	//达人详情
 	"/v1/dy/author/info",
+	"/v1/dy/author/reputation",
+	"/v1/dy/xt/author/index",
+	"/v1/account/collect/exist",
+	"/v1/dy/author/view",
+	"/v1/dy/author/basic/chart",
 	"/v1/config",
 	"/v1/config/list",
 	"/v1/search/dy",
