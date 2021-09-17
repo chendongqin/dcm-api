@@ -52,7 +52,7 @@ func (receiver *PayController) DySurplusValue() {
 	//扩张团队单人价格
 	value, primeValue := payBusiness.GetDySurplusValue(int(math.Ceil(surplusDay)))
 	//获取价格配置
-	priceConfig, _ := payBusiness.GetVipPriceConfig()
+	priceConfig, _ := payBusiness.GetVipPrice(receiver.UserId)
 	receiver.SuccReturn(map[string]interface{}{
 		"now_surplus_day": int(math.Ceil(nowSurplusDay)),
 		"now_value":       nowValue * float64(total),
@@ -132,8 +132,7 @@ func (receiver *PayController) CreateDyOrder() {
 		vipOrderType = 2
 		surplusValue, _ = payBusiness.GetDySurplusValue(int(surplusDay))
 	}
-	dyVipValue, _ := payBusiness.GetVipPriceConfigMap()
-	dyVipValue = payBusiness.BirthdayPriceActivity(receiver.UserId, dyVipValue)
+	price := payBusiness.GetVipPriceConfigMap(receiver.UserId)[buyDays]
 	title := fmt.Sprintf("专业版%d天", buyDays)
 	var amount float64 = 0
 	orderInfo := repost.VipOrderInfo{
@@ -141,7 +140,7 @@ func (receiver *PayController) CreateDyOrder() {
 	}
 	//购买会员
 	if orderType == 1 {
-		amount = dyVipValue[buyDays]
+		amount = price.GetPrice()
 		orderInfo.BuyDays = buyDays
 		orderInfo.Amount = amount
 		orderInfo.People = 1
@@ -166,7 +165,7 @@ func (receiver *PayController) CreateDyOrder() {
 	} else {
 		title = "团队成员续费"
 		totalPeople := userVip.SubNum + 1
-		amount = utils.FriendlyFloat64(dyVipValue[buyDays] * float64(totalPeople))
+		amount = utils.FriendlyFloat64(price.GetPrice() * float64(totalPeople))
 		orderInfo.BuyDays = buyDays
 		orderInfo.Amount = amount
 		orderInfo.People = totalPeople

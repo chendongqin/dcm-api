@@ -87,6 +87,7 @@ func (receiver *CollectBusiness) GetDyCollect(tagId, collectType int, keywords, 
 			data[k].WeekOrderAccount = productInfo.WeekOrderAccount
 			data[k].PlatformLabel = productInfo.PlatformLabel
 			data[k].Undercarriage = productInfo.Undercarriage
+			data[k].IsCoupon = productInfo.IsCoupon
 			yesterdayDate := time.Now().AddDate(0, 0, -1).Format("20060102")
 			yesterdayTime, _ := time.ParseInLocation("20060102", yesterdayDate, time.Local)
 			startTime := yesterdayTime.AddDate(0, 0, -30)
