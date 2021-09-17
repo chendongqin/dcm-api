@@ -1,19 +1,28 @@
 package entity
 
 var DyAwemeMap = HbaseEntity{
-	"aweme_id":      {String, "aweme_id"},
-	"crawl_time":    {Long, "crawl_time"},
-	"aweme_title":   {String, "aweme_title"},
-	"data":          {Json, "data"},
-	"hot_word_show": {Json, "hot_word_show"},
+	"aweme_id":         {String, "aweme_id"},
+	"crawl_time":       {Long, "crawl_time"},
+	"aweme_title":      {String, "aweme_title"},
+	"data":             {Json, "data"},
+	"hot_word_show":    {Json, "hot_word_show"},
+	"gender":           {Json, "gender"},
+	"province":         {Json, "province"},
+	"city":             {Json, "city"},
+	"word":             {AJson, "word"},
+	"ageDistrinbution": {Json, "age_distrinbution"},
 }
 
 type DyAweme struct {
-	AwemeID     string           `json:"aweme_id"`
-	CrawlTime   int              `json:"crawl_time"`
-	AwemeTitle  string           `json:"aweme_title"`
-	Data        DyAwemeData      `json:"data"`
-	HotWordShow map[string]int64 `json:"hot_word_show"`
+	AwemeID          string                 `json:"aweme_id"`
+	CrawlTime        int                    `json:"crawl_time"`
+	AwemeTitle       string                 `json:"aweme_title"`
+	Data             DyAwemeData            `json:"data"`
+	HotWordShow      map[string]int64       `json:"hot_word_show"`
+	Gender           []DyAuthorFansGender   `json:"gender"`
+	Province         []DyAuthorFansProvince `json:"province"`
+	City             []DyAuthorFansCity     `json:"city"`
+	AgeDistrinbution []DyAuthorFansAge      `json:"age_distrinbution"`
 }
 
 type DyAwemeData struct {

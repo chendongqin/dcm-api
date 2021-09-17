@@ -29,6 +29,10 @@ func GetVideo(awemeId string) (data entity.DyAweme, comErr global.CommonError) {
 	}
 	detailMap := hbaseService.HbaseFormat(result, entity.DyAwemeMap)
 	utils.MapToStruct(detailMap, &data)
+	data.Gender = []entity.DyAuthorFansGender{{Gender: "女", GenderNum: "2"}, {Gender: "男", GenderNum: "3"}, {Gender: "女1", GenderNum: "2"}}
+	data.Province = []entity.DyAuthorFansProvince{{Province: "四川省", ProvinceNum: "1"}, {Province: "湖南", ProvinceNum: "1"}}
+	data.City = []entity.DyAuthorFansCity{{City: "广安市", CityNum: "1"}, {City: "衡阳", CityNum: "1"}}
+	data.AgeDistrinbution = []entity.DyAuthorFansAge{{AgeDistrinbution: "24-30", AgeDistrinbutionNum: "1"}}
 	duration := math.Ceil(float64(data.Data.Duration) / 1000)
 	data.Data.Duration = utils.ToInt(duration)
 	data.Data.AwemeTitle = data.AwemeTitle
