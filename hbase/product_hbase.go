@@ -252,9 +252,9 @@ func GetDyProductAwemeSalesTrendRangeDate(productId string, startTime, endTime t
 }
 
 //商品视频某天分销数据
-func GetDyProductAwemeSalesTrend(product, date string) (data entity.DyProductAwemeSalesTrend, comErr global.CommonError) {
+func GetDyProductAwemeSalesTrend(productId, date string) (data entity.DyProductAwemeSalesTrend, comErr global.CommonError) {
 	query := hbasehelper.NewQuery()
-	startRow := product + "_" + date
+	startRow := productId + "_" + date
 	result, err := query.
 		SetTable(hbaseService.HbaseDyProductAwemeSalesTrend).
 		GetByRowKey([]byte(startRow))
@@ -286,6 +286,53 @@ func GetDyProductAwemeDailyDistributeRange(awemeId, beginDate, endDate string) (
 		hData := entity.DyProductAwemeDailyDistribute{}
 		utils.MapToStruct(dataMap, &hData)
 		data = append(data, hData)
+	}
+	return
+}
+
+//商品gpm数据
+func GetDyProductGpmDate(productId, date string) (data entity.AdsDyProductGpmDi, comErr global.CommonError) {
+	query := hbasehelper.NewQuery()
+	startRow := productId + "_" + date
+	result, err := query.
+		SetTable(hbaseService.HbaseAdsDyProductGpmDi).
+		GetByRowKey([]byte(startRow))
+	if err != nil {
+		comErr = global.NewMsgError(err.Error())
+		return
+	}
+	dataMap := hbaseService.HbaseFormat(result, entity.AdsDyProductGpmDiMap)
+	utils.MapToStruct(dataMap, &data)
+	return
+}
+
+//商品gpm数据
+func GetDyProductGpmRangeDate(productId string, startTime, endTime time.Time) (data map[string]entity.AdsDyProductGpmDi, comErr global.CommonError) {
+	query := hbasehelper.NewQuery()
+	startRow := productId + "_" + startTime.Format("20060102")
+	endRow := productId + "_" + endTime.AddDate(0, 0, 1).Format("20060102")
+	results, err := query.
+		SetTable(hbaseService.HbaseAdsDyProductGpmDi).
+		SetStartRow([]byte(startRow)).
+		SetStopRow([]byte(endRow)).
+		Scan(1000)
+	if err != nil {
+		comErr = global.NewMsgError(err.Error())
+		return
+	}
+	data = map[string]entity.AdsDyProductGpmDi{}
+	for _, v := range results {
+		dataMap := hbaseService.HbaseFormat(v, entity.AdsDyProductGpmDiMap)
+		hData := entity.AdsDyProductGpmDi{}
+		utils.MapToStruct(dataMap, &hData)
+		rowKey := string(v.GetRow())
+		rowKeyArr := strings.Split(rowKey, "_")
+		if len(rowKeyArr) < 2 {
+			comErr = global.NewError(5000)
+			return
+		}
+		date := rowKeyArr[1]
+		data[date] = hData
 	}
 	return
 }

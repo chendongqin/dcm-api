@@ -24,6 +24,7 @@ type ProductOrderDaily struct {
 	OrderCount int64   `json:"order_count"`
 	PvCount    int64   `json:"pv_count"`
 	Rate       float64 `json:"rate"`
+	Gpm        float64 `json:"gpm"`
 	AwemeNum   int     `json:"aweme_num"`
 	RoomNum    int     `json:"room_num"`
 	AuthorNum  int     `json:"author_num"`

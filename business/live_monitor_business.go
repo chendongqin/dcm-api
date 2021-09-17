@@ -3,6 +3,7 @@ package business
 import (
 	"dongchamao/global"
 	"dongchamao/global/alias"
+	"dongchamao/global/cache"
 	"dongchamao/global/logger"
 	"dongchamao/global/utils"
 	"dongchamao/hbase"
@@ -112,6 +113,15 @@ func (receiver *LiveMonitorBusiness) checkRoom(monitorRoom dcm.DcLiveMonitorRoom
 		}
 		//推送下播通知
 		receiver.SendFinishNotice(monitorRoom, roomInfo)
+	} else {
+		cacheKey := cache.GetCacheKey(cache.DyMonitorUpdateRoomLock, roomInfo.RoomID)
+		cacheData := global.Cache.Get(cacheKey)
+		if cacheData == "" {
+			err := receiver.UpdateLiveRoomMonitor(&roomInfo)
+			if err != nil {
+				_ = global.Cache.Set(cacheKey, "1", 300)
+			}
+		}
 	}
 
 }
@@ -481,13 +491,14 @@ func (receiver *LiveMonitorBusiness) AddLiveMonitor(liveMonitor *dcm.DcLiveMonit
 // 更新直播间记录
 func (receiver *LiveMonitorBusiness) UpdateLiveRoomMonitor(roomInfo *entity.DyLiveInfo) (err error) {
 	updateMap := map[string]interface{}{
-		"gmv":        roomInfo.PredictGmv,
-		"sales":      roomInfo.PredictSales,
-		"user_total": roomInfo.TotalUser,
+		"gmv":         roomInfo.PredictGmv,
+		"sales":       roomInfo.PredictSales,
+		"user_total":  roomInfo.TotalUser,
+		"update_time": time.Now().Format("2006-01-02 15:04:05"),
 	}
 	_, err = dcm.GetDbSession().
 		Table(new(dcm.DcLiveMonitorRoom)).
-		Cols("gmv", "sales", "user_total").
+		Cols("gmv", "sales", "user_total", "update_time").
 		Where("room_id=?", roomInfo.RoomID).
 		Update(updateMap)
 	return
