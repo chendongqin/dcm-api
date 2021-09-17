@@ -141,20 +141,7 @@ func (receiver *UserBusiness) SmsLogin(mobile, code, unionid string, appId int) 
 		comErr = global.NewError(4209)
 		return
 	}
-	if unionid != "" {
-		wechatModel := dcm.DcWechat{} //如果有微信信息 头像/昵称 默认用微信
-		if exist, _ := dcm.GetSlaveDbSession().Where("unionid = ?", unionid).Get(&wechatModel); !exist {
-			comErr = global.NewError(4304)
-			return
-		}
-		user.Nickname = wechatModel.NickName
-		user.Avatar = wechatModel.Avatar
-		user.Openid = wechatModel.Openid
-		user.OpenidApp = wechatModel.OpenidApp
-		user.Unionid = wechatModel.Unionid
-	} else {
-		user.Nickname = mobile[:3] + "****" + mobile[7:]
-	}
+	user = dcm.DcUser{}
 	exist, err := dcm.GetBy("username", mobile, &user)
 	if exist && err == nil {
 		if user.Status != 1 {
@@ -177,6 +164,20 @@ func (receiver *UserBusiness) SmsLogin(mobile, code, unionid string, appId int) 
 			return
 		}
 		isNew = 1
+	}
+	if unionid != "" {
+		wechatModel := dcm.DcWechat{} //如果有微信信息 头像/昵称 默认用微信
+		if exist, _ := dcm.GetSlaveDbSession().Where("unionid = ?", unionid).Get(&wechatModel); !exist {
+			comErr = global.NewError(4304)
+			return
+		}
+		user.Nickname = wechatModel.NickName
+		user.Avatar = wechatModel.Avatar
+		user.Openid = wechatModel.Openid
+		user.OpenidApp = wechatModel.OpenidApp
+		user.Unionid = wechatModel.Unionid
+	} else {
+		user.Nickname = mobile[:3] + "****" + mobile[7:]
 	}
 	tokenString, expire, err = receiver.CreateToken(appId, user.Id, 604800)
 	if err != nil {

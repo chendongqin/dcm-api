@@ -176,7 +176,14 @@ func (receiver *ProductController) ProductBaseAnalysis() {
 	authorMap := map[string]string{}
 	roomMap := map[string]string{}
 	videoMap := map[string]string{}
-	gpmMap, _ := hbase.GetDyProductGpmRangeDate(productId, beginTime, endTime)
+	//gpmMap, _ := hbase.GetDyProductGpmRangeDate(productId, beginTime, endTime)
+	productInfo, _ := hbase.GetProductInfo(productId)
+	priceTrends := business.ProductPriceTrendsListOrderByTime(productInfo.PriceTrends)
+	priceMap := map[string]float64{}
+	for _, v := range priceTrends {
+		dstr := time.Unix(v.StartTime, 0).Format("20060102")
+		priceMap[dstr] = v.Price
+	}
 	for {
 		if beginTime.After(endTime) {
 			break
@@ -191,8 +198,9 @@ func (receiver *ProductController) ProductBaseAnalysis() {
 		roomNum := 0
 		var order int64 = 0
 		var pv int64 = 0
-		var rate float64 = 0
 		var gpm float64 = 0
+		var rate float64 = 0
+		var price = productInfo.Price
 		if v, ok := info[dateKey]; ok {
 			authors := map[string]string{}
 			for _, a := range v.AwemeAuthorList {
@@ -229,8 +237,11 @@ func (receiver *ProductController) ProductBaseAnalysis() {
 				rate = float64(d.ProductOrderAccount) / float64(d.Pv)
 			}
 		}
-		if p, ok := gpmMap[dateKey]; ok {
-			gpm = p.Gpm
+		if p, ok := priceMap[dateKey]; ok {
+			price = p
+		}
+		if pv > 0 {
+			gpm = float64(order) * price / float64(pv) * 1000
 		}
 		hotAuthorChart = append(hotAuthorChart, authorNum)
 		liveAuthorChart = append(liveAuthorChart, liveAuthorNum)

@@ -154,10 +154,15 @@ func (receiver *LiveController) LiveInfoData() {
 	authorBusiness := business.NewAuthorBusiness()
 	reputation, _ := hbase.GetLiveReputation(roomId)
 	authorInfo, _ := authorBusiness.HbaseGetAuthor(liveInfo.User.ID)
+	uniqueId := authorInfo.Data.UniqueID
+	if uniqueId == "" {
+		uniqueId = authorInfo.Data.ShortID
+	}
 	liveUser := dy2.DyLiveUserSimple{
 		Avatar:          liveInfo.User.Avatar,
 		FollowerCount:   authorInfo.Data.FollowerCount,
 		ID:              business.IdEncrypt(liveInfo.User.ID),
+		UniqueId:        uniqueId,
 		Nickname:        liveInfo.User.Nickname,
 		WithCommerce:    liveInfo.User.WithCommerce,
 		ReputationScore: reputation.AuthorReputation.Score,
