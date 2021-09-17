@@ -138,10 +138,10 @@ func (receiver *UserBusiness) SmsLogin(mobile, code, unionid string, appId int) 
 		return
 	}
 	codeKey := cache.GetCacheKey(cache.SmsCodeVerify, "login", mobile)
-	//if verifyCode := global.Cache.Get(codeKey); verifyCode != code {
-	//	comErr = global.NewError(4209)
-	//	return
-	//}
+	if verifyCode := global.Cache.Get(codeKey); verifyCode != code {
+		comErr = global.NewError(4209)
+		return
+	}
 	user = dcm.DcUser{}
 	exist, err := dcm.GetBy("username", mobile, &user)
 	if exist && err == nil {
