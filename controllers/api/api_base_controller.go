@@ -201,10 +201,7 @@ func (this *ApiBaseController) InitUserToken() {
 			this.RegisterLogin(tokenString, expireTime)
 		}
 
-		this.DyLevel = userBusiness.GetCacheUserLevel(this.UserId, 1, true)
-		this.XhsLevel = userBusiness.GetCacheUserLevel(this.UserId, 2, true)
-		this.TbLevel = userBusiness.GetCacheUserLevel(this.UserId, 3, true)
-
+		this.CacheUserVipLevel()
 		//异步记录用户行为日志
 		this.LogInputOutput("Format", this.ApiDatas)
 		this.HasLogin = true
@@ -212,6 +209,14 @@ func (this *ApiBaseController) InitUserToken() {
 		return
 	}
 	return
+}
+
+//缓存会员信息
+func (this *ApiBaseController) CacheUserVipLevel() {
+	userBusiness := business.NewUserBusiness()
+	this.DyLevel = userBusiness.GetCacheUserLevel(this.UserId, 1, true)
+	this.XhsLevel = userBusiness.GetCacheUserLevel(this.UserId, 2, true)
+	this.TbLevel = userBusiness.GetCacheUserLevel(this.UserId, 3, true)
 }
 
 func (this *ApiBaseController) CheckSign() {
