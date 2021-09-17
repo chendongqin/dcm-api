@@ -24,6 +24,11 @@ func GetProductInfo(productId string) (data entity.DyProduct, comErr global.Comm
 	}
 	detailMap := hbaseService.HbaseFormat(result, entity.DyProductMap)
 	utils.MapToStruct(detailMap, &data)
+	//todo mock数据
+	data.Gender = []entity.DyAuthorFansGender{{Gender: "女", GenderNum: "2"}, {Gender: "男", GenderNum: "3"}, {Gender: "女1", GenderNum: "2"}}
+	data.Province = []entity.DyAuthorFansProvince{{Province: "四川省", ProvinceNum: "1"}, {Province: "湖南", ProvinceNum: "1"}}
+	data.City = []entity.DyAuthorFansCity{{City: "广安市", CityNum: "1"}, {City: "衡阳", CityNum: "1"}}
+	data.AgeDistrinbution = []entity.DyAuthorFansAge{{AgeDistrinbution: "24-30", AgeDistrinbutionNum: "1"}}
 	data.ProductID = productId
 	if data.TbCouponInfo == "null" {
 		data.TbCouponInfo = ""
