@@ -135,11 +135,10 @@ func (receiver *PayBusiness) GetVipPriceConfigMap() (priceMap map[int]float64, p
 	primePriceMap = make(map[int]float64, len(config.VipPrice))
 	for _, v := range priceData {
 		priceMap[utils.ToInt(v.Days)] = utils.ToFloat64(v.Price)
-		primePriceMap[utils.ToInt(v.Days)] = utils.ToFloat64(v.PrimePriceValue)
+		primePriceMap[utils.ToInt(v.Days)] = utils.ToFloat64(v.InitPrice)
 	}
 	return
 }
-
 //扩充团队价格与原价
 func (receiver *PayBusiness) GetDySurplusValue(surplusDay int) (value float64, primeValue float64) {
 	price, primePrice := receiver.GetVipPriceConfig()
