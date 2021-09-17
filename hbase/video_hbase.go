@@ -153,10 +153,17 @@ func GetAwemeTopComment(awemeId string, start, end int) (data []entity.DyAwemeCo
 	if commentStruct.DiggInfo != "" {
 		commentStruct.DiggInfo = "[" + strings.Replace(commentStruct.DiggInfo, "=----=", ",", -1) + "]"
 		_ = json.Unmarshal([]byte(commentStruct.DiggInfo), &data)
+		sort.Slice(data, func(i, j int) bool {
+			return utils.ToInt(data[j].DiggCount) < utils.ToInt(data[i].DiggCount)
+		})
+		length := len(data)
+		if start > length {
+			start = length
+		}
+		if end > length {
+			end = length
+		}
+		data = data[start:end]
 	}
-	sort.Slice(data, func(i, j int) bool {
-		return utils.ToInt(data[j].DiggCount) < utils.ToInt(data[i].DiggCount)
-	})
-	data = data[start:end]
 	return
 }

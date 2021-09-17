@@ -133,7 +133,7 @@ func (receiver *PayController) CreateDyOrder() {
 		surplusValue, _ = payBusiness.GetDySurplusValue(int(surplusDay))
 	}
 	dyVipValue, _ := payBusiness.GetVipPriceConfigMap()
-	dyVipValue = payBusiness.BirthdayMonthPriceActivity(receiver.UserId, dyVipValue)
+	dyVipValue = payBusiness.BirthdayPriceActivity(receiver.UserId, dyVipValue)
 	title := fmt.Sprintf("专业版%d天", buyDays)
 	var amount float64 = 0
 	orderInfo := repost.VipOrderInfo{
