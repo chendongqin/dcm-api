@@ -34,7 +34,7 @@ const (
 	DyJewelRankShowNum     = 1500  //专业版条数
 	DyRankMinShowNum       = 5     //榜单条数
 	LiveMonitorMonthMinNum = 0     //抖音非会员监控次数
-	LiveMonitorMonthMaxNum = 1000  //抖音专业版监控次数
+	LiveMonitorMonthMaxNum = 100   //抖音专业版监控次数
 )
 
 const (

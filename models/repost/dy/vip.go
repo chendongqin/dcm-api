@@ -18,13 +18,6 @@ type VipPriceConfig struct {
 
 type VipPriceActive struct {
 	Price         float64
-	ActivePrice   float64
+	OriginalPrice float64
 	ActiveComment string
-}
-
-func (v *VipPriceActive) GetPrice() float64 {
-	if v.ActivePrice != 0 {
-		return v.ActivePrice
-	}
-	return v.Price
 }

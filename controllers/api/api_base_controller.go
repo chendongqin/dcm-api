@@ -35,6 +35,8 @@ type ApiBaseController struct {
 	TbLevel          int
 	Ip               string
 	TrueUri          string
+	Channel          string
+	ChannelWords     string
 	IsInitToken      bool               //是否初始化过token
 	LastInitTokenErr global.CommonError //记录首次初始化token的错误
 	Token            string
@@ -310,6 +312,8 @@ func (this *ApiBaseController) InitApi() {
 	}
 	authBusiness := business.NewAccountAuthBusiness()
 	this.TrueUri = authBusiness.GetTrueRequestUri(this.Ctx.Input.URI(), this.Ctx.Input.Params())
+	this.Channel = this.Ctx.Input.Header("CHANNEL")
+	this.ChannelWords = this.Ctx.Input.Header("CHANNEL_WORDS")
 	this.LogInputOutput("Input", this.ApiDatas)
 }
 

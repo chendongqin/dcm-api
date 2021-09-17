@@ -55,7 +55,7 @@ func (receiver *PayController) DySurplusValue() {
 	//扩张团队单人价格
 	value, primeValue := payBusiness.GetDySurplusValue(int(math.Ceil(surplusDay)))
 	//获取价格配置
-	priceConfig, _ := payBusiness.GetVipPrice()
+	priceConfig := payBusiness.GetVipPrice()
 	receiver.SuccReturn(map[string]interface{}{
 		"now_surplus_day": int(math.Ceil(nowSurplusDay)),
 		"now_value":       nowValue * float64(total),
@@ -63,6 +63,14 @@ func (receiver *PayController) DySurplusValue() {
 		"prime_value":     primeValue,
 		"price_config":    priceConfig,
 	})
+	return
+}
+
+//抖音会员价格
+func (receiver *PayController) DyPriceList() {
+	payBusiness := business.NewPayBusiness()
+	priceData := payBusiness.GetVipPriceConfigCheckActivity(receiver.UserId, true)
+	receiver.SuccReturn(priceData)
 	return
 }
 
@@ -120,6 +128,7 @@ func (receiver *PayController) CreateDyOrder() {
 			subExpiration = time.Now()
 		}
 	}
+	var remark = ""
 	var surplusDay int64 = 0
 	if userVip.Expiration.Before(time.Now()) {
 		surplusDay = (userVip.Expiration.Unix() - subExpiration.Unix()) / 86400
@@ -157,11 +166,12 @@ func (receiver *PayController) CreateDyOrder() {
 	}
 	//购买会员
 	if orderType == 1 {
-		amount = price.GetPrice()
+		amount = price.Price
 		orderInfo.BuyDays = buyDays
 		orderInfo.Amount = amount
 		orderInfo.People = 1
 		orderInfo.Title = "会员购买"
+		remark = price.ActiveComment
 	} else if orderType == 2 { //购买协同账号
 		title = fmt.Sprintf("购买协同账号%d人", groupPeople)
 		amount = surplusValue * float64(groupPeople)
@@ -170,7 +180,9 @@ func (receiver *PayController) CreateDyOrder() {
 			surplusSubDay := (userVip.Expiration.Unix() - subExpiration.Unix()) / 86400
 			if surplusSubDay > 0 {
 				surplusSubsValue, _ := payBusiness.GetDySurplusValue(int(surplusSubDay))
-				amount += float64(userVip.SubNum) * surplusSubsValue
+				tmpAmount := utils.FriendlyFloat64(float64(userVip.SubNum) * surplusSubsValue)
+				remark = fmt.Sprintf("已有子账号续费：%f元", tmpAmount)
+				amount += tmpAmount
 			}
 		}
 		orderInfo.BuyDays = int(surplusDay)
@@ -190,12 +202,13 @@ func (receiver *PayController) CreateDyOrder() {
 	} else if orderType == 5 {
 		title = "团队成员续费"
 		totalPeople := userVip.SubNum + 1
-		amount = utils.FriendlyFloat64(price.GetPrice() * float64(totalPeople))
+		amount = utils.FriendlyFloat64(price.Price * float64(totalPeople))
 		orderInfo.BuyDays = buyDays
 		orderInfo.Amount = amount
 		orderInfo.People = totalPeople
 		orderInfo.Title = "团队成员续费"
 		vipOrderType = 5
+		remark = price.ActiveComment
 	}
 	uniqueID, _ := utils.Snow.GetSnowflakeId()
 	tradeNo := fmt.Sprintf("%s%d", time.Now().Format("060102"), uniqueID)
@@ -214,6 +227,7 @@ func (receiver *PayController) CreateDyOrder() {
 		GoodsInfo:      string(orderInfoJson),
 		Referrer:       referrer,
 		ExpirationTime: time.Now().Add(1800 * time.Second),
+		Remark:         remark,
 		CreateTime:     time.Now(),
 		UpdateTime:     time.Now(),
 	}
@@ -235,7 +249,6 @@ func (receiver *PayController) CreateDyMonitorOrder() {
 		return
 	}
 	InputData := receiver.InputFormat()
-	referrer := InputData.GetString("referrer", "")
 	number := InputData.GetInt("number", 0)
 	if !utils.InArrayInt(number, []int{10, 100, 500}) {
 		receiver.FailReturn(global.NewError(4000))
@@ -276,7 +289,7 @@ func (receiver *PayController) CreateDyMonitorOrder() {
 		Level:          0,
 		BuyDays:        orderInfo.BuyDays,
 		GoodsInfo:      string(orderInfoJson),
-		Referrer:       referrer,
+		Referrer:       "",
 		ExpirationTime: time.Now().Add(1800 * time.Second),
 		CreateTime:     time.Now(),
 		UpdateTime:     time.Now(),

@@ -405,11 +405,12 @@ func (receiver *UserBusiness) GetUserList(userIds []string) (userList []dcm.DcUs
 }
 
 //新用户注册赠送vip
-func (receiver *UserBusiness) SendUserVip(user *dcm.DcUser) {
+func (receiver *UserBusiness) SendUserVip(user *dcm.DcUser, buyDays int) {
 	uniqueID, _ := utils.Snow.GetSnowflakeId()
-	BuyDays := 7 //购买天数
 	now := time.Now()
-	ExpirationDate := now.AddDate(0, 0, BuyDays)
+	title := fmt.Sprintf("赠送%d天专业版", buyDays)
+	remark := "新用户注册"
+	ExpirationDate := now.AddDate(0, 0, buyDays)
 	var VipOrder = dcm.DcVipOrder{
 		UserId:       user.Id,
 		Username:     user.Username,
@@ -418,13 +419,13 @@ func (receiver *UserBusiness) SendUserVip(user *dcm.DcUser) {
 		InterTradeNo: "",
 		OrderType:    6,
 		Platform:     "douyin",
-		Level:        3,
-		BuyDays:      7,
-		Title:        "新注册用户赠送vip",
+		Level:        UserLevelJewel,
+		BuyDays:      buyDays,
+		Title:        title,
 		Status:       1,
 		PayStatus:    1,
 		GoodsInfo:    "",
-		Remark:       "新注册用户赠送vip",
+		Remark:       remark,
 		CreateTime:   now,
 		UpdateTime:   now,
 	}

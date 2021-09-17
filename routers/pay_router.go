@@ -10,6 +10,7 @@ func init() {
 	//支付相关
 	ns := beego.NewNamespace("/v1",
 		beego.NSNamespace("/pay",
+			beego.NSRouter("/price/dy", &v1.PayController{}, "get:DyPriceList"),
 			beego.NSRouter("/order/dy", &v1.PayController{}, "put:CreateDyOrder"),
 			beego.NSRouter("/order/dy/monitor", &v1.PayController{}, "put:CreateDyMonitorOrder"),
 			beego.NSRouter("/wechat/:channel/:order_id", &v1.PayController{}, "get:WechatPay"),
