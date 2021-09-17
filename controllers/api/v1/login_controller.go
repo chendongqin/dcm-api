@@ -61,6 +61,10 @@ func (receiver *LoginController) Login() {
 	if business.AppIdMap[appId] == 2 {
 		updateData["is_install_app"] = 1
 	}
+	//  新用户赠送vip
+	if isNew == 1 {
+		userBusiness.SendUserVip(&user)
+	}
 	_, _ = userBusiness.UpdateUserAndClearCache(nil, user.Id, updateData)
 	receiver.RegisterLogin(authToken, expTime)
 	receiver.CacheUserVipLevel()

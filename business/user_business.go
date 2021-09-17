@@ -6,6 +6,7 @@ import (
 	"dongchamao/global/utils"
 	"dongchamao/models/dcm"
 	"dongchamao/services/mutex"
+	"fmt"
 	"github.com/dgrijalva/jwt-go"
 	"github.com/go-xorm/xorm"
 	"github.com/gomodule/redigo/redis"
@@ -401,4 +402,56 @@ func (receiver *UserBusiness) GetUserList(userIds []string) (userList []dcm.DcUs
 		return nil, global.NewCommonError(err)
 	}
 	return
+}
+
+//新用户注册赠送vip
+func (receiver *UserBusiness) SendUserVip(user *dcm.DcUser) {
+	uniqueID, _ := utils.Snow.GetSnowflakeId()
+	BuyDays := 7 //购买天数
+	now := time.Now()
+	ExpirationDate := now.AddDate(0, 0, BuyDays)
+	var VipOrder = dcm.DcVipOrder{
+		UserId:       user.Id,
+		Username:     user.Username,
+		TradeNo:      fmt.Sprintf("%s%d", time.Now().Format("060102"), uniqueID),
+		Channel:      0,
+		InterTradeNo: "",
+		OrderType:    6,
+		Platform:     "douyin",
+		Level:        3,
+		BuyDays:      7,
+		Title:        "新注册用户赠送vip",
+		Status:       1,
+		PayStatus:    1,
+		GoodsInfo:    "",
+		Remark:       "新注册用户赠送vip",
+		CreateTime:   now,
+		UpdateTime:   now,
+	}
+
+	var UserVip = dcm.DcUserVip{
+		UserId:     user.Id,
+		Platform:   VipPlatformDouYin,
+		Level:      UserLevelJewel,
+		Expiration: ExpirationDate,
+		Remark:     "新用户注册赠送vip",
+		UpdateTime: now,
+	}
+	dbSession := dcm.GetDbSession()
+	affectOrder, errOrder := dcm.Insert(dbSession, &VipOrder)
+	if affectOrder == 0 || errOrder != nil {
+		//logger.CheckError(errOrder)
+		NewMonitorBusiness().SendErr("注册赠送vip", fmt.Sprintf("vip_order数据表插入报错:%s", errOrder))
+		_ = dbSession.Rollback()
+		return
+	} else {
+		affectUser, errUser := dcm.Insert(dbSession, &UserVip)
+		if affectUser == 0 || errUser != nil {
+			NewMonitorBusiness().SendErr("注册赠送vip", fmt.Sprintf("user_vip数据表插入报错:%s", errOrder))
+			_ = dbSession.Rollback()
+			return
+		} else {
+			_ = dbSession.Commit()
+		}
+	}
 }
