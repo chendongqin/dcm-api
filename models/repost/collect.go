@@ -25,6 +25,7 @@ type CollectProductRet struct {
 	WeekOrderAccount int64
 	PlatformLabel    string
 	Undercarriage    int
+	IsCoupon         int
 }
 
 type CollectAwemeRet struct {
