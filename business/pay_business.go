@@ -98,7 +98,7 @@ func (receiver *PayBusiness) GetVipPriceConfig() (priceMap map[int]float64, prim
 
 //扩充团队价格与原价
 func (receiver *PayBusiness) GetDySurplusValue(surplusDay int) (value float64, primeValue float64) {
-	price, primePrice := receiver.GetVipPrice(0)
+	price, primePrice := receiver.GetVipPrice()
 	if surplusDay >= yearDay {
 		value = float64(surplusDay) * price.Year.GetPrice() / float64(yearDay)
 		primeValue = float64(surplusDay) * primePrice.Year.GetPrice() / float64(yearDay)
@@ -131,7 +131,7 @@ func (receiver *PayBusiness) GetDySurplusValue(surplusDay int) (value float64, p
 }
 
 //获取最终支付价格
-func (receiver *PayBusiness) GetVipPrice(userId int) (priceConfig dy.VipPriceConfig, primePrice dy.VipPriceConfig) {
+func (receiver *PayBusiness) GetVipPrice() (priceConfig dy.VipPriceConfig, primePrice dy.VipPriceConfig) {
 	priceMap, primePriceMap := receiver.GetVipPriceConfig()
 	priceConfig = dy.VipPriceConfig{
 		Year: dy.VipPriceActive{Price: priceMap[yearDay]}, HalfYear: dy.VipPriceActive{Price: priceMap[halfYearDay]}, Month: dy.VipPriceActive{Price: priceMap[monthDay]},
@@ -139,15 +139,13 @@ func (receiver *PayBusiness) GetVipPrice(userId int) (priceConfig dy.VipPriceCon
 	primePrice = dy.VipPriceConfig{
 		Year: dy.VipPriceActive{Price: primePriceMap[yearDay]}, HalfYear: dy.VipPriceActive{Price: primePriceMap[halfYearDay]}, Month: dy.VipPriceActive{Price: primePriceMap[monthDay]},
 	}
-	//登录时区分用户活动处理
-	priceConfig = NewVipActiveBusiness().CheckDyVipActive(userId, priceConfig)
 	//活动价struct、活动价格map通过日期获取、原价struct
 	return priceConfig, primePrice
 }
 
 //获取最终支付价格日期map
-func (receiver *PayBusiness) GetVipPriceConfigMap(userId int) (priceConfigMap map[int]dy.VipPriceActive) {
-	priceConfig, _ := receiver.GetVipPrice(userId)
+func (receiver *PayBusiness) GetVipPriceConfigMap() (priceConfigMap map[int]dy.VipPriceActive) {
+	priceConfig, _ := receiver.GetVipPrice()
 	priceConfigMap[yearDay] = priceConfig.Year
 	priceConfigMap[halfYearDay] = priceConfig.HalfYear
 	priceConfigMap[monthDay] = priceConfig.Month

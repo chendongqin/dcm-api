@@ -52,7 +52,7 @@ func (receiver *PayController) DySurplusValue() {
 	//扩张团队单人价格
 	value, primeValue := payBusiness.GetDySurplusValue(int(math.Ceil(surplusDay)))
 	//获取价格配置
-	priceConfig, _ := payBusiness.GetVipPrice(receiver.UserId)
+	priceConfig, _ := payBusiness.GetVipPrice()
 	receiver.SuccReturn(map[string]interface{}{
 		"now_surplus_day": int(math.Ceil(nowSurplusDay)),
 		"now_value":       nowValue * float64(total),
@@ -132,7 +132,7 @@ func (receiver *PayController) CreateDyOrder() {
 		vipOrderType = 2
 		surplusValue, _ = payBusiness.GetDySurplusValue(int(surplusDay))
 	}
-	price := payBusiness.GetVipPriceConfigMap(receiver.UserId)[buyDays]
+	price := payBusiness.GetVipPriceConfigMap()[buyDays]
 	title := fmt.Sprintf("专业版%d天", buyDays)
 	var amount float64 = 0
 	orderInfo := repost.VipOrderInfo{
