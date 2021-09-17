@@ -29,6 +29,7 @@ var LoginWitheUri = []string{
 	"/v1/wechat/app",
 	"/v1/dy/live/search",
 	"/v1/dy/author/red",
+	"/v1/pay/price/dy",
 	//视频基础详情
 	"/v1/dy/aweme/info",
 	"/v1/dy/aweme/chart",
