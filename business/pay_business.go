@@ -15,12 +15,6 @@ var monthDay = 30
 var halfYearDay = 180
 var yearDay = 365
 
-var DyVipPayMoney = map[int]float64{
-	monthDay:    259,
-	halfYearDay: 799,
-	yearDay:     1199,
-}
-
 type PayBusiness struct {
 }
 
@@ -86,46 +80,8 @@ func (receiver *PayBusiness) DoPayDyCallback(vipOrder dcm.DcVipOrder) bool {
 	return true
 }
 
-//剩余价值计算
-func (receiver *PayBusiness) CountDySurplusValue(surplusDay int) float64 {
-	yearPayMoney := DyVipPayMoney[yearDay]
-	halfYearPayMoney := DyVipPayMoney[halfYearDay]
-	monthPayMoney := DyVipPayMoney[monthDay]
-	if surplusDay >= yearDay {
-		value := float64(surplusDay) * yearPayMoney / float64(yearDay)
-		return math.Ceil(value)
-	}
-	//半年剩余价值
-	halfYear := surplusDay / halfYearDay
-	halfYearValue := halfYearPayMoney * float64(halfYear)
-	surplusDay -= halfYearDay * halfYear
-	//剩余价值计算
-	var dayValue float64 = 0
-	if surplusDay > monthDay {
-		dayValue = float64(surplusDay) * halfYearPayMoney / float64(halfYearDay)
-	} else {
-		dayValue = float64(surplusDay) * monthPayMoney / float64(monthDay)
-	}
-	value := halfYearValue + dayValue
-	if value < 100 {
-		value = 100
-	}
-	return math.Ceil(value)
-}
-
-func (receiver *PayBusiness) GetVipPriceConfig() (price dy.VipPriceConfig, primePrice dy.VipPriceConfig) {
-	priceMap, primePriceMap := receiver.GetVipPriceConfigMap()
-	price = dy.VipPriceConfig{
-		Year: priceMap[yearDay], HalfYear: priceMap[halfYearDay], Month: priceMap[monthDay],
-	}
-	primePrice = dy.VipPriceConfig{
-		Year: primePriceMap[yearDay], HalfYear: primePriceMap[halfYearDay], Month: primePriceMap[monthDay],
-	}
-	return
-}
-
 //获取抖音会员价格Map数据
-func (receiver *PayBusiness) GetVipPriceConfigMap() (priceMap map[int]float64, primePriceMap map[int]float64) {
+func (receiver *PayBusiness) GetVipPriceConfig() (priceMap map[int]float64, primePriceMap map[int]float64) {
 	var configJson dcm.DcConfigJson
 	_, _ = dcm.GetBy("key_name", "vip_price", &configJson)
 	var config dy.VipPrice
@@ -142,26 +98,26 @@ func (receiver *PayBusiness) GetVipPriceConfigMap() (priceMap map[int]float64, p
 
 //扩充团队价格与原价
 func (receiver *PayBusiness) GetDySurplusValue(surplusDay int) (value float64, primeValue float64) {
-	price, primePrice := receiver.GetVipPriceConfig()
+	price, primePrice := receiver.GetVipPrice(0)
 	if surplusDay >= yearDay {
-		value = float64(surplusDay) * price.Year / float64(yearDay)
-		primeValue = float64(surplusDay) * primePrice.Year / float64(yearDay)
+		value = float64(surplusDay) * price.Year.GetPrice() / float64(yearDay)
+		primeValue = float64(surplusDay) * primePrice.Year.GetPrice() / float64(yearDay)
 		return math.Ceil(value), math.Ceil(primeValue)
 	}
 	//半年剩余价值
 	halfYear := surplusDay / halfYearDay
-	halfYearValue := price.HalfYear * float64(halfYear)
-	primeHalfYearValue := primePrice.HalfYear * float64(halfYear)
+	halfYearValue := price.HalfYear.GetPrice() * float64(halfYear)
+	primeHalfYearValue := primePrice.HalfYear.GetPrice() * float64(halfYear)
 	surplusDay -= halfYearDay * halfYear
 	//剩余价值计算
 	var dayValue float64 = 0
 	var primeDayValue float64 = 0
 	if surplusDay > monthDay {
-		dayValue = float64(surplusDay) * price.HalfYear / float64(halfYearDay)
-		primeDayValue = float64(surplusDay) * primePrice.Month / float64(halfYearDay)
+		dayValue = float64(surplusDay) * price.HalfYear.GetPrice() / float64(halfYearDay)
+		primeDayValue = float64(surplusDay) * primePrice.Month.GetPrice() / float64(halfYearDay)
 	} else {
-		dayValue = float64(surplusDay) * price.Month / float64(monthDay)
-		primeDayValue = float64(surplusDay) * primePrice.Month / float64(monthDay)
+		dayValue = float64(surplusDay) * price.Month.GetPrice() / float64(monthDay)
+		primeDayValue = float64(surplusDay) * primePrice.Month.GetPrice() / float64(monthDay)
 	}
 	value = halfYearValue + dayValue
 	primeValue = primeHalfYearValue + primeDayValue
@@ -174,19 +130,26 @@ func (receiver *PayBusiness) GetDySurplusValue(surplusDay int) (value float64, p
 	return math.Ceil(value), math.Ceil(primeValue)
 }
 
-//首月首次月销量处理
-func (receiver *PayBusiness) BirthdayPriceActivity(userId int, dyVipValue map[int]float64) map[int]float64 {
-	if time.Now().Unix() >= 1635696000 {
-		return dyVipValue
+//获取最终支付价格
+func (receiver *PayBusiness) GetVipPrice(userId int) (priceConfig dy.VipPriceConfig, primePrice dy.VipPriceConfig) {
+	priceMap, primePriceMap := receiver.GetVipPriceConfig()
+	priceConfig = dy.VipPriceConfig{
+		Year: dy.VipPriceActive{Price: priceMap[yearDay]}, HalfYear: dy.VipPriceActive{Price: priceMap[halfYearDay]}, Month: dy.VipPriceActive{Price: priceMap[monthDay]},
 	}
-	if userId > 0 {
-		exist, _ := dcm.GetSlaveDbSession().
-			Where("user_id=? AND status>=0 AND expiration_time > ?", userId, time.Now().Format("2006-01-02 15:04:05")).
-			Get(new(dcm.DcVipOrder))
-		if exist {
-			return dyVipValue
-		}
+	primePrice = dy.VipPriceConfig{
+		Year: dy.VipPriceActive{Price: primePriceMap[yearDay]}, HalfYear: dy.VipPriceActive{Price: primePriceMap[halfYearDay]}, Month: dy.VipPriceActive{Price: primePriceMap[monthDay]},
 	}
-	dyVipValue[monthDay] = 99
-	return dyVipValue
+	//登录时区分用户活动处理
+	priceConfig = NewVipActiveBusiness().CheckDyVipActive(userId, priceConfig)
+	//活动价struct、活动价格map通过日期获取、原价struct
+	return priceConfig, primePrice
+}
+
+//获取最终支付价格日期map
+func (receiver *PayBusiness) GetVipPriceConfigMap(userId int) (priceConfigMap map[int]dy.VipPriceActive) {
+	priceConfig, _ := receiver.GetVipPrice(userId)
+	priceConfigMap[yearDay] = priceConfig.Year
+	priceConfigMap[halfYearDay] = priceConfig.HalfYear
+	priceConfigMap[monthDay] = priceConfig.Month
+	return
 }

@@ -11,7 +11,20 @@ type VipPrice struct {
 }
 
 type VipPriceConfig struct {
-	Year     float64 `json:"year"`
-	HalfYear float64 `json:"half_year"`
-	Month    float64 `json:"month"`
+	Year     VipPriceActive `json:"year"`
+	HalfYear VipPriceActive `json:"half_year"`
+	Month    VipPriceActive `json:"month"`
+}
+
+type VipPriceActive struct {
+	Price         float64
+	ActivePrice   float64
+	ActiveComment string
+}
+
+func (v *VipPriceActive) GetPrice() float64 {
+	if v.ActivePrice != 0 {
+		return v.ActivePrice
+	}
+	return v.Price
 }
