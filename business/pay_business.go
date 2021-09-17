@@ -139,6 +139,7 @@ func (receiver *PayBusiness) GetVipPriceConfigMap() (priceMap map[int]float64, p
 	}
 	return
 }
+
 //扩充团队价格与原价
 func (receiver *PayBusiness) GetDySurplusValue(surplusDay int) (value float64, primeValue float64) {
 	price, primePrice := receiver.GetVipPriceConfig()
@@ -174,7 +175,7 @@ func (receiver *PayBusiness) GetDySurplusValue(surplusDay int) (value float64, p
 }
 
 //首月首次月销量处理
-func (receiver *PayBusiness) BirthdayMonthPriceActivity(userId int, dyVipValue map[int]float64) map[int]float64 {
+func (receiver *PayBusiness) BirthdayPriceActivity(userId int, dyVipValue map[int]float64) map[int]float64 {
 	if time.Now().Unix() >= 1635696000 {
 		return dyVipValue
 	}
