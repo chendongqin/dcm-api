@@ -6,7 +6,7 @@ import (
 
 type DcUser struct {
 	Id               int       `xorm:"not null pk autoincr INT(11)"`
-	Username         string    `xorm:"not null default '' comment('用户名（手机号）') CHAR(11)"`
+	Username         string    `xorm:"not null default '' comment('用户名（手机号）') unique CHAR(11)"`
 	Nickname         string    `xorm:"not null comment('昵称') VARCHAR(30)"`
 	Password         string    `xorm:"not null default '' comment('密码') VARCHAR(32)"`
 	Salt             string    `xorm:"not null comment('盐') CHAR(4)"`
@@ -24,6 +24,8 @@ type DcUser struct {
 	CreateTime       time.Time `xorm:"comment('创建时间') TIMESTAMP"`
 	UpdateTime       time.Time `xorm:"comment('更新时间') TIMESTAMP"`
 	SetPassword      int       `xorm:"not null default 0 comment('是否设置了登陆密码') TINYINT(1)"`
-	Entrance         int       `xorm:"not null comment('用户来源0:PC,1:小程序,2:APP,3:wap') TINYINT(1)"`
-	IsInstallApp     int       `xorm:"not null comment('是否安装app') TINYINT(1)"`
+	Entrance         int       `xorm:"not null default 0 comment('用户来源0:PC,1:小程序,2:APP,3:wap') TINYINT(1)"`
+	IsInstallApp     int       `xorm:"not null default 0 comment('是否安装app') TINYINT(1)"`
+	Channel          string    `xorm:"not null default '' comment('渠道') VARCHAR(50)"`
+	ChannelWords     string    `xorm:"not null comment('渠道关键词') VARCHAR(50)"`
 }

@@ -31,7 +31,7 @@ func UpdateLiveMonitorStatus() {
 
 // 直播间轮询
 func LiveRoomMonitor() {
-	business.NewLiveMonitorBusiness().ScanLiveRoom()
+	go business.NewLiveMonitorBusiness().ScanLiveRoom()
 	return
 }
 

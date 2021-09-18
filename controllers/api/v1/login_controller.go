@@ -61,6 +61,12 @@ func (receiver *LoginController) Login() {
 	if business.AppIdMap[appId] == 2 {
 		updateData["is_install_app"] = 1
 	}
+	//新用户赠送7天专业版
+	if isNew == 1 {
+		userBusiness.SendUserVip(&user, 7)
+		updateData["channel"] = receiver.Channel
+		updateData["channel_words"] = receiver.ChannelWords
+	}
 	_, _ = userBusiness.UpdateUserAndClearCache(nil, user.Id, updateData)
 	receiver.RegisterLogin(authToken, expTime)
 	receiver.CacheUserVipLevel()

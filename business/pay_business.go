@@ -6,6 +6,7 @@ import (
 	"dongchamao/models/repost"
 	"dongchamao/models/repost/dy"
 	"encoding/json"
+	"fmt"
 	jsoniter "github.com/json-iterator/go"
 	"math"
 	"time"
@@ -14,6 +15,12 @@ import (
 var monthDay = 30
 var halfYearDay = 180
 var yearDay = 365
+
+var DyVipPayMoney = map[int]float64{
+	monthDay:    259,
+	halfYearDay: 799,
+	yearDay:     1199,
+}
 
 type PayBusiness struct {
 }
@@ -113,26 +120,26 @@ func (receiver *PayBusiness) GetVipPriceConfig() (priceMap map[int]float64, prim
 
 //扩充团队价格与原价
 func (receiver *PayBusiness) GetDySurplusValue(surplusDay int) (value float64, primeValue float64) {
-	price, primePrice := receiver.GetVipPrice()
+	price := receiver.GetVipPrice()
 	if surplusDay >= yearDay {
-		value = float64(surplusDay) * price.Year.GetPrice() / float64(yearDay)
-		primeValue = float64(surplusDay) * primePrice.Year.GetPrice() / float64(yearDay)
+		value = float64(surplusDay) * price.Year.Price / float64(yearDay)
+		primeValue = float64(surplusDay) * price.Year.OriginalPrice / float64(yearDay)
 		return math.Ceil(value), math.Ceil(primeValue)
 	}
 	//半年剩余价值
 	halfYear := surplusDay / halfYearDay
-	halfYearValue := price.HalfYear.GetPrice() * float64(halfYear)
-	primeHalfYearValue := primePrice.HalfYear.GetPrice() * float64(halfYear)
+	halfYearValue := price.HalfYear.Price * float64(halfYear)
+	primeHalfYearValue := price.HalfYear.OriginalPrice * float64(halfYear)
 	surplusDay -= halfYearDay * halfYear
 	//剩余价值计算
 	var dayValue float64 = 0
 	var primeDayValue float64 = 0
 	if surplusDay > monthDay {
-		dayValue = float64(surplusDay) * price.HalfYear.GetPrice() / float64(halfYearDay)
-		primeDayValue = float64(surplusDay) * primePrice.Month.GetPrice() / float64(halfYearDay)
+		dayValue = float64(surplusDay) * price.HalfYear.Price / float64(halfYearDay)
+		primeDayValue = float64(surplusDay) * price.Month.OriginalPrice / float64(halfYearDay)
 	} else {
-		dayValue = float64(surplusDay) * price.Month.GetPrice() / float64(monthDay)
-		primeDayValue = float64(surplusDay) * primePrice.Month.GetPrice() / float64(monthDay)
+		dayValue = float64(surplusDay) * price.Month.Price / float64(monthDay)
+		primeDayValue = float64(surplusDay) * price.Month.OriginalPrice / float64(monthDay)
 	}
 	value = halfYearValue + dayValue
 	primeValue = primeHalfYearValue + primeDayValue
@@ -146,21 +153,54 @@ func (receiver *PayBusiness) GetDySurplusValue(surplusDay int) (value float64, p
 }
 
 //获取最终支付价格
-func (receiver *PayBusiness) GetVipPrice() (priceConfig dy.VipPriceConfig, primePrice dy.VipPriceConfig) {
+func (receiver *PayBusiness) GetVipPrice() (priceConfig dy.VipPriceConfig) {
 	priceMap, primePriceMap := receiver.GetVipPriceConfig()
 	priceConfig = dy.VipPriceConfig{
-		Year: dy.VipPriceActive{Price: priceMap[yearDay]}, HalfYear: dy.VipPriceActive{Price: priceMap[halfYearDay]}, Month: dy.VipPriceActive{Price: priceMap[monthDay]},
+		Year:     dy.VipPriceActive{Price: priceMap[yearDay], OriginalPrice: primePriceMap[yearDay]},
+		HalfYear: dy.VipPriceActive{Price: priceMap[halfYearDay], OriginalPrice: primePriceMap[halfYearDay]},
+		Month:    dy.VipPriceActive{Price: priceMap[monthDay], OriginalPrice: primePriceMap[monthDay]},
 	}
-	primePrice = dy.VipPriceConfig{
-		Year: dy.VipPriceActive{Price: primePriceMap[yearDay]}, HalfYear: dy.VipPriceActive{Price: primePriceMap[halfYearDay]}, Month: dy.VipPriceActive{Price: primePriceMap[monthDay]},
+	//保证数据准确
+	if priceConfig.Month.Price == 0 {
+		priceConfig.Month.Price = DyVipPayMoney[monthDay]
 	}
+	if priceConfig.HalfYear.Price == 0 {
+		priceConfig.HalfYear.Price = DyVipPayMoney[halfYearDay]
+	}
+	if priceConfig.Year.Price == 0 {
+		priceConfig.Year.Price = DyVipPayMoney[yearDay]
+	}
+	if priceConfig.Month.OriginalPrice == 0 {
+		priceConfig.Month.OriginalPrice = priceConfig.Month.Price
+	}
+	if priceConfig.HalfYear.OriginalPrice == 0 {
+		priceConfig.HalfYear.OriginalPrice = priceConfig.Month.Price
+	}
+	if priceConfig.Year.OriginalPrice == 0 {
+		priceConfig.Year.OriginalPrice = priceConfig.Month.Price
+	}
+	if priceConfig.Month.OriginalPrice > priceConfig.Month.Price {
+		rate := utils.FriendlyFloat64(priceConfig.Month.Price/priceConfig.Month.OriginalPrice) * 10
+		priceConfig.Month.ActiveComment = fmt.Sprintf("%.1f折", rate)
+	}
+	if priceConfig.HalfYear.OriginalPrice > priceConfig.HalfYear.Price {
+		rate := utils.FriendlyFloat64(priceConfig.HalfYear.Price/priceConfig.HalfYear.OriginalPrice) * 10
+		priceConfig.HalfYear.ActiveComment = fmt.Sprintf("%.1f折", rate)
+	}
+	if priceConfig.Year.OriginalPrice > priceConfig.Year.Price {
+		rate := utils.FriendlyFloat64(priceConfig.Year.Price/priceConfig.Year.OriginalPrice) * 10
+		priceConfig.Year.ActiveComment = fmt.Sprintf("%.1f折", rate)
+	}
+	//primePrice = dy.VipPriceConfig{
+	//	Year: dy.VipPriceActive{Price: primePriceMap[yearDay]}, HalfYear: dy.VipPriceActive{Price: primePriceMap[halfYearDay]}, Month: dy.VipPriceActive{Price: primePriceMap[monthDay]},
+	//}
 	//活动价struct、活动价格map通过日期获取、原价struct
-	return priceConfig, primePrice
+	return priceConfig
 }
 
 //获取最终支付价格日期
 func (receiver *PayBusiness) GetVipPriceConfigCheckActivity(userId int, checkActivity bool) dy.VipPriceConfig {
-	price, _ := receiver.GetVipPrice()
+	price := receiver.GetVipPrice()
 	if checkActivity {
 		return NewVipActiveBusiness().CheckDyVipActive(userId, price)
 	}
