@@ -31,6 +31,7 @@ func init() {
 			beego.NSRouter("/keyword/search", &v1dy.AuthorController{}, "get:AuthorSearch"),
 			beego.NSRouter("/income/search", &v1dy.AuthorController{}, "get:AuthorIncomeSearch"),
 			beego.NSRouter("/income", &v1dy.AuthorController{}, "put:AuthorIncome"),
+			beego.NSRouter("/speed/:author_id", &v1dy.AuthorController{}, "get:SpiderSpeedUp"),
 		),
 		beego.NSNamespace("/xt/author",
 			beego.NSRouter("/index/:author_id", &v1dy.AuthorController{}, "get:AuthorStarSimpleData"),
