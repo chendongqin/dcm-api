@@ -39,6 +39,12 @@ var DyProductMap = HbaseEntity{
 	"cos_ratio":              {Double, "cos_ratio"},
 	"price_trends":           {AJson, "price_trends"},
 	"other_manmade_category": {Json, "manmade_category"},
+	//粉丝分析数据
+	"gender":           {Json, "gender"},
+	"province":         {Json, "province"},
+	"city":             {Json, "city"},
+	"word":             {AJson, "word"},
+	"ageDistrinbution": {Json, "age_distrinbution"},
 	//"tb_small_images":        {AJson, "tb_small_images"},
 }
 
@@ -85,6 +91,11 @@ type DyProduct struct {
 	CosRatio            float64                  `json:"cos_ratio"`
 	PriceTrends         []DyProductPriceTrend    `json:"price_trends"`
 	ManmadeCategory     DyProductManmadeCategory `json:"manmade_category"`
+	//粉丝分析数据
+	Gender           []DyAuthorFansGender   `json:"gender"`
+	Province         []DyAuthorFansProvince `json:"province"`
+	City             []DyAuthorFansCity     `json:"city"`
+	AgeDistrinbution []DyAuthorFansAge      `json:"age_distrinbution"`
 	//TbSmallImages       []interface{} `json:"tb_small_images"`
 }
 

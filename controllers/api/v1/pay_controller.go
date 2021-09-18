@@ -48,7 +48,9 @@ func (receiver *PayController) DySurplusValue() {
 		}
 		subTime := vip.Expiration.Sub(startTime)
 		nowSurplusDay = subTime.Hours() / 24
-		nowValue, _ = payBusiness.GetDySurplusValue(int(math.Ceil(nowSurplusDay)))
+		if vip.Expiration != vip.SubExpiration && vip.Expiration.After(time.Now()) {
+			nowValue, _ = payBusiness.GetDySurplusValue(int(math.Ceil(nowSurplusDay)))
+		}
 	}
 	//扩张团队单人价格
 	value, primeValue := payBusiness.GetDySurplusValue(int(math.Ceil(surplusDay)))
