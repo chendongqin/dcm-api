@@ -214,14 +214,14 @@ func (receiver *LiveMonitorBusiness) GetMaxCount(userId int) (freeCount int, pur
 }
 
 func (receiver *LiveMonitorBusiness) GetRemainingCount(userID int) (remainFreeCount int, remainPurchaseCount int) {
-	useFreeCount, usePurchaseCount := receiver.GetCurrentCount(userID)
+	useFreeCount, _ := receiver.GetCurrentCount(userID)
 	// 总共可以使用的次数
 	maxFreeCount, maxPurchaseCount := receiver.GetMaxCount(userID)
 	remainFreeCount = maxFreeCount - useFreeCount
 	if remainFreeCount <= 0 {
 		remainFreeCount = 0
 	}
-	remainPurchaseCount = maxPurchaseCount - usePurchaseCount
+	remainPurchaseCount = maxPurchaseCount
 	if remainPurchaseCount <= 0 {
 		remainPurchaseCount = 0
 	}
