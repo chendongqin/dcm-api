@@ -30,3 +30,47 @@ type EsSumStats struct {
 	Avg   float64 `json:"avg"`
 	Sum   float64 `json:"sum"`
 }
+
+type DyLiveDataUserSumCount struct {
+	TotalWatchCnt struct {
+		Value float64 `json:"value"`
+	} `json:"total_watch_cnt"`
+	TotalUserCount struct {
+		Value float64 `json:"value"`
+	} `json:"total_user_count"`
+}
+
+type DyLiveDataCategorySumCount struct {
+	TotalWatchCnt struct {
+		Value float64 `json:"value"`
+	} `json:"total_watch_cnt"`
+	TotalUserCount struct {
+		Value float64 `json:"value"`
+	} `json:"total_user_count"`
+	TotalGmv struct {
+		Value float64 `json:"value"`
+	} `json:"total_gmv"`
+	TotalTicketCount struct {
+		Value float64 `json:"value"`
+	} `json:"total_ticket_count"`
+}
+
+type DyLiveCategoryRateByWatchCnt struct {
+	DocCount int `json:"doc_count"`
+	Key      struct {
+		DcmLevelFirst string `json:"dcm_level_first"`
+	} `json:"key"`
+	TotalWatchCnt struct {
+		Value int64 `json:"value"`
+	} `json:"total_watch_cnt"`
+}
+
+type DyLiveCategoryRateByGmv struct {
+	DocCount int `json:"doc_count"`
+	Key      struct {
+		DcmLevelFirst string `json:"dcm_level_first"`
+	} `json:"key"`
+	TotalGmv struct {
+		Value float64 `json:"value"`
+	} `json:"total_gmv"`
+}
