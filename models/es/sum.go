@@ -50,6 +50,9 @@ type DyLiveDataCategorySumCount struct {
 	TotalGmv struct {
 		Value float64 `json:"value"`
 	} `json:"total_gmv"`
+	TotalSales struct {
+		Value float64 `json:"value"`
+	} `json:"total_sales"`
 	TotalTicketCount struct {
 		Value float64 `json:"value"`
 	} `json:"total_ticket_count"`
