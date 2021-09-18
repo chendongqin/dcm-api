@@ -157,7 +157,7 @@ func (receiver *PayBusiness) GetDySurplusValue(surplusDay int) (value float64, p
 	if primeValue < 100 {
 		primeValue = 100
 	}
-	return math.Ceil(value), math.Ceil(primeValue)
+	return value, primeValue
 }
 
 //获取最终支付价格
