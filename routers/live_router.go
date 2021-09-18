@@ -41,6 +41,7 @@ func init() {
 			beego.NSRouter("/all/:start/:end", &v1dy.LiveCountController{}, "get:AllLiveCount"),
 			beego.NSRouter("/rank/:start/:end", &v1dy.LiveCountController{}, "get:LiveCategoryRank"),
 			beego.NSRouter("/rate/:type/:start/:end", &v1dy.LiveCountController{}, "get:LiveCompositeByCategory"),
+			beego.NSRouter("/detail/:start/:end", &v1dy.LiveCountController{}, "get:LiveSumByCategory"),
 		),
 	)
 	// 注册路由组

@@ -476,13 +476,28 @@ func (receiver *LiveMonitorBusiness) AddLiveMonitor(liveMonitor *dcm.DcLiveMonit
 	if liveMonitor.StartTime.Before(time.Now()) {
 		liveMonitor.Status = 1
 	}
-
+	_ = dbSession.Begin()
 	_, err = dbSession.InsertOne(liveMonitor)
-	lastId = int64(liveMonitor.Id)
 	if err != nil {
-		logs.Error("[live monitor] add live monitor failed. err: %s", err)
+		_ = dbSession.Rollback()
+		NewMonitorBusiness().SendErr("直播监控", fmt.Sprintf("[live monitor] add live monitor failed. err: %s", err))
 		return
 	}
+	if liveMonitor.PurchaseCount > 0 {
+		affect, err1 := dbSession.Table(new(dcm.DcUserVip)).
+			Where("user_id=? AND platform=? AND live_monitor_num >= ?", liveMonitor.UserId, VipPlatformDouYin, liveMonitor.PurchaseCount).
+			Cols("live_monitor_num").
+			Decr("live_monitor_num", liveMonitor.PurchaseCount).
+			Update(new(dcm.DcUserVip))
+		if affect == 0 || err1 != nil {
+			NewMonitorBusiness().SendErr("直播监控", fmt.Sprintf("[live monitor] add live monitor failed. err: %s", err))
+			_ = dbSession.Rollback()
+			err = err1
+			return
+		}
+	}
+	_ = dbSession.Commit()
+	lastId = int64(liveMonitor.Id)
 	author, _ := hbase.GetAuthor(liveMonitor.AuthorId)
 	go NewSpiderBusiness().AddLive(liveMonitor.AuthorId, author.FollowerCount, AddLiveTopMonitored, liveMonitor.EndTime.Unix())
 	return

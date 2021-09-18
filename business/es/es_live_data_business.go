@@ -196,3 +196,71 @@ func (receiver *EsLiveDataBusiness) LiveRankByCategory(startTime, endTime time.T
 	utils.MapToStruct(results, &list)
 	return
 }
+
+//带货行业数据分类统计
+func (receiver *EsLiveDataBusiness) ProductLiveDataByCategory(startTime, endTime time.Time, category string) (total int, data es.DyLiveDataCategorySumCount) {
+	data = es.DyLiveDataCategorySumCount{}
+	esTable, err := GetESTableByTime(es.DyLiveInfoBaseTable, startTime, endTime)
+	if err != nil {
+		return
+	}
+	esQuery, esMultiQuery := elasticsearch.NewElasticQueryGroup()
+	esQuery.SetRange("create_time", map[string]interface{}{
+		"gte": startTime.Unix(),
+		"lt":  endTime.AddDate(0, 0, 1).Unix(),
+	})
+	esQuery.SetRange("num_product", map[string]interface{}{
+		"gt": 0,
+	})
+	if category != "" {
+		esQuery.SetMatchPhrase("dcm_level_first", category)
+	}
+	var cacheTime time.Duration = 300
+	today := time.Now().Format("20060102")
+	if today != endTime.Format("20060102") {
+		cacheTime = 86400
+	}
+	countResult := esMultiQuery.
+		SetCache(cacheTime).
+		SetTable(esTable).
+		SetMust(esQuery.Condition).
+		RawQuery(map[string]interface{}{
+			"query": map[string]interface{}{
+				"bool": map[string]interface{}{
+					"must": esQuery.Condition,
+				},
+			},
+			"size": 0,
+			"aggs": map[string]interface{}{
+				"total_watch_cnt": map[string]interface{}{
+					"sum": map[string]interface{}{
+						"field": "watch_cnt",
+					},
+				},
+				"total_user_count": map[string]interface{}{
+					"sum": map[string]interface{}{
+						"field": "user_count",
+					},
+				},
+				"total_gmv": map[string]interface{}{
+					"sum": map[string]interface{}{
+						"field": "predict_gmv",
+					},
+				},
+				"total_ticket_count": map[string]interface{}{
+					"sum": map[string]interface{}{
+						"field": "ticket_count",
+					},
+				},
+			},
+		})
+	if r, ok := countResult["aggregations"]; ok {
+		utils.MapToStruct(r, &data)
+	}
+	if h, ok := countResult["hits"]; ok {
+		if t, ok2 := h.(map[string]interface{})["total"]; ok2 {
+			total = utils.ToInt(t.(float64))
+		}
+	}
+	return
+}

@@ -82,7 +82,7 @@ func (receiver *LiveCountController) LiveCategoryRank() {
 	return
 }
 
-//直播总览
+//直播分类占比
 func (receiver *LiveCountController) LiveCompositeByCategory() {
 	startTime, endTime, comErr := receiver.GetRangeDate()
 	if comErr != nil {
@@ -162,5 +162,26 @@ func (receiver *LiveCountController) LiveCompositeByCategory() {
 		return rateData[i].Value > rateData[j].Value
 	})
 	receiver.SuccReturn(rateData)
+	return
+}
+
+//带货直播分类统计
+func (receiver *LiveCountController) LiveSumByCategory() {
+	startTime, endTime, comErr := receiver.GetRangeDate()
+	if comErr != nil {
+		receiver.FailReturn(comErr)
+		return
+	}
+	category := receiver.GetString("category", "")
+	if category == "" {
+		receiver.FailReturn(global.NewError(4000))
+		return
+	}
+	esLiveDataBusiness := es.NewEsLiveDataBusiness()
+	total, data := esLiveDataBusiness.ProductLiveDataByCategory(startTime, endTime, category)
+	receiver.SuccReturn(map[string]interface{}{
+		"total": total,
+		"data":  data,
+	})
 	return
 }
