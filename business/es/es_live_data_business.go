@@ -16,7 +16,7 @@ func NewEsLiveDataBusiness() *EsLiveDataBusiness {
 }
 
 //达人直播间统计
-func (receiver *EsLiveDataBusiness) SumLiveData(startTime, endTime time.Time, hasProduct int) (total int, data es.DyLiveDataUserSumCount) {
+func (receiver *EsLiveDataBusiness) SumLiveData(startTime, endTime time.Time, hasProduct, living int) (total int, data es.DyLiveDataUserSumCount) {
 	data = es.DyLiveDataUserSumCount{}
 	esTable, err := GetESTableByTime(es.DyLiveInfoBaseTable, startTime, endTime)
 	if err != nil {
@@ -31,6 +31,9 @@ func (receiver *EsLiveDataBusiness) SumLiveData(startTime, endTime time.Time, ha
 		esQuery.SetRange("num_product", map[string]interface{}{
 			"gt": 0,
 		})
+	}
+	if living == 1 {
+		esQuery.SetTerm("room_status", 2)
 	}
 	var cacheTime time.Duration = 300
 	today := time.Now().Format("20060102")
@@ -73,7 +76,7 @@ func (receiver *EsLiveDataBusiness) SumLiveData(startTime, endTime time.Time, ha
 }
 
 //商品占比查询
-func (receiver *EsLiveDataBusiness) LiveCompositeByCategory(startTime, endTime time.Time, rateType int) (total int, res []interface{}) {
+func (receiver *EsLiveDataBusiness) LiveCompositeByCategory(startTime, endTime time.Time, rateType, living int) (total int, res []interface{}) {
 	res = []interface{}{}
 	esTable, err := GetESTableByTime(es.DyLiveInfoBaseTable, startTime, endTime)
 	if err != nil {
@@ -87,6 +90,9 @@ func (receiver *EsLiveDataBusiness) LiveCompositeByCategory(startTime, endTime t
 	esQuery.SetRange("num_product", map[string]interface{}{
 		"gt": 0,
 	})
+	if living == 1 {
+		esQuery.SetTerm("room_status", 2)
+	}
 	var cacheTime time.Duration = 600
 	today := time.Now().Format("20060102")
 	if today != endTime.Format("20060102") {
@@ -159,7 +165,7 @@ func (receiver *EsLiveDataBusiness) LiveCompositeByCategory(startTime, endTime t
 }
 
 //榜单
-func (receiver *EsLiveDataBusiness) LiveRankByCategory(startTime, endTime time.Time, category, sortStr string) (list []es.EsDyLiveRank, comErr global.CommonError) {
+func (receiver *EsLiveDataBusiness) LiveRankByCategory(startTime, endTime time.Time, category, sortStr string, living int) (list []es.EsDyLiveRank, comErr global.CommonError) {
 	if sortStr == "" {
 		sortStr = "avg_user_count"
 	}
@@ -180,6 +186,9 @@ func (receiver *EsLiveDataBusiness) LiveRankByCategory(startTime, endTime time.T
 	if category != "" {
 		esQuery.SetMatchPhrase("dcm_level_first", category)
 	}
+	if living == 1 {
+		esQuery.SetTerm("room_status", 2)
+	}
 	var cacheTime time.Duration = 180
 	today := time.Now().Format("20060102")
 	if today != endTime.Format("20060102") {
@@ -198,7 +207,7 @@ func (receiver *EsLiveDataBusiness) LiveRankByCategory(startTime, endTime time.T
 }
 
 //带货行业数据分类统计
-func (receiver *EsLiveDataBusiness) ProductLiveDataByCategory(startTime, endTime time.Time, category string) (total int, data es.DyLiveDataCategorySumCount) {
+func (receiver *EsLiveDataBusiness) ProductLiveDataByCategory(startTime, endTime time.Time, category string, living int) (total int, uv, buyRate float64, data es.DyLiveDataCategorySumCount) {
 	data = es.DyLiveDataCategorySumCount{}
 	esTable, err := GetESTableByTime(es.DyLiveInfoBaseTable, startTime, endTime)
 	if err != nil {
@@ -214,6 +223,9 @@ func (receiver *EsLiveDataBusiness) ProductLiveDataByCategory(startTime, endTime
 	})
 	if category != "" {
 		esQuery.SetMatchPhrase("dcm_level_first", category)
+	}
+	if living == 1 {
+		esQuery.SetTerm("room_status", 2)
 	}
 	var cacheTime time.Duration = 300
 	today := time.Now().Format("20060102")
@@ -247,6 +259,11 @@ func (receiver *EsLiveDataBusiness) ProductLiveDataByCategory(startTime, endTime
 						"field": "predict_gmv",
 					},
 				},
+				"total_sales": map[string]interface{}{
+					"sum": map[string]interface{}{
+						"field": "predict_sales",
+					},
+				},
 				"total_ticket_count": map[string]interface{}{
 					"sum": map[string]interface{}{
 						"field": "ticket_count",
@@ -261,6 +278,12 @@ func (receiver *EsLiveDataBusiness) ProductLiveDataByCategory(startTime, endTime
 		if t, ok2 := h.(map[string]interface{})["total"]; ok2 {
 			total = utils.ToInt(t.(float64))
 		}
+	}
+	uv = 0
+	buyRate = 0
+	if data.TotalWatchCnt.Value > 0 {
+		uv = (data.TotalGmv.Value + data.TotalTicketCount.Value/10) / data.TotalWatchCnt.Value
+		buyRate = data.TotalSales.Value / data.TotalWatchCnt.Value
 	}
 	return
 }

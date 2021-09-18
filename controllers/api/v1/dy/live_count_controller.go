@@ -30,9 +30,10 @@ func (receiver *LiveCountController) AllLiveCount() {
 		receiver.FailReturn(comErr)
 		return
 	}
+	living, _ := receiver.GetInt("living", 0)
 	esLiveDataBusiness := es.NewEsLiveDataBusiness()
-	allTotal, allData := esLiveDataBusiness.SumLiveData(startTime, endTime, 0)
-	productTotal, productData := esLiveDataBusiness.SumLiveData(startTime, endTime, 1)
+	allTotal, allData := esLiveDataBusiness.SumLiveData(startTime, endTime, 0, living)
+	productTotal, productData := esLiveDataBusiness.SumLiveData(startTime, endTime, 1, living)
 	receiver.SuccReturn(map[string]interface{}{
 		"all_live": map[string]interface{}{
 			"total":            allTotal,
@@ -48,7 +49,7 @@ func (receiver *LiveCountController) AllLiveCount() {
 	return
 }
 
-//直播总览
+//直播分类榜单
 func (receiver *LiveCountController) LiveCategoryRank() {
 	startTime, endTime, comErr := receiver.GetRangeDate()
 	if comErr != nil {
@@ -60,9 +61,10 @@ func (receiver *LiveCountController) LiveCategoryRank() {
 		receiver.FailReturn(global.NewError(4000))
 		return
 	}
+	living, _ := receiver.GetInt("living", 0)
 	sortStr := receiver.GetString("sort", "")
 	esLiveDataBusiness := es.NewEsLiveDataBusiness()
-	list, comErr := esLiveDataBusiness.LiveRankByCategory(startTime, endTime, category, sortStr)
+	list, comErr := esLiveDataBusiness.LiveRankByCategory(startTime, endTime, category, sortStr, living)
 	if comErr != nil {
 		receiver.FailReturn(comErr)
 		return
@@ -94,8 +96,9 @@ func (receiver *LiveCountController) LiveCompositeByCategory() {
 		receiver.FailReturn(global.NewError(4000))
 		return
 	}
+	living, _ := receiver.GetInt("living", 0)
 	esLiveDataBusiness := es.NewEsLiveDataBusiness()
-	_, data := esLiveDataBusiness.LiveCompositeByCategory(startTime, endTime, rateType)
+	_, data := esLiveDataBusiness.LiveCompositeByCategory(startTime, endTime, rateType, living)
 	rateData := make([]dy.NameValueFloat64Chart, 0)
 	if rateType == 1 {
 		list := make([]es2.DyLiveCategoryRateByWatchCnt, 0)
@@ -177,11 +180,86 @@ func (receiver *LiveCountController) LiveSumByCategory() {
 		receiver.FailReturn(global.NewError(4000))
 		return
 	}
+	living, _ := receiver.GetInt("living", 0)
 	esLiveDataBusiness := es.NewEsLiveDataBusiness()
-	total, data := esLiveDataBusiness.ProductLiveDataByCategory(startTime, endTime, category)
-	receiver.SuccReturn(map[string]interface{}{
-		"total": total,
-		"data":  data,
-	})
+	total, uv, buyRate, data := esLiveDataBusiness.ProductLiveDataByCategory(startTime, endTime, category, living)
+	returnData := dy.LiveSumCountByCategory{
+		RoomNum:   total,
+		WatchCnt:  utils.ToInt64(data.TotalWatchCnt.Value),
+		UserCount: utils.ToInt64(data.TotalUserCount.Value),
+		Gmv:       data.TotalGmv.Value,
+		BuyRate:   buyRate,
+		Uv:        uv,
+	}
+	if living == 0 {
+		liveCountBusiness := business.NewLiveCountBusiness()
+		monthData, comErr := liveCountBusiness.CountMonthInc(startTime, startTime, category)
+		if comErr == nil {
+			if monthData.RoomNum > 0 {
+				returnData.RoomNumMonthInc = float64(returnData.RoomNum-monthData.RoomNum) / float64(monthData.RoomNum)
+			} else {
+				returnData.RoomNumMonthInc = 1
+			}
+			if monthData.WatchCnt > 0 {
+				returnData.WatchCntMonthInc = float64(returnData.WatchCnt-monthData.WatchCnt) / float64(monthData.WatchCnt)
+			} else {
+				returnData.WatchCntMonthInc = 1
+			}
+			if monthData.UserCount > 0 {
+				returnData.UserCountMonthInc = float64(returnData.UserCount-monthData.UserCount) / float64(monthData.UserCount)
+			} else {
+				returnData.UserCountMonthInc = 1
+			}
+			if monthData.Gmv > 0 {
+				returnData.GmvMonthInc = (returnData.Gmv - monthData.Gmv) / monthData.Gmv
+			} else {
+				returnData.GmvMonthInc = 1
+			}
+			if monthData.Uv > 0 {
+				returnData.UvMonthInc = (returnData.Uv - monthData.Uv) / monthData.Uv
+			} else {
+				returnData.UvMonthInc = 1
+			}
+			if monthData.BuyRate > 0 {
+				returnData.BuyRateMonthInc = (returnData.BuyRate - monthData.BuyRate) / monthData.BuyRate
+			} else {
+				returnData.BuyRateMonthInc = 1
+			}
+		}
+		lastData, comErr := liveCountBusiness.CountLastInc(startTime, startTime, category)
+		if comErr == nil {
+			if lastData.RoomNum > 0 {
+				returnData.RoomNumLastInc = float64(returnData.RoomNum-lastData.RoomNum) / float64(lastData.RoomNum)
+			} else {
+				returnData.RoomNumLastInc = 1
+			}
+			if lastData.WatchCnt > 0 {
+				returnData.WatchCntLastInc = float64(returnData.WatchCnt-lastData.WatchCnt) / float64(lastData.WatchCnt)
+			} else {
+				returnData.WatchCntLastInc = 1
+			}
+			if lastData.UserCount > 0 {
+				returnData.UserCountLastInc = float64(returnData.UserCount-lastData.UserCount) / float64(lastData.UserCount)
+			} else {
+				returnData.UserCountLastInc = 1
+			}
+			if lastData.Gmv > 0 {
+				returnData.GmvLastInc = (returnData.Gmv - lastData.Gmv) / lastData.Gmv
+			} else {
+				returnData.GmvLastInc = 1
+			}
+			if lastData.Uv > 0 {
+				returnData.UvLastInc = (returnData.Uv - lastData.Uv) / lastData.Uv
+			} else {
+				returnData.UvLastInc = 1
+			}
+			if lastData.BuyRate > 0 {
+				returnData.BuyRateLastInc = (returnData.BuyRate - lastData.BuyRate) / lastData.BuyRate
+			} else {
+				returnData.BuyRateLastInc = 1
+			}
+		}
+	}
+	receiver.SuccReturn(returnData)
 	return
 }

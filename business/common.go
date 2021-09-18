@@ -426,3 +426,8 @@ func DealIncDirtyFloat64Chart(chart []float64) []float64 {
 	chart = utils.ReverseFloat64Arr(chart)
 	return chart
 }
+
+func GetFirstDay() time.Time {
+	firstDay, _ := time.ParseInLocation("20060102", "20210901", time.Local)
+	return firstDay
+}
