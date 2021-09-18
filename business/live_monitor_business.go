@@ -496,7 +496,7 @@ func (receiver *LiveMonitorBusiness) AddLiveMonitor(liveMonitor *dcm.DcLiveMonit
 			return
 		}
 	}
-	_ = dbSession.Rollback()
+	_ = dbSession.Commit()
 	lastId = int64(liveMonitor.Id)
 	author, _ := hbase.GetAuthor(liveMonitor.AuthorId)
 	go NewSpiderBusiness().AddLive(liveMonitor.AuthorId, author.FollowerCount, AddLiveTopMonitored, liveMonitor.EndTime.Unix())
