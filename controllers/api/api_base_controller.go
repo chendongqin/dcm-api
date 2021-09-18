@@ -313,7 +313,7 @@ func (this *ApiBaseController) InitApi() {
 	authBusiness := business.NewAccountAuthBusiness()
 	this.TrueUri = authBusiness.GetTrueRequestUri(this.Ctx.Input.URI(), this.Ctx.Input.Params())
 	this.Channel = this.Ctx.Input.Header("CHANNEL")
-	this.ChannelWords = this.Ctx.Input.Header("CHANNEL_WORDS")
+	this.ChannelWords = this.Ctx.Input.Header("CHANNELWORDS")
 	this.LogInputOutput("Input", this.ApiDatas)
 }
 
