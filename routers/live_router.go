@@ -37,6 +37,12 @@ func init() {
 			beego.NSRouter("/product/:room_id", &v1dy.LiveController{}, "get:LivingProduct"),
 			beego.NSRouter("/message/:room_id", &v1dy.LiveController{}, "get:LivingMessage"),
 		),
+		beego.NSNamespace("/live/count",
+			beego.NSRouter("/all/:start/:end", &v1dy.LiveCountController{}, "get:AllLiveCount"),
+			beego.NSRouter("/rank/:start/:end", &v1dy.LiveCountController{}, "get:LiveCategoryRank"),
+			beego.NSRouter("/rate/:type/:start/:end", &v1dy.LiveCountController{}, "get:LiveCompositeByCategory"),
+			beego.NSRouter("/detail/:start/:end", &v1dy.LiveCountController{}, "get:LiveSumByCategory"),
+		),
 	)
 	// 注册路由组
 	beego.AddNamespace(ns)

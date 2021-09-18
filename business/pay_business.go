@@ -85,8 +85,16 @@ func (receiver *PayBusiness) DoPayDyCallback(vipOrder dcm.DcVipOrder) bool {
 	case 3:
 		updateMap["sub_expiration"] = userLevel.Expiration.Format("2006-01-02 15:04:05")
 		updateMap["sub_num"] = userLevel.SubNum + orderInfo.People
+		_, _ = dbSession.Table(new(dcm.DcVipOrder)).
+			Where("user_id=? AND platform=? AND order_type = 3 AND  id !=?", vipOrder.UserId, "douyin", vipOrder.Id).
+			Cols("status").
+			Update(map[string]interface{}{"status": 2})
 	case 4:
 		updateMap["sub_expiration"] = userLevel.Expiration.Format("2006-01-02 15:04:05")
+		_, _ = dbSession.Table(new(dcm.DcVipOrder)).
+			Where("user_id=? AND platform=? AND order_type = 4 AND  id !=?", vipOrder.UserId, "douyin", vipOrder.Id).
+			Cols("status").
+			Update(map[string]interface{}{"status": 2})
 	case 5:
 		expiration := userLevel.Expiration.AddDate(0, 0, orderInfo.BuyDays).Format("2006-01-02 15:04:05")
 		updateMap["expiration"] = expiration
