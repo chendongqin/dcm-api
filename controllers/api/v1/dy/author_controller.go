@@ -996,9 +996,9 @@ func (receiver *AuthorController) AuthorSearch() {
 }
 
 /**爬虫加速**/
-func (receiver *AuthorController) SpiderSpeedUp() (comErr global.CommonError) {
+func (receiver *AuthorController) SpiderSpeedUp() {
 	if !business.UserActionLock(receiver.TrueUri, utils.ToString(receiver.UserId), 5) {
-		comErr = global.NewError(6000)
+		receiver.FailReturn(global.NewError(6000))
 		return
 	}
 
@@ -1020,6 +1020,6 @@ func (receiver *AuthorController) SpiderSpeedUp() (comErr global.CommonError) {
 	global.Cache.Set(cacheKey, "1", 300)
 
 	logs.Info("达人加速，爬虫推送结果：", ret)
-	receiver.SuccReturn([]string{"success"})
+	receiver.SuccReturn([]string{})
 	return
 }
