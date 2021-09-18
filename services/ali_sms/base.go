@@ -8,7 +8,7 @@ import (
 	jsoniter "github.com/json-iterator/go"
 )
 
-const AliSign = "维妥科技"
+const AliSign = "洞察猫"
 const CodeTemplateCode = "SMS_218595039"
 
 type AliRe struct {
