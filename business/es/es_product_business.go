@@ -285,14 +285,18 @@ func (i *EsProductBusiness) SimpleSearch(productId, title, platformLabel, dcmLev
 		esQuery.SetTerm("third_cname.keyword", thirdCname)
 	}
 	if minPrice > 0 || maxPrice > 0 {
-		rangeMap := map[string]interface{}{}
-		if minPrice > 0 {
-			rangeMap["gte"] = minPrice
+		if minPrice == maxPrice {
+			esQuery.SetTerm("price", minPrice)
+		} else {
+			rangeMap := map[string]interface{}{}
+			if minPrice > 0 {
+				rangeMap["gte"] = minPrice
+			}
+			if maxPrice > 0 {
+				rangeMap["lt"] = maxPrice
+			}
+			esQuery.SetRange("price", rangeMap)
 		}
-		if maxPrice > 0 {
-			rangeMap["lt"] = maxPrice
-		}
-		esQuery.SetRange("price", rangeMap)
 	}
 	results := esMultiQuery.
 		SetTable(esTable).
