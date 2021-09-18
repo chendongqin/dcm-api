@@ -48,3 +48,19 @@ func (receiver EsDyLiveInfo) GetTagsArr() []string {
 	}
 	return strings.Split(receiver.Tags, "_")
 }
+
+type EsDyLiveRank struct {
+	RoomId     string  `json:"room_id"`
+	Nickname   string  `json:"nickname"`
+	Avatar     string  `json:"avatar"`
+	DisplayId  string  `json:"display_id"`
+	ShortId    string  `json:"short_id"`
+	Cover      string  `json:"cover"`
+	Title      string  `json:"title"`
+	RoomStatus int     `json:"room_status"`
+	AuthorId   string  `json:"author_id"`
+	CreateTime int64   `json:"create_time"`
+	PredictGmv float64 `json:"predict_gmv"`
+	FinishTime int64   `json:"finish_time"`
+	WatchCnt   int64   `json:"watch_cnt"`
+}

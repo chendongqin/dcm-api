@@ -29,27 +29,9 @@ func (receiver *LiveController) Prepare() {
 
 //直播库
 func (receiver *LiveController) SearchRoom() {
-	startDay := receiver.GetString("start", "")
-	endDay := receiver.GetString("end", "")
-	if startDay == "" {
-		startDay = time.Now().AddDate(0, 0, -7).Format("2006-01-02")
-	}
-	if endDay == "" {
-		endDay = time.Now().Format("2006-01-02")
-	}
-	pslTime := "2006-01-02"
-	startTime, err := time.ParseInLocation(pslTime, startDay, time.Local)
-	if err != nil {
-		receiver.FailReturn(global.NewError(4000))
-		return
-	}
-	endTime, err := time.ParseInLocation(pslTime, endDay, time.Local)
-	if err != nil {
-		receiver.FailReturn(global.NewError(4000))
-		return
-	}
-	if startTime.After(endTime) || endTime.After(startTime.AddDate(0, 0, 90)) || endTime.After(time.Now()) {
-		receiver.FailReturn(global.NewError(4000))
+	startTime, endTime, comErr := receiver.GetRangeDate()
+	if comErr != nil {
+		receiver.FailReturn(comErr)
 		return
 	}
 	keyword := receiver.GetString("keyword", "")
@@ -881,8 +863,11 @@ func (receiver *LiveController) getSon(son map[string]dy2.ProductPvChartMap, pv 
 
 func (receiver *LiveController) sortSon(data []dy2.ProductPvChart) []dy2.ProductPvChart {
 	sort.Slice(data, func(i, j int) bool {
-		if data[i].LabelName == "其他" || data[j].LabelName == "其他" {
+		if data[i].LabelName == "其他" {
 			return false
+		}
+		if data[j].LabelName == "其他" {
+			return true
 		}
 		return data[i].Pv > data[j].Pv
 	})
