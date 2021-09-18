@@ -501,6 +501,9 @@ func (receiver *LiveMonitorBusiness) UpdateLiveRoomMonitor(roomInfo *entity.DyLi
 		Cols("gmv", "sales", "user_total", "update_time").
 		Where("room_id=?", roomInfo.RoomID).
 		Update(updateMap)
+	if err != nil {
+		NewMonitorBusiness().SendErr("更新直播间记录", err.Error())
+	}
 	return
 }
 
