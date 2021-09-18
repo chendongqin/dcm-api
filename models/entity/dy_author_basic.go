@@ -9,7 +9,7 @@ var DyAuthorBasicMap = HbaseEntity{
 	"total_favorited_before":  {Long, "total_favorited_before"},
 	"comment_count":           {Long, "comment_count"},
 	"comment_count_before":    {Long, "comment_count_before"},
-	"forward_count":           {Long, "forward_count"},
+	"share_count":             {Long, "forward_count"},
 	"forward_count_before":    {Long, "forward_count_before"},
 }
 
