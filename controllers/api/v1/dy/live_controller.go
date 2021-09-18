@@ -1118,3 +1118,31 @@ func (receiver LiveController) LivingMessage() {
 	})
 	return
 }
+
+//直播加速
+func (receiver *LiveController) LiveSpeed() {
+	if !business.UserActionLock(receiver.TrueUri, utils.ToString(receiver.UserId), 5) {
+		receiver.FailReturn(global.NewError(6000))
+		return
+	}
+
+	AuthorId := business.IdDecrypt(receiver.GetString(":author_id", ""))
+	if AuthorId == "" {
+		receiver.FailReturn(global.NewError(4000))
+		return
+	}
+	spriderName := "live"
+	cacheKey := cache.GetCacheKey(cache.SpiderSpeedUpLimit, spriderName, AuthorId)
+	cacheData := global.Cache.Get(cacheKey)
+	if cacheData != "" {
+		//缓存存在
+		receiver.FailReturn(global.NewError(6000))
+		return
+	}
+	//加速
+	author, _ := hbase.GetAuthor(AuthorId)
+	go business.NewSpiderBusiness().AddLive(AuthorId, author.FollowerCount, business.AddLiveTopMonitored, time.Now().AddDate(0, 0, 3).Unix())
+	global.Cache.Set(cacheKey, "1", 300)
+	receiver.SuccReturn([]string{})
+	return
+}
