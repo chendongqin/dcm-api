@@ -53,10 +53,16 @@ func (receiver *VipBusiness) GetUserLevel(level int) string {
 //获取用户vip等级
 func (receiver *VipBusiness) GetVipLevels(userId int) []dy.AccountVipLevel {
 	vipLists := make([]dcm.DcUserVip, 0)
+	var parentVip dcm.DcUserVip
 	err := dcm.GetSlaveDbSession().Where("user_id=?", userId).Find(&vipLists)
 	vipList := make([]dy.AccountVipLevel, 0)
 	if err == nil {
 		for _, v := range vipLists {
+			if v.ParentId != 0 {
+				_, _ = dcm.GetSlaveDbSession().Where("id=?", v.ParentId).Get(&parentVip)
+				parentVip.Expiration = parentVip.SubExpiration
+				v = parentVip
+			}
 			var level = 0
 			if v.Expiration.After(time.Now()) {
 				level = v.Level
