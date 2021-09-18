@@ -49,7 +49,7 @@ func (receiver EsDyLiveInfo) GetTagsArr() []string {
 	return strings.Split(receiver.Tags, "_")
 }
 
-type EsDyLiveRank struct {
+type EsDyLiveDetail struct {
 	RoomId     string  `json:"room_id"`
 	Nickname   string  `json:"nickname"`
 	Avatar     string  `json:"avatar"`
