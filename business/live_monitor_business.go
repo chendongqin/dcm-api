@@ -73,7 +73,7 @@ func (receiver *LiveMonitorBusiness) getNeedNoticeRooms() (list []dcm.DcLiveMoni
 	defer dbSession.Close()
 	before24HourTime := time.Now().Add(-86400 * time.Second)
 	list = make([]dcm.DcLiveMonitorRoom, 0)
-	err = dbSession.Where("create_time > ? AND finish_notice = 1", before24HourTime.Format("2006-01-02 15:04:05")).Find(&list)
+	err = dbSession.Where("create_time > ? AND status = 2", before24HourTime.Format("2006-01-02 15:04:05")).Find(&list)
 	if err != nil {
 		return
 	}
@@ -154,7 +154,7 @@ func (receiver *LiveMonitorBusiness) SendFinishNotice(monitorRoom dcm.DcLiveMoni
 		},
 	}
 	err := NewWechatBusiness().SendMsg(monitorRoom.OpenId, WechatMsgTemplateLiveMonitorFinish, msgMap, DyDcmUrl)
-	if logger.CheckError(err) != nil {
+	if err != nil {
 		return
 	}
 	return
@@ -438,11 +438,11 @@ func (receiver *LiveMonitorBusiness) AddByMonitor(dbSession *xorm.Session, monit
 		CreateTime:   now,
 		UpdateTime:   now,
 	}
-	if roomInfo.RoomStatus == 4 {
-		room.Gmv = utils.ToString(roomInfo.PredictGmv)
-		room.Sales = utils.ToInt(roomInfo.PredictSales)
-		room.UserTotal = utils.ToInt(roomInfo.TotalUser)
-	}
+	//if roomInfo.RoomStatus == 4 {
+	room.Gmv = utils.ToString(roomInfo.PredictGmv)
+	room.Sales = utils.ToInt(roomInfo.PredictSales)
+	room.UserTotal = utils.ToInt(roomInfo.TotalUser)
+	//}
 	_, err := dbSession.InsertOne(room)
 	if err != nil {
 		return false
