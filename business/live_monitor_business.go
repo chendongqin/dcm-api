@@ -118,8 +118,8 @@ func (receiver *LiveMonitorBusiness) checkRoom(monitorRoom dcm.DcLiveMonitorRoom
 		cacheData := global.Cache.Get(cacheKey)
 		if cacheData == "" {
 			err := receiver.UpdateLiveRoomMonitor(&roomInfo)
-			if err != nil {
-				_ = global.Cache.Set(cacheKey, "1", 300)
+			if err == nil {
+				_ = global.Cache.Set(cacheKey, "1", 600)
 			}
 		}
 	}
