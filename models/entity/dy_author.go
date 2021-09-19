@@ -31,7 +31,7 @@ var DyAuthorMap = HbaseEntity{
 	"other_follower_count":     {Long, "follower_count"},
 	"other_total_favorited":    {Long, "total_favorited"},
 	"other_comment_count":      {Long, "comment_count"},
-	"other_forward_count":      {Long, "forward_count"},
+	"other_share_count":        {Long, "forward_count"},
 	"other_artificial_data":    {Json, "artificial_data"},
 	//粉丝数据
 	"gender":               {AJson, "gender"},
