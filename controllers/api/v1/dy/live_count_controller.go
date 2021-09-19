@@ -348,30 +348,30 @@ func (receiver *LiveCountController) LiveSumByCategoryLevelTwo() {
 		}
 		return dataList[i].Key > dataList[j].Key
 	})
-	levelMap := map[string]map[int][]dy.LiveSumDataCategoryLevelTwo{}
+	levelMap := map[string]map[int]map[int]dy.LiveSumDataCategoryLevelTwo{}
 	for _, v := range dataList {
 		keyNameArr := strings.Split(v.Key, "")
 		levelKey := keyNameArr[0]
 		intKey := utils.ToInt(strings.Replace(v.Key, levelKey, "", 1))
 		if _, ok := levelMap[levelKey]; !ok {
-			levelMap[levelKey] = map[int][]dy.LiveSumDataCategoryLevelTwo{}
+			levelMap[levelKey] = map[int]map[int]dy.LiveSumDataCategoryLevelTwo{}
 			if _, ok1 := levelMap[levelKey][intKey]; !ok1 {
-				levelMap[levelKey][intKey] = []dy.LiveSumDataCategoryLevelTwo{}
+				levelMap[levelKey][intKey] = map[int]dy.LiveSumDataCategoryLevelTwo{}
 			}
 		}
-		item := make([]dy.LiveSumDataCategoryLevelTwo, 0)
+		item := map[int]dy.LiveSumDataCategoryLevelTwo{}
 		buckets := v.LiveTwo.Buckets
 		sort.Slice(buckets, func(i, j int) bool {
 			return buckets[i].Key < buckets[j].Key
 		})
 		for _, v1 := range buckets {
-			item = append(item, dy.LiveSumDataCategoryLevelTwo{
+			item[v1.Key] = dy.LiveSumDataCategoryLevelTwo{
 				FlowLevel:     v.Key,
 				StayLevel:     v1.Key,
 				RoomCount:     v1.DocCount,
 				TotalWatchCnt: v1.TotalWatchCnt.Value,
 				TotalGmv:      v1.TotalGmv.Value,
-			})
+			}
 		}
 		levelMap[levelKey][intKey] = item
 	}
@@ -380,13 +380,27 @@ func (receiver *LiveCountController) LiveSumByCategoryLevelTwo() {
 	for _, level := range levelsArr {
 		item := [][]dy.LiveSumDataCategoryLevelTwo{}
 		if v, ok := levelMap[level]; ok {
-			keys := make([]int, 0)
-			for k := range v {
-				keys = append(keys, k)
+			kBegin := 1
+			if level == "E" {
+				kBegin = 0
 			}
-			sort.Ints(keys)
-			for _, k := range keys {
-				item = append(item, v[k])
+			for i := kBegin; i <= 9; i++ {
+				itemMap := map[int]dy.LiveSumDataCategoryLevelTwo{}
+				item1 := []dy.LiveSumDataCategoryLevelTwo{}
+				if d, exist := v[i]; exist {
+					itemMap = d
+				}
+				for j := 0; j <= 10; j++ {
+					tmp := dy.LiveSumDataCategoryLevelTwo{
+						FlowLevel: level + utils.ToString(i),
+						StayLevel: j,
+					}
+					if v2, exist1 := itemMap[j]; exist1 {
+						tmp = v2
+					}
+					item1 = append(item1, tmp)
+				}
+				item = append(item, item1)
 			}
 		}
 		list = append(list, item)
@@ -408,8 +422,8 @@ func (receiver *LiveCountController) LiveSumByCategoryLevelList() {
 		return
 	}
 	living, _ := receiver.GetInt("living", 0)
-	stayLevel, _ := receiver.GetInt("stay_level", 0)
-	level := receiver.GetString("level", "")
+	stayLevel := utils.ToInt(receiver.Ctx.Input.Param(":stay_level"))
+	level := receiver.Ctx.Input.Param(":level")
 	if level == "" {
 		receiver.FailReturn(global.NewError(4000))
 		return
@@ -451,8 +465,8 @@ func (receiver *LiveCountController) LiveSumByCategoryLevelCount() {
 		return
 	}
 	living, _ := receiver.GetInt("living", 0)
-	stayLevel, _ := receiver.GetInt("stay_level", 0)
-	level := receiver.GetString("level", "")
+	stayLevel := utils.ToInt(receiver.Ctx.Input.Param(":stay_level"))
+	level := receiver.Ctx.Input.Param(":level")
 	if level == "" {
 		receiver.FailReturn(global.NewError(4000))
 		return
