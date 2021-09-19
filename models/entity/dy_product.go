@@ -96,9 +96,15 @@ type DyProduct struct {
 	Province         []DyAuthorFansProvince `json:"province"`
 	City             []DyAuthorFansCity     `json:"city"`
 	AgeDistrinbution []DyAuthorFansAge      `json:"age_distrinbution"`
+	//弹幕热词
+	Word []DyAuthorWord `json:"word"`
 	//TbSmallImages       []interface{} `json:"tb_small_images"`
 }
 
+type DyAuthorWord struct {
+	Word    string `json:"word"`
+	WordNum string `json:"word_num"`
+}
 type DyProductPriceTrend struct {
 	StartTime int64   `json:"start_time"`
 	Price     float64 `json:"price"`

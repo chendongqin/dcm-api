@@ -84,26 +84,10 @@ func (receiver *VipBusiness) GetVipLevel(userId, appId int) dy.AccountVipLevel {
 	var level = 0
 	exist, _ := dcm.GetSlaveDbSession().Where("user_id=? AND platform=?", userId, appId).Get(&vip)
 	parentId := vip.ParentId
-	expiration := vip.Expiration
 	if parentId != 0 {
 		parentVip := dcm.DcUserVip{}
-		exist, _ = dcm.Get(vip.ParentId, &parentVip)
-		if parentVip.Expiration.After(time.Now()) {
-			expiration = parentVip.Expiration
-			vip = parentVip
-		} else {
-			//父账号团队过期
-			go func() {
-				if _, err := dcm.UpdateInfo(nil, vip.ParentId, map[string]interface{}{"sub_num": 0}, new(dcm.DcUserVip)); err != nil {
-					log.Println("parent_vip_expired:", err.Error())
-					return
-				}
-				if _, err := dcm.UpdateInfo(nil, vip.Id, map[string]interface{}{"parent_id": 0, "remark": ""}, new(dcm.DcUserVip)); err != nil {
-					log.Println("parent_vip_expired_sub:", err.Error())
-					return
-				}
-			}()
-		}
+		_, _ = dcm.Get(vip.ParentId, &parentVip)
+		vip = parentVip
 	}
 	if !exist {
 		vip.UserId = userId
@@ -113,8 +97,24 @@ func (receiver *VipBusiness) GetVipLevel(userId, appId int) dy.AccountVipLevel {
 		vip.SubExpiration = time.Now().AddDate(0, 0, -1)
 		_, _ = dcm.Insert(nil, &vip)
 	}
-	if vip.Expiration.Unix() > time.Now().Unix() {
+	if vip.Expiration.After(time.Now()) {
 		level = vip.Level
+	} else if vip.Level > 0 {
+		go func() {
+			if _, err := dcm.UpdateInfo(nil, vip.Id, map[string]interface{}{"sub_num": 0}, new(dcm.DcUserVip)); err != nil {
+				log.Println("vip_expired:", err.Error())
+				return
+			}
+			if _, err := dcm.GetDbSession().Table(dcm.DcUserVip{}).Where("parent_id=?", vip.Id).
+				Cols("parent_id").
+				Update(map[string]interface{}{"parent_id": 0, "remark": ""}); err != nil {
+				log.Println("vip_expired_sub:", err.Error())
+				return
+			}
+			if _, err := dcm.UpdateInfo(nil, vip.Id, map[string]interface{}{"parent_id": 0, "remark": ""}, new(dcm.DcUserVip)); err != nil {
+				return
+			}
+		}()
 	}
 	isSub := 0
 	if vip.ParentId > 0 && level > 0 {
@@ -128,7 +128,7 @@ func (receiver *VipBusiness) GetVipLevel(userId, appId int) dy.AccountVipLevel {
 		SubNum:            vip.SubNum,
 		IsSub:             isSub,
 		FeeLiveMonitor:    vip.LiveMonitorNum,
-		ExpirationTime:    expiration,
+		ExpirationTime:    vip.Expiration,
 		SubExpirationTime: vip.SubExpiration,
 	}
 	return info

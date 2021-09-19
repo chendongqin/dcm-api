@@ -948,7 +948,7 @@ func (receiver *ProductController) ProductAweme() {
 	})
 }
 
-//直播粉丝分析
+//商品粉丝分析
 func (receiver *ProductController) ProductFanAnalyse() {
 	productId := business.IdDecrypt(receiver.Ctx.Input.Param(":product_id"))
 	info, comErr := hbase.GetProductInfo(productId)
@@ -1080,5 +1080,19 @@ func (receiver *ProductController) ProductSpeed() {
 
 	logs.Info("产品加速，爬虫推送结果：", ret)
 	receiver.SuccReturn([]string{})
+	return
+}
+
+//商品热词
+func (receiver *ProductController) ProductWords() {
+	productId := business.IdDecrypt(receiver.Ctx.Input.Param(":product_id"))
+	info, comErr := hbase.GetProductInfo(productId)
+	if comErr != nil {
+		receiver.FailReturn(comErr)
+		return
+	}
+	//todo mock数据
+	info.Word = []entity.DyAuthorWord{{Word: "ggg", WordNum: "123"}, {Word: "ggg", WordNum: "321"}}
+	receiver.SuccReturn(info.Word)
 	return
 }
