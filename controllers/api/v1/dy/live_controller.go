@@ -711,6 +711,12 @@ func (receiver *LiveController) LiveFanAnalyse() {
 	sort.Slice(provinceChart, func(i, j int) bool {
 		return provinceChart[i].DistributionValue > provinceChart[j].DistributionValue
 	})
+	if len(cityChart) > 10 {
+		cityChart = cityChart[:10]
+	}
+	if len(provinceChart) > 10 {
+		provinceChart = provinceChart[:10]
+	}
 	if roomGenderTotal > 0 {
 		for k, v := range genderChart {
 			genderChart[k].DistributionPer = float64(v.DistributionValue) / float64(roomGenderTotal)
@@ -754,12 +760,12 @@ func (receiver *LiveController) LiveFanAnalyse() {
 
 func (receiver *LiveController) liveFansAgeMap(key string) string {
 	var ageMap = map[string]string{
-		"小于18":  "0-18",
+		"小于18":  "-18",
 		"18~23": "18-23",
 		"24~30": "24-30",
 		"31~40": "31-40",
 		"41~50": "41-50",
-		"50+":   "50+",
+		"50+":   "50-",
 	}
 	if s, ok := ageMap[key]; ok {
 		return s
