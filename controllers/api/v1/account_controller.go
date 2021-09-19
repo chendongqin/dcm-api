@@ -129,6 +129,8 @@ func (receiver *AccountController) ChangeMobile() {
 	_ = dbSession.Commit()
 	_ = global.Cache.Delete(codeKey)
 	_ = global.Cache.Delete(codeKey1)
+	//绑定/换绑手机成功通知
+	business.NewWechatBusiness().BindSendWechatMsg(&receiver.UserInfo)
 	receiver.Logout()
 	receiver.SuccReturn(nil)
 	return
@@ -212,6 +214,8 @@ func (receiver *AccountController) Logout() {
 	userBusiness := business.NewUserBusiness()
 	_ = userBusiness.AddOrUpdateUniqueToken(receiver.UserId, receiver.AppId, "")
 	userBusiness.DeleteUserInfoCache(receiver.UserInfo.Id)
+	//退出登录成功
+	business.NewWechatBusiness().LoginOutWechatMsg(&receiver.UserInfo)
 	receiver.SuccReturn("success")
 	return
 
