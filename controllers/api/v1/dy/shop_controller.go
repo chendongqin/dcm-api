@@ -16,5 +16,6 @@ func (receiver *ShopController) Prepare() {
 }
 
 func (receiver *ShopController) ShopBase() {
-
+	shopId := business.IdDecrypt(receiver.Ctx.Input.Param(":shop_id"))
+	receiver.SuccReturn(shopId)
 }
