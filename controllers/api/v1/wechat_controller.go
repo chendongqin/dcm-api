@@ -257,6 +257,9 @@ func (receiver *WechatController) WechatPhone() {
 		return
 	}
 	receiver.RegisterLogin(tokenString, expire)
+
+	//绑定手机成功通知
+	business.NewWechatBusiness().LoginWechatMsg(&userModel)
 	receiver.SuccReturn(map[string]interface{}{
 		"token_info": dy.RepostAccountToken{
 			UserId:      userModel.Id,

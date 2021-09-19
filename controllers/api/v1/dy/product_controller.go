@@ -371,7 +371,7 @@ func (receiver *ProductController) ProductBase() {
 		URL:           productBusiness.GetProductUrl(productInfo.PlatformLabel, productInfo.ProductID),
 		Image:         dyimg.Product(productInfo.Image),
 		Status:        productInfo.Status,
-		ShopId:        productInfo.ShopID,
+		ShopId:        business.IdEncrypt(productInfo.ShopID),
 		ShopName:      shopName,
 		Label:         label,
 		Undercarriage: productInfo.Undercarriage,
