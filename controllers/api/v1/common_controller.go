@@ -47,21 +47,20 @@ func (receiver *CommonController) Sms() {
 		return
 	}
 	if receiver.AppId == 10000 {
-
-	}
-	if sig == "" || sessionId == "" || token == "" {
-		receiver.FailReturn(global.NewError(4000))
-		return
-	}
-	scene := "nc_message"
-	if receiver.AppId != 10000 {
-		scene = "nc_message_h5"
-	}
-	appKey := "FFFF0N0000000000A2FA"
-	err1 := ali_tools.IClientProfile(sig, sessionId, token, receiver.Ip, scene, appKey)
-	if err1 != nil {
-		receiver.FailReturn(global.NewError(4000))
-		return
+		if sig == "" || sessionId == "" || token == "" {
+			receiver.FailReturn(global.NewError(4000))
+			return
+		}
+		scene := "nc_message"
+		if receiver.AppId != 10000 {
+			scene = "nc_message_h5"
+		}
+		appKey := "FFFF0N0000000000A2FA"
+		err1 := ali_tools.IClientProfile(sig, sessionId, token, receiver.Ip, scene, appKey)
+		if err1 != nil {
+			receiver.FailReturn(global.NewError(4000))
+			return
+		}
 	}
 	limitIpKey := cache.GetCacheKey(cache.SmsCodeLimitBySome, grantType, "ip", receiver.Ip)
 	verifyData := global.Cache.Get(limitIpKey)
