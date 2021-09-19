@@ -688,7 +688,7 @@ func (receiver *LiveController) LiveFanAnalyse() {
 	}
 	if roomType != "ing" {
 		if len(info.Word) > 0 {
-			for k, v := range info.Word[0] {
+			for k, v := range info.Word {
 				if k == "" {
 					continue
 				}
@@ -700,6 +700,9 @@ func (receiver *LiveController) LiveFanAnalyse() {
 			sort.Slice(wordChart, func(i, j int) bool {
 				return wordChart[i].DistributionValue > wordChart[j].DistributionValue
 			})
+			if len(wordChart) > 100 {
+				wordChart = wordChart[:100]
+			}
 		}
 	}
 	sort.Slice(cityChart, func(i, j int) bool {
@@ -708,6 +711,12 @@ func (receiver *LiveController) LiveFanAnalyse() {
 	sort.Slice(provinceChart, func(i, j int) bool {
 		return provinceChart[i].DistributionValue > provinceChart[j].DistributionValue
 	})
+	if len(cityChart) > 10 {
+		cityChart = cityChart[:10]
+	}
+	if len(provinceChart) > 10 {
+		provinceChart = provinceChart[:10]
+	}
 	if roomGenderTotal > 0 {
 		for k, v := range genderChart {
 			genderChart[k].DistributionPer = float64(v.DistributionValue) / float64(roomGenderTotal)
@@ -751,12 +760,12 @@ func (receiver *LiveController) LiveFanAnalyse() {
 
 func (receiver *LiveController) liveFansAgeMap(key string) string {
 	var ageMap = map[string]string{
-		"小于18":  "0-18",
+		"小于18":  "-18",
 		"18~23": "18-23",
 		"24~30": "24-30",
 		"31~40": "31-40",
 		"41~50": "41-50",
-		"50+":   "50+",
+		"50+":   "50-",
 	}
 	if s, ok := ageMap[key]; ok {
 		return s
