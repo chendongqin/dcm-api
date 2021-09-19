@@ -33,3 +33,20 @@ type DyShopScore struct {
 	Level string `json:"level"`
 	Score string `json:"score"`
 }
+
+type DyShopBaseBasic struct {
+	BaseData   DyShop           ` json:"base_data"`
+	DetailData DyShopBaseDetail `json:"detail_data"`
+}
+
+type DyShopBaseDetail struct {
+	Sales        int64   `json:"sales"`          //日销量
+	Gmv          float64 `json:"gmv"`            //每日gmv
+	D30AwemeCnt  int64   `json:"30d_aweme_cnt"`  //30天视频数
+	D30LiveCnt   int64   `json:"30d_live_cnt"`   //30天直播数
+	D30AuthorCnt int64   `json:"30d_author_cnt"` //30天达人数
+	D30Sales     int64   `json:"30d_sales"`      //30天销量
+	D30Gmv       int64   `json:"30d_gmv"`        //30天gmv
+	D30Pct       int64   `json:"30d_pct"`        //30天客单价
+	D30Rate      float64 `json:"30d_rate"`       //30天转化率
+}

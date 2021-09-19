@@ -130,8 +130,8 @@ func (receiver *PayController) CreateDyOrder() {
 	}
 	var remark = ""
 	var surplusDay int64 = 0
-	if userVip.Expiration.Before(time.Now()) {
-		surplusDay = (userVip.Expiration.Unix() - subExpiration.Unix()) / 86400
+	if userVip.Expiration.After(time.Now()) {
+		surplusDay = int64(math.Ceil(userVip.Expiration.Sub(subExpiration).Hours() / 24))
 		if surplusDay == 0 && orderType == 3 {
 			receiver.FailReturn(global.NewMsgError("协同账号到期时间与账户会员时间一致，不需要续费～"))
 			return
@@ -150,14 +150,12 @@ func (receiver *PayController) CreateDyOrder() {
 	}
 	priceData := payBusiness.GetVipPriceConfigCheckActivity(receiver.UserId, checkActivity)
 	price := dy.VipPriceActive{}
-	if utils.InArrayInt(orderType, []int{1, 5}) {
-		if buyDays == 30 {
-			price = priceData.Month
-		} else if buyDays == 180 {
-			price = priceData.HalfYear
-		} else if buyDays == 365 {
-			price = priceData.Year
-		}
+	if buyDays == 30 {
+		price = priceData.Month
+	} else if buyDays == 180 {
+		price = priceData.HalfYear
+	} else if buyDays == 365 {
+		price = priceData.Year
 	}
 	title := fmt.Sprintf("专业版%d天", buyDays)
 	var amount float64 = 0
@@ -176,24 +174,24 @@ func (receiver *PayController) CreateDyOrder() {
 		title = fmt.Sprintf("购买协同账号%d人", groupPeople)
 		amount = surplusValue * float64(groupPeople)
 		//先续费再购买
-		if userVip.Expiration != userVip.SubExpiration && userVip.SubExpiration.After(time.Now()) && userVip.SubNum > 0 {
-			surplusSubDay := (userVip.Expiration.Unix() - subExpiration.Unix()) / 86400
+		if userVip.Expiration.After(userVip.SubExpiration) && userVip.SubExpiration.After(time.Now()) && userVip.SubNum > 0 {
+			surplusSubDay := math.Ceil((userVip.Expiration.Sub(subExpiration)).Hours() / 24)
 			if surplusSubDay > 0 {
 				surplusSubsValue, _ := payBusiness.GetDySurplusValue(int(surplusSubDay))
-				tmpAmount := utils.FriendlyFloat64(float64(userVip.SubNum) * surplusSubsValue)
-				remark = fmt.Sprintf("已有子账号续费：%f元", tmpAmount)
+				tmpAmount := float64(userVip.SubNum) * surplusSubsValue
+				remark = fmt.Sprintf("已有子账号续费：%.1f元", tmpAmount)
 				amount += tmpAmount
 			}
 		}
 		orderInfo.BuyDays = int(surplusDay)
-		orderInfo.Amount = utils.FriendlyFloat64(amount)
+		orderInfo.Amount = utils.FriendlyFloat64One(amount)
 		orderInfo.People = groupPeople
 		orderInfo.Title = "协同账号购买"
 		vipOrderType = 3
 	} else if orderType == 3 { //协同账号续费
 		totalPeople := userVip.SubNum
 		title = fmt.Sprintf("协同账号续费%d人", totalPeople)
-		amount = utils.FriendlyFloat64(surplusValue * float64(totalPeople))
+		amount = utils.FriendlyFloat64One(surplusValue * float64(totalPeople))
 		orderInfo.BuyDays = int(surplusDay)
 		orderInfo.Amount = amount
 		orderInfo.People = totalPeople
@@ -202,7 +200,7 @@ func (receiver *PayController) CreateDyOrder() {
 	} else if orderType == 5 {
 		title = "团队成员续费"
 		totalPeople := userVip.SubNum + 1
-		amount = utils.FriendlyFloat64(price.Price * float64(totalPeople))
+		amount = utils.FriendlyFloat64One(price.Price * float64(totalPeople))
 		orderInfo.BuyDays = buyDays
 		orderInfo.Amount = amount
 		orderInfo.People = totalPeople
