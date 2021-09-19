@@ -19,9 +19,9 @@ func NewEsAuthorBusiness() *EsAuthorBusiness {
 
 //达人库查询
 func (receiver *EsAuthorBusiness) BaseSearch(
-	authorId, keyword, category, secondCategory, sellTags, province, city, fanProvince, fanCity string,
+	authorId, keyword, category, secondCategory, sellTags, province, city, fanProvince, fanCity, fanAge string,
 	minFollower, maxFollower, minWatch, maxWatch, minDigg, maxDigg,
-	minGmv, maxGmv int64, gender, minAge, maxAge, minFanAge, maxFanAge, verification, level, isDelivery, isBrand, superSeller, fanGender, page, pageSize int,
+	minGmv, maxGmv int64, gender, minAge, maxAge, verification, level, isDelivery, isBrand, superSeller, fanGender, page, pageSize int,
 	sortStr, orderBy string) (list []es.DyAuthor, total int, comErr global.CommonError) {
 	list = []es.DyAuthor{}
 	if sortStr == "" {
@@ -205,6 +205,22 @@ func (receiver *EsAuthorBusiness) BaseSearch(
 		esQuery.SetRange("predict_30_gmv", map[string]interface{}{
 			"gte": 100000,
 		})
+	}
+	if fanGender == 1 {
+		esQuery.SetTerm("fans_gender", 0)
+	} else if fanGender == 2 {
+		esQuery.SetTerm("fans_gender", 1)
+	} else if fanGender == 3 {
+		esQuery.SetTerm("fans_gender", 2)
+	}
+	if fanAge != "" {
+		esQuery.SetMatchPhrase("fans_age.keyword", fanAge)
+	}
+	if fanProvince != "" {
+		esQuery.SetTerm("fans_province.keyword", fanProvince)
+	}
+	if fanCity != "" {
+		esQuery.SetTerm("fans_city.keyword", fanCity)
 	}
 	results := esMultiQuery.
 		SetTable(esTable).
