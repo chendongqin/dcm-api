@@ -16,5 +16,6 @@ type DyAuthorAwemeAgg struct {
 	DiggCount       int64  `json:"digg_count"`
 	AwemeCreateTime int64  `json:"aweme_create_time"`
 	ForwardCount    int64  `json:"forward_count"`
+	ShareCount      int64  `json:"share_count"`
 	DyPromotionId   string `json:"dy_promotion_id"`
 }

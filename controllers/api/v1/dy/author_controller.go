@@ -68,8 +68,7 @@ func (receiver *AuthorController) BaseSearch() {
 	maxGmv, _ := receiver.GetInt64("max_gmv", 0)
 	minAge, _ := receiver.GetInt("min_age", 0)
 	maxAge, _ := receiver.GetInt("max_age", 0)
-	minFanAge, _ := receiver.GetInt("min_fan_age", 0)
-	maxFanAge, _ := receiver.GetInt("max_fan_age", 0)
+	fanAge := receiver.GetString("fan_age", "")
 	gender, _ := receiver.GetInt("gender", 0)
 	fanGender, _ := receiver.GetInt("fan_gender", 0)
 	verification, _ := receiver.GetInt("verification", 0)
@@ -87,7 +86,7 @@ func (receiver *AuthorController) BaseSearch() {
 	if !receiver.HasAuth {
 		if category != "" || secondCategory != "" || sellTags != "" || province != "" || city != "" || fanProvince != "" || fanCity != "" || sortStr != "follower_incre_count" || orderBy != "desc" ||
 			minFollower > 0 || maxFollower > 0 || minWatch > 0 || maxWatch > 0 || minDigg > 0 || maxDigg > 0 || minGmv > 0 || maxGmv > 0 ||
-			gender > 0 || minAge > 0 || maxAge > 0 || minFanAge > 0 || maxFanAge > 0 || verification > 0 || level > 0 || fanGender > 0 ||
+			gender > 0 || minAge > 0 || maxAge > 0 || fanAge != "" || verification > 0 || level > 0 || fanGender > 0 ||
 			superSeller == 1 || isDelivery > 0 || isBrand == 1 || page != 1 {
 			if !receiver.HasLogin {
 				receiver.FailReturn(global.NewError(4001))
@@ -121,9 +120,9 @@ func (receiver *AuthorController) BaseSearch() {
 		keyword = utils.MatchDouyinNewText(keyword)
 	}
 	EsAuthorBusiness := es.NewEsAuthorBusiness()
-	list, total, comErr := EsAuthorBusiness.BaseSearch(authorId, keyword, category, secondCategory, sellTags, province, city, fanProvince, fanCity,
+	list, total, comErr := EsAuthorBusiness.BaseSearch(authorId, keyword, category, secondCategory, sellTags, province, city, fanProvince, fanCity, fanAge,
 		minFollower, maxFollower, minWatch, maxWatch, minDigg, maxDigg, minGmv, maxGmv,
-		gender, minAge, maxAge, minFanAge, maxFanAge, verification, level, isDelivery, isBrand, superSeller, fanGender, page, pageSize,
+		gender, minAge, maxAge, verification, level, isDelivery, isBrand, superSeller, fanGender, page, pageSize,
 		sortStr, orderBy)
 	if comErr != nil {
 		receiver.FailReturn(comErr)
@@ -996,9 +995,9 @@ func (receiver *AuthorController) AuthorSearch() {
 }
 
 /**爬虫加速**/
-func (receiver *AuthorController) SpiderSpeedUp() (comErr global.CommonError) {
+func (receiver *AuthorController) SpiderSpeedUp() {
 	if !business.UserActionLock(receiver.TrueUri, utils.ToString(receiver.UserId), 5) {
-		comErr = global.NewError(6000)
+		receiver.FailReturn(global.NewError(6000))
 		return
 	}
 
@@ -1020,6 +1019,6 @@ func (receiver *AuthorController) SpiderSpeedUp() (comErr global.CommonError) {
 	global.Cache.Set(cacheKey, "1", 300)
 
 	logs.Info("达人加速，爬虫推送结果：", ret)
-	receiver.SuccReturn([]string{"success"})
+	receiver.SuccReturn([]string{})
 	return
 }

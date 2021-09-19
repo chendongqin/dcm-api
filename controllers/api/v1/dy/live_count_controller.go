@@ -263,3 +263,216 @@ func (receiver *LiveCountController) LiveSumByCategory() {
 	receiver.SuccReturn(returnData)
 	return
 }
+
+//带货直播分类分级统计
+func (receiver *LiveCountController) LiveSumByCategoryLevel() {
+	startTime, endTime, comErr := receiver.GetRangeDate()
+	if comErr != nil {
+		receiver.FailReturn(comErr)
+		return
+	}
+	category := receiver.GetString("category", "")
+	if category == "" {
+		receiver.FailReturn(global.NewError(4000))
+		return
+	}
+	living, _ := receiver.GetInt("living", 0)
+	esLiveDataBusiness := es.NewEsLiveDataBusiness()
+	_, dataList := esLiveDataBusiness.ProductLiveDataCategoryLevel(startTime, endTime, category, living)
+	levelsArr := []string{"E", "D", "C", "B", "A", "S"}
+	levelMap := map[string]dy.LiveSumDataCategoryLevel{}
+	var allGmv float64 = 0
+	var allWatch int64 = 0
+	for _, v := range dataList {
+		var avgWatch int64 = 0
+		var avgGmv float64 = 0
+		if v.TotalGmv.Value > 0 {
+			avgGmv = v.TotalGmv.Value / float64(v.DocCount)
+		}
+		if v.TotalWatchCnt.Value > 0 {
+			avgWatch = v.TotalWatchCnt.Value / int64(v.DocCount)
+		}
+		allGmv += v.TotalGmv.Value
+		allWatch += v.TotalWatchCnt.Value
+		item := dy.LiveSumDataCategoryLevel{
+			Level:      v.Key,
+			RoomCount:  v.DocCount,
+			TotalWatch: utils.ToInt64(v.TotalWatchCnt.Value),
+			AvgWatch:   avgWatch,
+			TotalGmv:   v.TotalGmv.Value,
+			AvgGmv:     avgGmv,
+		}
+		item.CustomerUnitPrice.Min = v.StatsCustomerUnitPrice.Min
+		item.CustomerUnitPrice.Max = v.StatsCustomerUnitPrice.Max
+		levelMap[v.Key] = item
+	}
+	list := make([]dy.LiveSumDataCategoryLevel, 0)
+	for _, key := range levelsArr {
+		item := dy.LiveSumDataCategoryLevel{}
+		if v, exist := levelMap[key]; exist {
+			item = v
+		}
+		if allGmv > 0 {
+			item.GmvPer = item.TotalGmv / allGmv
+		}
+		if allWatch > 0 {
+			item.WatchPer = float64(item.TotalWatch) / float64(allWatch)
+		}
+		list = append(list, item)
+	}
+	receiver.SuccReturn(list)
+	return
+}
+
+//带货直播分类分级统计
+func (receiver *LiveCountController) LiveSumByCategoryLevelTwo() {
+	startTime, endTime, comErr := receiver.GetRangeDate()
+	if comErr != nil {
+		receiver.FailReturn(comErr)
+		return
+	}
+	category := receiver.GetString("category", "")
+	if category == "" {
+		receiver.FailReturn(global.NewError(4000))
+		return
+	}
+	living, _ := receiver.GetInt("living", 0)
+	esLiveDataBusiness := es.NewEsLiveDataBusiness()
+	_, dataList := esLiveDataBusiness.ProductLiveDataCategoryLevelTwoShow(startTime, endTime, category, living)
+	sort.Slice(dataList, func(i, j int) bool {
+		if strings.Index(dataList[j].Key, "S") == 0 && strings.Index(dataList[i].Key, "S") < 0 {
+			return true
+		}
+		if strings.Index(dataList[i].Key, "S") == 0 && strings.Index(dataList[j].Key, "S") < 0 {
+			return false
+		}
+		return dataList[i].Key > dataList[j].Key
+	})
+	levelMap := map[string]map[int][]dy.LiveSumDataCategoryLevelTwo{}
+	for _, v := range dataList {
+		keyNameArr := strings.Split(v.Key, "")
+		levelKey := keyNameArr[0]
+		intKey := utils.ToInt(strings.Replace(v.Key, levelKey, "", 1))
+		if _, ok := levelMap[levelKey]; !ok {
+			levelMap[levelKey] = map[int][]dy.LiveSumDataCategoryLevelTwo{}
+			if _, ok1 := levelMap[levelKey][intKey]; !ok1 {
+				levelMap[levelKey][intKey] = []dy.LiveSumDataCategoryLevelTwo{}
+			}
+		}
+		item := make([]dy.LiveSumDataCategoryLevelTwo, 0)
+		buckets := v.LiveTwo.Buckets
+		sort.Slice(buckets, func(i, j int) bool {
+			return buckets[i].Key < buckets[j].Key
+		})
+		for _, v1 := range buckets {
+			item = append(item, dy.LiveSumDataCategoryLevelTwo{
+				FlowLevel:     v.Key,
+				StayLevel:     v1.Key,
+				RoomCount:     v1.DocCount,
+				TotalWatchCnt: v1.TotalWatchCnt.Value,
+				TotalGmv:      v1.TotalGmv.Value,
+			})
+		}
+		levelMap[levelKey][intKey] = item
+	}
+	levelsArr := []string{"E", "D", "C", "B", "A", "S"}
+	list := make([][][]dy.LiveSumDataCategoryLevelTwo, 0)
+	for _, level := range levelsArr {
+		item := [][]dy.LiveSumDataCategoryLevelTwo{}
+		if v, ok := levelMap[level]; ok {
+			keys := make([]int, 0)
+			for k := range v {
+				keys = append(keys, k)
+			}
+			sort.Ints(keys)
+			for _, k := range keys {
+				item = append(item, v[k])
+			}
+		}
+		list = append(list, item)
+	}
+	receiver.SuccReturn(list)
+	return
+}
+
+//明细列表
+func (receiver *LiveCountController) LiveSumByCategoryLevelList() {
+	startTime, endTime, comErr := receiver.GetRangeDate()
+	if comErr != nil {
+		receiver.FailReturn(comErr)
+		return
+	}
+	category := receiver.GetString("category", "")
+	if category == "" {
+		receiver.FailReturn(global.NewError(4000))
+		return
+	}
+	living, _ := receiver.GetInt("living", 0)
+	stayLevel, _ := receiver.GetInt("stay_level", 0)
+	level := receiver.GetString("level", "")
+	if level == "" {
+		receiver.FailReturn(global.NewError(4000))
+		return
+	}
+	page := receiver.GetPage("page")
+	pageSize := receiver.GetPageSize("page_size", 5, 30)
+	esLiveDataBusiness := es.NewEsLiveDataBusiness()
+	total, list, comErr := esLiveDataBusiness.ProductLiveDataCategoryLevelList(startTime, endTime, category, level, stayLevel, living, page, pageSize)
+	if comErr != nil {
+		receiver.FailReturn(comErr)
+		return
+	}
+	for k, v := range list {
+		list[k].Avatar = dyimg.Fix(v.Avatar)
+		list[k].Cover = dyimg.Fix(v.Cover)
+		list[k].RoomId = business.IdEncrypt(v.RoomId)
+		list[k].AuthorId = business.IdEncrypt(v.AuthorId)
+		if v.DisplayId == "" {
+			list[k].DisplayId = v.ShortId
+		}
+	}
+	receiver.SuccReturn(map[string]interface{}{
+		"list":  list,
+		"total": total,
+	})
+	return
+}
+
+//明细统计
+func (receiver *LiveCountController) LiveSumByCategoryLevelCount() {
+	startTime, endTime, comErr := receiver.GetRangeDate()
+	if comErr != nil {
+		receiver.FailReturn(comErr)
+		return
+	}
+	category := receiver.GetString("category", "")
+	if category == "" {
+		receiver.FailReturn(global.NewError(4000))
+		return
+	}
+	living, _ := receiver.GetInt("living", 0)
+	stayLevel, _ := receiver.GetInt("stay_level", 0)
+	level := receiver.GetString("level", "")
+	if level == "" {
+		receiver.FailReturn(global.NewError(4000))
+		return
+	}
+	esLiveDataBusiness := es.NewEsLiveDataBusiness()
+	total, data, comErr := esLiveDataBusiness.ProductLiveDataCategoryLevelCount(startTime, endTime, category, level, stayLevel, living)
+	var avgWatch int64 = 0
+	var avgGmv float64 = 0
+	if total > 0 {
+		avgWatch = data.TotalWatchCnt.Value / int64(total)
+		avgGmv = data.TotalGmv.Value / float64(total)
+	}
+	receiver.SuccReturn(map[string]interface{}{
+		"room_count":          total,
+		"total_watch":         data.TotalWatchCnt.Value,
+		"avg_watch":           avgWatch,
+		"total_gmv":           data.TotalGmv.Value,
+		"avg_gmv":             avgGmv,
+		"min_user_uint_price": data.StatsCustomerUnitPrice.Min,
+		"max_user_uint_price": data.StatsCustomerUnitPrice.Max,
+	})
+	return
+}

@@ -11,6 +11,7 @@ func init() {
 	ns := beego.NewNamespace("/v1/dy",
 		beego.NSNamespace("/live",
 			beego.NSRouter("/search", &v1dy.LiveController{}, "get:SearchRoom"),
+			beego.NSRouter("/speed/:author_id", &v1dy.LiveController{}, "get:LiveSpeed"),
 			beego.NSRouter("/info/:room_id", &v1dy.LiveController{}, "get:LiveInfoData"),
 			beego.NSRouter("/promotion/sale/:room_id/:product_id", &v1dy.LiveController{}, "get:LiveProductSaleChart"),
 			beego.NSRouter("/promotion/list/:room_id", &v1dy.LiveController{}, "get:LiveProductList"),
@@ -42,6 +43,10 @@ func init() {
 			beego.NSRouter("/rank/:start/:end", &v1dy.LiveCountController{}, "get:LiveCategoryRank"),
 			beego.NSRouter("/rate/:type/:start/:end", &v1dy.LiveCountController{}, "get:LiveCompositeByCategory"),
 			beego.NSRouter("/detail/:start/:end", &v1dy.LiveCountController{}, "get:LiveSumByCategory"),
+			beego.NSRouter("/level/:start/:end", &v1dy.LiveCountController{}, "get:LiveSumByCategoryLevel"),
+			beego.NSRouter("/level/show/:start/:end", &v1dy.LiveCountController{}, "get:LiveSumByCategoryLevelTwo"),
+			beego.NSRouter("/level/list/:start/:end", &v1dy.LiveCountController{}, "get:LiveSumByCategoryLevelList"),
+			beego.NSRouter("/level/count/:start/:end", &v1dy.LiveCountController{}, "get:LiveSumByCategoryLevelCount"),
 		),
 	)
 	// 注册路由组

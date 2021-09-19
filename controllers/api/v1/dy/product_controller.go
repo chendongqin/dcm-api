@@ -5,11 +5,13 @@ import (
 	"dongchamao/business/es"
 	controllers "dongchamao/controllers/api"
 	"dongchamao/global"
+	"dongchamao/global/cache"
 	"dongchamao/global/utils"
 	"dongchamao/hbase"
 	"dongchamao/models/entity"
 	dy2 "dongchamao/models/repost/dy"
 	"dongchamao/services/dyimg"
+	"github.com/astaxie/beego/logs"
 	"math"
 	"sort"
 	"time"
@@ -1044,5 +1046,39 @@ func (receiver *ProductController) ProductFanAnalyse() {
 		"province_chart":  provinceChart,
 		"province_people": provinceTotal,
 	})
+	return
+}
+
+//商品加速
+func (receiver *ProductController) ProductSpeed() {
+
+	if !business.UserActionLock(receiver.TrueUri, utils.ToString(receiver.UserId), 5) {
+		receiver.FailReturn(global.NewError(6000))
+		return
+	}
+	productId := receiver.Ctx.Input.Param(":product_id")
+	if productId == "" {
+		receiver.FailReturn(global.NewError(4000))
+		return
+	}
+	_, comErr := hbase.GetProductInfo(productId)
+	if comErr != nil {
+		receiver.FailReturn(global.NewError(4000))
+	}
+
+	spriderName := "product"
+	cacheKey := cache.GetCacheKey(cache.SpiderSpeedUpLimit, spriderName, productId)
+	cacheData := global.Cache.Get(cacheKey)
+	if cacheData != "" {
+		//缓存存在
+		receiver.FailReturn(global.NewError(6000))
+		return
+	}
+	//加速
+	ret, _ := business.NewSpiderBusiness().SpiderSpeedUp(spriderName, productId)
+	global.Cache.Set(cacheKey, "1", 300)
+
+	logs.Info("产品加速，爬虫推送结果：", ret)
+	receiver.SuccReturn([]string{})
 	return
 }
