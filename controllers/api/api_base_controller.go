@@ -216,7 +216,7 @@ func (this *ApiBaseController) InitUserToken() {
 //缓存会员信息
 func (this *ApiBaseController) CacheUserVipLevel() {
 	userBusiness := business.NewUserBusiness()
-	this.DyLevel = userBusiness.GetCacheUserLevel(this.UserId, 1, true)
+	this.DyLevel = userBusiness.GetCacheUserLevel(this.UserId, 1, false)
 	this.XhsLevel = userBusiness.GetCacheUserLevel(this.UserId, 2, true)
 	this.TbLevel = userBusiness.GetCacheUserLevel(this.UserId, 3, true)
 }
