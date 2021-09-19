@@ -105,7 +105,7 @@ func (e *EsVideoBusiness) SearchByAuthor(authorId, keyword, sortStr, orderBy str
 		"lt":  endTime.AddDate(0, 0, 1).Unix(),
 	})
 	if keyword != "" {
-		esQuery.SetMatchPhrase("aweme_title.keyword", keyword)
+		esQuery.SetMatchPhrase("aweme_title", keyword)
 	}
 	if hasProduct == 1 {
 		esQuery.SetExist("field", "product_ids")

@@ -158,14 +158,14 @@ func (receiver *EsLiveBusiness) RoomProductByRoomId(roomInfo entity.DyLiveInfo, 
 			secondLabel = ""
 			thirdLabel = ""
 		} else {
-			esQuery.SetMatchPhrase("dcm_level_first.keyword", firstLabel)
+			esQuery.SetMatchPhrase("dcm_level_first", firstLabel)
 		}
 	}
 	if secondLabel != "" {
-		esQuery.SetMatchPhrase("first_cname.keyword", secondLabel)
+		esQuery.SetMatchPhrase("first_cname", secondLabel)
 	}
 	if thirdLabel != "" {
-		esQuery.SetMatchPhrase("second_cname.keyword", thirdLabel)
+		esQuery.SetMatchPhrase("second_cname", thirdLabel)
 	}
 	orderEs := elasticsearch.NewElasticOrder().Add(sortStr, orderBy).Order
 	results := esMultiQuery.
