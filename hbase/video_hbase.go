@@ -141,12 +141,12 @@ func GetAuthorVideoCountData(awemeId, date string) (data entity.DyAwemeDiggComme
 }
 
 //获取视频评论列表
-func GetAwemeTopComment(productId string, start, end int) (data []entity.DyAwemeCommentTop, total int, comErr global.CommonError) {
+func GetAwemeTopComment(awemeId string, start, end int) (data []entity.DyAwemeCommentTop, total int, comErr global.CommonError) {
 	data = make([]entity.DyAwemeCommentTop, 0)
 	query := hbasehelper.NewQuery()
 	result, err := query.
 		SetTable(hbaseService.HbaseDyAwemeTopComment).
-		GetByRowKey([]byte(productId))
+		GetByRowKey([]byte(awemeId))
 	if err != nil {
 		comErr = global.NewMsgError(err.Error())
 		return
