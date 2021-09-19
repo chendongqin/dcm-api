@@ -688,7 +688,7 @@ func (receiver *LiveController) LiveFanAnalyse() {
 	}
 	if roomType != "ing" {
 		if len(info.Word) > 0 {
-			for k, v := range info.Word[0] {
+			for k, v := range info.Word {
 				if k == "" {
 					continue
 				}

@@ -395,7 +395,7 @@ func (receiver *LiveCountController) LiveSumByCategoryLevelTwo() {
 	return
 }
 
-//明显列表
+//明细列表
 func (receiver *LiveCountController) LiveSumByCategoryLevelList() {
 	startTime, endTime, comErr := receiver.GetRangeDate()
 	if comErr != nil {
@@ -438,7 +438,7 @@ func (receiver *LiveCountController) LiveSumByCategoryLevelList() {
 	return
 }
 
-//明显统计
+//明细统计
 func (receiver *LiveCountController) LiveSumByCategoryLevelCount() {
 	startTime, endTime, comErr := receiver.GetRangeDate()
 	if comErr != nil {
