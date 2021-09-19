@@ -96,7 +96,7 @@ func (receiver *EsAuthorBusiness) BaseSearch(
 				},
 			})
 		} else {
-			esQuery.SetMatchPhrase("tags.keyword", category)
+			esQuery.SetMatchPhrase("tags", category)
 		}
 	}
 	if sellTags != "" {
@@ -214,7 +214,7 @@ func (receiver *EsAuthorBusiness) BaseSearch(
 		esQuery.SetTerm("fans_gender", 2)
 	}
 	if fanAge != "" {
-		esQuery.SetMatchPhrase("fans_age.keyword", fanAge)
+		esQuery.SetMatchPhrase("fans_age", fanAge)
 	}
 	if fanProvince != "" {
 		esQuery.SetTerm("fans_province.keyword", fanProvince)
@@ -286,7 +286,7 @@ func (receiver *EsAuthorBusiness) SimpleSearch(
 				},
 			})
 		} else {
-			esQuery.SetMatchPhrase("tags.keyword", tags)
+			esQuery.SetMatchPhrase("tags", tags)
 		}
 	}
 	if secondTags != "" {

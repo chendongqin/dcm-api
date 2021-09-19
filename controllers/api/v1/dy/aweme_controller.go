@@ -2,6 +2,7 @@ package dy
 
 import (
 	"dongchamao/business"
+	"dongchamao/business/es"
 	controllers "dongchamao/controllers/api"
 	"dongchamao/global"
 	"dongchamao/global/cache"
@@ -362,6 +363,37 @@ func (receiver *AwemeController) AwemeProductAnalyseChart() {
 			"product_num": len(productMap),
 		},
 		"list": list,
+	})
+	return
+}
+
+//商品带货同款视频
+func (receiver *AwemeController) AwemeProductSameAweme() {
+	startTime, endTime, comErr := receiver.GetRangeDate()
+	if comErr != nil {
+		receiver.FailReturn(comErr)
+		return
+	}
+	awemeId := business.IdDecrypt(receiver.Ctx.Input.Param(":aweme_id"))
+	productId := business.IdDecrypt(receiver.Ctx.Input.Param(":product_id"))
+	page := receiver.GetPage("page")
+	pageSize := receiver.GetPageSize("page_size", 5, 30)
+	orderBy := receiver.GetString("order_by", "")
+	sortStr := receiver.GetString("sort", "")
+	list, total, comErr := es.NewEsVideoBusiness().SearchByProductId(productId, awemeId, sortStr, orderBy, page, pageSize, startTime, endTime)
+	for k, v := range list {
+		list[k].AuthorId = business.IdEncrypt(v.AuthorId)
+		list[k].AwemeId = business.IdEncrypt(v.AwemeId)
+		list[k].AwemeCover = dyimg.Fix(v.AwemeCover)
+		list[k].Avatar = dyimg.Fix(v.Avatar)
+		if v.UniqueId == "" {
+			list[k].UniqueId = v.ShortId
+		}
+		list[k].AwemeUrl = business.AwemeUrl + awemeId
+	}
+	receiver.SuccReturn(map[string]interface{}{
+		"list":  list,
+		"total": total,
 	})
 	return
 }

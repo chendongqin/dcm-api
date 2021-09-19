@@ -16,6 +16,7 @@ func init() {
 			beego.NSRouter("/hot/words/:aweme_id", &v1dy.AwemeController{}, "get:AwemeCommentHotWords"),
 			beego.NSRouter("/comments/:aweme_id", &v1dy.AwemeController{}, "get:AwemeCommentTop"),
 			beego.NSRouter("/product/:aweme_id/:start/:end", &v1dy.AwemeController{}, "get:AwemeProductAnalyse"),
+			beego.NSRouter("/product/same/:product_id/:aweme_id/:start/:end", &v1dy.AwemeController{}, "get:AwemeProductSameAweme"),
 			beego.NSRouter("/product/chart/:aweme_id/:start/:end", &v1dy.AwemeController{}, "get:AwemeProductAnalyseChart"),
 		),
 	)

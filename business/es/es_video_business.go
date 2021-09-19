@@ -105,7 +105,7 @@ func (e *EsVideoBusiness) SearchByAuthor(authorId, keyword, sortStr, orderBy str
 		"lt":  endTime.AddDate(0, 0, 1).Unix(),
 	})
 	if keyword != "" {
-		esQuery.SetMatchPhrase("aweme_title.keyword", keyword)
+		esQuery.SetMatchPhrase("aweme_title", keyword)
 	}
 	if hasProduct == 1 {
 		esQuery.SetExist("field", "product_ids")
@@ -204,4 +204,57 @@ func (e *EsVideoBusiness) CountProductAwemeByAuthor(authorId string, startTime, 
 		SetCache(300).
 		SetMust(esQuery.Condition).
 		SetTable(esTable).FindCount()
+}
+
+//获取视频同款视频
+func (e *EsVideoBusiness) SearchByProductId(productId, awemeId, sortStr, orderBy string, page, pageSize int, startTime, endTime time.Time) (list []es.DyAweme, total int, comErr global.CommonError) {
+	if orderBy == "" {
+		orderBy = "desc"
+	}
+	if sortStr == "" {
+		sortStr = "aweme_create_time"
+	}
+	if !utils.InArrayString(orderBy, []string{"desc", "asc"}) {
+		comErr = global.NewError(4000)
+		return
+	}
+	if !utils.InArrayString(sortStr, []string{"aweme_create_time", "digg_count", "comment_count", "share_count"}) {
+		comErr = global.NewError(4000)
+		return
+	}
+	esTable, err := GetESTableByMonthTime(es.DyVideoTable, startTime, endTime)
+	if err != nil {
+		comErr = global.NewError(4000)
+		return
+	}
+	esQuery, esMultiQuery := elasticsearch.NewElasticQueryGroup()
+	esQuery.SetMatchPhrase("product_ids", productId)
+	esQuery.SetExist("field", "aweme_title")
+	esQuery.SetTerm("exist", 1)
+	esQuery.SetRange("aweme_create_time", map[string]interface{}{
+		"gte": startTime.Unix(),
+		"lt":  endTime.AddDate(0, 0, 1).Unix(),
+	})
+	if awemeId != "" {
+		esQuery.AddCondition(map[string]interface{}{
+			"bool": map[string]interface{}{
+				"must_not": map[string]interface{}{
+					"term": map[string]interface{}{
+						"aweme_id": awemeId,
+					},
+				},
+			},
+		})
+	}
+	result := esMultiQuery.
+		SetTable(esTable).
+		SetCache(180).
+		AddMust(esQuery.Condition).
+		SetOrderBy(elasticsearch.NewElasticOrder().Add(sortStr, orderBy).Order).
+		SetLimit((page-1)*pageSize, pageSize).
+		SetMultiQuery().
+		Query()
+	utils.MapToStruct(result, &list)
+	total = esMultiQuery.Count
+	return
 }
