@@ -700,6 +700,9 @@ func (receiver *LiveController) LiveFanAnalyse() {
 			sort.Slice(wordChart, func(i, j int) bool {
 				return wordChart[i].DistributionValue > wordChart[j].DistributionValue
 			})
+			if len(wordChart) > 1000 {
+				wordChart = wordChart[:1000]
+			}
 		}
 	}
 	sort.Slice(cityChart, func(i, j int) bool {

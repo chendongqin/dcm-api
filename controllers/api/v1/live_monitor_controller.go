@@ -12,6 +12,7 @@ import (
 	"dongchamao/models/repost/dy"
 	jsoniter "github.com/json-iterator/go"
 	"math"
+	"sort"
 	"strconv"
 	"time"
 )
@@ -244,6 +245,9 @@ func (receiver *LiveMonitorController) LiveMonitorRooms() {
 			Sales:      utils.ToInt64(math.Floor(v.PredictSales)),
 		})
 	}
+	sort.Slice(roomList, func(i, j int) bool {
+		return roomList[i].CreateTime > roomList[j].CreateTime
+	})
 	receiver.SuccReturn(alias.M{
 		"list":  roomList,
 		"total": totalCount,
