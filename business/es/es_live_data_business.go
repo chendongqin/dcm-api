@@ -4,6 +4,7 @@ import (
 	"dongchamao/global"
 	"dongchamao/global/utils"
 	"dongchamao/models/es"
+	"dongchamao/models/repost/dy"
 	"dongchamao/services/elasticsearch"
 	"time"
 )
@@ -165,7 +166,7 @@ func (receiver *EsLiveDataBusiness) LiveCompositeByCategory(startTime, endTime t
 }
 
 //榜单
-func (receiver *EsLiveDataBusiness) LiveRankByCategory(startTime, endTime time.Time, category, sortStr string, living int) (list []es.EsDyLiveRank, comErr global.CommonError) {
+func (receiver *EsLiveDataBusiness) LiveRankByCategory(startTime, endTime time.Time, category, sortStr string, living int) (list []es.EsDyLiveDetail, comErr global.CommonError) {
 	if sortStr == "" {
 		sortStr = "avg_user_count"
 	}
@@ -284,6 +285,262 @@ func (receiver *EsLiveDataBusiness) ProductLiveDataByCategory(startTime, endTime
 	if data.TotalWatchCnt.Value > 0 {
 		uv = (data.TotalGmv.Value + data.TotalTicketCount.Value/10) / data.TotalWatchCnt.Value
 		buyRate = data.TotalSales.Value / data.TotalWatchCnt.Value
+	}
+	return
+}
+
+//带货行业数据分类分级统计
+func (receiver *EsLiveDataBusiness) ProductLiveDataCategoryLevel(startTime, endTime time.Time, category string, living int) (total int, data []dy.EsLiveSumDataCategoryLevel) {
+	data = []dy.EsLiveSumDataCategoryLevel{}
+	esTable, err := GetESTableByTime(es.DyLiveInfoBaseTable, startTime, endTime)
+	if err != nil {
+		return
+	}
+	esQuery, esMultiQuery := elasticsearch.NewElasticQueryGroup()
+	esQuery.SetRange("create_time", map[string]interface{}{
+		"gte": startTime.Unix(),
+		"lt":  endTime.AddDate(0, 0, 1).Unix(),
+	})
+	esQuery.SetRange("num_product", map[string]interface{}{
+		"gt": 0,
+	})
+	if category != "" {
+		esQuery.SetMatchPhrase("dcm_level_first", category)
+	}
+	if living == 1 {
+		esQuery.SetTerm("room_status", 2)
+	}
+	var cacheTime time.Duration = 300
+	today := time.Now().Format("20060102")
+	if today != endTime.Format("20060102") {
+		cacheTime = 86400
+	}
+	countResult := esMultiQuery.
+		SetCache(cacheTime).
+		SetTable(esTable).
+		SetMust(esQuery.Condition).
+		RawQuery(map[string]interface{}{
+			"query": map[string]interface{}{
+				"bool": map[string]interface{}{
+					"must": esQuery.Condition,
+				},
+			},
+			"size": 0,
+			"aggs": map[string]interface{}{
+				"live": map[string]interface{}{
+					"terms": map[string]interface{}{
+						"field": "flow_rates_index.keyword",
+						"size":  10,
+					},
+					"aggs": map[string]interface{}{
+						"total_watch_cnt": map[string]interface{}{
+							"sum": map[string]interface{}{
+								"field": "watch_cnt",
+							},
+						},
+						"total_gmv": map[string]interface{}{
+							"sum": map[string]interface{}{
+								"field": "predict_gmv",
+							},
+						},
+						"stats_customer_unit_price": map[string]interface{}{
+							"stats": map[string]interface{}{
+								"field": "customer_unit_price",
+							},
+						},
+					},
+				},
+			},
+		})
+	res := elasticsearch.GetBuckets(countResult, "live")
+	utils.MapToStruct(res, &data)
+	if h, ok := countResult["hits"]; ok {
+		if t, ok2 := h.(map[string]interface{})["total"]; ok2 {
+			total = utils.ToInt(t.(float64))
+		}
+	}
+	return
+}
+
+//带货行业数据分类分级分布数据
+func (receiver *EsLiveDataBusiness) ProductLiveDataCategoryLevelTwoShow(startTime, endTime time.Time, category string, living int) (total int, data []dy.EsLiveSumDataCategoryLevelTwo) {
+	data = []dy.EsLiveSumDataCategoryLevelTwo{}
+	esTable, err := GetESTableByTime(es.DyLiveInfoBaseTable, startTime, endTime)
+	if err != nil {
+		return
+	}
+	esQuery, esMultiQuery := elasticsearch.NewElasticQueryGroup()
+	esQuery.SetRange("create_time", map[string]interface{}{
+		"gte": startTime.Unix(),
+		"lt":  endTime.AddDate(0, 0, 1).Unix(),
+	})
+	esQuery.SetRange("num_product", map[string]interface{}{
+		"gt": 0,
+	})
+	if category != "" {
+		esQuery.SetMatchPhrase("dcm_level_first", category)
+	}
+	if living == 1 {
+		esQuery.SetTerm("room_status", 2)
+	}
+	var cacheTime time.Duration = 300
+	today := time.Now().Format("20060102")
+	if today != endTime.Format("20060102") {
+		cacheTime = 86400
+	}
+	countResult := esMultiQuery.
+		SetCache(cacheTime).
+		SetTable(esTable).
+		SetMust(esQuery.Condition).
+		RawQuery(map[string]interface{}{
+			"query": map[string]interface{}{
+				"bool": map[string]interface{}{
+					"must": esQuery.Condition,
+				},
+			},
+			"size": 0,
+			"aggs": map[string]interface{}{
+				"live": map[string]interface{}{
+					"terms": map[string]interface{}{
+						"field": "flow_rates.keyword",
+						"size":  10000,
+					},
+					"aggs": map[string]interface{}{
+						"live_tow": map[string]interface{}{
+							"terms": map[string]interface{}{
+								"field": "avg_stay_index",
+							},
+							"aggs": map[string]interface{}{
+								"total_watch_cnt": map[string]interface{}{
+									"sum": map[string]interface{}{
+										"field": "watch_cnt",
+									},
+								},
+								"total_gmv": map[string]interface{}{
+									"sum": map[string]interface{}{
+										"field": "predict_gmv",
+									},
+								},
+							},
+						},
+					},
+				},
+			},
+		})
+	res := elasticsearch.GetBuckets(countResult, "live")
+	utils.MapToStruct(res, &data)
+	if h, ok := countResult["hits"]; ok {
+		if t, ok2 := h.(map[string]interface{})["total"]; ok2 {
+			total = utils.ToInt(t.(float64))
+		}
+	}
+	return
+}
+
+//等级分布明细列表
+func (receiver *EsLiveDataBusiness) ProductLiveDataCategoryLevelList(startTime, endTime time.Time, category, level string, stayLevel, living, page, pageSize int) (total int, list []es.EsDyLiveDetail, comErr global.CommonError) {
+	esTable, err := GetESTableByTime(es.DyLiveInfoBaseTable, startTime, endTime)
+	if err != nil {
+		comErr = global.NewError(4000)
+		return
+	}
+	if pageSize > 30 {
+		comErr = global.NewError(4000)
+		return
+	}
+	esQuery, esMultiQuery := elasticsearch.NewElasticQueryGroup()
+	esQuery.SetRange("create_time", map[string]interface{}{
+		"gte": startTime.Unix(),
+		"lt":  endTime.AddDate(0, 0, 1).Unix(),
+	})
+	if category != "" {
+		esQuery.SetMatchPhrase("dcm_level_first", category)
+	}
+	if living == 1 {
+		esQuery.SetTerm("room_status", 2)
+	}
+	esQuery.SetTerm("flow_rates.keyword", level)
+	esQuery.SetTerm("avg_stay_index", stayLevel)
+	var cacheTime time.Duration = 180
+	today := time.Now().Format("20060102")
+	if today != endTime.Format("20060102") {
+		cacheTime = 86400
+	}
+	results := esMultiQuery.
+		SetTable(esTable).
+		SetCache(cacheTime).
+		AddMust(esQuery.Condition).
+		SetLimit((page-1)*pageSize, pageSize).
+		SetOrderBy(elasticsearch.NewElasticOrder().Add("predict_gmv", "desc").Order).
+		SetMultiQuery().
+		Query()
+	utils.MapToStruct(results, &list)
+	total = esMultiQuery.Count
+	return
+}
+
+//等级分布明细统计
+func (receiver *EsLiveDataBusiness) ProductLiveDataCategoryLevelCount(startTime, endTime time.Time, category, level string, stayLevel, living int) (total int, data dy.EsLiveSumDataCategoryLevel, comErr global.CommonError) {
+	data = dy.EsLiveSumDataCategoryLevel{}
+	esTable, err := GetESTableByTime(es.DyLiveInfoBaseTable, startTime, endTime)
+	if err != nil {
+		comErr = global.NewError(4000)
+		return
+	}
+	esQuery, esMultiQuery := elasticsearch.NewElasticQueryGroup()
+	esQuery.SetRange("create_time", map[string]interface{}{
+		"gte": startTime.Unix(),
+		"lt":  endTime.AddDate(0, 0, 1).Unix(),
+	})
+	if category != "" {
+		esQuery.SetMatchPhrase("dcm_level_first", category)
+	}
+	if living == 1 {
+		esQuery.SetTerm("room_status", 2)
+	}
+	esQuery.SetTerm("flow_rates.keyword", level)
+	esQuery.SetTerm("avg_stay_index", stayLevel)
+	var cacheTime time.Duration = 180
+	today := time.Now().Format("20060102")
+	if today != endTime.Format("20060102") {
+		cacheTime = 86400
+	}
+	countResult := esMultiQuery.
+		SetTable(esTable).
+		SetCache(cacheTime).
+		AddMust(esQuery.Condition).
+		RawQuery(map[string]interface{}{
+			"query": map[string]interface{}{
+				"bool": map[string]interface{}{
+					"must": esQuery.Condition,
+				},
+			},
+			"size": 0,
+			"aggs": map[string]interface{}{
+				"total_watch_cnt": map[string]interface{}{
+					"sum": map[string]interface{}{
+						"field": "watch_cnt",
+					},
+				},
+				"total_gmv": map[string]interface{}{
+					"sum": map[string]interface{}{
+						"field": "predict_gmv",
+					},
+				},
+				"stats_customer_unit_price": map[string]interface{}{
+					"stats": map[string]interface{}{
+						"field": "customer_unit_price",
+					},
+				},
+			},
+		})
+	if aggregations, ok := countResult["aggregations"].(map[string]interface{}); ok {
+		utils.MapToStruct(aggregations, &data)
+	}
+	if h, ok := countResult["hits"]; ok {
+		if t, ok2 := h.(map[string]interface{})["total"]; ok2 {
+			total = utils.ToInt(t.(float64))
+		}
 	}
 	return
 }
