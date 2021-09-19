@@ -20,6 +20,10 @@ type WechatBusiness struct {
 const (
 	WechatMsgTemplateLiveMonitorFinish = "enHnUWWRMZiOdiyTlP4EKHy6sO6AX3SMlmPyamKNa3c" //直播监控结束通知
 	WechatMsgTemplateLiveMonitorBegin  = "0JlZIQz3gk0hCYwNLtBmtd-WAGZ0zK_uQ_aR6-1ZpS0" //直播监控开始
+	WechatMsgTemplateBindNotice        = "-O4v3TG7c8hV1xeVwt5jUdHLP0bLKghvfsxWMUCPeU8" //绑定通知 - 模板id
+	WechatMsgTemplateLoginNotice       = "lbk1OMOLE1x-tSQIqap8otYWlAu-7d8mTmTnT0R4k50" //登录成功通知-模板id
+	WechatMsgTemplateLoginOutNotice    = "e-tT-wntWlj-tVpb2YktMaPN5CnkBdKxGK11lq_ccUQ" //退出成功通知-模板id
+
 )
 
 func NewWechatBusiness() *WechatBusiness {
@@ -190,5 +194,91 @@ func (receiver *WechatBusiness) DelMedia(mediaId string) error {
 
 func (receiver *WechatBusiness) GetMenuClick(key string) (click dcm.DcWechatMenuClick, err error) {
 	_, err = dcm.GetDbSession().Table(dcm.DcWechatMenuClick{}).Where("`msg_key`=?", key).Get(&click)
+	return
+}
+
+//绑定成功--发送微信模板消息
+func (receiver *WechatBusiness) BindSendWechatMsg(user *dcm.DcUser) {
+	if user.Openid == "" {
+		return
+	}
+	msgMap := map[string]*message.TemplateDataItem{
+		"first": {
+			Value: "账号绑定成功",
+			Color: "red",
+		},
+		"keyword1": {
+			Value: user.Username,
+			Color: "",
+		},
+		"keyword2": {
+			Value: user.Nickname,
+			Color: "",
+		},
+		"remark": {
+			Value: "",
+			Color: "",
+		},
+	}
+	err := NewWechatBusiness().SendMsg(user.Openid, WechatMsgTemplateBindNotice, msgMap, DyDcmUrl)
+	if err != nil {
+		return
+	}
+	return
+}
+
+//登录成功--发送微信模板消息
+func (receiver *WechatBusiness) LoginWechatMsg(user *dcm.DcUser) {
+	if user.Openid == "" {
+		return
+	}
+	msgMap := map[string]*message.TemplateDataItem{
+		"first": {
+			Value: "登录成功",
+			Color: "red",
+		},
+		"keyword1": {
+			Value: user.UpdateTime.Format("20060102"),
+			Color: "",
+		},
+		"keyword2": {
+			Value: user.LoginIp,
+			Color: "",
+		},
+		"remark": {
+			Value: "",
+			Color: "",
+		},
+	}
+	err := NewWechatBusiness().SendMsg(user.Openid, WechatMsgTemplateLoginNotice, msgMap, DyDcmUrl)
+	if err != nil {
+		return
+	}
+	return
+}
+
+//退出登录--发送微信模板消息
+func (receiver *WechatBusiness) LoginOutWechatMsg(user *dcm.DcUser) {
+	if user.Openid == "" {
+		return
+	}
+	msgMap := map[string]*message.TemplateDataItem{
+		"first": {
+			Value: "退出登录",
+			Color: "red",
+		},
+		"keyword1": {
+			Value: user.Nickname,
+			Color: "",
+		},
+		"keyword2": {
+			Value: time.Now().Format("20060102"),
+			Color: "",
+		},
+	}
+	err := NewWechatBusiness().SendMsg(user.Openid, WechatMsgTemplateLoginOutNotice, msgMap, DyDcmUrl)
+	if err != nil {
+		return
+	}
 	return
 }
