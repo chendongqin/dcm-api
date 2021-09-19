@@ -50,4 +50,7 @@ const (
 	HbaseDyAwemeShareRank         = "dy_aweme_share_top"
 
 	HbaseDyAwemeTopComment = "dws_dy_aweme_ext_topcomment_di"
+
+	HbaseDyShop       = "dy_shop"        //小店
+	HbaseDyShopDetail = "dy_shop_detail" //小店
 )

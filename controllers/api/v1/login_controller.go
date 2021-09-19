@@ -67,6 +67,9 @@ func (receiver *LoginController) Login() {
 		updateData["channel"] = receiver.Channel
 		updateData["channel_words"] = receiver.ChannelWords
 	}
+	//登录成功通知
+	business.NewWechatBusiness().LoginWechatMsg(&user)
+
 	_, _ = userBusiness.UpdateUserAndClearCache(nil, user.Id, updateData)
 	receiver.RegisterLogin(authToken, expTime)
 	receiver.CacheUserVipLevel()
