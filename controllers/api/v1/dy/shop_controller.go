@@ -33,11 +33,10 @@ func (receiver *ShopController) ShopBase() {
 		receiver.FailReturn(comErr)
 		return
 	}
-	shopDetailData, comErr := hbase.GetShopDetailByDate(shopId, time.Now().AddDate(0, 0, 0).Format("20060102"))
+	shopDetailData, comErr := hbase.GetShopDetailByDate(shopId, time.Now().Format("20060102"))
 	if comErr != nil { //今天取不到，取昨日数据
 		shopDetailData, _ = hbase.GetShopDetailByDate(shopId, time.Now().AddDate(0, 0, -1).Format("20060102"))
 	}
-
 	returnRes.DetailData.Sales = shopDetailData.Sales
 	returnRes.DetailData.Gmv = shopDetailData.Gmv
 	returnRes.DetailData.D30LiveCnt = shopDetailData.D30LiveCnt
