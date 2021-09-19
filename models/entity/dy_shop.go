@@ -48,4 +48,5 @@ type DyShopBaseDetail struct {
 	D30Sales     int64   `json:"30d_sales"`      //30天销量
 	D30Gmv       int64   `json:"30d_gmv"`        //30天gmv
 	D30Pct       int64   `json:"30d_pct"`        //30天客单价
+	D30Rate      float64 `json:"30d_rate"`       //30天转化率
 }
