@@ -19,18 +19,18 @@ var DyShopDetailMap = HbaseEntity{
 }
 
 type DyShopDetail struct {
-	ShopId          string         `json:"shop_id"`
-	Sales           int64          `json:"sales"`
-	Gmv             float64        `json:"gmv"`
-	Classifications map[string]int `json:"classifications"`
-	PriceDist       map[string]int `json:"price_dist"`
-	AwemeNum        int64          `json:"aweme_num"`
-	LiveNum         int64          `json:"live_num"`
-	D30AwemeCnt     int64          `json:"30d_aweme_cnt"`
-	D30LiveCnt      int64          `json:"30d_live_cnt"`
-	D30AuthorCnt    int64          `json:"30d_author_cnt"`
-	ShopName        string         `json:"shop_name"`
-	D30Sales        int64          `json:"30d_sales"`
-	D30Gmv          int64          `json:"30d_gmv"`
-	D30Pct          int64          `json:"30d_pct"`
+	ShopId          string           `json:"shop_id"`
+	Sales           int64            `json:"sales"`
+	Gmv             float64          `json:"gmv"`
+	Classifications map[string]int64 `json:"classifications"`
+	PriceDist       map[string]int64 `json:"price_dist"`
+	AwemeNum        int64            `json:"aweme_num"`
+	LiveNum         int64            `json:"live_num"`
+	D30AwemeCnt     int64            `json:"30d_aweme_cnt"`
+	D30LiveCnt      int64            `json:"30d_live_cnt"`
+	D30AuthorCnt    int64            `json:"30d_author_cnt"`
+	ShopName        string           `json:"shop_name"`
+	D30Sales        int64            `json:"30d_sales"`
+	D30Gmv          int64            `json:"30d_gmv"`
+	D30Pct          int64            `json:"30d_pct"`
 }
