@@ -54,7 +54,7 @@ func (a *AuthorAwemeBusiness) HbaseGetVideoAggRangeDate(authorId string, startTi
 			}
 			diggCount += agg.DiggCount
 			commentCount += agg.CommentCount
-			forwardCount += agg.ForwardCount
+			forwardCount += agg.ShareCount
 			//map处理
 			//时长时间
 			var durationLab string
@@ -89,11 +89,11 @@ func (a *AuthorAwemeBusiness) HbaseGetVideoAggRangeDate(authorId string, startTi
 			if commentMin == 0 || commentMin > agg.CommentCount {
 				commentMin = agg.CommentCount
 			}
-			if agg.ForwardCount > forwardMax {
-				forwardMax = agg.ForwardCount
+			if agg.ShareCount > forwardMax {
+				forwardMax = agg.ShareCount
 			}
-			if forwardMin == 0 || forwardMin > agg.ForwardCount {
-				forwardMin = agg.ForwardCount
+			if forwardMin == 0 || forwardMin > agg.ShareCount {
+				forwardMin = agg.ShareCount
 			}
 			//视频趋势数据处理
 			createTime := time.Unix(agg.AwemeCreateTime, 0)
