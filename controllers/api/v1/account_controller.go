@@ -190,6 +190,18 @@ func (receiver *AccountController) Info() {
 		}
 		if v.PlatForm == business.VipPlatformDouYin {
 			account.DyLevel = vipLevel
+			var parentVip dcm.DcUserVip
+			if v.ParentId != 0 {
+				_, _ = dcm.GetSlaveDbSession().Where("id=?", v.ParentId).Get(&parentVip)
+				account.DyLevelParent = dy.RepostAccountVipLevel{
+					Level:             parentVip.Level,
+					LevelName:         vipBusiness.GetUserLevel(parentVip.Level),
+					ExpirationTime:    expiration,
+					SubNum:            parentVip.SubNum,
+					SubExpirationTime: subExpiration,
+					ParentId:          parentVip.ParentId,
+				}
+			}
 		} else if v.PlatForm == business.VipPlatformXiaoHongShu {
 			account.XhsLevel = vipLevel
 		} else if v.PlatForm == business.VipPlatformTaoBao {
