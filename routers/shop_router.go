@@ -10,6 +10,7 @@ func init() {
 	ns := beego.NewNamespace("/v1/dy",
 		beego.NSNamespace("/shop",
 			beego.NSRouter("/info/:shop_id", &v1dy.ShopController{}, "get:ShopBase"),
+			beego.NSRouter("/analysis/:shop_id/:start/:end", &v1dy.ShopController{}, "get:ShopBaseAnalysis"),
 		),
 	)
 	// 注册路由组
