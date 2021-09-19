@@ -6,6 +6,8 @@ import (
 	"dongchamao/models/entity"
 	"dongchamao/services/hbaseService"
 	"dongchamao/services/hbaseService/hbasehelper"
+	"encoding/json"
+	"sort"
 	"strings"
 	"time"
 )
@@ -338,6 +340,38 @@ func GetDyProductGpmRangeDate(productId string, startTime, endTime time.Time) (d
 		}
 		date := rowKeyArr[1]
 		data[date] = hData
+	}
+	return
+}
+
+//获取商品评论列表
+func GetProductTopComment(productId string, start, end int) (data []entity.DyProductCommentTop, total int, comErr global.CommonError) {
+	data = make([]entity.DyProductCommentTop, 0)
+	query := hbasehelper.NewQuery()
+	result, err := query.
+		SetTable(hbaseService.HbaseDyProductTopComment).
+		GetByRowKey([]byte(productId))
+	if err != nil {
+		comErr = global.NewMsgError(err.Error())
+		return
+	}
+	dataMap := hbaseService.HbaseFormat(result, entity.DyProductCommentTopMap)
+	var commentStruct entity.DyProductCommentTopStruct
+	utils.MapToStruct(dataMap, &commentStruct)
+	if commentStruct.DiggInfo != "" {
+		commentStruct.DiggInfo = "[" + strings.Replace(commentStruct.DiggInfo, "=----=", ",", -1) + "]"
+		_ = json.Unmarshal([]byte(commentStruct.DiggInfo), &data)
+		sort.Slice(data, func(i, j int) bool {
+			return utils.ToInt(data[j].DiggCount) < utils.ToInt(data[i].DiggCount)
+		})
+		total = len(data)
+		if start > total {
+			start = total
+		}
+		if end > total {
+			end = total
+		}
+		data = data[start:end]
 	}
 	return
 }
