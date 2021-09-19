@@ -1096,3 +1096,32 @@ func (receiver *ProductController) ProductWords() {
 	receiver.SuccReturn(info.Word)
 	return
 }
+
+func (receiver *ProductController) ProductCommentTop() {
+	productId := business.IdDecrypt(receiver.Ctx.Input.Param(":product_id"))
+	page := receiver.GetPage("page")
+	pageSize := receiver.GetPageSize("page_size", 10, 100)
+	if productId == "" {
+		receiver.FailReturn(global.NewError(4000))
+		return
+	}
+	start := (page - 1) * pageSize
+	end := page * pageSize
+	productComment, total, comErr := hbase.GetProductTopComment(productId, start, end)
+	if comErr != nil {
+		receiver.FailReturn(comErr)
+		return
+	}
+	if total > 1000 {
+		total = 1000
+	}
+	//todo 虚拟数据
+	productComment = []entity.DyProductCommentTop{{DiggCount: "0", Cid: "7000663908826546958", Text: "欢迎欢迎[感谢][玫瑰][玫瑰]", CreateTime: "2021-08-26 17:11:27"}, {DiggCount: "0", Cid: "7000663908826546958", Text: "欢迎欢迎[感谢][玫瑰][玫瑰]", CreateTime: "2021-08-26 17:11:27"}}
+	receiver.SuccReturn(map[string]interface{}{
+		"total": total,
+		"page":  page,
+		"size":  pageSize,
+		"list":  productComment,
+	})
+	return
+}
