@@ -59,10 +59,12 @@ func (receiver *VipBusiness) GetVipLevels(userId int) []dy.AccountVipLevel {
 		for _, v := range vipLists {
 			subNum := v.SubNum
 			parentId := v.ParentId
+			expiration := v.Expiration
 			if v.ParentId != 0 {
 				parentVip := dcm.DcUserVip{}
 				_, _ = dcm.Get(v.ParentId, &parentVip)
 				v = parentVip
+				expiration = v.SubExpiration
 			}
 			var level = 0
 			if v.Expiration.After(time.Now()) {
@@ -78,7 +80,7 @@ func (receiver *VipBusiness) GetVipLevels(userId int) []dy.AccountVipLevel {
 				Level:             level,
 				SubNum:            subNum,
 				IsSub:             isSub,
-				ExpirationTime:    v.Expiration,
+				ExpirationTime:    expiration,
 				SubExpirationTime: v.SubExpiration,
 			})
 		}
