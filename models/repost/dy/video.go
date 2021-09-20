@@ -37,7 +37,6 @@ type DySimpleAweme struct {
 	ForwardCount    int64  `json:"forward_count"`
 	ID              string `json:"id"`
 	MusicID         string `json:"music_id"`
-	ShareCount      int64  `json:"share_count"`
 	PromotionNum    int    `json:"promotion_num"`
 	DiggInc         int64  `json:"digg_inc"`
 	CommentInc      int64  `json:"comment_inc"`

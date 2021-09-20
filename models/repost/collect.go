@@ -36,6 +36,7 @@ type CollectAwemeRet struct {
 	AwemeCreateTime int64
 	AwemeURL        string
 	DiggCount       int64
+	DiggCountIncr   int64
 	AuthorAvatar    string
 	AuthorNickname  string
 }

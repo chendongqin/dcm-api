@@ -50,7 +50,6 @@ func (receiver *AwemeController) AwemeBaseData() {
 		ForwardCount:    awemeBase.Data.ForwardCount,
 		ID:              awemeBase.Data.ID,
 		MusicID:         awemeBase.Data.MusicID,
-		ShareCount:      awemeBase.Data.ShareCount,
 		PromotionNum:    len(awemeBase.Data.DyPromotionID),
 	}
 

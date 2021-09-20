@@ -450,13 +450,22 @@ func (receiver *AccountController) UpdCollectTag() {
 
 //抖音达人收藏分组
 func (receiver *AccountController) GetDyCollectTags() {
+	collectType, err := receiver.GetInt("collect_type", 1)
+	if err != nil {
+		receiver.FailReturn(global.NewError(5000))
+		return
+	}
+	if collectType == 0 {
+		receiver.FailReturn(global.NewError(4000))
+		return
+	}
 	collectBusiness := business.NewCollectBusiness()
 	data, comErr := collectBusiness.GetDyCollectTags(receiver.UserId)
 	if comErr != nil {
 		receiver.FailReturn(comErr)
 		return
 	}
-	collectCount, comErr := collectBusiness.GetDyCollectCount(receiver.UserId)
+	collectCount, comErr := collectBusiness.GetDyCollectCount(receiver.UserId, collectType)
 	if comErr != nil {
 		receiver.FailReturn(comErr)
 		return
