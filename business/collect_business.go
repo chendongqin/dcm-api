@@ -132,10 +132,10 @@ func (receiver *CollectBusiness) GetDyCollect(tagId, collectType int, keywords, 
 }
 
 //获取分组收藏数量
-func (receiver *CollectBusiness) GetDyCollectCount(userId int) (data []repost.CollectCount, comErr global.CommonError) {
+func (receiver *CollectBusiness) GetDyCollectCount(userId, collectType int) (data []repost.CollectCount, comErr global.CommonError) {
 	dbCollect := dcm.GetDbSession()
 	defer dbCollect.Close()
-	if err := dbCollect.Table(dcm.DcUserDyCollect{}).Where("user_id=? AND status=1", userId).Select("tag_id,count(collect_id) as count").GroupBy("tag_id").Find(&data); err != nil {
+	if err := dbCollect.Table(dcm.DcUserDyCollect{}).Where("user_id=? AND status=1 AND collect_type=?", userId, collectType).Select("tag_id,count(collect_id) as count").GroupBy("tag_id").Find(&data); err != nil {
 		comErr = global.NewError(5000)
 		return
 	}
