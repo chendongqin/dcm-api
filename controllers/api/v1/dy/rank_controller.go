@@ -627,3 +627,42 @@ func (receiver *RankController) DyAuthorFollowerRank() {
 	receiver.SuccReturn(ret)
 	return
 }
+
+func (receiver *RankController) ProductTodayRank() {
+	date := receiver.Ctx.Input.Param(":date")
+	fCate := receiver.GetString("first_cate", "all")
+	sortStr := receiver.GetString("sort", "sales")
+	page := receiver.GetPage("page")
+	pageSize := receiver.GetPageSize("page_size", 10, 100)
+	if date == "" {
+		receiver.FailReturn(global.NewError(4000))
+		return
+	}
+	pslTime := "2006-01-02"
+	dateTime, err := time.ParseInLocation(pslTime, date, time.Local)
+	if err != nil {
+		receiver.FailReturn(global.NewError(4000))
+		return
+	}
+	if !receiver.HasAuth {
+		if page != 1 {
+			receiver.FailReturn(global.NewError(4004))
+			return
+		}
+		pageSize = receiver.MaxTotal
+	}
+	start := (page - 1) * pageSize
+	end := page * pageSize
+	data, _ := hbase.GetProductRank(dateTime.Format("20060102"), fCate, sortStr)
+	total := len(data)
+	if total < end {
+		end = total
+	}
+	list := data[start:end]
+	ret := map[string]interface{}{
+		"list":  list,
+		"total": total,
+	}
+	receiver.SuccReturn(ret)
+	return
+}

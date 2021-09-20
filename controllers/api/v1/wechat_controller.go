@@ -142,7 +142,6 @@ func (receiver *WechatController) Receive() {
 						break
 					}
 				} else {
-					click.Type = "text"
 					msgData = message.NewText("消息未知")
 				}
 				logs.Error("msgData:%s", msgData)
@@ -150,34 +149,6 @@ func (receiver *WechatController) Receive() {
 			default:
 				return &message.Reply{MsgType: message.MsgTypeText, MsgData: "消息未知"}
 			}
-		} else if msg.MsgType == message.MsgTypeText {
-			click, _ := business.NewWechatBusiness().GetMenuClick(msg.Content)
-			logs.Error("msg.EventKey:%s,click.Key:%s  click.Type:%s", msg.EventKey, click.MsgKey, message.MsgType(click.Type))
-			var msgData interface{}
-			if click.MsgKey != "" {
-				switch message.MsgType(click.Type) {
-				case message.MsgTypeText:
-					msgData = message.NewText(click.Content)
-					break
-				case message.MsgTypeImage:
-					msgData = message.NewImage(click.MediaId)
-					break
-				case message.MsgTypeVoice:
-					msgData = message.NewVoice(click.MediaId)
-					break
-				case message.MsgTypeVideo:
-					msgData = message.NewVideo(click.MediaId, click.Title, click.Description)
-					break
-				}
-			} else {
-				click.Type = "text"
-				msgData = message.NewText("消息未知")
-			}
-			logs.Error("msgData:%s", msgData)
-			return &message.Reply{MsgType: message.MsgType(click.Type), MsgData: msgData}
-		} else {
-			var msgData = message.NewText("消息未知")
-			return &message.Reply{MsgType: message.MsgTypeText, MsgData: msgData}
 		}
 		return &message.Reply{MsgType: message.MsgTypeText, MsgData: text}
 	})
