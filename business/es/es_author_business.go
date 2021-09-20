@@ -161,7 +161,6 @@ func (receiver *EsAuthorBusiness) BaseSearch(
 		rangeMap := map[string]interface{}{}
 		if minAge > 0 {
 			rangeMap["gte"] = minAge
-			rangeMap["lt"] = 0
 		}
 		if maxAge > 0 {
 			rangeMap["lt"] = maxAge

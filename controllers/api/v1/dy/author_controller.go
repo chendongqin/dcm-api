@@ -142,7 +142,7 @@ func (receiver *AuthorController) BaseSearch() {
 			list[k].IsCollect = collect[v.AuthorId]
 		}
 	}
-	authorMap := business.NewAuthorBusiness().GetAuthorFormPool(authorIds, 10)
+	authorMap, _ := hbase.GetAuthorByIds(authorIds)
 	for k, v := range list {
 		list[k].Avatar = dyimg.Fix(v.Avatar)
 		if v.UniqueId == "" || v.UniqueId == "0" {

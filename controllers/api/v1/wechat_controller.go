@@ -145,7 +145,6 @@ func (receiver *WechatController) Receive() {
 					click.Type = "text"
 					msgData = message.NewText("消息未知")
 				}
-				logs.Error("msgData:%s", msgData)
 				return &message.Reply{MsgType: message.MsgType(click.Type), MsgData: msgData}
 			default:
 				return &message.Reply{MsgType: message.MsgTypeText, MsgData: "消息未知"}
@@ -173,7 +172,6 @@ func (receiver *WechatController) Receive() {
 				click.Type = "text"
 				msgData = message.NewText("消息未知")
 			}
-			logs.Error("msgData:%s", msgData)
 			return &message.Reply{MsgType: message.MsgType(click.Type), MsgData: msgData}
 		} else {
 			var msgData = message.NewText("消息未知")
