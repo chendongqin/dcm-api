@@ -81,7 +81,7 @@ func (receiver *WechatController) Receive() {
 			return nil
 		}
 		var text *message.Text
-		text = message.NewText("扫码登录成功!!") //TODO 事件推送返回信息 可以抽象出来 也可以后台配置
+		text = message.NewText(global.WECHATLOGINMSG) //TODO 事件推送返回信息 可以抽象出来 也可以后台配置
 		//msg.EventKey 返回场景基本都是qrscene_你自己定义场景key
 		if msg.MsgType == message.MsgTypeEvent {
 			logs.Error("MsgType:%s,Event:%s", msg.MsgType, msg.Event)

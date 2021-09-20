@@ -143,6 +143,7 @@ func (receiver *CommonController) GetConfig() {
 	keyName := receiver.GetString(":key_name")
 	cacheKey := cache.GetCacheKey(cache.ConfigKeyCache, keyName)
 	cacheData := global.Cache.Get(cacheKey)
+	var isString = true
 	if cacheData == "" {
 		var configJson dcm.DcConfigJson
 		exist, err := dcm.GetBy("key_name", keyName, &configJson)
@@ -154,7 +155,14 @@ func (receiver *CommonController) GetConfig() {
 			receiver.FailReturn(global.NewError(4000))
 			return
 		}
+		if configJson.ContentType != 2 {
+			isString = false
+		}
 		cacheData = configJson.Value
+	}
+	if isString {
+		receiver.SuccReturn(cacheData)
+		return
 	}
 	var data map[string]interface{}
 	if err := json.Unmarshal([]byte(cacheData), &data); err != nil {
