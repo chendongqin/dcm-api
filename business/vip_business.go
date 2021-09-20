@@ -57,6 +57,15 @@ func (receiver *VipBusiness) GetVipLevels(userId int) []dy.AccountVipLevel {
 	vipList := make([]dy.AccountVipLevel, 0)
 	if err == nil {
 		for _, v := range vipLists {
+			subNum := v.SubNum
+			parentId := v.ParentId
+			expiration := v.Expiration
+			if v.ParentId != 0 {
+				parentVip := dcm.DcUserVip{}
+				_, _ = dcm.Get(v.ParentId, &parentVip)
+				v = parentVip
+				expiration = v.SubExpiration
+			}
 			var level = 0
 			if v.Expiration.After(time.Now()) {
 				level = v.Level
@@ -67,11 +76,11 @@ func (receiver *VipBusiness) GetVipLevels(userId int) []dy.AccountVipLevel {
 			}
 			vipList = append(vipList, dy.AccountVipLevel{
 				PlatForm:          v.Platform,
-				ParentId:          v.ParentId,
+				ParentId:          parentId,
 				Level:             level,
-				SubNum:            v.SubNum,
+				SubNum:            subNum,
 				IsSub:             isSub,
-				ExpirationTime:    v.Expiration,
+				ExpirationTime:    expiration,
 				SubExpirationTime: v.SubExpiration,
 			})
 		}
@@ -84,6 +93,7 @@ func (receiver *VipBusiness) GetVipLevel(userId, appId int) dy.AccountVipLevel {
 	var level = 0
 	exist, _ := dcm.GetSlaveDbSession().Where("user_id=? AND platform=?", userId, appId).Get(&vip)
 	parentId := vip.ParentId
+	subNum := vip.SubNum
 	if parentId != 0 {
 		parentVip := dcm.DcUserVip{}
 		_, _ = dcm.Get(vip.ParentId, &parentVip)
@@ -125,7 +135,7 @@ func (receiver *VipBusiness) GetVipLevel(userId, appId int) dy.AccountVipLevel {
 		PlatForm:          vip.Platform,
 		ParentId:          parentId,
 		Level:             level,
-		SubNum:            vip.SubNum,
+		SubNum:            subNum,
 		IsSub:             isSub,
 		FeeLiveMonitor:    vip.LiveMonitorNum,
 		ExpirationTime:    vip.Expiration,
