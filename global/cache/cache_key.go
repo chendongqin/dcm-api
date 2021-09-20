@@ -41,6 +41,8 @@ const (
 	RedAuthorRooms            KeyName = "dcm:red:author:room:%s"
 	RedAuthorLivingRooms      KeyName = "dcm:red:author:living:room"
 	RedAuthorMapCache         KeyName = "dcm:red:author:map:%s"
+	//小店
+	ShopProductAnalysisScanList KeyName = "dcm:shop:product:analysis:%s:%s"
 	//视频商品列表
 	AwemeProductByDate KeyName = "dcm:aweme:product:%s:%s:%s"
 	//榜单数据缓存

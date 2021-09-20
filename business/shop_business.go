@@ -2,11 +2,13 @@ package business
 
 import (
 	"dongchamao/global"
+	"dongchamao/global/cache"
 	"dongchamao/global/utils"
 	"dongchamao/hbase"
 	"dongchamao/models/entity"
 	"dongchamao/models/repost/dy"
 	"dongchamao/services/dyimg"
+	jsoniter "github.com/json-iterator/go"
 	"sort"
 	"strings"
 	"time"
@@ -21,25 +23,20 @@ func NewShopBusiness() *ShopBusiness {
 
 //小店商品分析
 func (s *ShopBusiness) ShopProductAnalysis(shopId, keyword, category, sortStr, orderBy string, startTime, stopTime time.Time, page, pageSize int) (
-	list []entity.DyShopProductAnalysis, count []dy.NameValueChart, total int, comError global.CommonError) {
-	startKey := ""
-	stopKey := "99999999999999999999"
-	//if keyword != "" {
-	//	startKey, stopKey = es.NewEsProductBusiness().GetSearchRowKey(keyword, category)
-	//}
-	//if stopKey == "" {
-	//	return
-	//}
+	list []entity.DyShopProductAnalysis, total int, comError global.CommonError) {
 	hbaseList := make([]entity.DyShopProductAnalysis, 0)
-	if startKey != stopKey {
+	cacheKey := cache.GetCacheKey(cache.ShopProductAnalysisScanList, startTime.Format("20060102"), stopTime.Format("20060102"))
+	cacheStr := global.Cache.Get(cacheKey)
+	if cacheStr != "" {
+		cacheStr = utils.DeserializeData(cacheStr)
+		_ = jsoniter.Unmarshal([]byte(cacheStr), &hbaseList)
+	} else {
+		startKey := ""
+		stopKey := "99999999999999999999"
 		hbaseList, _ = hbase.GetShopProductAnalysisRangDate(shopId, startKey, stopKey, startTime, stopTime)
-	}
-	hbaseData, err1 := hbase.GetShopProductAnalysisByDate(shopId, stopKey, stopTime.Format("20060102"))
-	if err1 == nil {
-		hbaseList = append(hbaseList, hbaseData)
+		_ = global.Cache.Set(cacheKey, utils.SerializeData(hbaseList), 300)
 	}
 	productMap := map[string]entity.DyShopProductAnalysis{}
-	cateMap := map[string]int{}
 	for _, v := range hbaseList {
 		if v.DcmLevelFirst == "" {
 			v.DcmLevelFirst = "其他"
@@ -68,11 +65,6 @@ func (s *ShopBusiness) ShopProductAnalysis(shopId, keyword, category, sortStr, o
 				p.MonthCvr = v.MonthCvr
 			}
 		} else {
-			if n, ok := cateMap[v.DcmLevelFirst]; ok {
-				cateMap[v.DcmLevelFirst] = n + 1
-			} else {
-				cateMap[v.DcmLevelFirst] = 1
-			}
 			productMap[v.ProductId] = v
 		}
 	}
@@ -116,11 +108,71 @@ func (s *ShopBusiness) ShopProductAnalysis(shopId, keyword, category, sortStr, o
 		list[k].Image = dyimg.Product(v.Image)
 		list[k].ProductId = IdEncrypt(v.ProductId)
 	}
-	count = make([]dy.NameValueChart, 0)
+	return
+}
+
+func (s *ShopBusiness) ShopProductAnalysisCount(shopId, keyword string, startTime, stopTime time.Time) (
+	count []dy.DyCate, comError global.CommonError) {
+	hbaseList := make([]entity.DyShopProductAnalysis, 0)
+	cacheKey := cache.GetCacheKey(cache.ShopProductAnalysisScanList, startTime.Format("20060102"), stopTime.Format("20060102"))
+	cacheStr := global.Cache.Get(cacheKey)
+	if cacheStr != "" {
+		cacheStr = utils.DeserializeData(cacheStr)
+		_ = jsoniter.Unmarshal([]byte(cacheStr), &hbaseList)
+	} else {
+		startKey := ""
+		stopKey := "99999999999999999999"
+		hbaseList, _ = hbase.GetShopProductAnalysisRangDate(shopId, startKey, stopKey, startTime, stopTime)
+		_ = global.Cache.Set(cacheKey, utils.SerializeData(hbaseList), 300)
+	}
+	productMap := map[string]entity.DyShopProductAnalysis{}
+	cateMap := map[string]int{}
+	cateSonMap := map[string]map[string]int{}
+	for _, v := range hbaseList {
+		if v.DcmLevelFirst == "" {
+			v.DcmLevelFirst = "其他"
+		}
+		if v.FirstCname == "" {
+			v.FirstCname = "其他"
+		}
+		if keyword != "" {
+			if strings.Index(v.Title, keyword) < 0 {
+				continue
+			}
+		}
+		if _, exist := productMap[v.ProductId]; !exist {
+			if n, ok := cateMap[v.DcmLevelFirst]; ok {
+				cateMap[v.DcmLevelFirst] = n + 1
+			} else {
+				cateMap[v.DcmLevelFirst] = 1
+				cateSonMap[v.DcmLevelFirst] = map[string]int{}
+			}
+			if _, ok := cateSonMap[v.DcmLevelFirst][v.FirstCname]; !ok {
+				cateSonMap[v.DcmLevelFirst][v.FirstCname] = 1
+			} else {
+				cateSonMap[v.DcmLevelFirst][v.FirstCname] += 1
+			}
+			productMap[v.ProductId] = v
+		}
+	}
+	count = []dy.DyCate{}
 	for k, v := range cateMap {
-		count = append(count, dy.NameValueChart{
-			Name:  k,
-			Value: v,
+		item := []dy.DyCate{}
+		if k != "其他" {
+			if c, ok := cateSonMap[k]; ok {
+				for ck, cv := range c {
+					item = append(item, dy.DyCate{
+						Name:    ck,
+						Num:     cv,
+						SonCate: []dy.DyCate{},
+					})
+				}
+			}
+		}
+		count = append(count, dy.DyCate{
+			Name:    k,
+			Num:     v,
+			SonCate: item,
 		})
 	}
 	sort.Slice(count, func(i, j int) bool {
@@ -130,7 +182,7 @@ func (s *ShopBusiness) ShopProductAnalysis(shopId, keyword, category, sortStr, o
 		if count[j].Name == "其他" {
 			return true
 		}
-		return count[i].Value > count[j].Value
+		return count[i].Num > count[j].Num
 	})
 	return
 }
