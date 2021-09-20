@@ -167,3 +167,27 @@ func GetAwemeShareRank(rowKey string) (data entity.DyAwemeShareTops, comErr glob
 	utils.MapToStruct(detailMap, &data)
 	return
 }
+
+//
+func GetProductRank(day, fCate, sortStr string) (data []entity.ShortVideoProduct, comErr global.CommonError) {
+	key := day + "_" + fCate + "_" + sortStr
+	rowKey := utils.Md5_encode(key)
+	startRow := rowKey + "0"
+	endRow := rowKey + "5"
+	query := hbasehelper.NewQuery()
+	results, err := query.SetTable(hbaseService.HbaseShortVideoProductRank).
+		SetStartRow([]byte(startRow)).
+		SetStopRow([]byte(endRow)).
+		Scan(10)
+	if err != nil {
+		comErr = global.NewMsgError(err.Error())
+		return
+	}
+	for _, v := range results {
+		dataMap := hbaseService.HbaseFormat(v, entity.ShortVideoCommodityTopNMap)
+		hData := entity.ShortVideoCommodityTopN{}
+		utils.MapToStruct(dataMap, &hData)
+		data = append(data, hData.Ranks...)
+	}
+	return
+}
