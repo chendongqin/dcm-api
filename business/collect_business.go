@@ -116,7 +116,7 @@ func (receiver *CollectBusiness) GetDyCollect(tagId, collectType int, keywords, 
 				return nil, 0, comErr
 			}
 			v.CollectId = IdEncrypt(v.CollectId)
-			yesDateTime := time.Now().AddDate(0, 0, -1)
+			yesDateTime := time.Now().AddDate(0, 0, -2)
 			yesData, _ := hbase.GetVideoCountData(v.CollectId, yesDateTime.Format("20060102"))
 			data[k].DcUserDyCollect = v
 			data[k].AwemeAuthorID = IdEncrypt(awemeBase.Data.AuthorID)
