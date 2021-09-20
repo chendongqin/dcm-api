@@ -46,7 +46,7 @@ func (receiver *CommonController) Sms() {
 		receiver.FailReturn(global.NewError(4205))
 		return
 	}
-	if receiver.AppId == 10000 {
+	if receiver.AppId == 10000 && global.IsDev() {
 		if sig == "" || sessionId == "" || token == "" {
 			receiver.FailReturn(global.NewError(4000))
 			return
