@@ -474,3 +474,48 @@ func (i *EsProductBusiness) SearchProducts(productIds []string) (list []es.DyPro
 	total = esMultiQuery.Count
 	return
 }
+
+//获取查询rowkey的productid
+func (i *EsProductBusiness) GetSearchRowKey(keyword, category string) (starRowKey string, stopRowKey string) {
+	esTable := es.DyProductTable
+	esQuery, esMultiQuery := elasticsearch.NewElasticQueryGroup()
+	if keyword != "" {
+		esQuery.SetMatchPhrase("title", keyword)
+	}
+	if category != "" {
+		esQuery.SetTerm("dcm_level_first.keyword", category)
+	}
+	sortOrder1 := elasticsearch.NewElasticOrder().Add("_id", "desc").Order
+	result1 := esMultiQuery.
+		SetTable(esTable).
+		SetFields("product_id").
+		AddMust(esQuery.Condition).
+		SetLimit(0, 1).
+		SetOrderBy(sortOrder1).
+		SetMultiQuery().
+		QueryOne()
+	stopRow := es.DyProduct{}
+	utils.MapToStruct(result1, &stopRow)
+	if esMultiQuery.Count == 0 {
+		return
+	} else if esMultiQuery.Count == 1 {
+		stopRowKey = stopRow.ProductId
+		starRowKey = stopRowKey
+		return
+	}
+	_, esMultiQuery2 := elasticsearch.NewElasticQueryGroup()
+	sortOrder2 := elasticsearch.NewElasticOrder().Add("_id", "asc").Order
+	result2 := esMultiQuery2.
+		SetTable(esTable).
+		SetFields("product_id").
+		AddMust(esQuery.Condition).
+		SetLimit(0, 1).
+		SetOrderBy(sortOrder2).
+		SetMultiQuery().
+		QueryOne()
+	startRow := es.DyProduct{}
+	utils.MapToStruct(result2, &startRow)
+	stopRowKey = stopRow.ProductId
+	starRowKey = startRow.ProductId
+	return
+}

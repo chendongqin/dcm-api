@@ -157,3 +157,47 @@ func (receiver *ShopController) ShopBaseAnalysis() {
 	})
 	return
 }
+
+//小店商品分析
+func (receiver *ShopController) ShopProductAnalysis() {
+	shopId := business.IdDecrypt(receiver.GetString(":shop_id"))
+	startTime, stopTime, comErr := receiver.GetRangeDate()
+	if comErr != nil {
+		receiver.FailReturn(comErr)
+		return
+	}
+	keyword := receiver.GetString("keyword", "")
+	category := receiver.GetString("category", "")
+	orderBy := receiver.GetString("order_by", "")
+	sortStr := receiver.GetString("sort", "")
+	page := receiver.GetPage("page")
+	pageSize := receiver.GetPageSize("page_size", 10, 50)
+	list, total, comErr := business.NewShopBusiness().ShopProductAnalysis(shopId, keyword, category, sortStr, orderBy, startTime, stopTime, page, pageSize)
+	if comErr != nil {
+		receiver.FailReturn(comErr)
+		return
+	}
+	receiver.SuccReturn(map[string]interface{}{
+		"list":  list,
+		"total": total,
+	})
+}
+
+//小店商品分析统计
+func (receiver *ShopController) ShopProductAnalysisCount() {
+	shopId := business.IdDecrypt(receiver.GetString(":shop_id"))
+	startTime, stopTime, comErr := receiver.GetRangeDate()
+	if comErr != nil {
+		receiver.FailReturn(comErr)
+		return
+	}
+	keyword := receiver.GetString("keyword", "")
+	count, comErr := business.NewShopBusiness().ShopProductAnalysisCount(shopId, keyword, startTime, stopTime)
+	if comErr != nil {
+		receiver.FailReturn(comErr)
+		return
+	}
+	receiver.SuccReturn(map[string]interface{}{
+		"count": count,
+	})
+}

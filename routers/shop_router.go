@@ -11,6 +11,8 @@ func init() {
 		beego.NSNamespace("/shop",
 			beego.NSRouter("/info/:shop_id", &v1dy.ShopController{}, "get:ShopBase"),
 			beego.NSRouter("/analysis/:shop_id/:start/:end", &v1dy.ShopController{}, "get:ShopBaseAnalysis"),
+			beego.NSRouter("/product/analysis/:shop_id/:start/:end", &v1dy.ShopController{}, "get:ShopProductAnalysis"),
+			beego.NSRouter("/product/analysis/count/:shop_id/:start/:end", &v1dy.ShopController{}, "get:ShopProductAnalysisCount"),
 		),
 	)
 	// 注册路由组

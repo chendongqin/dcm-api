@@ -246,7 +246,7 @@ func (e *EsVideoBusiness) SearchByProductId(productId, awemeId, keyword, sortStr
 			},
 		})
 	}
-	if keyword == "" {
+	if keyword != "" {
 		esQuery.SetMatchPhrase("aweme_title", keyword)
 	}
 	result := esMultiQuery.

@@ -22,6 +22,7 @@ func init() {
 			beego.NSRouter("/product/sale/:date", &v1dy.RankController{}, "get:ProductSalesTopDayRank"),
 			beego.NSRouter("/product/live/sale/:date", &v1dy.RankController{}, "get:LiveProductSalesTopDayRank"),
 			beego.NSRouter("/product/share/:date", &v1dy.RankController{}, "get:ProductShareTopDayRank"),
+			beego.NSRouter("/product/:date", &v1dy.RankController{}, "get:ProductTodayRank"),
 		),
 	)
 	// 注册路由组
