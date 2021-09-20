@@ -378,9 +378,10 @@ func (receiver *AwemeController) AwemeProductSameAweme() {
 	productId := business.IdDecrypt(receiver.Ctx.Input.Param(":product_id"))
 	page := receiver.GetPage("page")
 	pageSize := receiver.GetPageSize("page_size", 5, 30)
+	keyword := receiver.GetString("keyword", "")
 	orderBy := receiver.GetString("order_by", "")
 	sortStr := receiver.GetString("sort", "")
-	list, total, comErr := es.NewEsVideoBusiness().SearchByProductId(productId, awemeId, sortStr, orderBy, page, pageSize, startTime, endTime)
+	list, total, comErr := es.NewEsVideoBusiness().SearchByProductId(productId, awemeId, keyword, sortStr, orderBy, page, pageSize, startTime, endTime)
 	for k, v := range list {
 		list[k].AuthorId = business.IdEncrypt(v.AuthorId)
 		list[k].AwemeId = business.IdEncrypt(v.AwemeId)

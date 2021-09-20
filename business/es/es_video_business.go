@@ -207,7 +207,7 @@ func (e *EsVideoBusiness) CountProductAwemeByAuthor(authorId string, startTime, 
 }
 
 //获取视频同款视频
-func (e *EsVideoBusiness) SearchByProductId(productId, awemeId, sortStr, orderBy string, page, pageSize int, startTime, endTime time.Time) (list []es.DyAweme, total int, comErr global.CommonError) {
+func (e *EsVideoBusiness) SearchByProductId(productId, awemeId, keyword, sortStr, orderBy string, page, pageSize int, startTime, endTime time.Time) (list []es.DyAweme, total int, comErr global.CommonError) {
 	if orderBy == "" {
 		orderBy = "desc"
 	}
@@ -245,6 +245,9 @@ func (e *EsVideoBusiness) SearchByProductId(productId, awemeId, sortStr, orderBy
 				},
 			},
 		})
+	}
+	if keyword == "" {
+		esQuery.SetMatchPhrase("aweme_title", keyword)
 	}
 	result := esMultiQuery.
 		SetTable(esTable).

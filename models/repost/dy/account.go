@@ -3,16 +3,15 @@ package dy
 import "time"
 
 type RepostAccountData struct {
-	UserId        int                   `json:"user_id"`
-	Username      string                `json:"username"`
-	Nickname      string                `json:"nickname"`
-	Avatar        string                `json:"avatar"`
-	PasswordSet   int                   `json:"password_set"`
-	Wechat        int                   `json:"wechat"`
-	DyLevel       RepostAccountVipLevel `json:"dy_level"`
-	DyLevelParent RepostAccountVipLevel `json:"dy_level_parent"`
-	XhsLevel      RepostAccountVipLevel `json:"xhs_level"`
-	TbLevel       RepostAccountVipLevel `json:"tb_level"`
+	UserId      int                   `json:"user_id"`
+	Username    string                `json:"username"`
+	Nickname    string                `json:"nickname"`
+	Avatar      string                `json:"avatar"`
+	PasswordSet int                   `json:"password_set"`
+	Wechat      int                   `json:"wechat"`
+	DyLevel     RepostAccountVipLevel `json:"dy_level"`
+	XhsLevel    RepostAccountVipLevel `json:"xhs_level"`
+	TbLevel     RepostAccountVipLevel `json:"tb_level"`
 }
 
 type RepostAccountToken struct {
