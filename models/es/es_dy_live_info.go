@@ -63,4 +63,5 @@ type EsDyLiveDetail struct {
 	PredictGmv float64 `json:"predict_gmv"`
 	FinishTime int64   `json:"finish_time"`
 	WatchCnt   int64   `json:"watch_cnt"`
+	AvgStay    float64 `json:"avg_stay"`
 }
