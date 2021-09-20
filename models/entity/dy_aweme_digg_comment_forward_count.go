@@ -4,7 +4,7 @@ var DyAwemeDiggCommentForwardCountMap = HbaseEntity{
 	"crawl_time":    {Long, "crawl_time"},
 	"digg_count":    {Long, "digg_count"},
 	"comment_count": {Long, "comment_count"},
-	"forward_count": {Long, "forward_count"},
+	"share_count":   {Long, "forward_count"},
 }
 
 type DyAwemeDiggCommentForwardCount struct {

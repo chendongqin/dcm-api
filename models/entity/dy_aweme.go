@@ -36,12 +36,11 @@ type DyAwemeData struct {
 	DownloadCount   int64          `json:"download_count"`
 	Duration        int            `json:"duration"`
 	DyPromotionID   []string       `json:"dy_promotion_id"`
-	ForwardCount    int64          `json:"forward_count"`
+	ForwardCount    int64          `json:"share_count"`
 	Sales           []int64        `json:"sales"`
 	ID              string         `json:"id"`
 	MusicID         string         `json:"music_id"`
 	PromotionID     []string       `json:"promotion_id"`
-	ShareCount      int64          `json:"share_count"`
 	Topic           []DyAwemeTopic `json:"topic"`
 }
 
