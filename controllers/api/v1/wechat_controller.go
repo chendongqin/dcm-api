@@ -151,7 +151,7 @@ func (receiver *WechatController) Receive() {
 				return &message.Reply{MsgType: message.MsgTypeText, MsgData: "消息未知"}
 			}
 		} else if msg.MsgType == message.MsgTypeText {
-			click, _ := business.NewWechatBusiness().GetMenuClick(msg.EventKey)
+			click, _ := business.NewWechatBusiness().GetMenuClick(msg.Content)
 			logs.Error("msg.EventKey:%s,click.Key:%s  click.Type:%s", msg.EventKey, click.MsgKey, message.MsgType(click.Type))
 			var msgData interface{}
 			if click.MsgKey != "" {
