@@ -116,13 +116,16 @@ func (receiver *CollectBusiness) GetDyCollect(tagId, collectType int, keywords, 
 				return nil, 0, comErr
 			}
 			v.CollectId = IdEncrypt(v.CollectId)
+			yesDateTime := time.Now().AddDate(0, 0, -1)
+			yesData, _ := hbase.GetVideoCountData(v.CollectId, yesDateTime.Format("20060102"))
 			data[k].DcUserDyCollect = v
 			data[k].AwemeAuthorID = IdEncrypt(awemeBase.Data.AuthorID)
 			data[k].AwemeCover = awemeBase.Data.AwemeCover
 			data[k].AwemeTitle = awemeBase.AwemeTitle
 			data[k].AwemeCreateTime = awemeBase.Data.AwemeCreateTime
 			data[k].AwemeURL = awemeBase.Data.AwemeURL
-			data[k].DiggCount = awemeBase.Data.DiggCount
+			data[k].DiggCount = awemeBase.Data.DiggCount - yesData.DiggCount
+			data[k].DiggCountIncr = awemeBase.Data.DiggCount
 			data[k].AuthorAvatar = dyimg.Fix(awemeAuthor.Data.Avatar)
 			data[k].AuthorNickname = awemeAuthor.Data.Nickname
 		}
@@ -132,10 +135,10 @@ func (receiver *CollectBusiness) GetDyCollect(tagId, collectType int, keywords, 
 }
 
 //获取分组收藏数量
-func (receiver *CollectBusiness) GetDyCollectCount(userId int) (data []repost.CollectCount, comErr global.CommonError) {
+func (receiver *CollectBusiness) GetDyCollectCount(userId, collectType int) (data []repost.CollectCount, comErr global.CommonError) {
 	dbCollect := dcm.GetDbSession()
 	defer dbCollect.Close()
-	if err := dbCollect.Table(dcm.DcUserDyCollect{}).Where("user_id=? AND status=1", userId).Select("tag_id,count(collect_id) as count").GroupBy("tag_id").Find(&data); err != nil {
+	if err := dbCollect.Table(dcm.DcUserDyCollect{}).Where("user_id=? AND status=1 AND collect_type=?", userId, collectType).Select("tag_id,count(collect_id) as count").GroupBy("tag_id").Find(&data); err != nil {
 		comErr = global.NewError(5000)
 		return
 	}
