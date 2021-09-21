@@ -254,6 +254,29 @@ func (receiver *ShopController) ShopBaseAnalysis() {
 	return
 }
 
+//达人销售额占比
+func (receiver *ShopController) ShopAuthorGmvRate() {
+	shopId := business.IdDecrypt(receiver.GetString(":shop_id", ""))
+	if shopId == "" {
+		receiver.FailReturn(global.NewError(4000))
+		return
+	}
+	startTime, endTime, comErr := receiver.GetRangeDate()
+	if comErr != nil {
+		receiver.FailReturn(comErr)
+		return
+	}
+	allTop5, comErr := business.NewShopBusiness().ShopAuthorView(shopId, startTime, endTime)
+	if comErr != nil {
+		receiver.FailReturn(comErr)
+		return
+	}
+	receiver.SuccReturn(map[string]interface{}{
+		"top5": allTop5,
+	})
+	return
+}
+
 //小店商品分析
 func (receiver *ShopController) ShopProductAnalysis() {
 	shopId := business.IdDecrypt(receiver.GetString(":shop_id"))

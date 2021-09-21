@@ -1,16 +1,43 @@
 package hbase
 
 import (
+	"context"
 	"dongchamao/global"
 	"dongchamao/global/utils"
 	"dongchamao/models/entity"
 	"dongchamao/services/hbaseService"
+	"dongchamao/services/hbaseService/hbase"
 	"dongchamao/services/hbaseService/hbasehelper"
 	"encoding/json"
 	"sort"
 	"strings"
 	"time"
 )
+
+func GetProductByIds(productIds []string) (map[string]entity.DyProduct, error) {
+	rowKeys := make([]*hbase.TGet, 0)
+	for _, id := range productIds {
+		rowKeys = append(rowKeys, &hbase.TGet{Row: []byte(id)})
+	}
+	client := global.HbasePools.Get("default")
+	defer client.Close()
+	results, err := client.GetMultiple(context.Background(), []byte(hbaseService.HbaseDyProduct), rowKeys)
+	if err != nil {
+		return nil, err
+	}
+	infoMap := map[string]entity.DyProduct{}
+	for _, v := range results {
+		data := entity.DyProduct{}
+		detailMap := hbaseService.HbaseFormat(v, entity.DyProductMap)
+		utils.MapToStruct(detailMap, &data)
+		data.ProductID = string(v.Row)
+		if data.TbCouponInfo == "null" {
+			data.TbCouponInfo = ""
+		}
+		infoMap[data.ProductID] = data
+	}
+	return infoMap, nil
+}
 
 //商品详情
 func GetProductInfo(productId string) (data entity.DyProduct, comErr global.CommonError) {
@@ -26,11 +53,6 @@ func GetProductInfo(productId string) (data entity.DyProduct, comErr global.Comm
 	}
 	detailMap := hbaseService.HbaseFormat(result, entity.DyProductMap)
 	utils.MapToStruct(detailMap, &data)
-	//todo mock数据
-	data.Gender = []entity.DyAuthorFansGender{{Gender: "女", GenderNum: "2"}, {Gender: "男", GenderNum: "3"}, {Gender: "女1", GenderNum: "2"}}
-	data.Province = []entity.DyAuthorFansProvince{{Province: "四川省", ProvinceNum: "1"}, {Province: "湖南", ProvinceNum: "1"}}
-	data.City = []entity.DyAuthorFansCity{{City: "广安市", CityNum: "1"}, {City: "衡阳", CityNum: "1"}}
-	data.AgeDistrinbution = []entity.DyAuthorFansAge{{AgeDistrinbution: "24-30", AgeDistrinbutionNum: "1"}}
 	data.ProductID = productId
 	if data.TbCouponInfo == "null" {
 		data.TbCouponInfo = ""
