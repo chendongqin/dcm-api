@@ -9,6 +9,7 @@ import (
 	"dongchamao/models/entity"
 	"dongchamao/models/repost/dy"
 	"dongchamao/services/dyimg"
+	"fmt"
 	jsoniter "github.com/json-iterator/go"
 	"sort"
 	"strings"
@@ -189,168 +190,117 @@ func (receiver *ShopBusiness) ShopProductAnalysisCount(shopId, keyword string, s
 }
 
 //达人概览
-func (receiver *ShopBusiness) ShopAuthorView(productId string, startTime, endTime time.Time) (
-	allTop3 []dy.NameValueInt64PercentChart, liveTop3 []dy.NameValueInt64PercentChart, awemeTop3 []dy.NameValueInt64PercentChart, comErr global.CommonError) {
-	allTop3 = []dy.NameValueInt64PercentChart{}
-	liveTop3 = []dy.NameValueInt64PercentChart{}
-	awemeTop3 = []dy.NameValueInt64PercentChart{}
-	esProductBusiness := es.NewEsProductBusiness()
+func (receiver *ShopBusiness) ShopAuthorView(shopId string, startTime, endTime time.Time) (
+	allTop5 []dy.NameValueFloat64PercentChart, comErr global.CommonError) {
+	allTop5 = []dy.NameValueFloat64PercentChart{}
+	esShopBusiness := es.NewEsShopBusiness()
 	//直播达人
+	startDate := startTime.Format("20060102")
+	stopDate := endTime.Format("20060102")
 	allLiveList := make([]entity.DyProductAuthorAnalysis, 0)
-	startRow, stopRow, _, comErr := esProductBusiness.SearchRangeDateRowKey(productId, "", startTime, endTime)
-	if comErr != nil {
-		return
-	}
-	if startRow.ProductId != "" && stopRow.ProductId != "" {
-		startRowKey := startRow.ProductId + "_" + startRow.CreateSdf + "_" + startRow.AuthorId
-		stopRowKey := stopRow.ProductId + "_" + stopRow.CreateSdf + "_" + stopRow.AuthorId
-		cacheKey := cache.GetCacheKey(cache.ProductAuthorAllList, startRowKey, stopRowKey)
-		cacheStr := global.Cache.Get(cacheKey)
-		if cacheStr != "" {
-			cacheStr = utils.DeserializeData(cacheStr)
-			_ = jsoniter.Unmarshal([]byte(cacheStr), &allLiveList)
-		} else {
-			if startRowKey != stopRowKey {
-				allLiveList, _ = hbase.GetProductAuthorAnalysisRange(startRowKey, stopRowKey)
-			}
-			lastRow, err := hbase.GetProductAuthorAnalysis(stopRowKey)
-			if err == nil {
-				allLiveList = append(allLiveList, lastRow)
-			}
-			sort.Slice(allLiveList, func(i, j int) bool {
-				return allLiveList[i].Date > allLiveList[j].Date
-			})
-			_ = global.Cache.Set(cacheKey, utils.SerializeData(allLiveList), 300)
+	cacheKey := cache.GetCacheKey(cache.ShopLiveAuthorAllList, utils.Md5_encode(fmt.Sprintf("%s%s%s%s", shopId, startDate, stopDate, "")))
+	cacheStr := global.Cache.Get(cacheKey)
+	if cacheStr != "" {
+		cacheStr = utils.DeserializeData(cacheStr)
+		_ = jsoniter.Unmarshal([]byte(cacheStr), &allLiveList)
+	} else {
+		idsList, idTotal, comErr1 := esShopBusiness.GetShopLiveAuthorRowKeys(shopId, "", "", startTime, endTime)
+		if comErr1 != nil {
+			comErr = comErr1
+			return
 		}
+		if idTotal == 0 {
+			return
+		}
+		for _, v := range idsList {
+			startRowKey := v.Key + "_" + startDate + "_"
+			stopRowKey := v.Key + "_" + stopDate + "_99999999999999999"
+			tmpList, _ := hbase.GetProductAuthorAnalysisRange(startRowKey, stopRowKey)
+			allLiveList = append(allLiveList, tmpList...)
+		}
+		sort.Slice(allLiveList, func(i, j int) bool {
+			return allLiveList[i].Date > allLiveList[j].Date
+		})
+		_ = global.Cache.Set(cacheKey, utils.SerializeData(allLiveList), 300)
 	}
-
 	//视频达人
-	startRow, stopRow, _, comErr = esProductBusiness.SearchAwemeRangeDateRowKey(productId, "", startTime, endTime)
-	if comErr != nil {
-		return
-	}
 	allAwemeList := make([]entity.DyProductAwemeAuthorAnalysis, 0)
-	if startRow.ProductId != "" && stopRow.ProductId != "" {
-		startRowKey := startRow.ProductId + "_" + startRow.CreateSdf + "_" + startRow.AuthorId
-		stopRowKey := stopRow.ProductId + "_" + stopRow.CreateSdf + "_" + stopRow.AuthorId
-		cacheAwemeKey := cache.GetCacheKey(cache.ProductAwemeAuthorAllList, startRowKey, stopRowKey)
-		cacheAwemeStr := global.Cache.Get(cacheAwemeKey)
-		if cacheAwemeStr != "" {
-			cacheAwemeStr = utils.DeserializeData(cacheAwemeStr)
-			_ = jsoniter.Unmarshal([]byte(cacheAwemeStr), &allAwemeList)
-		} else {
-			if startRowKey != stopRowKey {
-				allAwemeList, _ = hbase.GetProductAwemeAuthorAnalysisRange(startRowKey, stopRowKey)
-			}
-			lastRow, err := hbase.GetProductAwemeAuthorAnalysis(stopRowKey)
-			if err == nil {
-				allAwemeList = append(allAwemeList, lastRow)
-			}
-			sort.Slice(allAwemeList, func(i, j int) bool {
-				return allAwemeList[i].CreateSdf > allAwemeList[j].CreateSdf
-			})
-			_ = global.Cache.Set(cacheAwemeKey, utils.SerializeData(allAwemeList), 300)
+	cacheAwemeKey := cache.GetCacheKey(cache.ShopAwemeAuthorAllList, utils.Md5_encode(fmt.Sprintf("%s%s%s%s", shopId, startDate, stopDate, "")))
+	cacheAwemeStr := global.Cache.Get(cacheAwemeKey)
+	if cacheAwemeStr != "" {
+		cacheStr = utils.DeserializeData(cacheStr)
+		_ = jsoniter.Unmarshal([]byte(cacheStr), &allAwemeList)
+	} else {
+		idsList, idTotal, comErr1 := esShopBusiness.GetShopVideoAuthorRowKeys(shopId, "", "", startTime, endTime)
+		if comErr1 != nil {
+			comErr = comErr1
+			return
 		}
+		if idTotal == 0 {
+			return
+		}
+		for _, v := range idsList {
+			startRowKey := v.Key + "_" + startDate + "_"
+			stopRowKey := v.Key + "_" + stopDate + "_99999999999999999"
+			tmpList, _ := hbase.GetProductAwemeAuthorAnalysisRange(startRowKey, stopRowKey)
+			allAwemeList = append(allAwemeList, tmpList...)
+		}
+		sort.Slice(allAwemeList, func(i, j int) bool {
+			return allAwemeList[i].CreateSdf > allAwemeList[j].CreateSdf
+		})
+		_ = global.Cache.Set(cacheAwemeKey, utils.SerializeData(allAwemeList), 300)
 	}
-	allSales := map[string]int64{}
-	liveSales := map[string]int64{}
-	awemeSales := map[string]int64{}
-	var liveTotalSales int64 = 0
-	var awemeTotalSales int64 = 0
+	allGmv := map[string]float64{}
+	var totalGmv float64 = 0
 	for _, v := range allLiveList {
-		if v.Sales == 0 {
+		if v.Gmv == 0 {
 			continue
 		}
-		if _, ok := allSales[v.AuthorId]; !ok {
-			allSales[v.AuthorId] = 0
+		if _, ok := allGmv[v.AuthorId]; !ok {
+			allGmv[v.AuthorId] = v.Gmv
+		} else {
+			allGmv[v.AuthorId] += v.Gmv
 		}
-		if _, ok := liveSales[v.AuthorId]; !ok {
-			liveSales[v.AuthorId] = 0
-		}
-		liveSales[v.AuthorId] += v.Sales
-		allSales[v.AuthorId] += v.Sales
-		liveTotalSales += v.Sales
+		totalGmv += v.Gmv
 	}
 	for _, v := range allAwemeList {
-		if v.Sales == 0 {
+		if v.Gmv == 0 {
 			continue
 		}
-		if _, ok := allSales[v.AuthorId]; !ok {
-			allSales[v.AuthorId] = 0
+		if _, ok := allGmv[v.AuthorId]; !ok {
+			allGmv[v.AuthorId] = v.Gmv
+		} else {
+			allGmv[v.AuthorId] += v.Gmv
 		}
-		if _, ok := awemeSales[v.AuthorId]; !ok {
-			awemeSales[v.AuthorId] = 0
-		}
-		awemeSales[v.AuthorId] += v.Sales
-		allSales[v.AuthorId] += v.Sales
-		awemeTotalSales += v.Sales
+		totalGmv += v.Gmv
 	}
-	totalSales := liveTotalSales + awemeTotalSales
-	for k, v := range allSales {
-		allTop3 = append(allTop3, dy.NameValueInt64PercentChart{
+	for k, v := range allGmv {
+		allTop5 = append(allTop5, dy.NameValueFloat64PercentChart{
 			Name:  k,
 			Value: v,
 		})
 	}
-	for k, v := range liveSales {
-		liveTop3 = append(liveTop3, dy.NameValueInt64PercentChart{
-			Name:  k,
-			Value: v,
-		})
-	}
-	for k, v := range awemeSales {
-		awemeTop3 = append(awemeTop3, dy.NameValueInt64PercentChart{
-			Name:  k,
-			Value: v,
-		})
-	}
-	sort.Slice(allTop3, func(i, j int) bool {
-		return allTop3[i].Value > allTop3[j].Value
+	sort.Slice(allTop5, func(i, j int) bool {
+		return allTop5[i].Value > allTop5[j].Value
 	})
-	sort.Slice(liveTop3, func(i, j int) bool {
-		return liveTop3[i].Value > liveTop3[j].Value
-	})
-	sort.Slice(awemeTop3, func(i, j int) bool {
-		return awemeTop3[i].Value > awemeTop3[j].Value
-	})
-	if len(allTop3) > 3 {
-		allTop3 = allTop3[0:3]
+	if len(allTop5) > 5 {
+		allTop5 = allTop5[0:5]
 	}
-	if len(liveTop3) > 3 {
-		liveTop3 = liveTop3[0:3]
-	}
-	if len(awemeTop3) > 3 {
-		awemeTop3 = awemeTop3[0:3]
-	}
-	otherSales := totalSales
-	if totalSales > 0 {
-		for k, v := range allTop3 {
+	otherGmv := totalGmv
+	if totalGmv > 0 {
+		for k, v := range allTop5 {
 			author, _ := hbase.GetAuthor(v.Name)
-			allTop3[k].Name = author.Data.Nickname
-			allTop3[k].Percent = float64(v.Value) / float64(totalSales)
-			otherSales -= v.Value
+			allTop5[k].Name = author.Data.Nickname
+			allTop5[k].Percent = v.Value / totalGmv
+			totalGmv -= v.Value
 		}
 	}
-	if otherSales > 0 {
-		allTop3 = append(allTop3, dy.NameValueInt64PercentChart{
+	if otherGmv > 0 {
+		allTop5 = append(allTop5, dy.NameValueFloat64PercentChart{
 			Name:    "其他",
-			Value:   otherSales,
-			Percent: float64(otherSales) / float64(totalSales),
+			Value:   otherGmv,
+			Percent: otherGmv / totalGmv,
 		})
-	}
-	if liveTotalSales > 0 {
-		for k, v := range liveTop3 {
-			author, _ := hbase.GetAuthor(v.Name)
-			liveTop3[k].Name = author.Data.Nickname
-			liveTop3[k].Percent = float64(v.Value) / float64(liveTotalSales)
-		}
-	}
-	if awemeTotalSales > 0 {
-		for k, v := range awemeTop3 {
-			author, _ := hbase.GetAuthor(v.Name)
-			awemeTop3[k].Name = author.Data.Nickname
-			awemeTop3[k].Percent = float64(v.Value) / float64(awemeTotalSales)
-		}
 	}
 	return
 }
@@ -361,9 +311,9 @@ func (receiver *ShopBusiness) ShopLiveAuthorAnalysis(shopId, keyword, tag string
 	startDate := startTime.Format("20060102")
 	stopDate := endTime.Format("20060102")
 	allList := make([]entity.DyProductAuthorAnalysis, 0)
-	cacheKey := cache.GetCacheKey(cache.ShopLiveAuthorAllList, shopId, startDate, stopDate)
+	cacheKey := cache.GetCacheKey(cache.ShopLiveAuthorAllList, utils.Md5_encode(fmt.Sprintf("%s%s%s%s", shopId, startDate, stopDate, keyword)))
 	cacheStr := global.Cache.Get(cacheKey)
-	if cacheStr != "" && keyword == "" {
+	if cacheStr != "" {
 		cacheStr = utils.DeserializeData(cacheStr)
 		_ = jsoniter.Unmarshal([]byte(cacheStr), &allList)
 	} else {
@@ -483,9 +433,9 @@ func (receiver *ShopBusiness) ShopLiveAuthorAnalysisCount(shopId, keyword string
 	startDate := startTime.Format("20060102")
 	stopDate := endTime.Format("20060102")
 	allList := make([]entity.DyProductAuthorAnalysis, 0)
-	cacheKey := cache.GetCacheKey(cache.ShopLiveAuthorAllList, shopId, startDate, stopDate)
+	cacheKey := cache.GetCacheKey(cache.ShopLiveAuthorAllList, utils.Md5_encode(fmt.Sprintf("%s%s%s%s", shopId, startDate, stopDate, keyword)))
 	cacheStr := global.Cache.Get(cacheKey)
-	if cacheStr != "" && keyword == "" {
+	if cacheStr != "" {
 		cacheStr = utils.DeserializeData(cacheStr)
 		_ = jsoniter.Unmarshal([]byte(cacheStr), &allList)
 	} else {
@@ -587,9 +537,9 @@ func (receiver *ShopBusiness) ShopAwemeAuthorAnalysis(shopId, keyword, tag strin
 	startDate := startTime.Format("20060102")
 	stopDate := endTime.Format("20060102")
 	allList := make([]entity.DyProductAwemeAuthorAnalysis, 0)
-	cacheKey := cache.GetCacheKey(cache.ShopAwemeAuthorAllList, shopId, startDate, stopDate)
+	cacheKey := cache.GetCacheKey(cache.ShopAwemeAuthorAllList, utils.Md5_encode(fmt.Sprintf("%s%s%s%s", shopId, startDate, stopDate, keyword)))
 	cacheStr := global.Cache.Get(cacheKey)
-	if cacheStr != "" && keyword == "" {
+	if cacheStr != "" {
 		cacheStr = utils.DeserializeData(cacheStr)
 		_ = jsoniter.Unmarshal([]byte(cacheStr), &allList)
 	} else {
@@ -709,9 +659,9 @@ func (receiver *ShopBusiness) ShopAwemeAuthorAnalysisCount(shopId, keyword strin
 	startDate := startTime.Format("20060102")
 	stopDate := endTime.Format("20060102")
 	allList := make([]entity.DyProductAwemeAuthorAnalysis, 0)
-	cacheKey := cache.GetCacheKey(cache.ShopAwemeAuthorAllList, shopId, startDate, stopDate)
+	cacheKey := cache.GetCacheKey(cache.ShopAwemeAuthorAllList, utils.Md5_encode(fmt.Sprintf("%s%s%s%s", shopId, startDate, stopDate, keyword)))
 	cacheStr := global.Cache.Get(cacheKey)
-	if cacheStr != "" && keyword == "" {
+	if cacheStr != "" {
 		cacheStr = utils.DeserializeData(cacheStr)
 		_ = jsoniter.Unmarshal([]byte(cacheStr), &allList)
 	} else {
