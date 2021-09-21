@@ -628,6 +628,7 @@ func (receiver *RankController) DyAuthorFollowerRank() {
 	return
 }
 
+//商品排行榜日榜
 func (receiver *RankController) ProductTodayRank() {
 	date := receiver.Ctx.Input.Param(":date")
 	fCate := receiver.GetString("first_cate", "all")
@@ -653,15 +654,35 @@ func (receiver *RankController) ProductTodayRank() {
 	}
 	start := (page - 1) * pageSize
 	end := page * pageSize
-	data, _ := hbase.GetProductRank(dateTime.Format("20060102"), fCate, sortStr)
-	total := len(data)
-	if total < end {
-		end = total
+	total := 0
+	finished := false
+	list := make([]entity.ShortVideoProduct, 0)
+	for i := 0; i < 5; i++ {
+		tempData, _ := hbase.GetProductRank(dateTime.Format("20060102"), fCate, sortStr, i)
+		lenNum := len(tempData)
+		tmpTotal := total
+		total += lenNum
+		if finished {
+			continue
+		}
+		if total > start {
+			if end <= total {
+				list = append(list, tempData[start-tmpTotal:end-tmpTotal]...)
+				finished = true
+			} else {
+				list = append(list, tempData[start-tmpTotal:]...)
+				start = total
+			}
+		}
 	}
-	list := data[start:end]
+	if !receiver.HasAuth && total > receiver.MaxTotal {
+		total = receiver.MaxTotal
+	}
 	ret := map[string]interface{}{
-		"list":  list,
-		"total": total,
+		"list":      list,
+		"has_login": receiver.HasLogin,
+		"has_auth":  receiver.HasAuth,
+		"total":     total,
 	}
 	receiver.SuccReturn(ret)
 	return
