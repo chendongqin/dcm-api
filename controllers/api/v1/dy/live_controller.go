@@ -890,8 +890,11 @@ func (receiver *LiveController) getSon(son map[string]dy2.ProductPvChartMap, pv 
 
 func (receiver *LiveController) sortSon(data []dy2.ProductPvChart) []dy2.ProductPvChart {
 	sort.Slice(data, func(i, j int) bool {
-		if data[i].LabelName == "其他" || data[j].LabelName == "其他" {
+		if data[i].LabelName == "其他" {
 			return false
+		}
+		if data[j].LabelName == "其他" {
+			return true
 		}
 		return data[i].Pv > data[j].Pv
 	})
