@@ -6,6 +6,7 @@ import (
 	"dongchamao/models/entity"
 	"dongchamao/services/hbaseService"
 	"dongchamao/services/hbaseService/hbasehelper"
+	"strconv"
 )
 
 //抖音视频达人热榜
@@ -168,26 +169,20 @@ func GetAwemeShareRank(rowKey string) (data entity.DyAwemeShareTops, comErr glob
 	return
 }
 
-//
-func GetProductRank(day, fCate, sortStr string) (data []entity.ShortVideoProduct, comErr global.CommonError) {
+//商品排行榜
+func GetProductRank(day, fCate, sortStr string, hPage int) (data []entity.ShortVideoProduct, comErr global.CommonError) {
 	key := day + "_" + fCate + "_" + sortStr
 	rowKey := utils.Md5_encode(key)
-	startRow := rowKey + "0"
-	endRow := rowKey + "5"
+	rowKey = rowKey + strconv.Itoa(hPage)
 	query := hbasehelper.NewQuery()
-	results, err := query.SetTable(hbaseService.HbaseShortVideoProductRank).
-		SetStartRow([]byte(startRow)).
-		SetStopRow([]byte(endRow)).
-		Scan(10)
+	result, err := query.SetTable(hbaseService.HbaseShortVideoProductRank).GetByRowKey([]byte(rowKey))
 	if err != nil {
 		comErr = global.NewMsgError(err.Error())
 		return
 	}
-	for _, v := range results {
-		dataMap := hbaseService.HbaseFormat(v, entity.ShortVideoCommodityTopNMap)
-		hData := entity.ShortVideoCommodityTopN{}
-		utils.MapToStruct(dataMap, &hData)
-		data = append(data, hData.Ranks...)
-	}
+	dataMap := hbaseService.HbaseFormat(result, entity.ShortVideoCommodityTopNMap)
+	hData := entity.ShortVideoCommodityTopN{}
+	utils.MapToStruct(dataMap, &hData)
+	data = hData.Ranks
 	return
 }

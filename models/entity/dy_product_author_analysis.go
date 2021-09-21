@@ -14,6 +14,7 @@ var DyProductAuthorAnalysisMap = HbaseEntity{
 	"level":         {Int, "level"},
 	"shop_tags":     {String, "shop_tags"},
 	"short_id":      {String, "short_id"},
+	"shop_id":       {String, "shop_id"},
 }
 
 type DyProductAuthorAnalysis struct {
@@ -26,13 +27,24 @@ type DyProductAuthorAnalysis struct {
 	Price        float64                      `json:"price"`
 	ProductId    string                       `json:"product_id"`
 	RelatedRooms []DyProductAuthorRelatedRoom `json:"related_rooms"`
+	Products     []DyAuthorProductDetail      `json:"products"`
 	RoomNum      int                          `json:"room_num"`
+	ProductNum   int                          `json:"product_num"`
 	Sales        int64                        `json:"sales"`
 	Score        float64                      `json:"score"`
 	Level        int                          `json:"level"`
 	ShopTags     string                       `json:"shop_tags"`
 	ShortId      string                       `json:"short_id"`
+	ShopId       string                       `json:"shop_id"`
 	Date         string                       `json:"date"`
+}
+
+type DyAuthorProductDetail struct {
+	Gmv       float64 `json:"gmv"`
+	Price     float64 `json:"price"`
+	ProductId string  `json:"product_id"`
+	Sales     int64   `json:"sales"`
+	Date      string  `json:"date"`
 }
 
 type DyProductAuthorRelatedRoom struct {

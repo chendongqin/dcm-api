@@ -114,20 +114,25 @@ func (i *EsProductBusiness) BaseSearch(productId, keyword, category, secondCateg
 	return
 }
 
-func (i *EsProductBusiness) SearchRangeDateList(productId, authorId string, startTime, endTime time.Time, page, pageSize int) (list []es.DyProductAuthorAnalysis, total int, comErr global.CommonError) {
+func (i *EsProductBusiness) SearchRangeDateList(productId, shopId, authorId string, startTime, endTime time.Time, page, pageSize int) (list []es.DyProductAuthorAnalysis, total int, comErr global.CommonError) {
 	esTable, err := GetESTableByTime(es.DyProductAuthorAnalysisTable, startTime, endTime)
 	if err != nil {
 		comErr = global.NewError(4000)
 		return
 	}
 	esQuery, esMultiQuery := elasticsearch.NewElasticQueryGroup()
-	esQuery.SetTerm("productId", productId)
+	if productId != "" {
+		esQuery.SetTerm("productId", productId)
+	}
 	esQuery.SetRange("createSdf.keyword", map[string]interface{}{
 		"gte": startTime.Format("20060102"),
 		"lte": endTime.Format("20060102"),
 	})
 	if authorId != "" {
 		esQuery.SetTerm("authorId", authorId)
+	}
+	if shopId != "" {
+		esQuery.SetTerm("shopId", shopId)
 	}
 	results := esMultiQuery.
 		SetTable(esTable).
@@ -142,14 +147,19 @@ func (i *EsProductBusiness) SearchRangeDateList(productId, authorId string, star
 	return
 }
 
-func (i *EsProductBusiness) SearchAwemeRangeDateList(productId, authorId string, startTime, endTime time.Time, page, pageSize int) (list []es.DyProductAwemeAuthorAnalysis, total int, comErr global.CommonError) {
+func (i *EsProductBusiness) SearchAwemeRangeDateList(productId, shopId, authorId string, startTime, endTime time.Time, page, pageSize int) (list []es.DyProductAwemeAuthorAnalysis, total int, comErr global.CommonError) {
 	esTable, err := GetESTableByMonthTime(es.DyProductAwemeAuthorAnalysisTable, startTime, endTime)
 	if err != nil {
 		comErr = global.NewError(4000)
 		return
 	}
 	esQuery, esMultiQuery := elasticsearch.NewElasticQueryGroup()
-	esQuery.SetTerm("productId", productId)
+	if productId != "" {
+		esQuery.SetTerm("productId", productId)
+	}
+	if shopId != "" {
+		esQuery.SetTerm("shopId", shopId)
+	}
 	esQuery.SetRange("createSdf.keyword", map[string]interface{}{
 		"gte": startTime.Format("20060102"),
 		"lte": endTime.Format("20060102"),

@@ -297,3 +297,189 @@ func (receiver *ShopController) ShopProductAnalysisCount() {
 		"count": count,
 	})
 }
+
+//小店直播达人分析
+func (receiver *ShopController) ShopLiveAuthorAnalysis() {
+	shopId := business.IdDecrypt(receiver.Ctx.Input.Param(":shop_id"))
+	startTime, endTime, comErr := receiver.GetRangeDate()
+	if comErr != nil {
+		receiver.FailReturn(comErr)
+		return
+	}
+	keyword := receiver.GetString("keyword", "")
+	tag := receiver.GetString("tag", "")
+	minFollow, _ := receiver.GetInt64("min_follow", 0)
+	maxFollow, _ := receiver.GetInt64("max_follow", 0)
+	scoreType, _ := receiver.GetInt("score_type", 5)
+	page := receiver.GetPage("page")
+	pageSize := receiver.GetPageSize("page_size", 10, 50)
+	list, total, comErr := business.NewShopBusiness().ShopLiveAuthorAnalysis(shopId, keyword, tag, startTime, endTime, minFollow, maxFollow, scoreType, page, pageSize)
+	if comErr != nil {
+		receiver.FailReturn(comErr)
+		return
+	}
+	for k, v := range list {
+		authorInfo, _ := hbase.GetAuthor(v.AuthorId)
+		list[k].Avatar = dyimg.Fix(authorInfo.Data.Avatar)
+		list[k].AuthorId = business.IdEncrypt(v.AuthorId)
+		list[k].ProductId = business.IdEncrypt(v.ProductId)
+		list[k].Nickname = authorInfo.Data.Nickname
+		list[k].RoomNum = len(v.RelatedRooms)
+		list[k].RelatedRooms = []entity.DyProductAuthorRelatedRoom{}
+	}
+	maxTotal := total
+	if total > business.EsMaxShowNum {
+		maxTotal = business.EsMaxShowNum
+	}
+	receiver.SuccReturn(map[string]interface{}{
+		"list":           list,
+		"total":          total,
+		"max_show_total": maxTotal,
+	})
+	return
+}
+
+//小店直播达人分析统计
+func (receiver *ShopController) ShopLiveAuthorAnalysisCount() {
+	shopId := business.IdDecrypt(receiver.Ctx.Input.Param(":shop_id"))
+	startTime, endTime, comErr := receiver.GetRangeDate()
+	if comErr != nil {
+		receiver.FailReturn(comErr)
+		return
+	}
+	keyword := receiver.GetString("keyword", "")
+	countList, comErr := business.NewShopBusiness().ShopLiveAuthorAnalysisCount(shopId, keyword, startTime, endTime)
+	if comErr != nil {
+		receiver.FailReturn(comErr)
+		return
+	}
+	receiver.SuccReturn(map[string]interface{}{
+		"list": countList,
+	})
+	return
+}
+
+//小店达人直播间列表
+func (receiver *ShopController) ShopLiveAuthorRooms() {
+	shopId := business.IdDecrypt(receiver.Ctx.Input.Param(":shop_id"))
+	authorId := business.IdDecrypt(receiver.Ctx.Input.Param(":author_id"))
+	startTime, endTime, comErr := receiver.GetRangeDate()
+	if comErr != nil {
+		receiver.FailReturn(comErr)
+		return
+	}
+	page := receiver.GetPage("page")
+	pageSize := receiver.GetPageSize("page_size", 5, 10)
+	sortStr := receiver.GetString("sort", "start_ts")
+	orderBy := receiver.GetString("order_by", "desc")
+	list, total := business.NewProductBusiness().ProductAuthorLiveRooms("", shopId, authorId, startTime, endTime, sortStr, orderBy, page, pageSize)
+	for k, v := range list {
+		list[k].Cover = dyimg.Fix(v.Cover)
+		list[k].RoomId = business.IdEncrypt(v.RoomId)
+		endLiveTime := v.EndTs
+		if endLiveTime == 0 {
+			endLiveTime = time.Now().Unix()
+		}
+		list[k].LiveSecond = endLiveTime - v.StartTs
+	}
+	maxTotal := total
+	if total > business.EsMaxShowNum {
+		maxTotal = business.EsMaxShowNum
+	}
+	receiver.SuccReturn(map[string]interface{}{
+		"list":           list,
+		"total":          total,
+		"max_show_total": maxTotal,
+	})
+}
+
+//小店视频达人分析
+func (receiver *ShopController) ShopAwemeAuthorAnalysis() {
+	shopId := business.IdDecrypt(receiver.Ctx.Input.Param(":shop_id"))
+	startTime, endTime, comErr := receiver.GetRangeDate()
+	if comErr != nil {
+		receiver.FailReturn(comErr)
+		return
+	}
+	keyword := receiver.GetString("keyword", "")
+	tag := receiver.GetString("tag", "")
+	minFollow, _ := receiver.GetInt64("min_follow", 0)
+	maxFollow, _ := receiver.GetInt64("max_follow", 0)
+	scoreType, _ := receiver.GetInt("score_type", 5)
+	page := receiver.GetPage("page")
+	pageSize := receiver.GetPageSize("page_size", 10, 50)
+	list, total, comErr := business.NewShopBusiness().ShopAwemeAuthorAnalysis(shopId, keyword, tag, startTime, endTime, minFollow, maxFollow, scoreType, page, pageSize)
+	if comErr != nil {
+		receiver.FailReturn(comErr)
+		return
+	}
+	for k, v := range list {
+		list[k].AuthorId = business.IdEncrypt(v.AuthorId)
+		list[k].ProductId = business.IdEncrypt(v.ProductId)
+		list[k].Avatar = dyimg.Fix(v.Avatar)
+		if v.DisplayId == "" || v.DisplayId == "0" {
+			list[k].DisplayId = v.ShortId
+		}
+	}
+	maxTotal := total
+	if total > business.EsMaxShowNum {
+		maxTotal = business.EsMaxShowNum
+	}
+	receiver.SuccReturn(map[string]interface{}{
+		"list":           list,
+		"total":          total,
+		"max_show_total": maxTotal,
+	})
+	return
+}
+
+//小店视频达人分析统计
+func (receiver *ShopController) ShopAwemeAuthorAnalysisCount() {
+	shopId := business.IdDecrypt(receiver.Ctx.Input.Param(":shop_id"))
+	startTime, endTime, comErr := receiver.GetRangeDate()
+	if comErr != nil {
+		receiver.FailReturn(comErr)
+		return
+	}
+	keyword := receiver.GetString("keyword", "")
+	productBusiness := business.NewProductBusiness()
+	countList, comErr := productBusiness.ProductAwemeAuthorAnalysisCount(shopId, keyword, startTime, endTime)
+	if comErr != nil {
+		receiver.FailReturn(comErr)
+		return
+	}
+	receiver.SuccReturn(map[string]interface{}{
+		"list": countList,
+	})
+	return
+}
+
+//小店达人视频列表
+func (receiver *ShopController) ShopAuthorAwemes() {
+	shopId := business.IdDecrypt(receiver.Ctx.Input.Param(":shop_id"))
+	authorId := business.IdDecrypt(receiver.Ctx.Input.Param(":author_id"))
+	startTime, endTime, comErr := receiver.GetRangeDate()
+	if comErr != nil {
+		receiver.FailReturn(comErr)
+		return
+	}
+	page := receiver.GetPage("page")
+	pageSize := receiver.GetPageSize("page_size", 5, 10)
+	sortStr := receiver.GetString("sort", "aweme_gmv")
+	orderBy := receiver.GetString("order_by", "desc")
+	list, total := business.NewProductBusiness().ProductAuthorAwemes("", shopId, authorId, startTime, endTime, sortStr, orderBy, page, pageSize)
+	for k, v := range list {
+		list[k].AwemeCover = dyimg.Fix(v.AwemeCover)
+		list[k].AwemeId = business.IdEncrypt(v.AwemeId)
+		list[k].AwemeUrl = business.AwemeUrl + v.AwemeId
+	}
+	maxTotal := total
+	if total > business.EsMaxShowNum {
+		maxTotal = business.EsMaxShowNum
+	}
+	receiver.SuccReturn(map[string]interface{}{
+		"list":           list,
+		"total":          total,
+		"max_show_total": maxTotal,
+	})
+}

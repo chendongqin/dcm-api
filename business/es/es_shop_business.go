@@ -2,9 +2,11 @@ package es
 
 import (
 	"dongchamao/global"
+	"dongchamao/global/alias"
 	"dongchamao/global/utils"
 	"dongchamao/models/es"
 	"dongchamao/services/elasticsearch"
+	"time"
 )
 
 type EsShopBusiness struct {
@@ -120,5 +122,169 @@ func (receiver *EsShopBusiness) BaseSearch(
 		Query()
 	utils.MapToStruct(results, &list)
 	total = esMultiQuery.Count
+	return
+}
+
+//小店库简易查询
+func (receiver *EsShopBusiness) SimpleSearch(keyword, category, secondCategory, thirdCategory string, page, pageSize int, sortStr, orderBy string) (list []es.DyShop, total int, comErr global.CommonError) {
+	list = []es.DyShop{}
+	if sortStr == "" {
+		sortStr = "month_sales"
+	}
+	if orderBy == "" {
+		orderBy = "desc"
+	}
+	if pageSize > 100 {
+		comErr = global.NewError(4000)
+		return
+	}
+	esTable := es.DyShopTable
+	esQuery, esMultiQuery := elasticsearch.NewElasticQueryGroup()
+	if keyword != "" {
+		esQuery.SetMatchPhrase("shop_name", keyword)
+	}
+	if category != "" {
+		esQuery.SetMultiMatch([]string{"dcm_level_first", "dcm_level_first_2", "dcm_level_first_3"}, category)
+	}
+	if secondCategory != "" {
+		esQuery.SetMultiMatch([]string{"first_cname", "first_cname_2", "first_cname_3"}, secondCategory)
+	}
+	if thirdCategory != "" {
+		esQuery.SetMultiMatch([]string{"second_cname", "second_cname_2", "second_cname_3"}, thirdCategory)
+	}
+	results := esMultiQuery.
+		SetTable(esTable).
+		SetCache(180).
+		AddMust(esQuery.Condition).
+		SetLimit((page-1)*pageSize, pageSize).
+		SetOrderBy(elasticsearch.NewElasticOrder().Add(sortStr, orderBy).Order).
+		SetMultiQuery().
+		Query()
+	utils.MapToStruct(results, &list)
+	total = esMultiQuery.Count
+	return
+}
+
+//获取小店直播达人所有商品id
+func (receiver *EsShopBusiness) GetShopLiveAuthorRowKeys(shopId, authorId, keyword string, startTime, endTime time.Time) (list []es.EsGroupByData, total int, comErr global.CommonError) {
+	esTable, err := GetESTableByTime(es.DyProductAuthorAnalysisTable, startTime, endTime)
+	if err != nil {
+		comErr = global.NewError(4000)
+		return
+	}
+	esQuery, esMultiQuery := elasticsearch.NewElasticQueryGroup()
+	esQuery.SetTerm("shopId", shopId)
+	if authorId != "" {
+		esQuery.SetTerm("authorId", authorId)
+	}
+	if keyword != "" {
+		if utils.HasChinese(keyword) {
+			slop := 100
+			length := len([]rune(keyword))
+			if length <= 3 {
+				slop = 2
+			}
+			esQuery.SetMatchPhraseWithParams("nickname", keyword, alias.M{
+				"slop": slop,
+			})
+		} else {
+			esQuery.SetMultiMatch([]string{"nickname", "displayId", "shortId"}, keyword)
+		}
+	}
+	esQuery.SetTerm("shopId", shopId)
+	esQuery.SetRange("createSdf.keyword", map[string]interface{}{
+		"gte": startTime.Format("20060102"),
+		"lte": endTime.Format("20060102"),
+	})
+	results := esMultiQuery.
+		SetCache(300).
+		SetTable(esTable).
+		AddMust(esQuery.Condition).
+		RawQuery(map[string]interface{}{
+			"query": map[string]interface{}{
+				"bool": map[string]interface{}{
+					"must": esQuery.Condition,
+				},
+			},
+			"size": 0,
+			"aggs": map[string]interface{}{
+				"product_id": map[string]interface{}{
+					"terms": map[string]interface{}{
+						"field": "productId.keyword",
+					},
+					"size": 10000,
+				},
+			},
+		})
+	res := elasticsearch.GetBuckets(results, "product_id")
+	list = []es.EsGroupByData{}
+	utils.MapToStruct(res, &list)
+	if h, ok := results["hits"]; ok {
+		if t, ok2 := h.(map[string]interface{})["total"]; ok2 {
+			total = utils.ToInt(t.(float64))
+		}
+	}
+	return
+}
+
+//获取小店视频达人所有商品id
+func (receiver *EsShopBusiness) GetShopVideoAuthorRowKeys(shopId, authorId, keyword string, startTime, endTime time.Time) (list []es.EsGroupByData, total int, comErr global.CommonError) {
+	esTable, err := GetESTableByTime(es.DyProductAwemeAuthorAnalysisTable, startTime, endTime)
+	if err != nil {
+		comErr = global.NewError(4000)
+		return
+	}
+	esQuery, esMultiQuery := elasticsearch.NewElasticQueryGroup()
+	esQuery.SetTerm("shopId", shopId)
+	if authorId != "" {
+		esQuery.SetTerm("authorId", authorId)
+	}
+	if keyword != "" {
+		if utils.HasChinese(keyword) {
+			slop := 100
+			length := len([]rune(keyword))
+			if length <= 3 {
+				slop = 2
+			}
+			esQuery.SetMatchPhraseWithParams("nickname", keyword, alias.M{
+				"slop": slop,
+			})
+		} else {
+			esQuery.SetMultiMatch([]string{"nickname", "displayId", "shortId"}, keyword)
+		}
+	}
+	esQuery.SetTerm("shopId", shopId)
+	esQuery.SetRange("createSdf.keyword", map[string]interface{}{
+		"gte": startTime.Format("20060102"),
+		"lte": endTime.Format("20060102"),
+	})
+	results := esMultiQuery.
+		SetCache(300).
+		SetTable(esTable).
+		AddMust(esQuery.Condition).
+		RawQuery(map[string]interface{}{
+			"query": map[string]interface{}{
+				"bool": map[string]interface{}{
+					"must": esQuery.Condition,
+				},
+			},
+			"size": 0,
+			"aggs": map[string]interface{}{
+				"product_id": map[string]interface{}{
+					"terms": map[string]interface{}{
+						"field": "productId.keyword",
+					},
+					"size": 10000,
+				},
+			},
+		})
+	res := elasticsearch.GetBuckets(results, "product_id")
+	list = []es.EsGroupByData{}
+	utils.MapToStruct(res, &list)
+	if h, ok := results["hits"]; ok {
+		if t, ok2 := h.(map[string]interface{})["total"]; ok2 {
+			total = utils.ToInt(t.(float64))
+		}
+	}
 	return
 }
