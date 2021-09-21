@@ -8,6 +8,7 @@ import (
 func init() {
 	ns := beego.NewNamespace("/v1/dy",
 		beego.NSNamespace("/product",
+			beego.NSRouter("/ids", &v1dy.ProductController{}, "post:GetBaseByIds"),
 			beego.NSRouter("/cate", &v1dy.ProductController{}, "get:GetCacheProductCate"),
 			beego.NSRouter("/search", &v1dy.ProductController{}, "get:Search"),
 			beego.NSRouter("/speed/:product_id", &v1dy.ProductController{}, "get:ProductSpeed"),

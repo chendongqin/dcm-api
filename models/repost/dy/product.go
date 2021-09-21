@@ -65,3 +65,13 @@ type DyProductAwemeCount struct {
 	Tags  []DyCate    `json:"tags"`
 	Level []DyIntCate `json:"level"`
 }
+
+type SimpleBaseProduct struct {
+	ProductID string  `json:"product_id"`
+	Title     string  `json:"title"`
+	Price     float64 `json:"price"`
+	Image     string  `json:"image"`
+	Status    int     `json:"status"`
+	MinPrice  float64 `json:"min_price"`
+	CosRatio  float64 `json:"cos_ratio"`
+}

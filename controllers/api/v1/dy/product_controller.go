@@ -1125,3 +1125,28 @@ func (receiver *ProductController) ProductCommentTop() {
 	})
 	return
 }
+
+//根据id获取基本信息
+func (receiver *ProductController) GetBaseByIds() {
+	inputForm := receiver.InputFormat()
+	ids := inputForm.GetArrString("ids")
+	if len(ids) > 30 {
+		receiver.FailReturn(global.NewError(4000))
+		return
+	}
+	products, _ := hbase.GetProductByIds(ids)
+	productMap := map[string]dy2.SimpleBaseProduct{}
+	for k, v := range products {
+		productMap[k] = dy2.SimpleBaseProduct{
+			ProductID: v.ProductID,
+			Title:     v.Title,
+			Price:     v.Price,
+			Image:     dyimg.Fix(v.Image),
+			Status:    v.Status,
+			MinPrice:  v.MinPrice,
+			CosRatio:  v.CosRatio,
+		}
+	}
+	receiver.SuccReturn(productMap)
+	return
+}
