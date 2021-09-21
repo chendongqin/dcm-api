@@ -1091,8 +1091,9 @@ func (receiver *ProductController) ProductWords() {
 		receiver.FailReturn(comErr)
 		return
 	}
-	//todo mock数据
-	info.Word = []entity.DyAuthorWord{{Word: "ggg", WordNum: "123"}, {Word: "ggg", WordNum: "321"}}
+	if len(info.Word) == 0 {
+		info.Word = []entity.DyAuthorWord{}
+	}
 	receiver.SuccReturn(info.Word)
 	return
 }
@@ -1115,8 +1116,9 @@ func (receiver *ProductController) ProductCommentTop() {
 	if total > 1000 {
 		total = 1000
 	}
-	//todo 虚拟数据
-	productComment = []entity.DyProductCommentTop{{DiggCount: "0", Cid: "7000663908826546958", Text: "欢迎欢迎[感谢][玫瑰][玫瑰]", CreateTime: "2021-08-26 17:11:27"}, {DiggCount: "0", Cid: "7000663908826546958", Text: "欢迎欢迎[感谢][玫瑰][玫瑰]", CreateTime: "2021-08-26 17:11:27"}}
+	if len(productComment) == 0 {
+		productComment = []entity.DyProductCommentTop{}
+	}
 	receiver.SuccReturn(map[string]interface{}{
 		"total": total,
 		"page":  page,
