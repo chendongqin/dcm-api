@@ -28,11 +28,13 @@ type DyProductAwemeAuthorAnalysis struct {
 	ShortId       string                        `json:"short_id"`
 	Score         float64                       `json:"score"`
 	Level         int                           `json:"level"`
+	ProductNum    int                           `json:"product_num"`
 	FirstName     string                        `json:"first_name"`
 	SecondName    string                        `json:"second_name"`
 	Avatar        string                        `json:"avatar"`
 	FollowCount   int64                         `json:"follow_count"`
 	RelatedAwemes []DyProductAuthorRelatedAweme `json:"related_awemes"`
+	Products      []DyAuthorProductDetail       `json:"products"`
 	DiggCount     int64                         `json:"digg_count"`
 	Sales         int64                         `json:"sales"`
 	Gmv           float64                       `json:"gmv"`

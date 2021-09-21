@@ -124,62 +124,61 @@ func (receiver *ProductBusiness) ProductAuthorView(productId string, startTime, 
 	awemeTop3 = []dy.NameValueInt64PercentChart{}
 	esProductBusiness := es.NewEsProductBusiness()
 	//直播达人
+	allLiveList := make([]entity.DyProductAuthorAnalysis, 0)
 	startRow, stopRow, _, comErr := esProductBusiness.SearchRangeDateRowKey(productId, "", startTime, endTime)
 	if comErr != nil {
 		return
 	}
-	if startRow.ProductId == "" || stopRow.ProductId == "" {
-		return
-	}
-	startRowKey := startRow.ProductId + "_" + startRow.CreateSdf + "_" + startRow.AuthorId
-	stopRowKey := stopRow.ProductId + "_" + stopRow.CreateSdf + "_" + stopRow.AuthorId
-	cacheKey := cache.GetCacheKey(cache.ProductAuthorAllList, startRowKey, stopRowKey)
-	cacheStr := global.Cache.Get(cacheKey)
-	allLiveList := make([]entity.DyProductAuthorAnalysis, 0)
-	if cacheStr != "" {
-		cacheStr = utils.DeserializeData(cacheStr)
-		_ = jsoniter.Unmarshal([]byte(cacheStr), &allLiveList)
-	} else {
-		if startRowKey != stopRowKey {
-			allLiveList, _ = hbase.GetProductAuthorAnalysisRange(startRowKey, stopRowKey)
+	if startRow.ProductId != "" && stopRow.ProductId != "" {
+		startRowKey := startRow.ProductId + "_" + startRow.CreateSdf + "_" + startRow.AuthorId
+		stopRowKey := stopRow.ProductId + "_" + stopRow.CreateSdf + "_" + stopRow.AuthorId
+		cacheKey := cache.GetCacheKey(cache.ProductAuthorAllList, startRowKey, stopRowKey)
+		cacheStr := global.Cache.Get(cacheKey)
+		if cacheStr != "" {
+			cacheStr = utils.DeserializeData(cacheStr)
+			_ = jsoniter.Unmarshal([]byte(cacheStr), &allLiveList)
+		} else {
+			if startRowKey != stopRowKey {
+				allLiveList, _ = hbase.GetProductAuthorAnalysisRange(startRowKey, stopRowKey)
+			}
+			lastRow, err := hbase.GetProductAuthorAnalysis(stopRowKey)
+			if err == nil {
+				allLiveList = append(allLiveList, lastRow)
+			}
+			sort.Slice(allLiveList, func(i, j int) bool {
+				return allLiveList[i].Date > allLiveList[j].Date
+			})
+			_ = global.Cache.Set(cacheKey, utils.SerializeData(allLiveList), 300)
 		}
-		lastRow, err := hbase.GetProductAuthorAnalysis(stopRowKey)
-		if err == nil {
-			allLiveList = append(allLiveList, lastRow)
-		}
-		sort.Slice(allLiveList, func(i, j int) bool {
-			return allLiveList[i].Date > allLiveList[j].Date
-		})
-		_ = global.Cache.Set(cacheKey, utils.SerializeData(allLiveList), 300)
 	}
+
 	//视频达人
 	startRow, stopRow, _, comErr = esProductBusiness.SearchAwemeRangeDateRowKey(productId, "", startTime, endTime)
 	if comErr != nil {
 		return
 	}
-	if startRow.ProductId == "" || stopRow.ProductId == "" {
-		return
-	}
-	startRowKey2 := startRow.ProductId + "_" + startRow.CreateSdf + "_" + startRow.AuthorId
-	stopRowKey2 := stopRow.ProductId + "_" + stopRow.CreateSdf + "_" + stopRow.AuthorId
 	allAwemeList := make([]entity.DyProductAwemeAuthorAnalysis, 0)
-	cacheAwemeKey := cache.GetCacheKey(cache.ProductAwemeAuthorAllList, startRowKey2, stopRowKey2)
-	cacheAwemeStr := global.Cache.Get(cacheAwemeKey)
-	if cacheAwemeStr != "" {
-		cacheAwemeStr = utils.DeserializeData(cacheAwemeStr)
-		_ = jsoniter.Unmarshal([]byte(cacheAwemeStr), &allAwemeList)
-	} else {
-		if startRowKey2 != stopRowKey2 {
-			allAwemeList, _ = hbase.GetProductAwemeAuthorAnalysisRange(startRowKey2, stopRowKey2)
+	if startRow.ProductId != "" && stopRow.ProductId != "" {
+		startRowKey := startRow.ProductId + "_" + startRow.CreateSdf + "_" + startRow.AuthorId
+		stopRowKey := stopRow.ProductId + "_" + stopRow.CreateSdf + "_" + stopRow.AuthorId
+		cacheAwemeKey := cache.GetCacheKey(cache.ProductAwemeAuthorAllList, startRowKey, stopRowKey)
+		cacheAwemeStr := global.Cache.Get(cacheAwemeKey)
+		if cacheAwemeStr != "" {
+			cacheAwemeStr = utils.DeserializeData(cacheAwemeStr)
+			_ = jsoniter.Unmarshal([]byte(cacheAwemeStr), &allAwemeList)
+		} else {
+			if startRowKey != stopRowKey {
+				allAwemeList, _ = hbase.GetProductAwemeAuthorAnalysisRange(startRowKey, stopRowKey)
+			}
+			lastRow, err := hbase.GetProductAwemeAuthorAnalysis(stopRowKey)
+			if err == nil {
+				allAwemeList = append(allAwemeList, lastRow)
+			}
+			sort.Slice(allAwemeList, func(i, j int) bool {
+				return allAwemeList[i].CreateSdf > allAwemeList[j].CreateSdf
+			})
+			_ = global.Cache.Set(cacheAwemeKey, utils.SerializeData(allAwemeList), 300)
 		}
-		lastRow, err := hbase.GetProductAwemeAuthorAnalysis(stopRowKey)
-		if err == nil {
-			allAwemeList = append(allAwemeList, lastRow)
-		}
-		sort.Slice(allAwemeList, func(i, j int) bool {
-			return allAwemeList[i].CreateSdf > allAwemeList[j].CreateSdf
-		})
-		_ = global.Cache.Set(cacheAwemeKey, utils.SerializeData(allAwemeList), 300)
 	}
 	allSales := map[string]int64{}
 	liveSales := map[string]int64{}
@@ -316,7 +315,6 @@ func (receiver *ProductBusiness) ProductAuthorAnalysis(productId, keyword, tag s
 		_ = global.Cache.Set(cacheKey, utils.SerializeData(allList), 300)
 	}
 	authorMap := map[string]entity.DyProductAuthorAnalysis{}
-	authorIds := make([]string, 0)
 	authorTagMap := map[string]string{}
 	for _, v := range allList {
 		if at, ok := authorTagMap[v.AuthorId]; ok {
@@ -359,7 +357,6 @@ func (receiver *ProductBusiness) ProductAuthorAnalysis(productId, keyword, tag s
 			authorMap[v.AuthorId] = d
 		} else {
 			authorMap[v.AuthorId] = v
-			authorIds = append(authorIds, v.AuthorId)
 		}
 	}
 	//开启任务处理
@@ -412,9 +409,9 @@ func (receiver *ProductBusiness) ProductAuthorAnalysis(productId, keyword, tag s
 	return
 }
 
-func (receiver *ProductBusiness) ProductAuthorLiveRooms(productId, authorId string, startTime, endTime time.Time, sortStr, orderBy string, page, pageSize int) (list []entity.DyProductAuthorRelatedRoom, total int) {
+func (receiver *ProductBusiness) ProductAuthorLiveRooms(productId, shopId, authorId string, startTime, endTime time.Time, sortStr, orderBy string, page, pageSize int) (list []entity.DyProductAuthorRelatedRoom, total int) {
 	esProductBusiness := es.NewEsProductBusiness()
-	allList, _, _ := esProductBusiness.SearchRangeDateList(productId, authorId, startTime, endTime, 1, 1000)
+	allList, _, _ := esProductBusiness.SearchRangeDateList(productId, shopId, authorId, startTime, endTime, 1, 1000)
 	list = []entity.DyProductAuthorRelatedRoom{}
 	for _, v := range allList {
 		rowKey := v.ProductId + "_" + v.CreateSdf + "_" + v.AuthorId
@@ -700,25 +697,25 @@ func (receiver *ProductBusiness) ProductAwemeAuthorAnalysis(productId, keyword, 
 	return
 }
 
-func (receiver *ProductBusiness) ProductAuthorAwemes(productId, authorId string, startTime, endTime time.Time, sortStr, orderBy string, page, pageSize int) (list []entity.DyProductAuthorRelatedAweme, total int) {
+func (receiver *ProductBusiness) ProductAuthorAwemes(productId, shopId, authorId string, startTime, endTime time.Time, sortStr, orderBy string, page, pageSize int) (list []entity.DyProductAuthorRelatedAweme, total int) {
 	list = []entity.DyProductAuthorRelatedAweme{}
-	cacheKey := cache.GetCacheKey(cache.ProductAuthorAwemesList, startTime.Format("20060102"), endTime.Format("20060102"))
-	cacheStr := global.Cache.Get(cacheKey)
-	if cacheStr != "" {
-		cacheStr = utils.DeserializeData(cacheStr)
-		_ = jsoniter.Unmarshal([]byte(cacheStr), &list)
-	} else {
-		esProductBusiness := es.NewEsProductBusiness()
-		allList, _, _ := esProductBusiness.SearchAwemeRangeDateList(productId, authorId, startTime, endTime, 1, 1000)
-		for _, v := range allList {
-			rowKey := v.ProductId + "_" + v.CreateSdf + "_" + v.AuthorId
-			data, err := hbase.GetProductAwemeAuthorAnalysis(rowKey)
-			if err == nil {
-				list = append(list, data.RelatedAwemes...)
-			}
+	//cacheKey := cache.GetCacheKey(cache.ProductAuthorAwemesList, startTime.Format("20060102"), endTime.Format("20060102"))
+	//cacheStr := global.Cache.Get(cacheKey)
+	//if cacheStr != "" {
+	//	cacheStr = utils.DeserializeData(cacheStr)
+	//	_ = jsoniter.Unmarshal([]byte(cacheStr), &list)
+	//} else {
+	esProductBusiness := es.NewEsProductBusiness()
+	allList, _, _ := esProductBusiness.SearchAwemeRangeDateList(productId, shopId, authorId, startTime, endTime, 1, 10000)
+	for _, v := range allList {
+		rowKey := v.ProductId + "_" + v.CreateSdf + "_" + v.AuthorId
+		data, err := hbase.GetProductAwemeAuthorAnalysis(rowKey)
+		if err == nil {
+			list = append(list, data.RelatedAwemes...)
 		}
-		_ = global.Cache.Set(cacheKey, utils.SerializeData(list), 180)
 	}
+	//_ = global.Cache.Set(cacheKey, utils.SerializeData(list), 180)
+	//}
 	sort.Slice(list, func(i, j int) bool {
 		switch sortStr {
 		case "sales":

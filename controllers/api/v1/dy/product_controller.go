@@ -808,7 +808,7 @@ func (receiver *ProductController) ProductAuthorLiveRooms() {
 	pageSize := receiver.GetPageSize("page_size", 5, 10)
 	sortStr := receiver.GetString("sort", "start_ts")
 	orderBy := receiver.GetString("order_by", "desc")
-	list, total := business.NewProductBusiness().ProductAuthorLiveRooms(productId, authorId, startTime, endTime, sortStr, orderBy, page, pageSize)
+	list, total := business.NewProductBusiness().ProductAuthorLiveRooms(productId, "", authorId, startTime, endTime, sortStr, orderBy, page, pageSize)
 	for k, v := range list {
 		list[k].Cover = dyimg.Fix(v.Cover)
 		list[k].RoomId = business.IdEncrypt(v.RoomId)
@@ -841,7 +841,7 @@ func (receiver *ProductController) ProductAuthorAwemes() {
 	pageSize := receiver.GetPageSize("page_size", 5, 10)
 	sortStr := receiver.GetString("sort", "aweme_gmv")
 	orderBy := receiver.GetString("order_by", "desc")
-	list, total := business.NewProductBusiness().ProductAuthorAwemes(productId, authorId, startTime, endTime, sortStr, orderBy, page, pageSize)
+	list, total := business.NewProductBusiness().ProductAuthorAwemes(productId, "", authorId, startTime, endTime, sortStr, orderBy, page, pageSize)
 	for k, v := range list {
 		list[k].AwemeCover = dyimg.Fix(v.AwemeCover)
 		list[k].AwemeId = business.IdEncrypt(v.AwemeId)

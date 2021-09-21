@@ -1,5 +1,10 @@
 package es
 
+type EsGroupByData struct {
+	Key      string `json:"key"`
+	DocCount int    `json:"doc_count"`
+}
+
 type DyAwemeSumCount struct {
 	AvgDigg struct {
 		Value float64 `json:"value"`
