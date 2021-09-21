@@ -588,9 +588,17 @@ func (a *AuthorBusiness) GetAuthorProductAnalyse(authorId, keyword, firstCate, s
 	if comErr != nil {
 		return
 	}
+	//判断自卖和推荐
+	hasShop := false
+	isRecommend := false
 	for _, v := range hbaseDataList {
+		if v.ShopId != "" {
+			hasShop = true
+		} else {
+			isRecommend = true
+		}
 		//数据过滤
-		if keyword != "" && strings.Index(v.Title, keyword) < 0 {
+		if keyword != "" && strings.Index(strings.ToLower(v.Title), strings.ToLower(keyword)) < 0 {
 			continue
 		}
 		if firstCate == "其他" {
@@ -781,6 +789,8 @@ func (a *AuthorBusiness) GetAuthorProductAnalyse(authorId, keyword, firstCate, s
 	analysisCount.VideoNum = len(videoIdMap)
 	analysisCount.Gmv = sumGmv
 	analysisCount.Sales = sumSale
+	analysisCount.HasShop = hasShop
+	analysisCount.IsRecommend = isRecommend
 	return
 }
 

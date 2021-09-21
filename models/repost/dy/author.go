@@ -41,11 +41,13 @@ type DyAuthorBasicChart struct {
 }
 
 type DyAuthorProductAnalysisCount struct {
-	ProductNum int     `json:"product_num"`
-	Sales      float64 `json:"sales"`
-	Gmv        float64 `json:"gmv"`
-	RoomNum    int     `json:"room_num"`
-	VideoNum   int     `json:"video_num"`
+	ProductNum  int     `json:"product_num"`
+	Sales       float64 `json:"sales"`
+	Gmv         float64 `json:"gmv"`
+	RoomNum     int     `json:"room_num"`
+	VideoNum    int     `json:"video_num"`
+	HasShop     bool    `json:"has_shop"`
+	IsRecommend bool    `json:"is_recommend"`
 }
 
 type DyAuthorProductRoom struct {
