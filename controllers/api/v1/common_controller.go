@@ -92,14 +92,15 @@ func (receiver *CommonController) Sms() {
 	}
 	cacheKey := cache.GetCacheKey(cache.SmsCodeVerify, grantType, mobile)
 	code := utils.GetRandomInt(6)
+	res, smsErr := aliSms.SmsCode(mobile, code)
+	if !res || logger.CheckError(smsErr) != nil {
+		business.NewMonitorBusiness().SendErr("短信验证码错误", fmt.Sprintf("%s,code:%s", smsErr.Error(), code))
+		receiver.FailReturn(global.NewError(6000))
+		return
+	}
 	err := global.Cache.Set(cacheKey, code, 300)
 	if logger.CheckError(err) != nil {
 		receiver.FailReturn(global.NewError(5000))
-		return
-	}
-	res, smsErr := aliSms.SmsCode(mobile, code)
-	if !res || logger.CheckError(smsErr) != nil {
-		receiver.FailReturn(global.NewError(6000))
 		return
 	}
 	_ = global.Cache.Set(limitIpKey, "1", 60)
