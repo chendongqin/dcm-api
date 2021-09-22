@@ -21,4 +21,5 @@ type DyAweme struct {
 	AwemeGmv        float64 `json:"aweme_gmv"`
 	Sales           int64   `json:"sales"`
 	AwemeUrl        string  `json:"aweme_url"`
+	ProductIds      string  `json:"product_ids"`
 }

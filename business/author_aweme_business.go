@@ -3,11 +3,8 @@ package business
 import (
 	"dongchamao/business/es"
 	"dongchamao/global"
-	"dongchamao/global/utils"
-	"dongchamao/hbase"
 	"dongchamao/models/entity"
 	"dongchamao/models/repost/dy"
-	"dongchamao/services/hbaseService"
 	"fmt"
 	"sync"
 	"time"
@@ -22,11 +19,14 @@ func NewAuthorAwemeBusiness() *AuthorAwemeBusiness {
 
 //获取视频概览数据
 func (a *AuthorAwemeBusiness) HbaseGetVideoAggRangeDate(authorId string, startTime, endTime time.Time) (data dy.AuthorVideoOverview) {
-	results, err := hbase.GetAuthorVideoAggRangeDate(authorId, startTime, endTime)
-	if err != nil {
-		return
-	}
+	//results, err := hbase.GetAuthorVideoAggRangeDate(authorId, startTime, endTime)
+	//if err != nil {
+	//	return
+	//}
 	var videoNum, productVideo int64
+	esVideoBusiness := es.NewEsVideoBusiness()
+	results, total, _ := esVideoBusiness.SearchByAuthor(authorId, "", "", "", 0, 1, 10000, startTime, endTime)
+	videoNum = int64(total)
 	var diggMax, diggMin, diggCount, commentMax, commentMin, commentCount, forwardMax, forwardMin, forwardCount int64
 	durationChartMap := map[string]int{
 		"up_120": 0,
@@ -41,94 +41,92 @@ func (a *AuthorAwemeBusiness) HbaseGetVideoAggRangeDate(authorId string, startTi
 	awemeIds := make([]string, 0)
 	var wg sync.WaitGroup
 	for _, v := range results {
-		dataMap := hbaseService.HbaseFormat(v, entity.DyAuthorAwemeAggMap)
-		hData := &entity.DyAuthorAwemeAggData{}
-		utils.MapToStruct(dataMap, hData)
-		for _, agg := range hData.Data {
-			awemeIds = append(awemeIds, agg.AwemeID)
-			aggCreateTime := time.Unix(agg.AwemeCreateTime, 0)
-			hour := aggCreateTime.Format("15")
-			videoNum++
-			if !utils.InArrayString(agg.DyPromotionId, []string{"0", ""}) {
-				productVideo++
-			}
-			diggCount += agg.DiggCount
-			commentCount += agg.CommentCount
-			forwardCount += agg.ShareCount
-			//map处理
-			//时长时间
-			var durationLab string
-			if agg.Duration > 120000 {
-				durationLab = "up_120"
-			} else if agg.Duration > 60000 {
-				durationLab = "up_60"
-			} else if agg.Duration > 30000 {
-				durationLab = "up_30"
-			} else if agg.Duration > 15000 {
-				durationLab = "up_15"
-			} else {
-				durationLab = "up_0"
-			}
-			durationChartMap[durationLab] += 1
-			//发布时间
-			if _, ok := publishChartMap[hour]; ok {
-				publishChartMap[hour] += 1
-			} else {
-				publishChartMap[hour] = 1
-			}
-			//峰值
-			if agg.DiggCount > diggMax {
-				diggMax = agg.DiggCount
-			}
-			if diggMin == 0 || diggMin > agg.DiggCount {
-				diggMin = agg.DiggCount
-			}
-			if agg.CommentCount > commentMax {
-				commentMax = agg.CommentCount
-			}
-			if commentMin == 0 || commentMin > agg.CommentCount {
-				commentMin = agg.CommentCount
-			}
-			if agg.ShareCount > forwardMax {
-				forwardMax = agg.ShareCount
-			}
-			if forwardMin == 0 || forwardMin > agg.ShareCount {
-				forwardMin = agg.ShareCount
-			}
-			//视频趋势数据处理
-			createTime := time.Unix(agg.AwemeCreateTime, 0)
-			wg.Add(1)
-			go func(awemeId string, startT, endT time.Time) {
-				defer global.RecoverPanic()
-				wg.Done()
-				awemeBusiness := NewAwemeBusiness()
-				awemeData, comErr := awemeBusiness.GetAwemeChart(awemeId, startT, endT, false)
-				if comErr == nil {
-					tmp := map[string]map[string]entity.DyAwemeDiggCommentForwardCount{
-						awemeId: awemeData,
-					}
-					allAwemeChan <- tmp
-				} else {
-					allAwemeChan <- nil
-				}
-			}(agg.AwemeID, createTime, endTime)
+		//dataMap := hbaseService.HbaseFormat(v, entity.DyAuthorAwemeAggMap)
+		//hData := &entity.DyAuthorAwemeAggData{}
+		//utils.MapToStruct(dataMap, hData)
+		//for _, agg := range hData.Data {
+		awemeIds = append(awemeIds, v.AwemeId)
+		aggCreateTime := time.Unix(v.AwemeCreateTime, 0)
+		hour := aggCreateTime.Format("15")
+		if v.ProductIds != "" {
+			productVideo++
 		}
+		diggCount += v.DiggCount
+		commentCount += v.CommentCount
+		forwardCount += v.ShareCount
+		//map处理
+		//时长时间
+		var durationLab string
+		if v.Duration > 120000 {
+			durationLab = "up_120"
+		} else if v.Duration > 60000 {
+			durationLab = "up_60"
+		} else if v.Duration > 30000 {
+			durationLab = "up_30"
+		} else if v.Duration > 15000 {
+			durationLab = "up_15"
+		} else {
+			durationLab = "up_0"
+		}
+		durationChartMap[durationLab] += 1
+		//发布时间
+		if _, ok := publishChartMap[hour]; ok {
+			publishChartMap[hour] += 1
+		} else {
+			publishChartMap[hour] = 1
+		}
+		//峰值
+		if v.DiggCount > diggMax {
+			diggMax = v.DiggCount
+		}
+		if diggMin == 0 || diggMin > v.DiggCount {
+			diggMin = v.DiggCount
+		}
+		if v.CommentCount > commentMax {
+			commentMax = v.CommentCount
+		}
+		if commentMin == 0 || commentMin > v.CommentCount {
+			commentMin = v.CommentCount
+		}
+		if v.ShareCount > forwardMax {
+			forwardMax = v.ShareCount
+		}
+		if forwardMin == 0 || forwardMin > v.ShareCount {
+			forwardMin = v.ShareCount
+		}
+		//视频趋势数据处理
+		createTime := time.Unix(v.AwemeCreateTime, 0)
+		wg.Add(1)
+		go func(awemeId string, startT, endT time.Time) {
+			defer global.RecoverPanic()
+			wg.Done()
+			awemeBusiness := NewAwemeBusiness()
+			awemeData, comErr := awemeBusiness.GetAwemeChart(awemeId, startT, endT, false)
+			if comErr == nil {
+				tmp := map[string]map[string]entity.DyAwemeDiggCommentForwardCount{
+					awemeId: awemeData,
+				}
+				allAwemeChan <- tmp
+			} else {
+				allAwemeChan <- nil
+			}
+		}(v.AwemeId, createTime, endTime)
+		//}
 	}
 	wg.Wait()
-	esVideoBusiness := es.NewEsVideoBusiness()
-	videoSumData := esVideoBusiness.SumDataByAuthor(authorId, startTime, endTime)
-	//if videoNum > 0 {
-	//	data.AvgDiggCount = diggCount / videoNum
-	//	data.AvgCommentCount = commentCount / videoNum
-	//	data.AvgForwardCount = forwardCount / videoNum
-	//}
-	//data.VideoNum = videoNum
-	//data.ProductVideo = productVideo
-	data.ProductVideo, _ = esVideoBusiness.CountProductAwemeByAuthor(authorId, startTime, endTime)
-	data.AvgDiggCount = videoSumData.AvgDigg
-	data.AvgCommentCount = videoSumData.AvgComment
-	data.AvgForwardCount = videoSumData.AvgShare
-	data.VideoNum = int64(videoSumData.Total)
+	//videoSumData := esVideoBusiness.SumDataByAuthor(authorId, startTime, endTime)
+	if videoNum > 0 {
+		data.AvgDiggCount = diggCount / videoNum
+		data.AvgCommentCount = commentCount / videoNum
+		data.AvgForwardCount = forwardCount / videoNum
+	}
+	data.VideoNum = videoNum
+	data.ProductVideo = productVideo
+	//data.ProductVideo, _ = esVideoBusiness.CountAwemeByAuthor(authorId, 1, startTime, endTime)
+	//data.AvgDiggCount = videoSumData.AvgDigg
+	//data.AvgCommentCount = videoSumData.AvgComment
+	//data.AvgForwardCount = videoSumData.AvgShare
+	//data.VideoNum = int64(videoSumData.Total)
 	data.DiggMax = diggMax
 	data.DiggMin = diggMin
 	data.CommentMax = commentMax

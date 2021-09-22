@@ -188,14 +188,16 @@ func (e *EsVideoBusiness) SumDataByAuthor(authorId string, startTime, endTime ti
 }
 
 //查询带货视频数
-func (e *EsVideoBusiness) CountProductAwemeByAuthor(authorId string, startTime, endTime time.Time) (int64, error) {
+func (e *EsVideoBusiness) CountAwemeByAuthor(authorId string, hasProduct int, startTime, endTime time.Time) (int64, error) {
 	esQuery, esMultiQuery := elasticsearch.NewElasticQueryGroup()
 	esQuery.SetRange("aweme_create_time", map[string]interface{}{
 		"gte": startTime.Unix(),
 		"lt":  endTime.AddDate(0, 0, 1).Unix(),
 	})
 	esQuery.SetTerm("author_id", authorId)
-	esQuery.SetExist("field", "product_ids")
+	if hasProduct == 1 {
+		esQuery.SetExist("field", "product_ids")
+	}
 	esTable, err := GetESTableByMonthTime(es.DyVideoTable, startTime, endTime)
 	if err != nil {
 		return 0, err
