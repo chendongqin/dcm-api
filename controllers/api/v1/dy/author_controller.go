@@ -523,7 +523,7 @@ func (receiver *AuthorController) AuthorAwemesByDay() {
 		return
 	}
 	aABusiness := business.NewAuthorAwemeBusiness()
-	videoOverview := aABusiness.HbaseGetVideoAggRangeDate(authorId, startDay, endDay)
+	videoOverview := aABusiness.GetVideoAggRangeDate(authorId, startDay, endDay)
 	receiver.SuccReturn(map[string]interface{}{
 		"video_overview": videoOverview,
 	})

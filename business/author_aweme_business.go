@@ -18,11 +18,7 @@ func NewAuthorAwemeBusiness() *AuthorAwemeBusiness {
 }
 
 //获取视频概览数据
-func (a *AuthorAwemeBusiness) HbaseGetVideoAggRangeDate(authorId string, startTime, endTime time.Time) (data dy.AuthorVideoOverview) {
-	//results, err := hbase.GetAuthorVideoAggRangeDate(authorId, startTime, endTime)
-	//if err != nil {
-	//	return
-	//}
+func (a *AuthorAwemeBusiness) GetVideoAggRangeDate(authorId string, startTime, endTime time.Time) (data dy.AuthorVideoOverview) {
 	var videoNum, productVideo int64
 	esVideoBusiness := es.NewEsVideoBusiness()
 	results, total, _ := esVideoBusiness.SearchByAuthor(authorId, "", "", "", 0, 1, 10000, startTime, endTime)
@@ -41,10 +37,6 @@ func (a *AuthorAwemeBusiness) HbaseGetVideoAggRangeDate(authorId string, startTi
 	awemeIds := make([]string, 0)
 	var wg sync.WaitGroup
 	for _, v := range results {
-		//dataMap := hbaseService.HbaseFormat(v, entity.DyAuthorAwemeAggMap)
-		//hData := &entity.DyAuthorAwemeAggData{}
-		//utils.MapToStruct(dataMap, hData)
-		//for _, agg := range hData.Data {
 		awemeIds = append(awemeIds, v.AwemeId)
 		aggCreateTime := time.Unix(v.AwemeCreateTime, 0)
 		hour := aggCreateTime.Format("15")
@@ -114,7 +106,6 @@ func (a *AuthorAwemeBusiness) HbaseGetVideoAggRangeDate(authorId string, startTi
 		//}
 	}
 	wg.Wait()
-	//videoSumData := esVideoBusiness.SumDataByAuthor(authorId, startTime, endTime)
 	if videoNum > 0 {
 		data.AvgDiggCount = diggCount / videoNum
 		data.AvgCommentCount = commentCount / videoNum
@@ -122,11 +113,6 @@ func (a *AuthorAwemeBusiness) HbaseGetVideoAggRangeDate(authorId string, startTi
 	}
 	data.VideoNum = videoNum
 	data.ProductVideo = productVideo
-	//data.ProductVideo, _ = esVideoBusiness.CountAwemeByAuthor(authorId, 1, startTime, endTime)
-	//data.AvgDiggCount = videoSumData.AvgDigg
-	//data.AvgCommentCount = videoSumData.AvgComment
-	//data.AvgForwardCount = videoSumData.AvgShare
-	//data.VideoNum = int64(videoSumData.Total)
 	data.DiggMax = diggMax
 	data.DiggMin = diggMin
 	data.CommentMax = commentMax
