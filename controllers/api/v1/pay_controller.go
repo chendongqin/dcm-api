@@ -185,7 +185,7 @@ func (receiver *PayController) CreateDyOrder() {
 				amount += surplusValue * float64(userVip.SubNum)
 			} else {
 				if userVip.Expiration.After(userVip.SubExpiration) {
-					surplusSubDay := math.Ceil((userVip.Expiration.Sub(subExpiration)).Hours() / 24)
+					surplusSubDay := math.Ceil((userVip.Expiration.Sub(userVip.SubExpiration)).Hours() / 24)
 					surplusSubsValue := surplusUnit * surplusSubDay
 					tmpAmount := float64(userVip.SubNum) * surplusSubsValue
 					remark = fmt.Sprintf("已有子账号续费：%.1f元", tmpAmount)
@@ -207,7 +207,7 @@ func (receiver *PayController) CreateDyOrder() {
 		orderInfo.People = totalPeople
 		orderInfo.Title = "协同账号续费"
 		vipOrderType = 4
-	} else if orderType == 5 {
+	} else if orderType == 4 {
 		title = "团队成员续费"
 		totalPeople := userVip.SubNum + 1
 		amount = utils.CeilFloat64One(price.Price * float64(totalPeople))
