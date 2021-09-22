@@ -358,10 +358,12 @@ func (receiver *AuthorController) AuthorViewData() {
 						}
 					}
 				}
-				topBrandSaleList = append(topBrandSaleList, dy2.NameValueInt64Chart{
-					Name:  "其他",
-					Value: sale,
-				})
+				if sale > 0 {
+					topBrandSaleList = append(topBrandSaleList, dy2.NameValueInt64Chart{
+						Name:  "其他",
+						Value: sale,
+					})
+				}
 				for _, v := range brandNumList {
 					if v.Value == 0 {
 						break
@@ -378,10 +380,12 @@ func (receiver *AuthorController) AuthorViewData() {
 						}
 					}
 				}
-				topBrandNumList = append(topBrandNumList, dy2.NameValueChart{
-					Name:  "其他",
-					Value: num,
-				})
+				if num > 0 {
+					topBrandNumList = append(topBrandNumList, dy2.NameValueChart{
+						Name:  "其他",
+						Value: num,
+					})
+				}
 			}
 			productCount = dy2.DyAuthorBaseProductCount{
 				Sales30Top3:           topSaleCates,

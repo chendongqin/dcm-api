@@ -67,8 +67,9 @@ func (this *BaseController) SuccReturnWithData(code int, retData interface{}) {
 //是否加密解密
 func (this *BaseController) setData(retJson map[string]interface{}) {
 	if this.JsonEncrypt {
-		this.Data["json"] = business.JsonEncrypt(retJson)
-	} else {
-		this.Data["json"] = retJson
+		if data, exist := retJson["data"]; exist {
+			retJson["data"] = business.JsonEncrypt(data)
+		}
 	}
+	this.Data["json"] = retJson
 }
