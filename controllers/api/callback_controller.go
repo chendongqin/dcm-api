@@ -101,7 +101,7 @@ func (receiver *CallbackController) AlipayNotify() {
 		exist, _ := dcm.GetBy("trade_no", notifyReq.OutTradeNo, &vipOrder)
 		if exist {
 			if vipOrder.PayStatus == 1 {
-				logs.Error("微信支付回调重复")
+				logs.Error("支付宝支付回调重复")
 				_, _ = w.Write([]byte("success"))
 				return
 			}

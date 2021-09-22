@@ -42,20 +42,17 @@ func (receiver *PayController) DySurplusValue() {
 	payBusiness := business.NewPayBusiness()
 	//扩张团队单人价格
 	value, primeValue := payBusiness.GetDySurplusValue(int(math.Ceil(surplusDay)))
-	if total != 0 {
+	if total > 0 {
 		//团队过期后续费重新计算时间
 		startTime := vip.SubExpiration
 		if startTime.Before(time.Now()) {
-			startTime = time.Now()
-		}
-		subTime := vip.Expiration.Sub(startTime)
-		nowSurplusDay = subTime.Hours() / 24
-
-		if vip.Expiration != vip.SubExpiration && vip.Expiration.After(time.Now()) {
-			surplusUnit := value / math.Ceil(surplusDay)
-			nowValue = utils.CeilFloat64One(surplusUnit * (math.Ceil(nowSurplusDay)))
-			if nowValue < 100 {
-				nowValue = 100
+			nowValue = value
+		} else {
+			if vip.Expiration != startTime && vip.Expiration.After(time.Now()) {
+				subTime := vip.Expiration.Sub(startTime)
+				nowSurplusDay = subTime.Hours() / 24
+				surplusUnit := value / math.Ceil(surplusDay)
+				nowValue = utils.CeilFloat64One(surplusUnit * (math.Ceil(nowSurplusDay)))
 			}
 		}
 	}
@@ -183,16 +180,17 @@ func (receiver *PayController) CreateDyOrder() {
 		title = fmt.Sprintf("购买协同账号%d人", groupPeople)
 		amount = surplusValue * float64(groupPeople)
 		//先续费再购买
-		if userVip.Expiration.After(userVip.SubExpiration) && userVip.SubExpiration.After(time.Now()) && userVip.SubNum > 0 {
-			surplusSubDay := math.Ceil((userVip.Expiration.Sub(subExpiration)).Hours() / 24)
-			if surplusSubDay > 0 {
-				surplusSubsValue := surplusUnit * surplusSubDay
-				tmpAmount := float64(userVip.SubNum) * surplusSubsValue
-				if tmpAmount < 100 {
-					tmpAmount = 100
+		if userVip.SubNum > 0 {
+			if userVip.SubExpiration.Before(time.Now()) {
+				amount += surplusValue * float64(userVip.SubNum)
+			} else {
+				if userVip.Expiration.After(userVip.SubExpiration) {
+					surplusSubDay := math.Ceil((userVip.Expiration.Sub(subExpiration)).Hours() / 24)
+					surplusSubsValue := surplusUnit * surplusSubDay
+					tmpAmount := float64(userVip.SubNum) * surplusSubsValue
+					remark = fmt.Sprintf("已有子账号续费：%.1f元", tmpAmount)
+					amount += tmpAmount
 				}
-				remark = fmt.Sprintf("已有子账号续费：%.1f元", tmpAmount)
-				amount += tmpAmount
 			}
 		}
 		orderInfo.BuyDays = int(surplusDay)
@@ -233,7 +231,7 @@ func (receiver *PayController) CreateDyOrder() {
 		Amount:         utils.ToString(amount),
 		TicketAmount:   "0",
 		Level:          business.UserLevelJewel,
-		BuyDays:        orderInfo.BuyDays,
+		BuyDays:        buyDays,
 		GoodsInfo:      string(orderInfoJson),
 		Referrer:       referrer,
 		ExpirationTime: time.Now().Add(1800 * time.Second),
