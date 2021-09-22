@@ -170,9 +170,7 @@ func GetAwemeShareRank(rowKey string) (data entity.DyAwemeShareTops, comErr glob
 }
 
 //商品排行榜
-func GetProductRank(day, fCate, sortStr string, hPage int) (data []entity.ShortVideoProduct, comErr global.CommonError) {
-	key := day + "_" + fCate + "_" + sortStr
-	rowKey := utils.Md5_encode(key)
+func GetProductRank(rowKey string, hPage int) (data []entity.ShortVideoProduct, comErr global.CommonError) {
 	rowKey = rowKey + strconv.Itoa(hPage)
 	query := hbasehelper.NewQuery()
 	result, err := query.SetTable(hbaseService.HbaseShortVideoProductRank).GetByRowKey([]byte(rowKey))
