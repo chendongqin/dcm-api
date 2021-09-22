@@ -32,6 +32,7 @@ func GetVideo(awemeId string) (data entity.DyAweme, comErr global.CommonError) {
 	duration := math.Ceil(float64(data.Data.Duration) / 1000)
 	data.Data.Duration = utils.ToInt(duration)
 	data.Data.AwemeTitle = data.AwemeTitle
+	data.Data.CrawlTime = data.CrawlTime
 	data.Data.AwemeCover = dyimg.Fix(data.Data.AwemeCover)
 	return
 }

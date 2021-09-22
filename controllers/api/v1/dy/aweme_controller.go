@@ -11,6 +11,7 @@ import (
 	"dongchamao/models/entity"
 	dy2 "dongchamao/models/repost/dy"
 	"dongchamao/services/dyimg"
+	"github.com/astaxie/beego/logs"
 	jsoniter "github.com/json-iterator/go"
 	"sort"
 	"time"
@@ -50,6 +51,7 @@ func (receiver *AwemeController) AwemeBaseData() {
 		ForwardCount:    awemeBase.Data.ForwardCount,
 		ID:              awemeBase.Data.ID,
 		MusicID:         awemeBase.Data.MusicID,
+		CrawlTime:       awemeBase.Data.CrawlTime,
 		PromotionNum:    len(awemeBase.Data.DyPromotionID),
 	}
 
@@ -496,5 +498,39 @@ func (receiver *AwemeController) AwemeFanAnalyse() {
 		"province_chart":  provinceChart,
 		"province_people": provinceTotal,
 	})
+	return
+}
+
+//视频加速
+func (receiver *AwemeController) AwemeSpeed() {
+
+	if !business.UserActionLock(receiver.TrueUri, utils.ToString(receiver.UserId), 5) {
+		receiver.FailReturn(global.NewError(6000))
+		return
+	}
+	awemeId := receiver.Ctx.Input.Param(":aweme_id")
+	if awemeId == "" {
+		receiver.FailReturn(global.NewError(4000))
+		return
+	}
+	_, comErr := hbase.GetVideo(awemeId)
+	if comErr != nil {
+		receiver.FailReturn(global.NewError(4000))
+	}
+
+	spriderName := "aweme"
+	cacheKey := cache.GetCacheKey(cache.SpiderSpeedUpLimit, spriderName, awemeId)
+	cacheData := global.Cache.Get(cacheKey)
+	if cacheData != "" {
+		//缓存存在
+		receiver.FailReturn(global.NewError(6000))
+		return
+	}
+	//加速
+	ret, _ := business.NewSpiderBusiness().SpiderSpeedUp(spriderName, awemeId)
+	global.Cache.Set(cacheKey, "1", 300)
+
+	logs.Info("视频加速，爬虫推送结果：", ret)
+	receiver.SuccReturn([]string{})
 	return
 }
