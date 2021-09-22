@@ -271,7 +271,7 @@ func (receiver *CollectBusiness) GetDyCollectTags(userId int) (tags []dcm.DcUser
 //创建分组
 func (receiver *CollectBusiness) AddDyCollectTag(userId int, name string) (comErr global.CommonError) {
 	db := dcm.GetDbSession().Table(dcm.DcUserDyCollectTag{})
-	by, err := dcm.GetBy("name", name, new(dcm.DcUserDyCollectTag))
+	by, err := db.Where("name=? and delete_time is null", name).Exist()
 	if err != nil {
 		comErr = global.NewError(5000)
 		return

@@ -477,6 +477,7 @@ func (i *EsProductBusiness) SearchProducts(productIds []string) (list []es.DyPro
 	results := esMultiQuery.
 		SetTable(esTable).
 		AddMust(esQuery.Condition).
+		SetCache(300).
 		SetOrderBy(elasticsearch.NewElasticOrder().Order).
 		SetMultiQuery().
 		Query()
