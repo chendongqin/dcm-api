@@ -1153,7 +1153,7 @@ func (receiver *LiveController) LiveSpeed() {
 	}
 	//加速
 	author, _ := hbase.GetAuthor(AuthorId)
-	go business.NewSpiderBusiness().AddLive(AuthorId, author.FollowerCount, business.AddLiveTopMonitored, time.Now().AddDate(0, 0, 3).Unix())
+	go business.NewSpiderBusiness().AddLive(AuthorId, author.FollowerCount, business.AddLiveTopConcerned, time.Now().AddDate(0, 0, 3).Unix())
 	global.Cache.Set(cacheKey, "1", 300)
 	receiver.SuccReturn([]string{})
 	return
