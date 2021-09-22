@@ -192,7 +192,7 @@ func (this *VipBusiness) AddDyTeamSub(userId, subUserId int) global.CommonError 
 	if int(subCount) >= userVip.SubNum {
 		return global.NewMsgError("人数已满")
 	}
-	if _, err := dcm.UpdateInfo(dbSession, subUserVip.Id, map[string]interface{}{"parent_id": userVip.Id, "update_time": now.Format("2006-01-02 15:04:05")}, new(dcm.DcUserVip)); err != nil {
+	if _, err := dcm.UpdateInfo(dbSession, subUserVip.Id, map[string]interface{}{"parent_id": userVip.Id, "update_time": now.Format("2006-01-02 15:04:05"), "remark": ""}, new(dcm.DcUserVip)); err != nil {
 		return global.NewError(5000)
 	}
 	return nil
