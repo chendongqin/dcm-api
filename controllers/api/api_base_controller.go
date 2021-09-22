@@ -162,6 +162,7 @@ func (this *ApiBaseController) InitUserToken() {
 		this.Token = tokenString
 		userInfo, exist := userBusiness.GetCacheUser(this.UserId, true)
 		if !exist {
+			this.RegisterLogout()
 			this.FailReturn(global.NewError(4001))
 			return
 		}
@@ -188,6 +189,7 @@ func (this *ApiBaseController) InitUserToken() {
 		//验证 user Platform token的唯一性
 		uniqueToken, exist := userBusiness.GetUniqueToken(this.UserId, this.AppId, true)
 		if exist == false {
+			this.RegisterLogout()
 			this.FailReturn(global.NewError(4003))
 			return
 		} else {
