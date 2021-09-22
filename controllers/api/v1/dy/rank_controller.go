@@ -12,6 +12,7 @@ import (
 	"dongchamao/models/repost/dy"
 	"dongchamao/services/dyimg"
 	"math"
+	"strconv"
 	"time"
 )
 
@@ -631,6 +632,7 @@ func (receiver *RankController) DyAuthorFollowerRank() {
 //商品排行榜日榜
 func (receiver *RankController) ProductTodayRank() {
 	date := receiver.Ctx.Input.Param(":date")
+	dataType, _ := receiver.GetInt("data_type", 1)
 	fCate := receiver.GetString("first_cate", "all")
 	sortStr := receiver.GetString("sort", "sales")
 	page := receiver.GetPage("page")
@@ -645,6 +647,33 @@ func (receiver *RankController) ProductTodayRank() {
 		receiver.FailReturn(global.NewError(4000))
 		return
 	}
+	var rowKey = ""
+	switch dataType {
+	case 1: //日榜
+		day := dateTime.Format("20060102")
+		key := day + "_" + fCate + "_" + sortStr
+		rowKey = utils.Md5_encode(key)
+		break
+	case 2: //周榜
+		startTime := dateTime
+		lastWeekStartTime := dateTime.AddDate(0, 0, -7)
+		firstDay := strconv.Itoa(lastWeekStartTime.Day())
+		lastWeekEndTime := dateTime.AddDate(0, 0, -1)
+		endDay := strconv.Itoa(lastWeekEndTime.Day())
+		if startTime.Weekday() != 1 {
+			receiver.FailReturn(global.NewError(4000))
+			return
+		}
+		weekRange := startTime.Format("20060102") + firstDay + endDay
+		key := weekRange + "_" + fCate + "_" + sortStr
+		rowKey = utils.Md5_encode(key)
+		break
+	case 3: //月榜
+		month := dateTime.Format("200601")
+		key := month + "_" + fCate + "_" + sortStr
+		rowKey = utils.Md5_encode(key)
+		break
+	}
 	if !receiver.HasAuth {
 		if page != 1 {
 			receiver.FailReturn(global.NewError(4004))
@@ -657,26 +686,28 @@ func (receiver *RankController) ProductTodayRank() {
 	total := 0
 	finished := false
 	list := make([]entity.ShortVideoProduct, 0)
-	for i := 0; i < 5; i++ {
-		tempData, _ := hbase.GetProductRank(dateTime.Format("20060102"), fCate, sortStr, i)
-		lenNum := len(tempData)
-		tmpTotal := total
-		total += lenNum
-		if finished {
-			continue
-		}
-		if total > start {
-			if end <= total {
-				list = append(list, tempData[start-tmpTotal:end-tmpTotal]...)
-				finished = true
-			} else {
-				list = append(list, tempData[start-tmpTotal:]...)
-				start = total
+	if rowKey != "" {
+		for i := 0; i < 5; i++ {
+			tempData, _ := hbase.GetProductRank(rowKey, i)
+			lenNum := len(tempData)
+			tmpTotal := total
+			total += lenNum
+			if finished {
+				continue
+			}
+			if total > start {
+				if end <= total {
+					list = append(list, tempData[start-tmpTotal:end-tmpTotal]...)
+					finished = true
+				} else {
+					list = append(list, tempData[start-tmpTotal:]...)
+					start = total
+				}
 			}
 		}
-	}
-	if !receiver.HasAuth && total > receiver.MaxTotal {
-		total = receiver.MaxTotal
+		if !receiver.HasAuth && total > receiver.MaxTotal {
+			total = receiver.MaxTotal
+		}
 	}
 	ret := map[string]interface{}{
 		"list":      list,
