@@ -389,7 +389,7 @@ func (receiver *AwemeController) AwemeProductSameAweme() {
 		if v.UniqueId == "" {
 			list[k].UniqueId = v.ShortId
 		}
-		list[k].AwemeUrl = business.AwemeUrl + awemeId
+		list[k].AwemeUrl = business.AwemeUrl + v.AwemeId
 	}
 	receiver.SuccReturn(map[string]interface{}{
 		"list":  list,

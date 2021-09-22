@@ -1202,6 +1202,15 @@ func FriendlyFloat64One(fv float64) float64 {
 	return val
 }
 
+func CeilFloat64One(fv float64) float64 {
+	fv = math.Ceil(fv*10) / 10
+	val, err := strconv.ParseFloat(fmt.Sprintf("%.1f", fv), 64)
+	if err != nil {
+		return fv
+	}
+	return val
+}
+
 func FriendlyFloat64String(fv float64) string {
 	return fmt.Sprintf("%.2f", fv)
 }
