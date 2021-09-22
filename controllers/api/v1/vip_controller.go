@@ -49,6 +49,7 @@ func (receiver *VipController) GetDyTeam() {
 			SubExpiration: v.SubExpiration.Unix(),
 			Id:            userInfoMap[v.UserId].Id,
 			Username:      userInfoMap[v.UserId].Username,
+			Avatar:        userInfoMap[v.UserId].Avatar,
 			LoginTime:     userInfoMap[v.UserId].LoginTime.Unix(),
 		})
 	}
