@@ -635,6 +635,7 @@ func (receiver *RankController) ProductTodayRank() {
 	dataType, _ := receiver.GetInt("data_type", 1)
 	fCate := receiver.GetString("first_cate", "all")
 	sortStr := receiver.GetString("sort", "sales")
+	orderBy := receiver.GetString("order_by", "desc")
 	page := receiver.GetPage("page")
 	pageSize := receiver.GetPageSize("page_size", 10, 100)
 	if date == "" {
@@ -686,7 +687,7 @@ func (receiver *RankController) ProductTodayRank() {
 	total := 0
 	finished := false
 	list := make([]entity.ShortVideoProduct, 0)
-	if rowKey != "" {
+	if orderBy == "asc" {
 		for i := 0; i < 5; i++ {
 			tempData, _ := hbase.GetProductRank(rowKey, i)
 			lenNum := len(tempData)
@@ -705,9 +706,33 @@ func (receiver *RankController) ProductTodayRank() {
 				}
 			}
 		}
-		if !receiver.HasAuth && total > receiver.MaxTotal {
-			total = receiver.MaxTotal
+	} else {
+		for i := 4; i >= 0; i-- {
+			tempData, _ := hbase.GetProductRank(rowKey, i)
+			lenNum := len(tempData)
+			for j := 0; j < lenNum/2; j++ { //倒序
+				temp := tempData[lenNum-1-j]
+				tempData[lenNum-1-j] = tempData[j]
+				tempData[j] = temp
+			}
+			tmpTotal := total
+			total += lenNum
+			if finished {
+				continue
+			}
+			if total > start {
+				if end <= total {
+					list = append(list, tempData[start-tmpTotal:end-tmpTotal]...)
+					finished = true
+				} else {
+					list = append(list, tempData[start-tmpTotal:]...)
+					start = total
+				}
+			}
 		}
+	}
+	if !receiver.HasAuth && total > receiver.MaxTotal {
+		total = receiver.MaxTotal
 	}
 	ret := map[string]interface{}{
 		"list":      list,
