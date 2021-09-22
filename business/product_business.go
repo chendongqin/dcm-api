@@ -636,52 +636,20 @@ func (receiver *ProductBusiness) ProductAwemeAuthorAnalysis(productId, keyword, 
 			d.Sales += v.Sales
 			d.DiggCount += v.DiggCount
 			d.RelatedAwemes = append(d.RelatedAwemes, v.RelatedAwemes...)
-			//if v.CreateSdf > d.CreateSdf {
-			//	d.FollowCount = v.FollowCount
-			//	d.CreateSdf = v.CreateSdf
-			//	d.FirstName = v.FirstName
-			//	d.SecondName = v.SecondName
-			//	d.ShortId = v.ShortId
-			//	d.Avatar = v.Avatar
-			//	d.Nickname = v.Nickname
-			//}
 			authorMap[v.AuthorId] = d
 		} else {
 			authorMap[v.AuthorId] = v
 			authorIds = append(authorIds, v.AuthorId)
 		}
 	}
-	//cacheAuthorKey := cache.GetCacheKey(cache.ProductAwemeAuthorAllMap, startRowKey, stopRowKey)
-	//cacheAuthorStr := global.Cache.Get(cacheAuthorKey)
-	//authorDataMap := map[string]entity.DyAuthor{}
-	//if cacheAuthorStr != "" {
-	//	cacheAuthorStr = utils.DeserializeData(cacheAuthorStr)
-	//	_ = jsoniter.Unmarshal([]byte(cacheAuthorStr), &authorDataMap)
-	//} else {
-	//	authorDataMap = NewAuthorBusiness().GetAuthorFormPool(authorIds, 10)
-	//	if tag == "" && minFollow == 0 && maxFollow == 0 && scoreType == 5 {
-	//		_ = global.Cache.Set(cacheAuthorKey, utils.SerializeData(authorDataMap), 300)
-	//	}
-	//}
 	for _, v := range authorMap {
-		//if a, ok := authorDataMap[v.AuthorId]; ok {
-		//	if v.DisplayId == "" {
-		//		v.DisplayId = a.Data.UniqueID
-		//		v.ShortId = a.Data.ShortID
-		//	}
-		//} else {
-		//	a, _ := hbase.GetAuthor(v.AuthorId)
-		//	if v.DisplayId == "" {
-		//		v.DisplayId = a.Data.UniqueID
-		//		v.ShortId = a.Data.ShortID
-		//	}
-		//}
 		if minFollow > 0 && v.FollowCount < minFollow {
 			continue
 		}
 		if maxFollow > 0 && v.FollowCount >= maxFollow {
 			continue
 		}
+		v.AwemesNum = len(v.RelatedAwemes)
 		list = append(list, v)
 	}
 	sort.Slice(list, func(i, j int) bool {

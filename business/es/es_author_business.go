@@ -216,10 +216,10 @@ func (receiver *EsAuthorBusiness) BaseSearch(
 		esQuery.SetMatchPhrase("fans_age", fanAge)
 	}
 	if fanProvince != "" {
-		esQuery.SetTerm("fans_province.keyword", fanProvince)
+		esQuery.SetMatchPhrase("fans_province", fanProvince)
 	}
 	if fanCity != "" {
-		esQuery.SetTerm("fans_city.keyword", fanCity)
+		esQuery.SetMatchPhrase("fans_city", fanCity)
 	}
 	results := esMultiQuery.
 		SetTable(esTable).
