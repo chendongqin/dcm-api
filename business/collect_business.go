@@ -84,24 +84,11 @@ func (receiver *CollectBusiness) GetDyCollect(tagId, collectType int, keywords, 
 			data[k].CouponPrice = productInfo.CouponPrice
 			data[k].Pv = productInfo.Pv
 			data[k].OrderAccount = productInfo.OrderAccount
-			data[k].WeekOrderAccount = productInfo.WeekOrderAccount
+			data[k].WeekOrderAccount = productInfo.MonthOrderAccount
 			data[k].PlatformLabel = productInfo.PlatformLabel
 			data[k].Undercarriage = productInfo.Undercarriage
 			data[k].IsCoupon = productInfo.IsCoupon
-			yesterdayDate := time.Now().AddDate(0, 0, -1).Format("20060102")
-			yesterdayTime, _ := time.ParseInLocation("20060102", yesterdayDate, time.Local)
-			startTime := yesterdayTime.AddDate(0, 0, -30)
-			relatedInfo, _ := hbase.GetProductDailyRangDate(v.CollectId, startTime, yesterdayTime)
-			authorMap := map[string]string{}
-			for _, v := range relatedInfo {
-				for _, a := range v.AwemeAuthorList {
-					authorMap[a.AuthorId] = a.AuthorId
-				}
-				for _, a := range v.LiveAuthorList {
-					authorMap[a.AuthorId] = a.AuthorId
-				}
-			}
-			data[k].WeekRelateAuthor = len(authorMap)
+			data[k].WeekRelateAuthor = productInfo.RelateAuthor
 		}
 		return data, total, commonError
 	case 3:
