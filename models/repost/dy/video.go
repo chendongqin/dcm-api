@@ -41,6 +41,7 @@ type DySimpleAweme struct {
 	DiggInc         int64  `json:"digg_inc"`
 	CommentInc      int64  `json:"comment_inc"`
 	ForwardInc      int64  `json:"forward_inc"`
+	CrawlTime       int    `json:"crawl_time"`
 }
 
 type DyAwemeProductSale struct {

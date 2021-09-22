@@ -29,6 +29,7 @@ type DyAwemeData struct {
 	AuthorID        string         `json:"author_id"`
 	AwemeCover      string         `json:"aweme_cover"`
 	AwemeTitle      string         `json:"aweme_title"`
+	CrawlTime       int            `json:"crawl_time"`
 	AwemeCreateTime int64          `json:"aweme_create_time"`
 	AwemeURL        string         `json:"aweme_url"`
 	CommentCount    int64          `json:"comment_count"`
