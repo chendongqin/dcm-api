@@ -2,6 +2,7 @@ package repost
 
 import (
 	"dongchamao/models/dcm"
+	"dongchamao/models/entity"
 )
 
 type CollectAuthorRet struct {
@@ -49,4 +50,9 @@ type CollectTagRet struct {
 type CollectCount struct {
 	TagId int   `json:"tag_id" gorm:"tag_id"`
 	Count int64 `json:"count" gorm:"count"`
+}
+
+type DyProductDailySlice struct {
+	ProductId      string `json:"product_id"`
+	DyProductDaily map[string]entity.DyProductDaily
 }
