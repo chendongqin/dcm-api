@@ -61,7 +61,7 @@ func (receiver *PayController) DySurplusValue() {
 	receiver.SuccReturn(map[string]interface{}{
 		"now_surplus_day": int(math.Ceil(nowSurplusDay)),
 		"now_value":       utils.CeilFloat64One(nowValue * float64(total)),
-		"value":           utils.FriendlyFloat64(value),
+		"value":           utils.CeilFloat64One(value),
 		"prime_value":     primeValue,
 		"price_config":    priceConfig,
 	})
@@ -187,14 +187,15 @@ func (receiver *PayController) CreateDyOrder() {
 				if userVip.Expiration.After(userVip.SubExpiration) {
 					surplusSubDay := math.Ceil((userVip.Expiration.Sub(userVip.SubExpiration)).Hours() / 24)
 					surplusSubsValue := surplusUnit * surplusSubDay
-					tmpAmount := float64(userVip.SubNum) * surplusSubsValue
+					tmpAmount := float64(userVip.SubNum) * utils.CeilFloat64One(surplusSubsValue)
 					remark = fmt.Sprintf("已有子账号续费：%.1f元", tmpAmount)
 					amount += tmpAmount
 				}
 			}
 		}
+		amount = utils.CeilFloat64One(amount)
 		orderInfo.BuyDays = int(surplusDay)
-		orderInfo.Amount = utils.CeilFloat64One(amount)
+		orderInfo.Amount = amount
 		orderInfo.People = groupPeople
 		orderInfo.Title = "协同账号购买"
 		vipOrderType = 3
