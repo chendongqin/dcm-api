@@ -1133,6 +1133,7 @@ func (receiver LiveController) LivingMessage() {
 
 //直播加速
 func (receiver *LiveController) LiveSpeed() {
+	isScreen, _ := receiver.GetInt("is_screen", 0)
 	if !business.UserActionLock(receiver.TrueUri, utils.ToString(receiver.UserId), 5) {
 		receiver.FailReturn(global.NewError(6000))
 		return
@@ -1152,8 +1153,14 @@ func (receiver *LiveController) LiveSpeed() {
 		return
 	}
 	//加速
+	top := business.AddLiveTopConcerned
+	expireTime := time.Now().AddDate(0, 0, 7).Unix()
+	if isScreen == 1 {
+		top = business.AddLiveTopHighLevelStar
+		expireTime = time.Now().AddDate(0, 0, 1).Unix()
+	}
 	author, _ := hbase.GetAuthor(AuthorId)
-	go business.NewSpiderBusiness().AddLive(AuthorId, author.FollowerCount, business.AddLiveTopConcerned, time.Now().AddDate(0, 0, 3).Unix())
+	go business.NewSpiderBusiness().AddLive(AuthorId, author.FollowerCount, top, expireTime)
 	global.Cache.Set(cacheKey, "1", 300)
 	receiver.SuccReturn([]string{})
 	return
