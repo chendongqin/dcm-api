@@ -64,7 +64,7 @@ func (receiver *PayController) DySurplusValue() {
 	receiver.SuccReturn(map[string]interface{}{
 		"now_surplus_day": int(math.Ceil(nowSurplusDay)),
 		"now_value":       utils.CeilFloat64One(nowValue * float64(total)),
-		"value":           utils.CeilFloat64One(value),
+		"value":           utils.FriendlyFloat64(value),
 		"prime_value":     primeValue,
 		"price_config":    priceConfig,
 	})

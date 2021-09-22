@@ -29,6 +29,7 @@ type DyProductAwemeAuthorAnalysis struct {
 	Score         float64                       `json:"score"`
 	Level         int                           `json:"level"`
 	ProductNum    int                           `json:"product_num"`
+	AwemesNum     int                           `json:"awemes_num"`
 	FirstName     string                        `json:"first_name"`
 	SecondName    string                        `json:"second_name"`
 	Avatar        string                        `json:"avatar"`

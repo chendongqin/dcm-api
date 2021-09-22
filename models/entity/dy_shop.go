@@ -24,9 +24,9 @@ type DyShop struct {
 	ServiceScore   DyShopScore `json:"service_score"`   //商家服务
 	Logo           string      `json:"logo"`            //logo
 	Name           string      `json:"name"`            //名称
-	OrderNum       string      `json:"order_num"`       //合作商品商量
-	Sales          string      `json:"sales"`           //月销量
-	CrawlTime      string      `json:"crawl_time"`      //爬虫时间
+	OrderNum       int64       `json:"order_num"`       //合作商品商量
+	Sales          int64       `json:"sales"`           //月销量
+	CrawlTime      int64       `json:"crawl_time"`      //爬虫时间
 }
 
 type DyShopScore struct {

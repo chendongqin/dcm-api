@@ -15,4 +15,5 @@ type DyProductVideo struct {
 	Sales           int     `json:"sales"`
 	AwemeGmv        float64 `json:"aweme_gmv"`
 	AwemeCreateSdf  string  `json:"aweme_create_sdf"`
+	AwemeUrl        string  `json:"aweme_url"`
 }
