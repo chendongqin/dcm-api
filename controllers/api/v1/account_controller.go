@@ -154,7 +154,7 @@ func (receiver *AccountController) Info() {
 	username := receiver.UserInfo.Username
 	isWechat := 0
 	if receiver.UserInfo.Unionid != "" {
-
+		isWechat = 1
 	}
 	usernameEncrypt := ""
 	if len(username) >= 11 {
