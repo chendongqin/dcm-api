@@ -111,8 +111,8 @@ func (receiver *CollectBusiness) GetDyCollect(tagId, collectType int, keywords, 
 			data[k].AwemeTitle = awemeBase.AwemeTitle
 			data[k].AwemeCreateTime = awemeBase.Data.AwemeCreateTime
 			data[k].AwemeURL = awemeBase.Data.AwemeURL
-			data[k].DiggCount = awemeBase.Data.DiggCount - yesData.DiggCount
-			data[k].DiggCountIncr = awemeBase.Data.DiggCount
+			data[k].DiggCount = awemeBase.Data.DiggCount
+			data[k].DiggCountIncr = awemeBase.Data.DiggCount - yesData.DiggCount
 			data[k].AuthorAvatar = dyimg.Fix(awemeAuthor.Data.Avatar)
 			data[k].AuthorNickname = awemeAuthor.Data.Nickname
 		}
