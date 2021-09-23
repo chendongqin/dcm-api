@@ -6,6 +6,7 @@ type EsAuthorLiveProduct struct {
 	RoomTitle      string  `json:"room_title"`
 	RoomCover      string  `json:"room_cover"`
 	Title          string  `json:"title"`
+	MaxUserCount   int64   `json:"max_user_count"`
 	ElasticTitle   string  `json:"elastic_title"`
 	Nickname       string  `json:"nickname"`
 	Avatar         string  `json:"avatar"`
@@ -24,15 +25,16 @@ type EsAuthorLiveProduct struct {
 	FirstCname     string  `json:"first_cname"`
 	SecondCname    string  `json:"second_cname"`
 	RoomStatus     string  `json:"room_status"`
-	//ThirdCname    string  `json:"third_cname"`
-	BrandName    string  `json:"brand_name"`
-	ShopName     string  `json:"shop_name"`
-	ShopId       string  `json:"shop_id"`
-	ShopIcon     string  `json:"shop_icon"`
-	CreateTime   string  `json:"create_time"` //直播间时间
-	PredictSales float64 `json:"predict_sales"`
-	PredictGmv   float64 `json:"predict_gmv"`
-	RealGmv      float64 `json:"real_gmv"`
-	BuyRate      float64 `json:"buy_rate"`
-	AuthorRoomID string  `json:"author_room_id"`
+	ThirdCname     string  `json:"third_cname"`
+	BrandName      string  `json:"brand_name"`
+	PlatformLabel  string  `json:"platform_label"`
+	ShopName       string  `json:"shop_name"`
+	ShopId         string  `json:"shop_id"`
+	ShopIcon       string  `json:"shop_icon"`
+	CreateTime     string  `json:"create_time"` //直播间时间
+	PredictSales   float64 `json:"predict_sales"`
+	PredictGmv     float64 `json:"predict_gmv"`
+	RealGmv        float64 `json:"real_gmv"`
+	BuyRate        float64 `json:"buy_rate"`
+	AuthorRoomID   string  `json:"author_room_id"`
 }

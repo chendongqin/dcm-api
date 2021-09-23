@@ -22,7 +22,7 @@ type ShopController struct {
 func (receiver *ShopController) Prepare() {
 	receiver.InitApiController()
 	receiver.CheckToken()
-	receiver.CheckDyUserGroupRight(business.DyJewelBaseMinShowNum, business.DyJewelBaseShowNum)
+	receiver.CheckDyUserGroupRight(business.DyJewelBaseMinShowNum, business.DyJewelBaseLoginMinShowNum, business.DyJewelBaseShowNum)
 }
 
 //小店基本数据

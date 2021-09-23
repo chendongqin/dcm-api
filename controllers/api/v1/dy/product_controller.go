@@ -24,7 +24,7 @@ type ProductController struct {
 func (receiver *ProductController) Prepare() {
 	receiver.InitApiController()
 	receiver.CheckToken()
-	receiver.CheckDyUserGroupRight(business.DyJewelBaseMinShowNum, business.DyJewelBaseShowNum)
+	receiver.CheckDyUserGroupRight(business.DyJewelBaseMinShowNum, business.DyJewelBaseLoginMinShowNum, business.DyJewelBaseShowNum)
 }
 
 func (receiver *ProductController) GetCacheProductCate() {
@@ -244,6 +244,7 @@ func (receiver *ProductController) ProductBaseAnalysis() {
 		}
 		if pv > 0 {
 			gpm = float64(order) * price / float64(pv) * 1000
+			countData.Gpm += gpm
 		}
 		hotAuthorChart = append(hotAuthorChart, authorNum)
 		liveAuthorChart = append(liveAuthorChart, liveAuthorNum)

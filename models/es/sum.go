@@ -24,6 +24,7 @@ type DyAwemeSumCount struct {
 }
 
 type DyLiveSumCount struct {
+	Key        string     `json:"key"`
 	TotalSales EsSumStats `json:"total_sales"`
 	TotalGmv   EsSumStats `json:"total_gmv"`
 }

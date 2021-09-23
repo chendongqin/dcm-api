@@ -22,7 +22,7 @@ type RankController struct {
 
 func (receiver *RankController) Prepare() {
 	receiver.InitApiController()
-	receiver.CheckDyUserGroupRight(business.DyRankMinShowNum, business.DyJewelRankShowNum)
+	receiver.CheckDyUserGroupRight(business.DyRankUnLogin, business.DyRankLogin, business.DyJewelRankShowNum)
 	//receiver.lockAction()
 }
 
@@ -270,6 +270,12 @@ func (receiver *RankController) DyLiveShareWeekRank() {
 			uniqueId = v.ShortId
 		}
 		roomNum := len(v.Rooms)
+		var TotalUser int64
+		if roomNum != 0 {
+			TotalUser = totalUser / int64(roomNum)
+		} else {
+			TotalUser = int64(0)
+		}
 		list = append(list, entity.DyLiveShareWeekData{
 			AuthorId:   business.IdEncrypt(utils.ToString(v.AuthorId)),
 			Avatar:     dyimg.Avatar(v.Avatar),
@@ -281,7 +287,7 @@ func (receiver *RankController) DyLiveShareWeekRank() {
 			UniqueId:   uniqueId,
 			Gmv:        gmv,
 			Sales:      sales,
-			TotalUser:  totalUser / int64(roomNum),
+			TotalUser:  TotalUser,
 			RoomNum:    roomNum,
 		})
 	}
@@ -442,54 +448,6 @@ func (receiver *RankController) ProductShareTopDayRank() {
 	return
 }
 
-//抖音直播销量日榜
-func (receiver *RankController) LiveProductSalesTopDayRank() {
-	date := receiver.Ctx.Input.Param(":date")
-	fCate := receiver.GetString("first_cate", "")
-	sCate := receiver.GetString("second_cate", "")
-	tCate := receiver.GetString("third_cate", "")
-	sortStr := receiver.GetString("sort", "")
-	orderBy := receiver.GetString("order", "")
-	page := receiver.GetPage("page")
-	pageSize := receiver.GetPageSize("page_size", 10, 100)
-	if date == "" {
-		receiver.FailReturn(global.NewError(4000))
-		return
-	}
-	pslTime := "2006-01-02"
-	dateTime, err := time.ParseInLocation(pslTime, date, time.Local)
-	if err != nil {
-		receiver.FailReturn(global.NewError(4000))
-		return
-	}
-	if !receiver.HasAuth {
-		if page != 1 {
-			receiver.FailReturn(global.NewError(4004))
-			return
-		}
-		pageSize = receiver.MaxTotal
-	}
-	list, total, comErr := es.NewEsProductBusiness().LiveProductSalesTopDayRank(dateTime.Format("20060102"), fCate, sCate, tCate, sortStr, orderBy, page, pageSize)
-	if comErr != nil {
-		receiver.FailReturn(comErr)
-		return
-	}
-	for k, v := range list {
-		list[k].ProductId = business.IdEncrypt(v.ProductId)
-		list[k].Images = dyimg.Fix(v.Images)
-	}
-	if total > receiver.MaxTotal {
-		total = receiver.MaxTotal
-	}
-	receiver.SuccReturn(map[string]interface{}{
-		"has_login": receiver.HasLogin,
-		"has_auth":  receiver.HasAuth,
-		"list":      list,
-		"total":     total,
-	})
-	return
-}
-
 //达人带货榜
 func (receiver *RankController) DyAuthorTakeGoodsRank() {
 	date := receiver.Ctx.Input.Param(":date")
@@ -629,8 +587,8 @@ func (receiver *RankController) DyAuthorFollowerRank() {
 	return
 }
 
-//商品排行榜日榜
-func (receiver *RankController) ProductTodayRank() {
+//短视频商品排行榜
+func (receiver *RankController) VideoProductRank() {
 	date := receiver.Ctx.Input.Param(":date")
 	dataType, _ := receiver.GetInt("data_type", 1)
 	fCate := receiver.GetString("first_cate", "all")
@@ -689,7 +647,7 @@ func (receiver *RankController) ProductTodayRank() {
 	list := make([]entity.ShortVideoProduct, 0)
 	if orderBy == "asc" {
 		for i := 0; i < 5; i++ {
-			tempData, _ := hbase.GetProductRank(rowKey, i)
+			tempData, _ := hbase.GetVideoProductRank(rowKey, i)
 			lenNum := len(tempData)
 			tmpTotal := total
 			total += lenNum
@@ -708,7 +666,7 @@ func (receiver *RankController) ProductTodayRank() {
 		}
 	} else {
 		for i := 4; i >= 0; i-- {
-			tempData, _ := hbase.GetProductRank(rowKey, i)
+			tempData, _ := hbase.GetVideoProductRank(rowKey, i)
 			lenNum := len(tempData)
 			for j := 0; j < lenNum/2; j++ { //倒序
 				temp := tempData[lenNum-1-j]
@@ -734,6 +692,136 @@ func (receiver *RankController) ProductTodayRank() {
 	if !receiver.HasAuth && total > receiver.MaxTotal {
 		total = receiver.MaxTotal
 	}
+	ret := map[string]interface{}{
+		"list":      list,
+		"has_login": receiver.HasLogin,
+		"has_auth":  receiver.HasAuth,
+		"total":     total,
+	}
+	receiver.SuccReturn(ret)
+	return
+}
+
+//直播商品榜
+func (receiver *RankController) LiveProductRank() {
+	date := receiver.Ctx.Input.Param(":date")
+	dataType, _ := receiver.GetInt("data_type", 1)
+	fCate := receiver.GetString("first_cate", "all")
+	sortStr := receiver.GetString("sort", "sales")
+	orderBy := receiver.GetString("order_by", "desc")
+	page := receiver.GetPage("page")
+	pageSize := receiver.GetPageSize("page_size", 10, 100)
+	if date == "" {
+		receiver.FailReturn(global.NewError(4000))
+		return
+	}
+	pslTime := "2006-01-02"
+	dateTime, err := time.ParseInLocation(pslTime, date, time.Local)
+	if err != nil {
+		receiver.FailReturn(global.NewError(4000))
+		return
+	}
+	var rowKey = ""
+	switch dataType {
+	case 1: //日榜
+		day := dateTime.Format("20060102")
+		key := day + "_" + fCate + "_" + sortStr
+		rowKey = utils.Md5_encode(key)
+		break
+	case 2: //周榜
+		startTime := dateTime
+		lastWeekStartTime := dateTime.AddDate(0, 0, -7)
+		firstDay := strconv.Itoa(lastWeekStartTime.Day())
+		lastWeekEndTime := dateTime.AddDate(0, 0, -1)
+		endDay := strconv.Itoa(lastWeekEndTime.Day())
+		if startTime.Weekday() != 1 {
+			receiver.FailReturn(global.NewError(4000))
+			return
+		}
+		weekRange := startTime.Format("20060102") + firstDay + endDay
+		key := weekRange + "_" + fCate + "_" + sortStr
+		rowKey = utils.Md5_encode(key)
+		break
+	case 3: //月榜
+		month := dateTime.Format("200601")
+		key := month + "_" + fCate + "_" + sortStr
+		rowKey = utils.Md5_encode(key)
+		break
+	}
+	if !receiver.HasAuth {
+		if page != 1 {
+			receiver.FailReturn(global.NewError(4004))
+			return
+		}
+		pageSize = receiver.MaxTotal
+	}
+	start := (page - 1) * pageSize
+	end := page * pageSize
+	total := 0
+	finished := false
+	orginList := make([]entity.ShortVideoProduct, 0)
+	if orderBy == "asc" {
+		for i := 0; i < 5; i++ {
+			tempData, _ := hbase.GetLiveProductRank(rowKey, i)
+			lenNum := len(tempData)
+			tmpTotal := total
+			total += lenNum
+			if finished {
+				continue
+			}
+			if total > start {
+				if end <= total {
+					orginList = append(orginList, tempData[start-tmpTotal:end-tmpTotal]...)
+					finished = true
+				} else {
+					orginList = append(orginList, tempData[start-tmpTotal:]...)
+					start = total
+				}
+			}
+		}
+	} else {
+		for i := 4; i >= 0; i-- {
+			tempData, _ := hbase.GetLiveProductRank(rowKey, i)
+			lenNum := len(tempData)
+			for j := 0; j < lenNum/2; j++ { //倒序
+				temp := tempData[lenNum-1-j]
+				tempData[lenNum-1-j] = tempData[j]
+				tempData[j] = temp
+			}
+			tmpTotal := total
+			total += lenNum
+			if finished {
+				continue
+			}
+			if total > start {
+				if end <= total {
+					orginList = append(orginList, tempData[start-tmpTotal:end-tmpTotal]...)
+					finished = true
+				} else {
+					orginList = append(orginList, tempData[start-tmpTotal:]...)
+					start = total
+				}
+			}
+		}
+	}
+	if !receiver.HasAuth && total > receiver.MaxTotal {
+		total = receiver.MaxTotal
+	}
+	list := make([]entity.DyLiveProductSaleTopRank, 0)
+	for i := 0; i < len(orginList); i++ {
+		tempData := entity.DyLiveProductSaleTopRank{}
+		tempData.ProductId = orginList[i].ProductId
+		tempData.Images = orginList[i].Image
+		tempData.Title = orginList[i].Title
+		tempData.LiveCount = orginList[i].AwemeNum
+		tempData.PlatformLabel = orginList[i].PlatformLabel
+		tempData.Price = orginList[i].Price
+		tempData.CosFee = orginList[i].CosFee
+		tempData.CosRatio = orginList[i].CosRatio
+		tempData.Gmv = orginList[i].Saleroom
+		list = append(list, tempData)
+	}
+
 	ret := map[string]interface{}{
 		"list":      list,
 		"has_login": receiver.HasLogin,

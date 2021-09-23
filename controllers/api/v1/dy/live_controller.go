@@ -24,7 +24,7 @@ type LiveController struct {
 func (receiver *LiveController) Prepare() {
 	receiver.InitApiController()
 	receiver.CheckToken()
-	receiver.CheckDyUserGroupRight(business.DyJewelBaseMinShowNum, business.DyJewelBaseShowNum)
+	receiver.CheckDyUserGroupRight(business.DyJewelBaseMinShowNum, business.DyJewelBaseMinShowNum, business.DyJewelBaseShowNum)
 }
 
 //直播库

@@ -219,6 +219,9 @@ func (this *ApiBaseController) InitUserToken() {
 func (this *ApiBaseController) CacheUserVipLevel() {
 	userBusiness := business.NewUserBusiness()
 	this.DyLevel = userBusiness.GetCacheUserLevel(this.UserId, 1, true)
+	if this.DyLevel > 0 {
+		this.HasAuth = true
+	}
 	this.XhsLevel = userBusiness.GetCacheUserLevel(this.UserId, 2, true)
 	this.TbLevel = userBusiness.GetCacheUserLevel(this.UserId, 3, true)
 }
@@ -426,11 +429,13 @@ func (this *ApiBaseController) FormVerify(input interface{}) {
 }
 
 //检测抖音用户权限
-func (this *ApiBaseController) CheckDyUserGroupRight(minAuthShow, maxAuthShow int) {
-	this.MaxTotal = minAuthShow
+func (this *ApiBaseController) CheckDyUserGroupRight(unLoginMax, loginMax, maxAuthShow int) {
 	if this.DyLevel > 0 {
 		this.MaxTotal = maxAuthShow
-		this.HasAuth = true
+	} else if this.UserId != 0 {
+		this.MaxTotal = loginMax
+	} else {
+		this.MaxTotal = unLoginMax
 	}
 	return
 }

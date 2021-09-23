@@ -3,6 +3,7 @@ package business
 import (
 	"dongchamao/business/es"
 	"dongchamao/global"
+	"dongchamao/global/utils"
 	"dongchamao/hbase"
 	"dongchamao/models/dcm"
 	es2 "dongchamao/models/es"
@@ -51,6 +52,9 @@ func (receiver *CollectBusiness) GetDyCollect(tagId, collectType int, keywords, 
 	switch collectType {
 	case 1:
 		data := make([]repost.CollectAuthorRet, len(collects))
+		startTime := time.Now().AddDate(0, 0, -31)
+		yesterday := time.Now().AddDate(0, 0, -1)
+		var authorIds []string
 		for k, v := range collects {
 			data[k].DcUserDyCollect = v
 			data[k].DcUserDyCollect.CollectId = IdEncrypt(v.CollectId)
@@ -60,6 +64,20 @@ func (receiver *CollectBusiness) GetDyCollect(tagId, collectType int, keywords, 
 			data[k].FollowerCount = basicData.FollowerCount
 			data[k].FollowerIncreCount = basicData.FollowerCount - YesBasicData.FollowerCount
 			data[k].Avatar = dyimg.Avatar(dyAuthor.Data.Avatar)
+			authorIds = append(authorIds, v.CollectId)
+		}
+		liveSumData := es.NewEsLiveBusiness().SumDataByAuthors(authorIds, startTime, yesterday)
+		for k, v := range collects {
+			authorBase, comErr := NewAuthorBusiness().HbaseGetAuthor(v.CollectId)
+			if comErr != nil {
+				return nil, 0, comErr
+			}
+			//近30日场均销售额
+			data[k].Predict7Gmv = utils.FriendlyFloat64(liveSumData[v.CollectId].TotalGmv.Avg)
+			//近30日视频平均点赞
+			if authorBase.AwemeCount != 0 {
+				data[k].Predict7Digg = float64(authorBase.DiggCount) / float64(authorBase.AwemeCount)
+			}
 		}
 		return data, total, nil
 	case 2:
@@ -195,6 +213,7 @@ func (receiver *CollectBusiness) AddDyCollect(collectId string, collectType, tag
 			return comErr
 		}
 		collect.Nickname = info.Title
+		collect.DyId = info.DyPromotionID
 		collect.Label = info.DcmLevelFirst
 	case 3:
 		//视频

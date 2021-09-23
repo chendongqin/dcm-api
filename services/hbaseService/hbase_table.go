@@ -19,9 +19,9 @@ const (
 	HbaseDyAwemeDiggCommentForwardCount = "dy_aweme_digg_comment_forward_count" //达人抖音视频
 	HbaseDyProductAwemeSalesTrend       = "dy_product_aweme_sales_trend"        //商品视频分销趋势
 
-	HbaseDyAuthor                 = "dy_author"       //抖音用户信息
-	HbaseDyAuthorBasic            = "dy_author_basic" //抖音用户基本数据信息
-	HbaseDyAuthorFans             = "dy_author_fans"  //抖音粉丝信息
+	HbaseDyAuthor                 = "dy_author"           //抖音用户信息
+	HbaseDyAuthorBasic            = "dy_author_basic_new" //抖音用户基本数据信息
+	HbaseDyAuthorFans             = "dy_author_fans"      //抖音粉丝信息
 	HbaseDyAuthorLiveFansClubUser = "dy_live_fansclub_user"
 	HbaseDyLiveFansClub           = "dy_live_fansclub"           //抖音粉丝团数据信息
 	HbaseDyLiveChatMessage        = "dy_live_chat_message"       //直播间弹幕
@@ -57,5 +57,6 @@ const (
 	HbaseDyShopDetail          = "dy_shop_detail"           //小店详情
 	HbaseDyShopProductAnalysis = "dy_shop_product_analysis" //小店商品分析
 
-	HbaseShortVideoProductRank = "shortvideo_commodity_topN" //商品销量榜
+	HbaseShortVideoProductRank = "shortvideo_commodity_topN" //视频商品榜
+	HbaseLiveProductRank       = "live_commodity_TopN"       //直播商品榜
 )

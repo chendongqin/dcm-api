@@ -26,7 +26,7 @@ type AuthorController struct {
 func (receiver *AuthorController) Prepare() {
 	receiver.InitApiController()
 	receiver.CheckToken()
-	receiver.CheckDyUserGroupRight(business.DyJewelBaseMinShowNum, business.DyJewelBaseShowNum)
+	receiver.CheckDyUserGroupRight(business.DyJewelBaseMinShowNum, business.DyJewelBaseLoginMinShowNum, business.DyJewelBaseShowNum)
 }
 
 //达人分类
@@ -424,13 +424,15 @@ func (receiver *AuthorController) AuthorViewData() {
 		},
 		VideoCount: dy2.DyAuthorBaseVideoCount{
 			VideoCount:       int64(authorBase.AwemeCount),
-			AvgDigg:          authorBase.DiggCount,
 			DiggFollowerRate: authorBase.DiggFollowerRate,
 			Predict30Sales:   float64(videoSumData.Sales),
 			Predict30Gmv:     videoSumData.Gmv,
 			AgeDuration:      authorBase.Duration / 1000,
 		},
 		ProductCount: productCount,
+	}
+	if authorBase.AwemeCount != 0 {
+		data.VideoCount.AvgDigg = authorBase.DiggCount / int64(authorBase.AwemeCount)
 	}
 	firstLiveTimestamp := authorBase.FirstLiveTime - (authorBase.FirstLiveTime % 86400)
 	firstVideoTimestamp := authorBase.FirstAwemeTime - (authorBase.FirstAwemeTime % 86400)
@@ -837,7 +839,7 @@ func (receiver *AuthorController) AuthorProductAnalyse() {
 		firstCate = ""
 	}
 	authorBusiness := business.NewAuthorBusiness()
-	list, analysisCount, cateList, brandList, total, comErr := authorBusiness.GetAuthorProductAnalyse(authorId, keyword, firstCate, secondCate, thirdCate, brandName, sortStr, orderBy, shopType, startTime, endTime, page, pageSize)
+	list, analysisCount, cateList, brandList, total, comErr := authorBusiness.NewGetAuthorProductAnalyse(authorId, keyword, firstCate, secondCate, thirdCate, brandName, sortStr, orderBy, shopType, startTime, endTime, page, pageSize)
 	if comErr != nil {
 		receiver.FailReturn(comErr)
 		return

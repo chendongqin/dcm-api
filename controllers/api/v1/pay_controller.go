@@ -23,7 +23,6 @@ type PayController struct {
 func (receiver *PayController) Prepare() {
 	receiver.InitApiController()
 	receiver.CheckToken()
-	receiver.CheckDyUserGroupRight(business.DyJewelBaseMinShowNum, business.DyJewelBaseShowNum)
 }
 
 func (receiver *PayController) DySurplusValue() {

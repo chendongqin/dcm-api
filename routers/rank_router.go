@@ -20,9 +20,9 @@ func init() {
 			beego.NSRouter("/live/share/:start/:end", &v1dy.RankController{}, "get:DyLiveShareWeekRank"),
 			beego.NSRouter("/video/share/:date", &v1dy.RankController{}, "get:DyAwemeShareRank"),
 			beego.NSRouter("/product/sale/:date", &v1dy.RankController{}, "get:ProductSalesTopDayRank"),
-			beego.NSRouter("/product/live/sale/:date", &v1dy.RankController{}, "get:LiveProductSalesTopDayRank"),
+			beego.NSRouter("/product/live/sale/:date", &v1dy.RankController{}, "get:LiveProductRank"),
 			beego.NSRouter("/product/share/:date", &v1dy.RankController{}, "get:ProductShareTopDayRank"),
-			beego.NSRouter("/product/:date", &v1dy.RankController{}, "get:ProductTodayRank"),
+			beego.NSRouter("/product/:date", &v1dy.RankController{}, "get:VideoProductRank"),
 		),
 	)
 	// 注册路由组

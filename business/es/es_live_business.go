@@ -507,6 +507,51 @@ func (receiver *EsLiveBusiness) GetAuthorProductSearchRoomIds(authorId, productI
 	return
 }
 
+//达人直播带货商品直播列表
+func (receiver *EsLiveBusiness) GetAuthorProductSearchRoomList(authorId, productId string, startTime, stopTime time.Time, page, pageSize int, sortStr, orderBy string) (list []es.EsAuthorLiveProduct, total int, comErr global.CommonError) {
+	esTable, connection, err := GetESTableByTime(es.DyRoomProductRecordsTable, startTime, stopTime)
+	if err != nil {
+		comErr = global.NewError(4000)
+		return
+	}
+	esQuery, esMultiQuery := elasticsearch.NewElasticQueryGroup()
+	if authorId != "" {
+		esQuery.SetTerm("author_id", authorId)
+	}
+	if productId != "" {
+		esQuery.SetTerm("product_id", productId)
+	}
+	if startTime.Unix() != stopTime.Unix() {
+		esQuery.SetRange("shelf_time", map[string]interface{}{
+			"gte": startTime.Unix(),
+			"lt":  stopTime.AddDate(0, 0, 1).Unix(),
+		})
+	}
+	if sortStr == "" {
+		sortStr = "shelf_time"
+	}
+	if orderBy == "" {
+		orderBy = "desc"
+	}
+	results := esMultiQuery.
+		SetConnection(connection).
+		SetTable(esTable).
+		SetFields("room_id").
+		AddMust(esQuery.Condition).
+		SetLimit((page-1)*pageSize, pageSize).
+		SetOrderBy(elasticsearch.NewElasticOrder().Add(sortStr, orderBy).Order).
+		SetMultiQuery().
+		Query()
+
+	total = esMultiQuery.Count
+	if total == 0 {
+		list = []es.EsAuthorLiveProduct{}
+	} else {
+		utils.MapToStruct(results, &list)
+	}
+	return
+}
+
 //商品直播间搜索
 func (receiver *EsLiveBusiness) SearchProductRooms(productId, keyword, sortStr, orderBy string,
 	page, size int, startTime, endTime time.Time) (list []es.EsAuthorLiveProduct, total int, comErr global.CommonError) {
@@ -804,4 +849,110 @@ func (receiver *EsLiveBusiness) CountDataByAuthor(authorId string, startTime, en
 		SetMust(esQuery.Condition).
 		FindCount()
 	return total
+}
+
+//达人直播商品数据
+func (receiver *EsLiveBusiness) ScanLiveProductByAuthor(authorId, keyword, category, secondCategory, thirdCategory, brandName, shopId string, shopType int, startTime, endTime time.Time, page, pageSize int) (list []es.EsAuthorLiveProduct, total int, comErr global.CommonError) {
+	esTable, connection, err := GetESTableByTime(es.DyRoomProductRecordsTable, startTime, endTime)
+	if err != nil {
+		comErr = global.NewError(4000)
+		return
+	}
+	esQuery, esMultiQuery := elasticsearch.NewElasticQueryGroup()
+	esQuery.SetTerm("author_id", authorId)
+	if keyword != "" {
+		esQuery.SetMatchPhrase("title", keyword)
+	}
+	if category != "" {
+		esQuery.SetMatchPhrase("dcm_level_first.keyword", category)
+	}
+	if secondCategory != "" {
+		esQuery.SetMatchPhrase("first_cname.keyword", secondCategory)
+	}
+	if thirdCategory != "" {
+		esQuery.SetMatchPhrase("second_cname.keyword", thirdCategory)
+	}
+	if brandName != "" {
+		esQuery.SetTerm("brand_name.keyword", brandName)
+	}
+	if shopType == 1 {
+		esQuery.SetTerm("shop_id", shopId)
+	} else if shopType == 2 {
+		if shopId != "" {
+			esQuery.AddCondition(map[string]interface{}{
+				"bool": map[string]interface{}{
+					"must_not": map[string]interface{}{
+						"term": map[string]interface{}{
+							"shop_id": shopId,
+						},
+					},
+				},
+			})
+		}
+	}
+	results := esMultiQuery.
+		SetConnection(connection).
+		SetTable(esTable).
+		AddMust(esQuery.Condition).
+		SetLimit((page-1)*pageSize, pageSize).
+		SetMultiQuery().
+		Query()
+	utils.MapToStruct(results, &list)
+	total = esMultiQuery.Count
+	return
+}
+
+//达人直播间统计
+func (receiver *EsLiveBusiness) SumDataByAuthors(authorIds []string, startTime, endTime time.Time) (data map[string]es.DyLiveSumCount) {
+	esTable, connection, err := GetESTableByTime(es.DyLiveInfoBaseTable, startTime, endTime)
+	if err != nil {
+		return
+	}
+	esQuery, esMultiQuery := elasticsearch.NewElasticQueryGroup()
+	esQuery.SetRange("create_time", map[string]interface{}{
+		"gte": startTime.Unix(),
+		"lt":  endTime.AddDate(0, 0, 1).Unix(),
+	})
+	esQuery.SetTerms("author_id", authorIds)
+	countResult := esMultiQuery.
+		SetConnection(connection).
+		SetCache(300).
+		SetTable(esTable).
+		SetMust(esQuery.Condition).
+		RawQuery(map[string]interface{}{
+			"query": map[string]interface{}{
+				"bool": map[string]interface{}{
+					"must": esQuery.Condition,
+				},
+			},
+			"size": 0,
+			"aggs": map[string]interface{}{
+				"authors": map[string]interface{}{
+					"terms": map[string]interface{}{
+						"field": "author_id.keyword",
+						"size":  1000,
+					},
+					"aggs": map[string]interface{}{
+						"total_gmv": map[string]interface{}{
+							"stats": map[string]interface{}{
+								"field": "predict_gmv",
+							},
+						},
+						"total_sales": map[string]interface{}{
+							"stats": map[string]interface{}{
+								"field": "predict_sales",
+							},
+						},
+					},
+				},
+			},
+		})
+	res := elasticsearch.GetBuckets(countResult, "authors")
+	var dataMap []es.DyLiveSumCount
+	data = make(map[string]es.DyLiveSumCount)
+	utils.MapToStruct(res, &dataMap)
+	for _, v := range dataMap {
+		data[v.Key] = v
+	}
+	return
 }
