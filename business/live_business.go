@@ -129,6 +129,9 @@ func (l *LiveBusiness) DealOnlineTrends(liveInfo entity.DyLiveInfo) (entity.DyLi
 		}
 		startFormat := time.Unix(v.CrawlTime, 0).Format("2006-01-02 15:04:05")
 		dates = append(dates, startFormat)
+		if inc < 0 {
+			inc = 0
+		}
 		incTrends = append(incTrends, entity.DyLiveIncOnlineTrends{
 			UserCount: v.UserCount,
 			WatchInc:  inc,
