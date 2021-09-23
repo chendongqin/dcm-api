@@ -40,7 +40,9 @@ func (receiver *LoginController) Login() {
 		username := InputData.GetString("username", "")
 		code := InputData.GetString("code", "")
 		abstractId := business.IdDecrypt(InputData.GetString("unionid", ""))
-		user, authToken, expTime, isNew, comErr = userBusiness.SmsLogin(username, code, abstractId, appId)
+		password := InputData.GetString("pwd", "")
+		password = utils.Base64Decode(password)
+		user, authToken, expTime, isNew, comErr = userBusiness.SmsLogin(username, code, password, abstractId, appId)
 		if isNew == 0 && user.SetPassword == 0 {
 			setPassword = 1
 		}
