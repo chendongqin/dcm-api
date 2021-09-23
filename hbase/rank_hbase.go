@@ -169,11 +169,27 @@ func GetAwemeShareRank(rowKey string) (data entity.DyAwemeShareTops, comErr glob
 	return
 }
 
-//商品排行榜
-func GetProductRank(rowKey string, hPage int) (data []entity.ShortVideoProduct, comErr global.CommonError) {
+//视频商品排行榜
+func GetVideoProductRank(rowKey string, hPage int) (data []entity.ShortVideoProduct, comErr global.CommonError) {
 	rowKey = rowKey + strconv.Itoa(hPage)
 	query := hbasehelper.NewQuery()
 	result, err := query.SetTable(hbaseService.HbaseShortVideoProductRank).GetByRowKey([]byte(rowKey))
+	if err != nil {
+		comErr = global.NewMsgError(err.Error())
+		return
+	}
+	dataMap := hbaseService.HbaseFormat(result, entity.ShortVideoCommodityTopNMap)
+	hData := entity.ShortVideoCommodityTopN{}
+	utils.MapToStruct(dataMap, &hData)
+	data = hData.Ranks
+	return
+}
+
+//直播商品排行榜
+func GetLiveProductRank(rowKey string, hPage int) (data []entity.ShortVideoProduct, comErr global.CommonError) {
+	rowKey = rowKey + strconv.Itoa(hPage)
+	query := hbasehelper.NewQuery()
+	result, err := query.SetTable(hbaseService.HbaseLiveProductRank).GetByRowKey([]byte(rowKey))
 	if err != nil {
 		comErr = global.NewMsgError(err.Error())
 		return
