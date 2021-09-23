@@ -270,6 +270,12 @@ func (receiver *RankController) DyLiveShareWeekRank() {
 			uniqueId = v.ShortId
 		}
 		roomNum := len(v.Rooms)
+		var TotalUser int64
+		if roomNum != 0 {
+			TotalUser = totalUser / int64(roomNum)
+		} else {
+			TotalUser = int64(0)
+		}
 		list = append(list, entity.DyLiveShareWeekData{
 			AuthorId:   business.IdEncrypt(utils.ToString(v.AuthorId)),
 			Avatar:     dyimg.Avatar(v.Avatar),
@@ -281,7 +287,7 @@ func (receiver *RankController) DyLiveShareWeekRank() {
 			UniqueId:   uniqueId,
 			Gmv:        gmv,
 			Sales:      sales,
-			TotalUser:  totalUser / int64(roomNum),
+			TotalUser:  TotalUser,
 			RoomNum:    roomNum,
 		})
 	}
