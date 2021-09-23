@@ -103,16 +103,16 @@ func (receiver *CollectBusiness) GetDyCollect(tagId, collectType int, keywords, 
 				return nil, 0, comErr
 			}
 			v.CollectId = IdEncrypt(v.CollectId)
-			yesDateTime := time.Now().AddDate(0, 0, -2)
-			yesData, _ := hbase.GetVideoCountData(v.CollectId, yesDateTime.Format("20060102"))
+			yesData, _ := hbase.GetVideoCountData(v.CollectId, time.Now().AddDate(0, 0, -1).Format("20060102"))
+			beforeYesData, _ := hbase.GetVideoCountData(v.CollectId, time.Now().AddDate(0, 0, -2).Format("20060102"))
 			data[k].DcUserDyCollect = v
 			data[k].AwemeAuthorID = IdEncrypt(awemeBase.Data.AuthorID)
 			data[k].AwemeCover = awemeBase.Data.AwemeCover
 			data[k].AwemeTitle = awemeBase.AwemeTitle
 			data[k].AwemeCreateTime = awemeBase.Data.AwemeCreateTime
 			data[k].AwemeURL = awemeBase.Data.AwemeURL
-			data[k].DiggCount = awemeBase.Data.DiggCount
-			data[k].DiggCountIncr = awemeBase.Data.DiggCount - yesData.DiggCount
+			data[k].DiggCount = beforeYesData.DiggCount
+			data[k].DiggCountIncr = beforeYesData.DiggCount - yesData.DiggCount
 			data[k].AuthorAvatar = dyimg.Fix(awemeAuthor.Data.Avatar)
 			data[k].AuthorNickname = awemeAuthor.Data.Nickname
 		}
