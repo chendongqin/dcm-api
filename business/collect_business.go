@@ -213,7 +213,7 @@ func (receiver *CollectBusiness) AddDyCollect(collectId string, collectType, tag
 			return comErr
 		}
 		collect.Nickname = info.Title
-		collect.PromotionId = info.DyPromotionID
+		collect.DyId = info.DyPromotionID
 		collect.Label = info.DcmLevelFirst
 	case 3:
 		//视频
