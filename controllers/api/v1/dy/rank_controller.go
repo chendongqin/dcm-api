@@ -622,7 +622,6 @@ func (receiver *RankController) VideoProductRank() {
 			receiver.FailReturn(global.NewError(4000))
 			return
 		}
-
 		weekRange := startTime.Format("20060102") + firstDay + endDay
 		key := weekRange + "_" + fCate + "_" + sortStr
 		rowKey = utils.Md5_encode(key)
