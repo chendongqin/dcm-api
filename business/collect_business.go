@@ -9,6 +9,7 @@ import (
 	"dongchamao/models/repost"
 	"dongchamao/services/dyimg"
 	"fmt"
+	"log"
 	"strconv"
 	"strings"
 	"time"
@@ -76,6 +77,7 @@ func (receiver *CollectBusiness) GetDyCollect(tagId, collectType int, keywords, 
 			v.Image = dyimg.Fix(v.Image)
 			productMap[v.ProductId] = v
 		}
+		var labelUpdate = make(map[string]string)
 		for k, v := range data {
 			productInfo := productMap[v.CollectId]
 			data[k].ProductId = productInfo.ProductId
@@ -90,7 +92,20 @@ func (receiver *CollectBusiness) GetDyCollect(tagId, collectType int, keywords, 
 			data[k].Undercarriage = productInfo.Undercarriage
 			data[k].IsCoupon = productInfo.IsCoupon
 			data[k].WeekRelateAuthor = productInfo.RelateAuthor
+			//获取分类更新商品
+			if data[k].Label != productInfo.DcmLevelFirst {
+				labelUpdate[productInfo.ProductId] = productInfo.DcmLevelFirst
+			}
 		}
+		go func() {
+			//更新商品分类
+			for k, v := range labelUpdate {
+				if _, err := dcm.GetDbSession().Table(dcm.DcUserDyCollect{}).Where("collect_id=? and collect_type=?", k, collectType).Update(map[string]string{"label": v}); err != nil {
+					log.Println("collect_product_label:", err.Error())
+					return
+				}
+			}
+		}()
 		return data, total, commonError
 	case 3:
 		data := make([]repost.CollectAwemeRet, len(collects))

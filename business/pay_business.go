@@ -196,8 +196,8 @@ func (receiver *PayBusiness) GetVipPrice() (priceConfig dy.VipPriceConfig) {
 		priceConfig.HalfYear.ActiveComment = fmt.Sprintf("%.1f折", rate)
 	}
 	if priceConfig.Year.OriginalPrice > priceConfig.Year.Price {
-		rate := utils.FriendlyFloat64(priceConfig.Year.Price/priceConfig.Year.OriginalPrice) * 10
-		priceConfig.Year.ActiveComment = fmt.Sprintf("%.1f折", rate)
+		rate := math.Floor(priceConfig.Year.Price / priceConfig.Year.OriginalPrice * 100)
+		priceConfig.Year.ActiveComment = fmt.Sprintf("%.1f折", rate/10)
 	}
 	//primePrice = dy.VipPriceConfig{
 	//	Year: dy.VipPriceActive{Price: primePriceMap[yearDay]}, HalfYear: dy.VipPriceActive{Price: primePriceMap[halfYearDay]}, Month: dy.VipPriceActive{Price: primePriceMap[monthDay]},
