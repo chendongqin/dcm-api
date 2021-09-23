@@ -564,3 +564,65 @@ func (receiver *AccountController) DyCollectRemark() {
 	receiver.SuccReturn(nil)
 	return
 }
+
+//绑定微信
+func (receiver *AccountController) BindWeChat() {
+	inputData := receiver.InputFormat()
+	unionid := business.IdDecrypt(inputData.GetString("unionid", ""))
+	if unionid == "" {
+		receiver.FailReturn(global.NewError(4000))
+		return
+	}
+	dbSession := dcm.GetDbSession()
+	wechatModel := dcm.DcWechat{}
+	if exist, _ := dbSession.Where("unionid = ?", unionid).Get(&wechatModel); !exist {
+		receiver.FailReturn(global.NewError(4304))
+		return
+	}
+	//查询手机是否该用户 ...
+	userModel := dcm.DcUser{}
+	if _, err := dbSession.Where("username = ?", receiver.UserInfo.Username).Get(&userModel); err != nil {
+		receiver.FailReturn(global.NewError(5000))
+		return
+	}
+	//开始更新用户信息
+	if userModel.Unionid != "" {
+		receiver.FailReturn(global.NewError(4305))
+		return
+	}
+	userBusiness := business.NewUserBusiness()
+	updateData := map[string]interface{}{
+		"openid_app":  wechatModel.OpenidApp,
+		"openid":      wechatModel.Openid,
+		"unionid":     wechatModel.Unionid,
+		"nickname":    wechatModel.NickName,
+		"avatar":      wechatModel.Avatar,
+		"update_time": utils.GetNowTimeStamp(),
+	}
+	affect, _ := userBusiness.UpdateUserAndClearCache(nil, userModel.Id, updateData)
+	if affect == 0 {
+		receiver.FailReturn(global.NewError(4213))
+		return
+	}
+	tokenString, expire, err := userBusiness.CreateToken(receiver.AppId, userModel.Id, 604800)
+	if err != nil {
+		receiver.FailReturn(global.NewError(5000))
+		return
+	}
+	err = userBusiness.AddOrUpdateUniqueToken(userModel.Id, receiver.AppId, tokenString)
+	if err != nil {
+		receiver.FailReturn(global.NewError(5000))
+		return
+	}
+	receiver.RegisterLogin(tokenString, expire)
+	//绑定手机成功通知
+	business.NewWechatBusiness().LoginWechatMsg(&userModel)
+	receiver.SuccReturn(map[string]interface{}{
+		"token_info": dy.RepostAccountToken{
+			UserId:      userModel.Id,
+			TokenString: tokenString,
+			ExpTime:     expire,
+		},
+	})
+	return
+}
