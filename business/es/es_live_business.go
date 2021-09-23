@@ -859,6 +859,10 @@ func (receiver *EsLiveBusiness) ScanLiveProductByAuthor(authorId, keyword, categ
 		return
 	}
 	esQuery, esMultiQuery := elasticsearch.NewElasticQueryGroup()
+	esQuery.SetRange("shelf_time", map[string]interface{}{
+		"gte": startTime.Unix(),
+		"lt":  endTime.AddDate(0, 0, 1).Unix(),
+	})
 	esQuery.SetTerm("author_id", authorId)
 	if keyword != "" {
 		esQuery.SetMatchPhrase("title", keyword)

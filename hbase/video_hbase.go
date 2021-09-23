@@ -1,6 +1,7 @@
 package hbase
 
 import (
+	"context"
 	"dongchamao/global"
 	"dongchamao/global/utils"
 	"dongchamao/models/entity"
@@ -14,6 +15,33 @@ import (
 	"strings"
 	"time"
 )
+
+func GetVideoByIds(awemeIds []string) (map[string]entity.DyAweme, error) {
+	rowKeys := make([]*hbase.TGet, 0)
+	for _, id := range awemeIds {
+		rowKeys = append(rowKeys, &hbase.TGet{Row: []byte(id)})
+	}
+	client := global.HbasePools.Get("default")
+	defer client.Close()
+	results, err := client.GetMultiple(context.Background(), []byte(hbaseService.HbaseDyAweme), rowKeys)
+	if err != nil {
+		return nil, err
+	}
+	infoMap := map[string]entity.DyAweme{}
+	for _, v := range results {
+		data := entity.DyAweme{}
+		detailMap := hbaseService.HbaseFormat(v, entity.DyAwemeMap)
+		utils.MapToStruct(detailMap, &data)
+		duration := math.Ceil(float64(data.Data.Duration) / 1000)
+		data.Data.Duration = utils.ToInt(duration)
+		data.AwemeID = string(v.Row)
+		data.Data.AwemeTitle = data.AwemeTitle
+		data.Data.CrawlTime = data.CrawlTime
+		data.Data.AwemeCover = dyimg.Fix(data.Data.AwemeCover)
+		infoMap[data.AwemeID] = data
+	}
+	return infoMap, nil
+}
 
 //视频详情
 func GetVideo(awemeId string) (data entity.DyAweme, comErr global.CommonError) {
@@ -31,6 +59,7 @@ func GetVideo(awemeId string) (data entity.DyAweme, comErr global.CommonError) {
 	utils.MapToStruct(detailMap, &data)
 	duration := math.Ceil(float64(data.Data.Duration) / 1000)
 	data.Data.Duration = utils.ToInt(duration)
+	data.AwemeID = string(result.Row)
 	data.Data.AwemeTitle = data.AwemeTitle
 	data.Data.CrawlTime = data.CrawlTime
 	data.Data.AwemeCover = dyimg.Fix(data.Data.AwemeCover)
