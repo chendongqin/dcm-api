@@ -20,7 +20,6 @@ type LiveCountController struct {
 func (receiver *LiveCountController) Prepare() {
 	receiver.InitApiController()
 	receiver.CheckToken()
-	receiver.CheckDyUserGroupRight(business.DyJewelBaseMinShowNum, business.DyJewelBaseShowNum)
 }
 
 //直播总览

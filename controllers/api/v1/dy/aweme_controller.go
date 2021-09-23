@@ -24,7 +24,6 @@ type AwemeController struct {
 func (receiver *AwemeController) Prepare() {
 	receiver.InitApiController()
 	receiver.CheckToken()
-	receiver.CheckDyUserGroupRight(business.DyJewelBaseMinShowNum, business.DyJewelBaseShowNum)
 }
 
 func (receiver *AwemeController) AwemeBaseData() {

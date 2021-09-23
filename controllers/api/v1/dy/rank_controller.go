@@ -22,7 +22,7 @@ type RankController struct {
 
 func (receiver *RankController) Prepare() {
 	receiver.InitApiController()
-	receiver.CheckDyUserGroupRight(business.DyRankMinShowNum, business.DyJewelRankShowNum)
+	receiver.CheckDyUserGroupRight(business.DyRankUnLogin, business.DyRankLogin, business.DyJewelRankShowNum)
 	//receiver.lockAction()
 }
 
