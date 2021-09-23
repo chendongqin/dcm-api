@@ -76,6 +76,7 @@ func Fix(image string) string {
 	//image = strings.Replace(image, "-ipv6", "", 1)
 	image = strings.Replace(image, ".heic", ".jpeg", 1)
 	image = WebpToJpg(image)
+	image = strings.Replace(image, "-sign", "", 1)
 	return Convert("", image)
 }
 
