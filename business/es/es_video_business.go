@@ -33,7 +33,7 @@ func (e *EsVideoBusiness) SearchAwemeByProduct(productId, keyword, sortStr, orde
 		comErr = global.NewError(4000)
 		return
 	}
-	esTable, err := GetESTableByMonthTime(es.DyProductVideoTable, startTime, endTime)
+	esTable, connection, err := GetESTableByMonthTime(es.DyProductVideoTable, startTime, endTime)
 	if err != nil {
 		comErr = global.NewError(4000)
 		return
@@ -63,6 +63,7 @@ func (e *EsVideoBusiness) SearchAwemeByProduct(productId, keyword, sortStr, orde
 		})
 	}
 	result := esMultiQuery.
+		SetConnection(connection).
 		SetTable(esTable).
 		SetCache(180).
 		AddMust(esQuery.Condition).
@@ -91,7 +92,7 @@ func (e *EsVideoBusiness) SearchByAuthor(authorId, keyword, sortStr, orderBy str
 		comErr = global.NewError(4000)
 		return
 	}
-	esTable, err := GetESTableByMonthTime(es.DyVideoTable, startTime, endTime)
+	esTable, connection, err := GetESTableByMonthTime(es.DyVideoTable, startTime, endTime)
 	if err != nil {
 		comErr = global.NewError(4000)
 		return
@@ -111,6 +112,7 @@ func (e *EsVideoBusiness) SearchByAuthor(authorId, keyword, sortStr, orderBy str
 		esQuery.SetExist("field", "product_ids")
 	}
 	result := esMultiQuery.
+		SetConnection(connection).
 		SetTable(esTable).
 		SetCache(180).
 		AddMust(esQuery.Condition).
@@ -131,12 +133,13 @@ func (e *EsVideoBusiness) SumDataByAuthor(authorId string, startTime, endTime ti
 		"lt":  endTime.AddDate(0, 0, 1).Unix(),
 	})
 	esQuery.SetTerm("author_id", authorId)
-	esTable, err := GetESTableByMonthTime(es.DyVideoTable, startTime, endTime)
+	esTable, connection, err := GetESTableByMonthTime(es.DyVideoTable, startTime, endTime)
 	if err != nil {
 		return
 	}
 	countResult := esMultiQuery.
 		SetCache(300).
+		SetConnection(connection).
 		SetTable(esTable).
 		SetMust(esQuery.Condition).
 		RawQuery(map[string]interface{}{
@@ -198,11 +201,12 @@ func (e *EsVideoBusiness) CountAwemeByAuthor(authorId string, hasProduct int, st
 	if hasProduct == 1 {
 		esQuery.SetExist("field", "product_ids")
 	}
-	esTable, err := GetESTableByMonthTime(es.DyVideoTable, startTime, endTime)
+	esTable, connection, err := GetESTableByMonthTime(es.DyVideoTable, startTime, endTime)
 	if err != nil {
 		return 0, err
 	}
 	return esMultiQuery.
+		SetConnection(connection).
 		SetCache(300).
 		SetMust(esQuery.Condition).
 		SetTable(esTable).FindCount()
@@ -224,7 +228,7 @@ func (e *EsVideoBusiness) SearchByProductId(productId, awemeId, keyword, sortStr
 		comErr = global.NewError(4000)
 		return
 	}
-	esTable, err := GetESTableByMonthTime(es.DyVideoTable, startTime, endTime)
+	esTable, connection, err := GetESTableByMonthTime(es.DyVideoTable, startTime, endTime)
 	if err != nil {
 		comErr = global.NewError(4000)
 		return
@@ -252,6 +256,7 @@ func (e *EsVideoBusiness) SearchByProductId(productId, awemeId, keyword, sortStr
 		esQuery.SetMatchPhrase("aweme_title", keyword)
 	}
 	result := esMultiQuery.
+		SetConnection(connection).
 		SetTable(esTable).
 		SetCache(180).
 		AddMust(esQuery.Condition).
@@ -260,6 +265,32 @@ func (e *EsVideoBusiness) SearchByProductId(productId, awemeId, keyword, sortStr
 		SetMultiQuery().
 		Query()
 	utils.MapToStruct(result, &list)
+	total = esMultiQuery.Count
+	return
+}
+
+//获取达人带货商品数据
+func (e *EsVideoBusiness) SearchAwemeProductByAuthor(authorId, keyword, category, brandName, shopId string, startTime, endTime time.Time) (list []es.EsDyAuthorAwemeProduct, total int, comErr global.CommonError) {
+	esTable, connection, err := GetESTableByTime(es.DyAuthorAwemeProductTable, startTime, endTime)
+	if err != nil {
+		comErr = global.NewError(4000)
+		return
+	}
+	esQuery, esMultiQuery := elasticsearch.NewElasticQueryGroup()
+
+	esQuery.SetTerm("author_id", authorId)
+	if keyword != "" {
+		esQuery.SetMatchPhrase("title", keyword)
+	}
+	results := esMultiQuery.
+		SetConnection(connection).
+		SetTable(esTable).
+		SetCache(600).
+		AddMust(esQuery.Condition).
+		SetLimit(0, 10000).
+		SetMultiQuery().
+		Query()
+	utils.MapToStruct(results, &list)
 	total = esMultiQuery.Count
 	return
 }

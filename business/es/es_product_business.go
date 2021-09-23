@@ -6,7 +6,6 @@ import (
 	"dongchamao/global/utils"
 	"dongchamao/models/es"
 	"dongchamao/services/elasticsearch"
-	"fmt"
 	"time"
 )
 
@@ -39,7 +38,7 @@ func (i *EsProductBusiness) BaseSearch(productId, keyword, category, secondCateg
 		comErr = global.NewError(4000)
 		return
 	}
-	esTable := es.DyProductTable
+	esTable, connection := GetESTable(es.DyProductTable)
 	esQuery, esMultiQuery := elasticsearch.NewElasticQueryGroup()
 	if keyword != "" {
 		esQuery.SetMatchPhrase("title", keyword)
@@ -103,6 +102,7 @@ func (i *EsProductBusiness) BaseSearch(productId, keyword, category, secondCateg
 		sortOrder = elasticsearch.NewElasticOrder().Add("is_yesterday", "desc").Add(sortStr, orderBy).Order
 	}
 	results := esMultiQuery.
+		SetConnection(connection).
 		SetTable(esTable).
 		AddMust(esQuery.Condition).
 		SetLimit((page-1)*pageSize, pageSize).
@@ -115,7 +115,7 @@ func (i *EsProductBusiness) BaseSearch(productId, keyword, category, secondCateg
 }
 
 func (i *EsProductBusiness) SearchRangeDateList(productId, shopId, authorId string, startTime, endTime time.Time, page, pageSize int) (list []es.DyProductAuthorAnalysis, total int, comErr global.CommonError) {
-	esTable, err := GetESTableByTime(es.DyProductAuthorAnalysisTable, startTime, endTime)
+	esTable, connection, err := GetESTableByTime(es.DyProductAuthorAnalysisTable, startTime, endTime)
 	if err != nil {
 		comErr = global.NewError(4000)
 		return
@@ -135,6 +135,7 @@ func (i *EsProductBusiness) SearchRangeDateList(productId, shopId, authorId stri
 		esQuery.SetTerm("shopId", shopId)
 	}
 	results := esMultiQuery.
+		SetConnection(connection).
 		SetTable(esTable).
 		SetFields("productId", "authorId", "createSdf").
 		AddMust(esQuery.Condition).
@@ -148,7 +149,7 @@ func (i *EsProductBusiness) SearchRangeDateList(productId, shopId, authorId stri
 }
 
 func (i *EsProductBusiness) SearchAwemeRangeDateList(productId, shopId, authorId string, startTime, endTime time.Time, page, pageSize int) (list []es.DyProductAwemeAuthorAnalysis, total int, comErr global.CommonError) {
-	esTable, err := GetESTableByMonthTime(es.DyProductAwemeAuthorAnalysisTable, startTime, endTime)
+	esTable, connection, err := GetESTableByMonthTime(es.DyProductAwemeAuthorAnalysisTable, startTime, endTime)
 	if err != nil {
 		comErr = global.NewError(4000)
 		return
@@ -168,6 +169,7 @@ func (i *EsProductBusiness) SearchAwemeRangeDateList(productId, shopId, authorId
 		esQuery.SetTerm("authorId", authorId)
 	}
 	results := esMultiQuery.
+		SetConnection(connection).
 		SetTable(esTable).
 		SetFields("productId", "authorId", "createSdf").
 		AddMust(esQuery.Condition).
@@ -181,7 +183,7 @@ func (i *EsProductBusiness) SearchAwemeRangeDateList(productId, shopId, authorId
 }
 
 func (i *EsProductBusiness) SearchRangeDateRowKey(productId, keyword string, startTime, endTime time.Time) (startRow es.DyProductAuthorAnalysis, stopRow es.DyProductAuthorAnalysis, total int, comErr global.CommonError) {
-	esTable, err := GetESTableByTime(es.DyProductAuthorAnalysisTable, startTime, endTime)
+	esTable, connection, err := GetESTableByTime(es.DyProductAuthorAnalysisTable, startTime, endTime)
 	if err != nil {
 		comErr = global.NewError(4000)
 		return
@@ -208,6 +210,7 @@ func (i *EsProductBusiness) SearchRangeDateRowKey(productId, keyword string, sta
 		}
 	}
 	result := esMultiQuery.
+		SetConnection(connection).
 		SetTable(esTable).
 		SetFields("productId", "authorId", "createSdf").
 		AddMust(esQuery.Condition).
@@ -216,6 +219,7 @@ func (i *EsProductBusiness) SearchRangeDateRowKey(productId, keyword string, sta
 		QueryOne()
 	utils.MapToStruct(result, &startRow)
 	result2 := esMultiQuery2.
+		SetConnection(connection).
 		SetTable(esTable).
 		SetFields("productId", "authorId", "createSdf").
 		AddMust(esQuery.Condition).
@@ -228,7 +232,7 @@ func (i *EsProductBusiness) SearchRangeDateRowKey(productId, keyword string, sta
 }
 
 func (i *EsProductBusiness) SearchAwemeRangeDateRowKey(productId, keyword string, startTime, endTime time.Time) (startRow es.DyProductAuthorAnalysis, stopRow es.DyProductAuthorAnalysis, total int, comErr global.CommonError) {
-	esTable, err := GetESTableByMonthTime(es.DyProductAwemeAuthorAnalysisTable, startTime, endTime)
+	esTable, connection, err := GetESTableByMonthTime(es.DyProductAwemeAuthorAnalysisTable, startTime, endTime)
 	if err != nil {
 		comErr = global.NewError(4000)
 		return
@@ -255,6 +259,7 @@ func (i *EsProductBusiness) SearchAwemeRangeDateRowKey(productId, keyword string
 		}
 	}
 	result := esMultiQuery.
+		SetConnection(connection).
 		SetTable(esTable).
 		SetFields("productId", "authorId", "createSdf").
 		AddMust(esQuery.Condition).
@@ -263,6 +268,7 @@ func (i *EsProductBusiness) SearchAwemeRangeDateRowKey(productId, keyword string
 		QueryOne()
 	utils.MapToStruct(result, &startRow)
 	result2 := esMultiQuery2.
+		SetConnection(connection).
 		SetTable(esTable).
 		SetFields("productId", "authorId", "createSdf").
 		AddMust(esQuery.Condition).
@@ -275,7 +281,7 @@ func (i *EsProductBusiness) SearchAwemeRangeDateRowKey(productId, keyword string
 }
 
 func (i *EsProductBusiness) SimpleSearch(productId, title, platformLabel, dcmLevelFirst, firstCname, secondCname, thirdCname string, minPrice, maxPrice float64, page, pageSize int) (list []es.DyProduct, total int, comErr global.CommonError) {
-	esTable := es.DyProductTable
+	esTable, connection := GetESTable(es.DyProductTable)
 	esQuery, esMultiQuery := elasticsearch.NewElasticQueryGroup()
 	if productId != "" {
 		esQuery.SetTerm("product_id", productId)
@@ -313,6 +319,7 @@ func (i *EsProductBusiness) SimpleSearch(productId, title, platformLabel, dcmLev
 		}
 	}
 	results := esMultiQuery.
+		SetConnection(connection).
 		SetTable(esTable).
 		AddMust(esQuery.Condition).
 		SetLimit((page-1)*pageSize, pageSize).
@@ -326,9 +333,10 @@ func (i *EsProductBusiness) SimpleSearch(productId, title, platformLabel, dcmLev
 
 func (i *EsProductBusiness) KeywordSearch(keyword string) (list []es.DyProduct) {
 	esQuery, esMultiQuery := elasticsearch.NewElasticQueryGroup()
-	esTable := es.DyProductTable
+	esTable, connection := GetESTable(es.DyProductTable)
 	esQuery.SetMatchPhrase("title", keyword)
 	results := esMultiQuery.
+		SetConnection(connection).
 		SetTable(esTable).
 		SetCache(60).
 		AddShould(esQuery.Condition).
@@ -343,7 +351,7 @@ func (i *EsProductBusiness) KeywordSearch(keyword string) (list []es.DyProduct) 
 func (i *EsProductBusiness) ProductSalesTopDayRank(day, fCate, sCate, tCate, sortStr, orderBy string,
 	page, pageSize int) (list []es.DyProductSalesTopRank, total int, commonError global.CommonError) {
 	esQuery, esMultiQuery := elasticsearch.NewElasticQueryGroup()
-	esTable := fmt.Sprintf(es.DyProductSalesTopTable, day)
+	esTable, connection := GetESTableByDate(es.DyProductSalesTopTable, day)
 	if sortStr == "" {
 		sortStr = "order_count"
 	}
@@ -370,6 +378,7 @@ func (i *EsProductBusiness) ProductSalesTopDayRank(day, fCate, sCate, tCate, sor
 		esOrder.Add("order_count", "desc")
 	}
 	results := esMultiQuery.
+		SetConnection(connection).
 		SetTable(esTable).
 		SetCache(600).
 		AddShould(esQuery.Condition).
@@ -385,7 +394,7 @@ func (i *EsProductBusiness) ProductSalesTopDayRank(day, fCate, sCate, tCate, sor
 func (i *EsProductBusiness) ProductShareTopDayRank(day, fCate, sCate, tCate, sortStr, orderBy string,
 	page, pageSize int) (list []es.DyProductShareTopRank, total int, commonError global.CommonError) {
 	esQuery, esMultiQuery := elasticsearch.NewElasticQueryGroup()
-	esTable := fmt.Sprintf(es.DyProductShareTopTable, day)
+	esTable, connection := GetESTableByDate(es.DyProductShareTopTable, day)
 	if sortStr == "" {
 		sortStr = "share_count"
 	}
@@ -412,6 +421,7 @@ func (i *EsProductBusiness) ProductShareTopDayRank(day, fCate, sCate, tCate, sor
 		esOrder.Add("share_count", "desc")
 	}
 	results := esMultiQuery.
+		SetConnection(connection).
 		SetTable(esTable).
 		SetCache(600).
 		AddShould(esQuery.Condition).
@@ -427,7 +437,7 @@ func (i *EsProductBusiness) ProductShareTopDayRank(day, fCate, sCate, tCate, sor
 func (i *EsProductBusiness) LiveProductSalesTopDayRank(day, fCate, sCate, tCate, sortStr, orderBy string,
 	page, pageSize int) (list []es.DyLiveProductSaleTopRank, total int, commonError global.CommonError) {
 	esQuery, esMultiQuery := elasticsearch.NewElasticQueryGroup()
-	esTable := fmt.Sprintf(es.DyLiveProductSalesTopTable, day)
+	esTable, connection := GetESTableByDate(es.DyLiveProductSalesTopTable, day)
 	if sortStr == "" {
 		sortStr = "gmv"
 	}
@@ -454,6 +464,7 @@ func (i *EsProductBusiness) LiveProductSalesTopDayRank(day, fCate, sCate, tCate,
 		esOrder.Add("gmv", "desc")
 	}
 	results := esMultiQuery.
+		SetConnection(connection).
 		SetTable(esTable).
 		SetCache(600).
 		AddShould(esQuery.Condition).
@@ -471,10 +482,11 @@ func (i *EsProductBusiness) SearchProducts(productIds []string) (list []es.DyPro
 	if len(productIds) == 0 {
 		return
 	}
-	esTable := es.DyProductTable
+	esTable, connection := GetESTable(es.DyProductTable)
 	esQuery, esMultiQuery := elasticsearch.NewElasticQueryGroup()
 	esQuery.SetTerms("product_id", productIds)
 	results := esMultiQuery.
+		SetConnection(connection).
 		SetTable(esTable).
 		AddMust(esQuery.Condition).
 		SetCache(300).
@@ -489,7 +501,7 @@ func (i *EsProductBusiness) SearchProducts(productIds []string) (list []es.DyPro
 
 //获取查询rowkey的productid
 func (i *EsProductBusiness) GetSearchRowKey(keyword, category string) (starRowKey string, stopRowKey string) {
-	esTable := es.DyProductTable
+	esTable, connection := GetESTable(es.DyProductTable)
 	esQuery, esMultiQuery := elasticsearch.NewElasticQueryGroup()
 	if keyword != "" {
 		esQuery.SetMatchPhrase("title", keyword)
@@ -499,6 +511,7 @@ func (i *EsProductBusiness) GetSearchRowKey(keyword, category string) (starRowKe
 	}
 	sortOrder1 := elasticsearch.NewElasticOrder().Add("_id", "desc").Order
 	result1 := esMultiQuery.
+		SetConnection(connection).
 		SetTable(esTable).
 		SetFields("product_id").
 		AddMust(esQuery.Condition).
@@ -518,6 +531,7 @@ func (i *EsProductBusiness) GetSearchRowKey(keyword, category string) (starRowKe
 	_, esMultiQuery2 := elasticsearch.NewElasticQueryGroup()
 	sortOrder2 := elasticsearch.NewElasticOrder().Add("_id", "asc").Order
 	result2 := esMultiQuery2.
+		SetConnection(connection).
 		SetTable(esTable).
 		SetFields("product_id").
 		AddMust(esQuery.Condition).

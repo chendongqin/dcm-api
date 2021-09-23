@@ -6,7 +6,6 @@ import (
 	"dongchamao/global/utils"
 	"dongchamao/models/es"
 	"dongchamao/services/elasticsearch"
-	"fmt"
 	"time"
 )
 
@@ -42,7 +41,7 @@ func (receiver *EsAuthorBusiness) BaseSearch(
 		comErr = global.NewError(4000)
 		return
 	}
-	esTable := es.DyAuthorTable
+	esTable, connection := GetESTable(es.DyAuthorTable)
 	esQuery, esMultiQuery := elasticsearch.NewElasticQueryGroup()
 	esQuery.SetTerm("exist", 1)
 	if sortStr == "follower_count" && minFollower == 0 && maxFollower == 0 && keyword == "" && authorId == "" {
@@ -222,6 +221,7 @@ func (receiver *EsAuthorBusiness) BaseSearch(
 		esQuery.SetMatchPhrase("fans_city", fanCity)
 	}
 	results := esMultiQuery.
+		SetConnection(connection).
 		SetTable(esTable).
 		SetCache(180).
 		AddMust(esQuery.Condition).
@@ -245,7 +245,7 @@ func (receiver *EsAuthorBusiness) SimpleSearch(
 		comErr = global.NewError(4000)
 		return
 	}
-	esTable := es.DyAuthorTable
+	esTable, connection := GetESTable(es.DyAuthorTable)
 	esQuery, esMultiQuery := elasticsearch.NewElasticQueryGroup()
 	esQuery.SetTerm("exist", 1)
 	if authorId != "" {
@@ -310,6 +310,7 @@ func (receiver *EsAuthorBusiness) SimpleSearch(
 		}
 	}
 	results := esMultiQuery.
+		SetConnection(connection).
 		SetTable(esTable).
 		AddMust(esQuery.Condition).
 		SetLimit((page-1)*pageSize, pageSize).
@@ -323,7 +324,7 @@ func (receiver *EsAuthorBusiness) SimpleSearch(
 
 func (receiver *EsAuthorBusiness) KeywordSearch(keyword string) (list []es.DyAuthor) {
 	esQuery, esMultiQuery := elasticsearch.NewElasticQueryGroup()
-	esTable := es.DyAuthorTable
+	esTable, connection := GetESTable(es.DyAuthorTable)
 	esQuery.SetTerm("exist", 1)
 	if utils.HasChinese(keyword) {
 		slop := 100
@@ -339,6 +340,7 @@ func (receiver *EsAuthorBusiness) KeywordSearch(keyword string) (list []es.DyAut
 			SetMultiMatch([]string{"author_id", "nickname", "unique_id", "short_id"}, keyword)
 	}
 	results := esMultiQuery.
+		SetConnection(connection).
 		SetTable(esTable).
 		SetCache(60).
 		AddMust(esQuery.Condition).
@@ -352,7 +354,7 @@ func (receiver *EsAuthorBusiness) KeywordSearch(keyword string) (list []es.DyAut
 
 //商品达人分析
 func (receiver *EsAuthorBusiness) AuthorProductAnalysis(authorId, keyword string, startTime, endTime time.Time) (startRow es.EsDyAuthorProductAnalysis, endRow es.EsDyAuthorProductAnalysis, comErr global.CommonError) {
-	esTable, err := GetESTableByTime(es.DyAuthorProductAnalysisTable, startTime, endTime)
+	esTable, connection, err := GetESTableByTime(es.DyAuthorProductAnalysisTable, startTime, endTime)
 	if err != nil {
 		comErr = global.NewError(4000)
 		return
@@ -367,6 +369,7 @@ func (receiver *EsAuthorBusiness) AuthorProductAnalysis(authorId, keyword string
 		esQuery.SetMatchPhrase("title", keyword)
 	}
 	result := esMultiQuery.
+		SetConnection(connection).
 		SetTable(esTable).
 		AddMust(esQuery.Condition).
 		SetOrderBy(elasticsearch.NewElasticOrder().Add("author_date_product.keyword", "asc").Order).
@@ -375,6 +378,7 @@ func (receiver *EsAuthorBusiness) AuthorProductAnalysis(authorId, keyword string
 	utils.MapToStruct(result, &startRow)
 	_, esMultiQuery2 := elasticsearch.NewElasticQueryGroup()
 	result2 := esMultiQuery2.
+		SetConnection(connection).
 		SetTable(esTable).
 		AddMust(esQuery.Condition).
 		SetOrderBy(elasticsearch.NewElasticOrder().Add("author_date_product.keyword", "desc").Order).
@@ -409,6 +413,7 @@ func (receiver *EsAuthorBusiness) SaleAuthorRankCount(startTime time.Time, dateT
 		esQuery.SetTerm("verification_type", 2)
 	}
 	var esTable string
+	var connection string
 	cacheTime := 600 * time.Second
 	today := time.Now().Format("20060102")
 	var err error
@@ -418,20 +423,21 @@ func (receiver *EsAuthorBusiness) SaleAuthorRankCount(startTime time.Time, dateT
 		if date != today {
 			cacheTime = 86400
 		}
-		esTable = fmt.Sprintf(es.DyAuthorTakeGoodsTopTable, date)
+		esTable, connection = GetESTableByDate(es.DyAuthorTakeGoodsTopTable, date)
 	case 2:
 		endDate := startTime.AddDate(0, 0, 6)
 		if endDate.Format("20060102") != today {
 			cacheTime = 86400
 		}
-		esTable, err = GetESTableByDayTime(es.DyAuthorTakeGoodsTopTable, startTime, endDate)
+		esTable, connection, err = GetESTableByDayTime(es.DyAuthorTakeGoodsTopTable, startTime, endDate)
 	case 3:
-		esTable = fmt.Sprintf(es.DyAuthorTakeGoodsTopTable+"*", startTime.Format("200601"))
+		esTable, connection = GetESTableByDate(es.DyAuthorTakeGoodsTopTable, startTime.Format("200601"))
 	}
 	if err != nil {
 		return nil, 0, global.NewError(4000)
 	}
 	countResult := elasticsearch.NewElasticMultiQuery().
+		SetConnection(connection).
 		SetCache(cacheTime).
 		SetTable(esTable).RawQuery(map[string]interface{}{
 		"query": map[string]interface{}{
@@ -532,8 +538,9 @@ func (receiver *EsAuthorBusiness) DyAuthorFollowerIncRank(date, tags, province, 
 	if city != "" {
 		esQuery.SetTerm("city.keyword", city)
 	}
-	esTable := fmt.Sprintf(es.DyAuthorFollowerTable, date)
+	esTable, connection := GetESTableByDate(es.DyAuthorFollowerTable, date)
 	results := esMultiQuery.
+		SetConnection(connection).
 		SetTable(esTable).
 		AddMust(esQuery.Condition).
 		SetLimit((page-1)*pageSize, pageSize).

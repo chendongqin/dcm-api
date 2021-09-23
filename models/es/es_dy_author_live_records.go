@@ -25,6 +25,10 @@ type EsAuthorLiveProduct struct {
 	SecondCname    string  `json:"second_cname"`
 	RoomStatus     string  `json:"room_status"`
 	//ThirdCname    string  `json:"third_cname"`
+	BrandName    string  `json:"brand_name"`
+	ShopName     string  `json:"shop_name"`
+	ShopId       string  `json:"shop_id"`
+	ShopIcon     string  `json:"shop_icon"`
 	CreateTime   string  `json:"create_time"` //直播间时间
 	PredictSales float64 `json:"predict_sales"`
 	PredictGmv   float64 `json:"predict_gmv"`
