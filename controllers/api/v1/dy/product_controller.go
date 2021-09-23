@@ -845,8 +845,15 @@ func (receiver *ProductController) ProductAuthorAwemes() {
 	}
 	page := receiver.GetPage("page")
 	pageSize := receiver.GetPageSize("page_size", 5, 10)
-	sortStr := receiver.GetString("sort", "aweme_gmv")
+	sortStr := receiver.GetString("sort", "gmv")
 	orderBy := receiver.GetString("order_by", "desc")
+	if sortStr == "aweme_gmv" {
+		sortStr = "gmv"
+	}
+	if !utils.InArrayString(sortStr, []string{"gmv", "sales"}) {
+		receiver.FailReturn(global.NewError(4000))
+		return
+	}
 	list, total := business.NewProductBusiness().ProductAuthorAwemes(productId, "", authorId, startTime, endTime, sortStr, orderBy, page, pageSize)
 	for k, v := range list {
 		list[k].AwemeCover = dyimg.Fix(v.AwemeCover)
