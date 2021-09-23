@@ -55,8 +55,9 @@ func (receiver *CollectBusiness) GetDyCollect(tagId, collectType int, keywords, 
 			data[k].DcUserDyCollect.CollectId = IdEncrypt(v.CollectId)
 			dyAuthor, _ := hbase.GetAuthor(v.CollectId)
 			basicData, _ := hbase.GetAuthorBasic(v.CollectId, time.Now().AddDate(0, 0, -1).Format("20060102"))
-			data[k].FollowerCount = dyAuthor.Data.Fans.Douyin.Count + dyAuthor.Data.Fans.Toutiao.Count
-			data[k].FollowerIncreCount = dyAuthor.FollowerCount - basicData.FollowerCount
+			YesBasicData, _ := hbase.GetAuthorBasic(v.CollectId, time.Now().AddDate(0, 0, -2).Format("20060102"))
+			data[k].FollowerCount = dyAuthor.TotalFansCount
+			data[k].FollowerIncreCount = basicData.FollowerCount - YesBasicData.FollowerCount
 			data[k].Avatar = dyimg.Avatar(dyAuthor.Data.Avatar)
 		}
 		return data, total, nil
