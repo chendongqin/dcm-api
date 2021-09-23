@@ -536,7 +536,6 @@ func (receiver *EsLiveBusiness) GetAuthorProductSearchRoomList(authorId, product
 	results := esMultiQuery.
 		SetConnection(connection).
 		SetTable(esTable).
-		SetFields("room_id").
 		AddMust(esQuery.Condition).
 		SetLimit((page-1)*pageSize, pageSize).
 		SetOrderBy(elasticsearch.NewElasticOrder().Add(sortStr, orderBy).Order).
