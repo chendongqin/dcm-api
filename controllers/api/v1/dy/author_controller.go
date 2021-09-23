@@ -839,7 +839,7 @@ func (receiver *AuthorController) AuthorProductAnalyse() {
 		firstCate = ""
 	}
 	authorBusiness := business.NewAuthorBusiness()
-	list, analysisCount, cateList, brandList, total, comErr := authorBusiness.GetAuthorProductAnalyse(authorId, keyword, firstCate, secondCate, thirdCate, brandName, sortStr, orderBy, shopType, startTime, endTime, page, pageSize)
+	list, analysisCount, cateList, brandList, total, comErr := authorBusiness.NewGetAuthorProductAnalyse(authorId, keyword, firstCate, secondCate, thirdCate, brandName, sortStr, orderBy, shopType, startTime, endTime, page, pageSize)
 	if comErr != nil {
 		receiver.FailReturn(comErr)
 		return

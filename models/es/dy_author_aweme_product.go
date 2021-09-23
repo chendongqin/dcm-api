@@ -5,7 +5,7 @@ type EsDyAuthorAwemeProduct struct {
 	ProductId       string  `json:"product_id"`
 	AwemeId         string  `json:"aweme_id"`
 	Price           float64 `json:"price"`
-	Sales           int     `json:"sales"`
+	Sales           int64   `json:"sales"`
 	Gmv             float64 `json:"gmv"`
 	PlatformLabel   string  `json:"platform_label"`
 	Title           string  `json:"title"`
@@ -19,5 +19,5 @@ type EsDyAuthorAwemeProduct struct {
 	SecondCname     string  `json:"second_cname"`
 	ThirdCname      string  `json:"third_cname"`
 	DistDate        string  `json:"dist_date"`
-	AwemeCreateTime int     `json:"aweme_create_time"`
+	AwemeCreateTime int64   `json:"aweme_create_time"`
 }

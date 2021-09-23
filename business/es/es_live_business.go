@@ -806,6 +806,57 @@ func (receiver *EsLiveBusiness) CountDataByAuthor(authorId string, startTime, en
 	return total
 }
 
+//达人直播商品数据
+func (receiver *EsLiveBusiness) ScanLiveProductByAuthor(authorId, keyword, category, secondCategory, thirdCategory, brandName, shopId string, shopType int, startTime, endTime time.Time, page, pageSize int) (list []es.EsAuthorLiveProduct, total int, comErr global.CommonError) {
+	esTable, connection, err := GetESTableByTime(es.DyRoomProductRecordsTable, startTime, endTime)
+	if err != nil {
+		comErr = global.NewError(4000)
+		return
+	}
+	esQuery, esMultiQuery := elasticsearch.NewElasticQueryGroup()
+	esQuery.SetTerm("author_id", authorId)
+	if keyword != "" {
+		esQuery.SetMatchPhrase("title", keyword)
+	}
+	if category != "" {
+		esQuery.SetMatchPhrase("dcm_level_first.keyword", category)
+	}
+	if secondCategory != "" {
+		esQuery.SetMatchPhrase("first_cname.keyword", secondCategory)
+	}
+	if thirdCategory != "" {
+		esQuery.SetMatchPhrase("second_cname.keyword", thirdCategory)
+	}
+	if brandName != "" {
+		esQuery.SetTerm("brand_name.keyword", brandName)
+	}
+	if shopType == 1 {
+		esQuery.SetTerm("shop_id", shopId)
+	} else if shopType == 2 {
+		if shopId != "" {
+			esQuery.AddCondition(map[string]interface{}{
+				"bool": map[string]interface{}{
+					"must_not": map[string]interface{}{
+						"term": map[string]interface{}{
+							"shop_id": shopId,
+						},
+					},
+				},
+			})
+		}
+	}
+	results := esMultiQuery.
+		SetConnection(connection).
+		SetTable(esTable).
+		AddMust(esQuery.Condition).
+		SetLimit((page-1)*pageSize, pageSize).
+		SetMultiQuery().
+		Query()
+	utils.MapToStruct(results, &list)
+	total = esMultiQuery.Count
+	return
+}
+
 //达人直播间统计
 func (receiver *EsLiveBusiness) SumDataByAuthors(authorIds []string, startTime, endTime time.Time) (data map[string]es.DyLiveSumCount) {
 	esTable, connection, err := GetESTableByTime(es.DyLiveInfoBaseTable, startTime, endTime)
