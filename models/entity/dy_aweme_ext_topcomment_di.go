@@ -16,4 +16,5 @@ type DyAwemeCommentTop struct {
 	Text       string `json:"text"`
 	CreateTime string `json:"create_time"`
 	TagName    string `json:"tag_name"`
+	AwemeCover string `json:"aweme_cover"`
 }
