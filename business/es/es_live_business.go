@@ -805,3 +805,58 @@ func (receiver *EsLiveBusiness) CountDataByAuthor(authorId string, startTime, en
 		FindCount()
 	return total
 }
+
+//达人直播间统计
+func (receiver *EsLiveBusiness) SumDataByAuthors(authorIds []string, startTime, endTime time.Time) (data map[string]es.DyLiveSumCount) {
+	esTable, connection, err := GetESTableByTime(es.DyLiveInfoBaseTable, startTime, endTime)
+	if err != nil {
+		return
+	}
+	esQuery, esMultiQuery := elasticsearch.NewElasticQueryGroup()
+	esQuery.SetRange("create_time", map[string]interface{}{
+		"gte": startTime.Unix(),
+		"lt":  endTime.AddDate(0, 0, 1).Unix(),
+	})
+	esQuery.SetTerms("author_id", authorIds)
+	countResult := esMultiQuery.
+		SetConnection(connection).
+		SetCache(300).
+		SetTable(esTable).
+		SetMust(esQuery.Condition).
+		RawQuery(map[string]interface{}{
+			"query": map[string]interface{}{
+				"bool": map[string]interface{}{
+					"must": esQuery.Condition,
+				},
+			},
+			"size": 0,
+			"aggs": map[string]interface{}{
+				"authors": map[string]interface{}{
+					"terms": map[string]interface{}{
+						"field": "author_id.keyword",
+						"size":  1000,
+					},
+					"aggs": map[string]interface{}{
+						"total_gmv": map[string]interface{}{
+							"stats": map[string]interface{}{
+								"field": "predict_gmv",
+							},
+						},
+						"total_sales": map[string]interface{}{
+							"stats": map[string]interface{}{
+								"field": "predict_sales",
+							},
+						},
+					},
+				},
+			},
+		})
+	res := elasticsearch.GetBuckets(countResult, "authors")
+	var dataMap []es.DyLiveSumCount
+	data = make(map[string]es.DyLiveSumCount)
+	utils.MapToStruct(res, &dataMap)
+	for _, v := range dataMap {
+		data[v.Key] = v
+	}
+	return
+}

@@ -424,13 +424,15 @@ func (receiver *AuthorController) AuthorViewData() {
 		},
 		VideoCount: dy2.DyAuthorBaseVideoCount{
 			VideoCount:       int64(authorBase.AwemeCount),
-			AvgDigg:          authorBase.DiggCount,
 			DiggFollowerRate: authorBase.DiggFollowerRate,
 			Predict30Sales:   float64(videoSumData.Sales),
 			Predict30Gmv:     videoSumData.Gmv,
 			AgeDuration:      authorBase.Duration / 1000,
 		},
 		ProductCount: productCount,
+	}
+	if authorBase.AwemeCount != 0 {
+		data.VideoCount.AvgDigg = authorBase.DiggCount / int64(authorBase.AwemeCount)
 	}
 	firstLiveTimestamp := authorBase.FirstLiveTime - (authorBase.FirstLiveTime % 86400)
 	firstVideoTimestamp := authorBase.FirstAwemeTime - (authorBase.FirstAwemeTime % 86400)
