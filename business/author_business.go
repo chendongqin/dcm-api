@@ -1135,33 +1135,20 @@ func (a *AuthorBusiness) GetAuthorProductHbaseList(authorId, keyword string, sta
 //达人电商分析直播列表
 func (a *AuthorBusiness) GetAuthorProductRooms(authorId, productId string, startTime, stopTime time.Time, page, pageSize int, sortStr, orderBy string) (list []dy.DyAuthorProductRoom, total int, comErr global.CommonError) {
 	esLiveBusiness := es.NewEsLiveBusiness()
-	roomIds, total, comErr := esLiveBusiness.GetAuthorProductSearchRoomIds(authorId, productId, startTime, stopTime, page, pageSize, sortStr, orderBy)
+	rooms, total, comErr := esLiveBusiness.GetAuthorProductSearchRoomList(authorId, productId, startTime, stopTime, page, pageSize, sortStr, orderBy)
 	list = []dy.DyAuthorProductRoom{}
-	if len(roomIds) == 0 || comErr != nil {
+	if total == 0 || comErr != nil {
 		return
 	}
-	for _, roomId := range roomIds {
-		liveInfo, _ := hbase.GetLiveInfo(roomId)
-		//liveSaleData, _ := hbase.GetLiveSalesData(roomId)
-		////todo gmv数据兼容
-		//gmv := liveSaleData.Gmv
-		//sales := liveSaleData.Sales
-		//if liveSaleData.Gmv == 0 {
-		gmv := liveInfo.PredictGmv
-		sales := liveInfo.PredictSales
-		//if liveInfo.RealGmv > 0 {
-		//	gmv = liveInfo.RealGmv
-		//	sales = liveInfo.RealSales
-		//}
-		//}
+	for _, room := range rooms {
 		list = append(list, dy.DyAuthorProductRoom{
-			RoomId:       IdEncrypt(roomId),
-			Cover:        dyimg.Fix(liveInfo.Cover),
-			CreateTime:   liveInfo.CreateTime,
-			Title:        liveInfo.Title,
-			MaxUserCount: liveInfo.MaxUserCount,
-			Gmv:          gmv,
-			Sales:        sales,
+			RoomId:       IdEncrypt(room.RoomID),
+			Cover:        dyimg.Fix(room.Cover),
+			CreateTime:   room.LiveCreateTime,
+			Title:        room.Title,
+			MaxUserCount: room.MaxUserCount,
+			Gmv:          room.PredictGmv,
+			Sales:        math.Floor(room.PredictSales),
 		})
 	}
 	return

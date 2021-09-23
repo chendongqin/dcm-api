@@ -244,6 +244,7 @@ func (receiver *ProductController) ProductBaseAnalysis() {
 		}
 		if pv > 0 {
 			gpm = float64(order) * price / float64(pv) * 1000
+			countData.Gpm += gpm
 		}
 		hotAuthorChart = append(hotAuthorChart, authorNum)
 		liveAuthorChart = append(liveAuthorChart, liveAuthorNum)
