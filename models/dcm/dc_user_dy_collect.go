@@ -12,7 +12,7 @@ type DcUserDyCollect struct {
 	Label       string    `xorm:"not null default '' comment('类型') VARCHAR(20)"`
 	UniqueId    string    `xorm:"not null default '' comment('抖音号') VARCHAR(20)"`
 	Nickname    string    `xorm:"not null default '' comment('达人昵称') VARCHAR(50)"`
-	PromotionId string    `xorm:"not null default '' comment('抖音商品id') VARCHAR(50)"`
+	DyId        string    `xorm:"not null default '' comment('抖音id') VARCHAR(50)"`
 	TagId       int       `xorm:"not null default 0 comment('分组id') INT(11)"`
 	Remark      string    `xorm:"not null default '' comment('备注') VARCHAR(100)"`
 	Status      int       `xorm:"not null default 1 comment('状态0取消1正常') TINYINT(1)"`
