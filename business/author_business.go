@@ -794,6 +794,314 @@ func (a *AuthorBusiness) GetAuthorProductAnalyse(authorId, keyword, firstCate, s
 	return
 }
 
+func (a *AuthorBusiness) NewGetAuthorProductAnalyse(authorId, keyword, firstCate, secondCate, thirdCate, brandName, sortStr, orderBy string, shopType int, startTime, endTime time.Time, page, pageSize int) (list []entity.DyAuthorProductAnalysis, analysisCount dy.DyAuthorProductAnalysisCount, cateList []dy.DyCate, brandList []dy.NameValueChart, total int, comErr global.CommonError) {
+	if orderBy == "" {
+		orderBy = "desc"
+	}
+	if !utils.InArrayString(sortStr, []string{"price", "gmv", "sales", ""}) {
+		comErr = global.NewError(4000)
+		return
+	}
+	if !utils.InArrayString(orderBy, []string{"desc", "asc"}) {
+		comErr = global.NewError(4000)
+		return
+	}
+	list = []entity.DyAuthorProductAnalysis{}
+	cateList = []dy.DyCate{}
+	brandList = []dy.NameValueChart{}
+	shopId := ""
+	if shopType != 0 {
+		authorReputation, _ := a.HbaseGetAuthorReputation(authorId)
+		shopId = authorReputation.EncryptShopID
+	}
+	if shopType == 1 && shopId == "" {
+		return
+	}
+	firstCateCountMap := map[string]int{}
+	brandNameCountMap := map[string]int{}
+	firstCateMap := map[string]map[string]bool{}
+	secondCateMap := map[string]map[string]bool{}
+	videoIdMap := map[string]string{}
+	liveIdMap := map[string]string{}
+	productLiveIdMap := map[string]map[string]string{}
+	productVideoIdMap := map[string]map[string]string{}
+	productMapList := map[string]entity.DyAuthorProductAnalysis{}
+	var sumGmv float64 = 0
+	var sumSale float64 = 0
+	//判断自卖和推荐
+	hasShop := false
+	isRecommend := false
+	liveList, _, _ := es.NewEsLiveBusiness().ScanLiveProductByAuthor(authorId, keyword, firstCate, secondCate, thirdCate, brandName, shopId, shopType, startTime, endTime, 1, 10000)
+	awemeList, _, _ := es.NewEsVideoBusiness().ScanAwemeProductByAuthor(authorId, keyword, firstCate, secondCate, thirdCate, brandName, shopId, shopType, startTime, endTime, 1, 10000)
+	for _, v := range liveList {
+		if v.ShopId != "" {
+			hasShop = true
+		} else {
+			isRecommend = true
+		}
+		liveIdMap[v.RoomID] = v.RoomID
+		if _, exist := productLiveIdMap[v.ProductID]; !exist {
+			productLiveIdMap[v.ProductID] = map[string]string{}
+		}
+		productLiveIdMap[v.ProductID][v.RoomID] = v.RoomID
+		//数据累加
+		sumGmv += v.PredictGmv
+		sumSale += math.Floor(v.PredictSales)
+		if p, ok := productMapList[v.ProductID]; ok {
+			p.Gmv += v.PredictGmv
+			p.Sales += v.PredictSales
+			//p.AwemePredictGmv += v.AwemePredictGmv
+			//p.AwemePredictSales += math.Floor(v.AwemePredictSales)
+			p.LivePredictGmv += v.PredictGmv
+			p.LivePredictSales += math.Floor(v.PredictSales)
+			if p.Price > v.Price {
+				p.Price = v.Price
+			}
+			productMapList[v.ProductID] = p
+		} else {
+			total++
+			productMapList[v.ProductID] = entity.DyAuthorProductAnalysis{
+				AuthorId:         v.AuthorID,
+				ProductId:        v.ProductID,
+				Title:            v.Title,
+				Image:            v.Cover,
+				Price:            v.Price,
+				ShopId:           v.ShopId,
+				ShopName:         v.ShopName,
+				ShopIcon:         v.ShopIcon,
+				BrandName:        v.BrandName,
+				Platform:         v.PlatformLabel,
+				DcmLevelFirst:    v.DcmLevelFirst,
+				FirstCname:       v.FirstCname,
+				SecondCname:      v.SecondCname,
+				ThirdCname:       v.ThirdCname,
+				LivePredictSales: v.PredictSales,
+				LivePredictGmv:   v.PredictGmv,
+				ShelfTime:        v.ShelfTime,
+				Gmv:              v.PredictGmv,
+				Sales:            v.PredictSales,
+			}
+			//品牌聚合
+			brand := v.BrandName
+			if brand == "" {
+				brand = "其他"
+			}
+			if _, ok1 := brandNameCountMap[brand]; !ok1 {
+				brandNameCountMap[brand] = 1
+			} else {
+				brandNameCountMap[brand] += 1
+			}
+			//商品分类聚合
+			if v.DcmLevelFirst == "" || v.DcmLevelFirst == "null" {
+				v.DcmLevelFirst = "其他"
+			}
+			if _, ok1 := firstCateMap[v.DcmLevelFirst]; !ok1 {
+				firstCateMap[v.DcmLevelFirst] = map[string]bool{}
+			}
+			if _, ok1 := firstCateCountMap[v.DcmLevelFirst]; !ok1 {
+				firstCateCountMap[v.DcmLevelFirst] = 1
+			} else {
+				firstCateCountMap[v.DcmLevelFirst] += 1
+			}
+			if v.FirstCname == "" || v.DcmLevelFirst == "其他" {
+				continue
+			}
+			firstCateMap[v.DcmLevelFirst][v.FirstCname] = true
+			if _, ok1 := secondCateMap[v.FirstCname]; !ok1 {
+				secondCateMap[v.FirstCname] = map[string]bool{}
+			}
+			if v.SecondCname == "" {
+				continue
+			}
+			secondCateMap[v.FirstCname][v.SecondCname] = true
+		}
+	}
+	for _, v := range awemeList {
+		if v.ShopId != "" {
+			hasShop = true
+		} else {
+			isRecommend = true
+		}
+		videoIdMap[v.AwemeId] = v.AwemeId
+		if _, exist := productVideoIdMap[v.ProductId]; !exist {
+			productVideoIdMap[v.ProductId] = map[string]string{}
+		}
+		productVideoIdMap[v.ProductId][v.AwemeId] = v.AwemeId
+		//数据累加
+		sumGmv += v.Gmv
+		sumSale += float64(v.Sales)
+		if p, ok := productMapList[v.ProductId]; ok {
+			p.Gmv += v.Gmv
+			p.Sales += float64(v.Sales)
+			p.AwemePredictGmv += v.Gmv
+			p.AwemePredictSales += float64(v.Sales)
+			if p.Price > v.Price {
+				p.Price = v.Price
+			}
+			productMapList[v.ProductId] = p
+		} else {
+			total++
+			productMapList[v.ProductId] = entity.DyAuthorProductAnalysis{
+				AuthorId:          v.AuthorId,
+				ProductId:         v.ProductId,
+				Title:             v.Title,
+				Image:             v.Image,
+				Price:             v.Price,
+				ShopId:            v.ShopId,
+				ShopName:          v.ShopName,
+				ShopIcon:          v.ShopIcon,
+				BrandName:         v.BrandName,
+				Platform:          v.PlatformLabel,
+				DcmLevelFirst:     v.DcmLevelFirst,
+				FirstCname:        v.FirstCname,
+				SecondCname:       v.SecondCname,
+				ThirdCname:        v.ThirdCname,
+				AwemePredictSales: float64(v.Sales),
+				AwemePredictGmv:   v.Gmv,
+				Gmv:               v.Gmv,
+				Sales:             float64(v.Sales),
+			}
+			//品牌聚合
+			brand := v.BrandName
+			if brand == "" {
+				brand = "其他"
+			}
+			if _, ok1 := brandNameCountMap[brand]; !ok1 {
+				brandNameCountMap[brand] = 1
+			} else {
+				brandNameCountMap[brand] += 1
+			}
+			//商品分类聚合
+			if v.DcmLevelFirst == "" || v.DcmLevelFirst == "null" {
+				v.DcmLevelFirst = "其他"
+			}
+			if _, ok1 := firstCateMap[v.DcmLevelFirst]; !ok1 {
+				firstCateMap[v.DcmLevelFirst] = map[string]bool{}
+			}
+			if _, ok1 := firstCateCountMap[v.DcmLevelFirst]; !ok1 {
+				firstCateCountMap[v.DcmLevelFirst] = 1
+			} else {
+				firstCateCountMap[v.DcmLevelFirst] += 1
+			}
+			if v.FirstCname == "" || v.DcmLevelFirst == "其他" {
+				continue
+			}
+			firstCateMap[v.DcmLevelFirst][v.FirstCname] = true
+			if _, ok1 := secondCateMap[v.FirstCname]; !ok1 {
+				secondCateMap[v.FirstCname] = map[string]bool{}
+			}
+			if v.SecondCname == "" {
+				continue
+			}
+			secondCateMap[v.FirstCname][v.SecondCname] = true
+		}
+	}
+	//分类处理
+	for k, v := range firstCateMap {
+		secondCateList := make([]dy.DyCate, 0)
+		for ck, _ := range v {
+			if cv, ok := secondCateMap[ck]; ok {
+				secondCateItem := dy.DyCate{
+					Name: ck,
+				}
+				for tk, _ := range cv {
+					secondCateItem.SonCate = append(secondCateItem.SonCate, dy.DyCate{
+						Name:    tk,
+						Num:     0,
+						SonCate: nil,
+					})
+				}
+				if len(secondCateItem.SonCate) == 0 {
+					secondCateItem.SonCate = []dy.DyCate{}
+				}
+				secondCateList = append(secondCateList, secondCateItem)
+			}
+		}
+		productNumber := 0
+		if n, ok := firstCateCountMap[k]; ok {
+			productNumber = n
+		}
+		item := dy.DyCate{
+			Name:    k,
+			Num:     productNumber,
+			SonCate: []dy.DyCate{},
+		}
+		if len(secondCateList) > 0 {
+			item.SonCate = secondCateList
+		}
+		cateList = append(cateList, item)
+	}
+	//品牌处理
+	for k, v := range brandNameCountMap {
+		brandList = append(brandList, dy.NameValueChart{
+			Name:  k,
+			Value: v,
+		})
+	}
+	newList := make([]entity.DyAuthorProductAnalysis, 0)
+	for _, v := range productMapList {
+		newList = append(newList, v)
+	}
+	//排序
+	if sortStr != "" {
+		sort.Slice(newList, func(i, j int) bool {
+			var left, right float64
+			switch sortStr {
+			case "price":
+				left = newList[i].Price
+				right = newList[j].Price
+			case "gmv":
+				left = newList[i].Gmv
+				right = newList[j].Gmv
+			case "sales":
+				left = newList[i].Sales
+				right = newList[j].Sales
+			}
+			if left == right {
+				return newList[i].ShelfTime > newList[i].ShelfTime
+			}
+			if orderBy == "desc" {
+				return left > right
+			}
+			return right > left
+		})
+	}
+	start := (page - 1) * pageSize
+	end := start + pageSize
+	listLen := len(newList)
+	if listLen < end {
+		end = listLen
+	}
+	list = newList[start:end]
+	productIds := []string{}
+	for k, v := range list {
+		if n, exist := productLiveIdMap[v.ProductId]; exist {
+			list[k].RoomCount = int64(len(n))
+		}
+		if n, exist := productVideoIdMap[v.ProductId]; exist {
+			list[k].AwemeCount = int64(len(n))
+		}
+		list[k].Image = dyimg.Product(v.Image)
+		list[k].AuthorId = IdEncrypt(v.AuthorId)
+		list[k].ProductId = IdEncrypt(v.ProductId)
+		productIds = append(productIds, v.ProductId)
+	}
+	products, _ := hbase.GetProductByIds(productIds)
+	for k, v := range list {
+		if p, exist := products[v.ProductId]; exist {
+			list[k].Status = p.Status
+		}
+	}
+	analysisCount.ProductNum = total
+	analysisCount.RoomNum = len(liveIdMap)
+	analysisCount.VideoNum = len(videoIdMap)
+	analysisCount.Gmv = sumGmv
+	analysisCount.Sales = sumSale
+	analysisCount.HasShop = hasShop
+	analysisCount.IsRecommend = isRecommend
+	return
+}
+
 //获取达人电商分析数据
 func (a *AuthorBusiness) GetAuthorProductHbaseList(authorId, keyword string, startTime, endTime time.Time) (hbaseDataList []entity.DyAuthorProductAnalysis, comErr global.CommonError) {
 	hbaseDataList = make([]entity.DyAuthorProductAnalysis, 0)
