@@ -132,32 +132,29 @@ func (receiver *PayBusiness) GetDySurplusValue(surplusDay int) (value float64, p
 	if surplusDay >= yearDay {
 		value = float64(surplusDay) * price.Year.Price / float64(yearDay)
 		primeValue = float64(surplusDay) * price.Year.OriginalPrice / float64(yearDay)
-		return math.Ceil(value), math.Ceil(primeValue)
+		return
 	}
-	//半年剩余价值
-	halfYear := surplusDay / halfYearDay
-	halfYearValue := price.HalfYear.Price * float64(halfYear)
-	primeHalfYearValue := price.HalfYear.OriginalPrice * float64(halfYear)
-	surplusDay -= halfYearDay * halfYear
+	if surplusDay >= halfYearDay {
+		//半年剩余价值
+		value = price.HalfYear.Price + float64(surplusDay-halfYearDay)*price.Year.Price/float64(yearDay)
+		primeValue = price.HalfYear.OriginalPrice + float64(surplusDay-halfYearDay)*price.Year.OriginalPrice/float64(yearDay)
+		return
+	}
 	//剩余价值计算
-	var dayValue float64 = 0
-	var primeDayValue float64 = 0
 	if surplusDay > monthDay {
-		dayValue = float64(surplusDay) * price.HalfYear.Price / float64(halfYearDay)
-		primeDayValue = float64(surplusDay) * price.Month.OriginalPrice / float64(halfYearDay)
+		value = float64(surplusDay) * price.HalfYear.Price / float64(halfYearDay)
+		primeValue = float64(surplusDay) * price.Month.OriginalPrice / float64(halfYearDay)
 	} else {
-		dayValue = float64(surplusDay) * price.Month.Price / float64(monthDay)
-		primeDayValue = float64(surplusDay) * price.Month.OriginalPrice / float64(monthDay)
+		value = float64(surplusDay) * price.Month.Price / float64(monthDay)
+		primeValue = float64(surplusDay) * price.Month.OriginalPrice / float64(monthDay)
 	}
-	value = halfYearValue + dayValue
-	primeValue = primeHalfYearValue + primeDayValue
 	if value < 100 {
 		value = 100
 	}
 	if primeValue < 100 {
 		primeValue = 100
 	}
-	return value, primeValue
+	return
 }
 
 //获取最终支付价格
