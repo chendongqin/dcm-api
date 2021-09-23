@@ -234,11 +234,8 @@ func (this *ApiBaseController) CheckSign() {
 		if authBusiness.AuthSignWhiteUri(this.TrueUri) {
 			return
 		}
-		//todo 加密目前开放app
-		if utils.InArrayInt(this.AppId, []int{10003, 10004}) {
-			if global.JsonResEncrypt() {
-				this.JsonEncrypt = true
-			}
+		if global.JsonResEncrypt() {
+			this.JsonEncrypt = true
 		}
 		if global.IsDev() {
 			return

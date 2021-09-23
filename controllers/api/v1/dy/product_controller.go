@@ -364,22 +364,27 @@ func (receiver *ProductController) ProductBase() {
 		label = "其他"
 	}
 	simpleInfo := dy2.SimpleDyProduct{
-		ProductID:     business.IdEncrypt(productInfo.ProductID),
-		Title:         productInfo.Title,
-		MarketPrice:   productInfo.MarketPrice,
-		Price:         productInfo.Price,
-		URL:           productBusiness.GetProductUrl(productInfo.PlatformLabel, productInfo.ProductID),
-		Image:         dyimg.Product(productInfo.Image),
-		Status:        productInfo.Status,
-		ShopId:        business.IdEncrypt(productInfo.ShopID),
-		ShopName:      shopName,
-		Label:         label,
-		Undercarriage: productInfo.Undercarriage,
-		CrawlTime:     productInfo.CrawlTime,
-		PlatformLabel: productInfo.PlatformLabel,
-		MinPrice:      productInfo.MinPrice,
-		CosRatio:      productInfo.CosRatio,
-		CosRatioMoney: productInfo.CosRatio / 100 * productInfo.Price,
+		ProductID:           business.IdEncrypt(productInfo.ProductID),
+		Title:               productInfo.Title,
+		MarketPrice:         productInfo.MarketPrice,
+		Price:               productInfo.Price,
+		URL:                 productBusiness.GetProductUrl(productInfo.PlatformLabel, productInfo.ProductID),
+		Image:               dyimg.Product(productInfo.Image),
+		Status:              productInfo.Status,
+		ShopId:              business.IdEncrypt(productInfo.ShopID),
+		ShopName:            shopName,
+		Label:               label,
+		Undercarriage:       productInfo.Undercarriage,
+		CrawlTime:           productInfo.CrawlTime,
+		PlatformLabel:       productInfo.PlatformLabel,
+		MinPrice:            productInfo.MinPrice,
+		CosRatio:            productInfo.CosRatio,
+		CosRatioMoney:       productInfo.CosRatio / 100 * productInfo.Price,
+		TbCouponPrice:       productInfo.TbCouponPrice,
+		TbCouponRemainCount: productInfo.TbCouponRemainCount,
+	}
+	if simpleInfo.TbCouponRemainCount == 0 || simpleInfo.TbCouponPrice == 0 {
+		simpleInfo.TbCouponPrice = simpleInfo.Price
 	}
 	dateChart7 := make([]int64, 0)
 	priceChart7 := make([]float64, 0)

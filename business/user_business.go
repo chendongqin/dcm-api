@@ -132,7 +132,7 @@ func (receiver *UserBusiness) LoginByPwd(username, pwd string, appId int) (user 
 }
 
 //验证码登陆
-func (receiver *UserBusiness) SmsLogin(mobile, code, unionid string, appId int) (user dcm.DcUser, tokenString string, expire int64, isNew int, comErr global.CommonError) {
+func (receiver *UserBusiness) SmsLogin(mobile, code, password, unionid string, appId int) (user dcm.DcUser, tokenString string, expire int64, isNew int, comErr global.CommonError) {
 	if mobile == "" || code == "" {
 		comErr = global.NewError(4000)
 		return
@@ -153,7 +153,7 @@ func (receiver *UserBusiness) SmsLogin(mobile, code, unionid string, appId int) 
 		user.Username = mobile
 		user.Nickname = mobile[:3] + "****" + mobile[7:]
 		user.Salt = utils.GetRandomString(4)
-		user.Password = utils.Md5_encode(utils.GetRandomString(16) + user.Salt)
+		user.Password = utils.Md5_encode(password + user.Salt)
 		user.Status = 1
 		user.CreateTime = time.Now()
 		user.UpdateTime = time.Now()

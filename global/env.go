@@ -186,7 +186,7 @@ func GetEsClient(clientTypes ...string) *elasticsearch.Client {
 func _initEs() {
 	esClients = make(map[string]*elasticsearch.Client, 2)
 	_initEsWithName()
-	//_initEsWithName("fast")
+	_initEsWithName("aweme")
 }
 
 func _initEsWithName(clientTypes ...string) {

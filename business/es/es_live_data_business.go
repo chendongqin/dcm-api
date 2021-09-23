@@ -19,7 +19,7 @@ func NewEsLiveDataBusiness() *EsLiveDataBusiness {
 //达人直播间统计
 func (receiver *EsLiveDataBusiness) SumLiveData(startTime, endTime time.Time, hasProduct, living int) (total int, data es.DyLiveDataUserSumCount) {
 	data = es.DyLiveDataUserSumCount{}
-	esTable, err := GetESTableByTime(es.DyLiveInfoBaseTable, startTime, endTime)
+	esTable, connection, err := GetESTableByTime(es.DyLiveInfoBaseTable, startTime, endTime)
 	if err != nil {
 		return
 	}
@@ -42,6 +42,7 @@ func (receiver *EsLiveDataBusiness) SumLiveData(startTime, endTime time.Time, ha
 		cacheTime = 86400
 	}
 	countResult := esMultiQuery.
+		SetConnection(connection).
 		SetCache(cacheTime).
 		SetTable(esTable).
 		SetMust(esQuery.Condition).
@@ -79,7 +80,7 @@ func (receiver *EsLiveDataBusiness) SumLiveData(startTime, endTime time.Time, ha
 //商品占比查询
 func (receiver *EsLiveDataBusiness) LiveCompositeByCategory(startTime, endTime time.Time, rateType, living int) (total int, res []interface{}) {
 	res = []interface{}{}
-	esTable, err := GetESTableByTime(es.DyLiveInfoBaseTable, startTime, endTime)
+	esTable, connection, err := GetESTableByTime(es.DyLiveInfoBaseTable, startTime, endTime)
 	if err != nil {
 		return
 	}
@@ -117,6 +118,7 @@ func (receiver *EsLiveDataBusiness) LiveCompositeByCategory(startTime, endTime t
 		}
 	}
 	countResult := esMultiQuery.
+		SetConnection(connection).
 		SetCache(cacheTime).
 		SetTable(esTable).
 		SetMust(esQuery.Condition).
@@ -174,7 +176,7 @@ func (receiver *EsLiveDataBusiness) LiveRankByCategory(startTime, endTime time.T
 		comErr = global.NewError(4000)
 		return
 	}
-	esTable, err := GetESTableByTime(es.DyLiveInfoBaseTable, startTime, endTime)
+	esTable, connection, err := GetESTableByTime(es.DyLiveInfoBaseTable, startTime, endTime)
 	if err != nil {
 		comErr = global.NewError(4000)
 		return
@@ -196,6 +198,7 @@ func (receiver *EsLiveDataBusiness) LiveRankByCategory(startTime, endTime time.T
 		cacheTime = 86400
 	}
 	results := esMultiQuery.
+		SetConnection(connection).
 		SetTable(esTable).
 		SetCache(cacheTime).
 		AddMust(esQuery.Condition).
@@ -210,7 +213,7 @@ func (receiver *EsLiveDataBusiness) LiveRankByCategory(startTime, endTime time.T
 //带货行业数据分类统计
 func (receiver *EsLiveDataBusiness) ProductLiveDataByCategory(startTime, endTime time.Time, category string, living int) (total int, uv, buyRate float64, data es.DyLiveDataCategorySumCount) {
 	data = es.DyLiveDataCategorySumCount{}
-	esTable, err := GetESTableByTime(es.DyLiveInfoBaseTable, startTime, endTime)
+	esTable, connection, err := GetESTableByTime(es.DyLiveInfoBaseTable, startTime, endTime)
 	if err != nil {
 		return
 	}
@@ -234,6 +237,7 @@ func (receiver *EsLiveDataBusiness) ProductLiveDataByCategory(startTime, endTime
 		cacheTime = 86400
 	}
 	countResult := esMultiQuery.
+		SetConnection(connection).
 		SetCache(cacheTime).
 		SetTable(esTable).
 		SetMust(esQuery.Condition).
@@ -292,7 +296,7 @@ func (receiver *EsLiveDataBusiness) ProductLiveDataByCategory(startTime, endTime
 //带货行业数据分类分级统计
 func (receiver *EsLiveDataBusiness) ProductLiveDataCategoryLevel(startTime, endTime time.Time, category string, living int) (total int, data []dy.EsLiveSumDataCategoryLevel) {
 	data = []dy.EsLiveSumDataCategoryLevel{}
-	esTable, err := GetESTableByTime(es.DyLiveInfoBaseTable, startTime, endTime)
+	esTable, connection, err := GetESTableByTime(es.DyLiveInfoBaseTable, startTime, endTime)
 	if err != nil {
 		return
 	}
@@ -316,6 +320,7 @@ func (receiver *EsLiveDataBusiness) ProductLiveDataCategoryLevel(startTime, endT
 		cacheTime = 86400
 	}
 	countResult := esMultiQuery.
+		SetConnection(connection).
 		SetCache(cacheTime).
 		SetTable(esTable).
 		SetMust(esQuery.Condition).
@@ -365,7 +370,7 @@ func (receiver *EsLiveDataBusiness) ProductLiveDataCategoryLevel(startTime, endT
 //带货行业数据分类分级分布数据
 func (receiver *EsLiveDataBusiness) ProductLiveDataCategoryLevelTwoShow(startTime, endTime time.Time, category string, living int) (total int, data []dy.EsLiveSumDataCategoryLevelTwo) {
 	data = []dy.EsLiveSumDataCategoryLevelTwo{}
-	esTable, err := GetESTableByTime(es.DyLiveInfoBaseTable, startTime, endTime)
+	esTable, connection, err := GetESTableByTime(es.DyLiveInfoBaseTable, startTime, endTime)
 	if err != nil {
 		return
 	}
@@ -389,6 +394,7 @@ func (receiver *EsLiveDataBusiness) ProductLiveDataCategoryLevelTwoShow(startTim
 		cacheTime = 86400
 	}
 	countResult := esMultiQuery.
+		SetConnection(connection).
 		SetCache(cacheTime).
 		SetTable(esTable).
 		SetMust(esQuery.Condition).
@@ -439,7 +445,7 @@ func (receiver *EsLiveDataBusiness) ProductLiveDataCategoryLevelTwoShow(startTim
 
 //等级分布明细列表
 func (receiver *EsLiveDataBusiness) ProductLiveDataCategoryLevelList(startTime, endTime time.Time, category, level string, stayLevel, living, page, pageSize int) (total int, list []es.EsDyLiveDetail, comErr global.CommonError) {
-	esTable, err := GetESTableByTime(es.DyLiveInfoBaseTable, startTime, endTime)
+	esTable, connection, err := GetESTableByTime(es.DyLiveInfoBaseTable, startTime, endTime)
 	if err != nil {
 		comErr = global.NewError(4000)
 		return
@@ -467,6 +473,7 @@ func (receiver *EsLiveDataBusiness) ProductLiveDataCategoryLevelList(startTime, 
 		cacheTime = 86400
 	}
 	results := esMultiQuery.
+		SetConnection(connection).
 		SetTable(esTable).
 		SetCache(cacheTime).
 		AddMust(esQuery.Condition).
@@ -482,7 +489,7 @@ func (receiver *EsLiveDataBusiness) ProductLiveDataCategoryLevelList(startTime, 
 //等级分布明细统计
 func (receiver *EsLiveDataBusiness) ProductLiveDataCategoryLevelCount(startTime, endTime time.Time, category, level string, stayLevel, living int) (total int, data dy.EsLiveSumDataCategoryLevel, comErr global.CommonError) {
 	data = dy.EsLiveSumDataCategoryLevel{}
-	esTable, err := GetESTableByTime(es.DyLiveInfoBaseTable, startTime, endTime)
+	esTable, connection, err := GetESTableByTime(es.DyLiveInfoBaseTable, startTime, endTime)
 	if err != nil {
 		comErr = global.NewError(4000)
 		return
@@ -506,6 +513,7 @@ func (receiver *EsLiveDataBusiness) ProductLiveDataCategoryLevelCount(startTime,
 		cacheTime = 86400
 	}
 	countResult := esMultiQuery.
+		SetConnection(connection).
 		SetTable(esTable).
 		SetCache(cacheTime).
 		AddMust(esQuery.Condition).

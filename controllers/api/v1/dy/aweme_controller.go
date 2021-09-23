@@ -179,7 +179,9 @@ func (receiver *AwemeController) AwemeCommentHotWords() {
 		return list[i].Value > list[j].Value
 	})
 	receiver.SuccReturn(map[string]interface{}{
-		"hot_words": list,
+		"hot_words":  list,
+		"use_id_num": awemeBase.ContextNum["use_id_num"],
+		"msg_id_num": awemeBase.ContextNum["msg_id_num"],
 	})
 	return
 }

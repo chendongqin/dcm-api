@@ -8,16 +8,30 @@ import (
 	"time"
 )
 
-func GetESTableByTime(table string, start, stop time.Time) (string, error) {
+var EsTableConnectionMap = map[string]string{
+	"dy_product_aweme_author_analysis_%s": "aweme",
+	"dy_product_aweme_%s":                 "aweme",
+	"dy_aweme_%s":                         "aweme",
+}
+
+//对应的es集群
+func SureConnection(tableName string) string {
+	if v, ok := EsTableConnectionMap[tableName]; ok {
+		return v
+	}
+	return ""
+}
+
+func GetESTableByTime(table string, start, stop time.Time) (string, string, error) {
 	//时间截止至9.1号
 	if start.Unix() < 1630425600 {
 		start = time.Unix(1630425600, 0)
 	}
 	if start.After(stop) {
-		return "", errors.New("参数错误")
+		return "", "", errors.New("参数错误")
 	}
 	if start.Format("20060102") == stop.Format("20060102") {
-		return fmt.Sprintf(table, start.Format("20060102")), nil
+		return fmt.Sprintf(table, start.Format("20060102")), SureConnection(table), nil
 	}
 	esTableArr := make([]string, 0)
 	begin, _ := time.ParseInLocation("20060102", start.Format("200601")+"01", time.Local)
@@ -33,16 +47,16 @@ func GetESTableByTime(table string, start, stop time.Time) (string, error) {
 		begin = begin.AddDate(0, 1, 0)
 		beginMonth += 1
 	}
-	return strings.Join(esTableArr, ","), nil
+	return strings.Join(esTableArr, ","), SureConnection(table), nil
 }
 
-func GetESTableByDayTime(table string, start, stop time.Time) (string, error) {
+func GetESTableByDayTime(table string, start, stop time.Time) (string, string, error) {
 	//时间截止至9.1号
 	if start.Unix() < 1630425600 {
 		start = time.Unix(1630425600, 0)
 	}
 	if start.After(stop) {
-		return "", errors.New("参数错误")
+		return "", "", errors.New("参数错误")
 	}
 	esTableArr := make([]string, 0)
 	begin := start
@@ -54,16 +68,16 @@ func GetESTableByDayTime(table string, start, stop time.Time) (string, error) {
 		esTableArr = append(esTableArr, fmt.Sprintf(table, begin.Format("20060102")))
 		begin = begin.AddDate(0, 0, 1)
 	}
-	return strings.Join(esTableArr, ","), nil
+	return strings.Join(esTableArr, ","), SureConnection(table), nil
 }
 
-func GetESTableByMonthTime(table string, start, stop time.Time) (string, error) {
+func GetESTableByMonthTime(table string, start, stop time.Time) (string, string, error) {
 	//时间截止至9.1号
 	if start.Unix() < 1630425600 {
 		start = time.Unix(1630425600, 0)
 	}
 	if start.After(stop) {
-		return "", errors.New("参数错误")
+		return "", "", errors.New("参数错误")
 	}
 	esTableArr := make([]string, 0)
 	begin, _ := time.ParseInLocation("20060102", start.Format("200601")+"01", time.Local)
@@ -79,5 +93,18 @@ func GetESTableByMonthTime(table string, start, stop time.Time) (string, error) 
 		beginMonth += 1
 		begin = begin.AddDate(0, 1, 0)
 	}
-	return strings.Join(esTableArr, ","), nil
+	//对应的es集群
+	return strings.Join(esTableArr, ","), SureConnection(table), nil
+}
+
+//获取表命和对应的集群
+func GetESTable(table string) (string, string) {
+	//对应的es集群
+	return table, SureConnection(table)
+}
+
+//获取表命和对应的集群
+func GetESTableByDate(table, date string) (string, string) {
+	//对应的es集群
+	return fmt.Sprintf(table, date), SureConnection(table)
 }

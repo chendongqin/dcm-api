@@ -49,7 +49,7 @@ func (receiver *EsShopBusiness) BaseSearch(
 		comErr = global.NewError(4000)
 		return
 	}
-	esTable := es.DyShopTable
+	esTable, connection := GetESTable(es.DyShopTable)
 	esQuery, esMultiQuery := elasticsearch.NewElasticQueryGroup()
 	if keyword != "" {
 		esQuery.SetMatchPhrase("shop_name", keyword)
@@ -113,6 +113,7 @@ func (receiver *EsShopBusiness) BaseSearch(
 		esQuery.SetTerms("commerce_type", []int{DY_SHOP_AWEME, DY_SHOP_LIVE_BUT_AWEME, DY_SHOP_AWEME_BUT_LIVE, DY_SHOP_EQUALS})
 	}
 	results := esMultiQuery.
+		SetConnection(connection).
 		SetTable(esTable).
 		SetCache(180).
 		AddMust(esQuery.Condition).
@@ -138,7 +139,7 @@ func (receiver *EsShopBusiness) SimpleSearch(keyword, category, secondCategory, 
 		comErr = global.NewError(4000)
 		return
 	}
-	esTable := es.DyShopTable
+	esTable, connection := GetESTable(es.DyShopTable)
 	esQuery, esMultiQuery := elasticsearch.NewElasticQueryGroup()
 	if keyword != "" {
 		esQuery.SetMatchPhrase("shop_name", keyword)
@@ -153,6 +154,7 @@ func (receiver *EsShopBusiness) SimpleSearch(keyword, category, secondCategory, 
 		esQuery.SetMultiMatch([]string{"second_cname", "second_cname_2", "second_cname_3"}, thirdCategory)
 	}
 	results := esMultiQuery.
+		SetConnection(connection).
 		SetTable(esTable).
 		SetCache(180).
 		AddMust(esQuery.Condition).
@@ -167,7 +169,7 @@ func (receiver *EsShopBusiness) SimpleSearch(keyword, category, secondCategory, 
 
 //获取小店直播达人所有商品id
 func (receiver *EsShopBusiness) GetShopLiveAuthorRowKeys(shopId, authorId, keyword string, startTime, endTime time.Time) (list []es.EsGroupByData, total int, comErr global.CommonError) {
-	esTable, err := GetESTableByTime(es.DyProductAuthorAnalysisTable, startTime, endTime)
+	esTable, connection, err := GetESTableByTime(es.DyProductAuthorAnalysisTable, startTime, endTime)
 	if err != nil {
 		comErr = global.NewError(4000)
 		return
@@ -198,6 +200,7 @@ func (receiver *EsShopBusiness) GetShopLiveAuthorRowKeys(shopId, authorId, keywo
 	})
 	results := esMultiQuery.
 		SetCache(300).
+		SetConnection(connection).
 		SetTable(esTable).
 		AddMust(esQuery.Condition).
 		RawQuery(map[string]interface{}{
@@ -229,7 +232,7 @@ func (receiver *EsShopBusiness) GetShopLiveAuthorRowKeys(shopId, authorId, keywo
 
 //获取小店视频达人所有商品id
 func (receiver *EsShopBusiness) GetShopVideoAuthorRowKeys(shopId, authorId, keyword string, startTime, endTime time.Time) (list []es.EsGroupByData, total int, comErr global.CommonError) {
-	esTable, err := GetESTableByTime(es.DyProductAwemeAuthorAnalysisTable, startTime, endTime)
+	esTable, connection, err := GetESTableByTime(es.DyProductAwemeAuthorAnalysisTable, startTime, endTime)
 	if err != nil {
 		comErr = global.NewError(4000)
 		return
@@ -260,6 +263,7 @@ func (receiver *EsShopBusiness) GetShopVideoAuthorRowKeys(shopId, authorId, keyw
 	})
 	results := esMultiQuery.
 		SetCache(300).
+		SetConnection(connection).
 		SetTable(esTable).
 		AddMust(esQuery.Condition).
 		RawQuery(map[string]interface{}{
