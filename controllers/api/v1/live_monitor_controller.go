@@ -24,7 +24,6 @@ type LiveMonitorController struct {
 func (receiver *LiveMonitorController) Prepare() {
 	receiver.InitApiController()
 	receiver.CheckToken()
-	receiver.CheckDyUserGroupRight(business.DyJewelBaseMinShowNum, business.DyJewelBaseShowNum)
 }
 
 //直播监控价格
