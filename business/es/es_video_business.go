@@ -186,7 +186,11 @@ func (e *EsVideoBusiness) SumDataByAuthor(authorId string, startTime, endTime ti
 		countData.AvgShare = utils.ToInt64(math.Floor(data.AvgShare.Value))
 		countData.AvgComment = utils.ToInt64(math.Floor(data.AvgComment.Value))
 	}
-	countData.Total = int(countResult["hits"].(map[string]interface{})["total"].(float64))
+	if hits, ok := countResult["hits"]; ok {
+		if v, ok := hits.(map[string]interface{})["total"]; ok {
+			countData.Total = int(v.(float64))
+		}
+	}
 	return
 }
 
