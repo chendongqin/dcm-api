@@ -816,6 +816,9 @@ func (receiver *RankController) LiveProductRank() {
 		tempData.LiveCount = orginList[i].AwemeNum
 		tempData.PlatformLabel = orginList[i].PlatformLabel
 		tempData.Price = orginList[i].Price
+		tempData.CosFee = orginList[i].CosFee
+		tempData.CosRatio = orginList[i].CosRatio
+		tempData.Gmv = orginList[i].Saleroom
 		list = append(list, tempData)
 	}
 
