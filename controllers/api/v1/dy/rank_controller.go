@@ -692,8 +692,8 @@ func (receiver *RankController) VideoProductRank() {
 	if !receiver.HasAuth && total > receiver.MaxTotal {
 		total = receiver.MaxTotal
 	}
-	for i := 0; i < len(list); i++ {
-		list[i].ProductId = business.IdDecrypt(list[i].ProductId)
+	for k, v := range list {
+		list[k].ProductId = business.IdDecrypt(v.ProductId)
 	}
 	ret := map[string]interface{}{
 		"list":      list,
@@ -822,18 +822,18 @@ func (receiver *RankController) LiveProductRank() {
 		total = receiver.MaxTotal
 	}
 	list := make([]entity.DyLiveProductSaleTopRank, 0)
-	for i := 0; i < len(orginList); i++ {
+	for _, v := range orginList {
 		tempData := entity.DyLiveProductSaleTopRank{}
-		tempData.ProductId = business.IdEncrypt(orginList[i].ProductId)
-		tempData.Images = orginList[i].Image
-		tempData.Title = orginList[i].Title
-		tempData.LiveCount = orginList[i].RoomNum
-		tempData.PlatformLabel = orginList[i].PlatformLabel
-		tempData.Price = orginList[i].Price
-		tempData.CosFee = orginList[i].CosFee
-		tempData.CosRatio = orginList[i].CosRatio
-		tempData.Gmv = orginList[i].Saleroom
-		tempData.Sales = float64(orginList[i].Sales)
+		tempData.ProductId = business.IdEncrypt(v.ProductId)
+		tempData.Images = v.Image
+		tempData.Title = v.Title
+		tempData.LiveCount = v.RoomNum
+		tempData.PlatformLabel = v.PlatformLabel
+		tempData.Price = v.Price
+		tempData.CosFee = v.CosFee
+		tempData.CosRatio = v.CosRatio
+		tempData.Gmv = v.Saleroom
+		tempData.Sales = float64(v.Sales)
 		list = append(list, tempData)
 	}
 
