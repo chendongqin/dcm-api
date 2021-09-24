@@ -560,7 +560,7 @@ func (receiver *EsLiveBusiness) GetAuthorProductSearchRoomSumList(authorId, prod
 	if sortStr == "" {
 		sortStr = "live_create_time"
 	}
-	if sortStr != "live_create_time" {
+	if !utils.InArrayString(sortStr, []string{"live_create_time", "shelf_time"}) {
 		sortStr = "total_" + sortStr
 	}
 	esQuery, esMultiQuery := elasticsearch.NewElasticQueryGroup()
@@ -584,6 +584,7 @@ func (receiver *EsLiveBusiness) GetAuthorProductSearchRoomSumList(authorId, prod
 	}
 	results := esMultiQuery.
 		SetConnection(connection).
+		SetCache(60).
 		SetTable(esTable).
 		AddMust(esQuery.Condition).
 		RawQuery(map[string]interface{}{
@@ -620,6 +621,11 @@ func (receiver *EsLiveBusiness) GetAuthorProductSearchRoomSumList(authorId, prod
 								"field": "live_create_time",
 							},
 						},
+						"shelf_time": map[string]interface{}{
+							"max": map[string]interface{}{
+								"field": "shelf_time",
+							},
+						},
 						"r_bucket_sort": map[string]interface{}{
 							"bucket_sort": map[string]interface{}{
 								"sort": map[string]interface{}{
@@ -641,12 +647,6 @@ func (receiver *EsLiveBusiness) GetAuthorProductSearchRoomSumList(authorId, prod
 		if t, ok2 := h.(map[string]interface{})["total"]; ok2 {
 			total = utils.ToInt(t.(float64))
 		}
-	}
-	total = esMultiQuery.Count
-	if total == 0 {
-		list = []es.DyProductLiveRoomSum{}
-	} else {
-		utils.MapToStruct(results, &list)
 	}
 	return
 }
