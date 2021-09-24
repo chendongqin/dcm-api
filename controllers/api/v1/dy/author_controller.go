@@ -430,7 +430,7 @@ func (receiver *AuthorController) AuthorViewData() {
 		VideoCount: dy2.DyAuthorBaseVideoCount{
 			VideoCount:       int64(authorBase.AwemeCount),
 			Video30Count:     int64(videoSumData.Total),
-			DiggFollowerRate: authorBase.DiggFollowerRate,
+			DiggFollowerRate: 0,
 			Predict30Sales:   float64(videoSumData.Sales),
 			Predict30Gmv:     videoSumData.Gmv,
 			AgeDuration:      authorBase.Duration / 1000,
@@ -439,6 +439,10 @@ func (receiver *AuthorController) AuthorViewData() {
 	}
 	if authorBase.AwemeCount != 0 {
 		data.VideoCount.AvgDigg = authorBase.DiggCount / int64(authorBase.AwemeCount)
+	}
+	// todo 达人近30天视频为0 屏蔽赞粉比
+	if data.VideoCount.Video30Count > 0 {
+		data.VideoCount.DiggFollowerRate = authorBase.DiggFollowerRate
 	}
 	data.VideoCount.Avg30Digg = videoSumData.AvgDigg
 	firstLiveTimestamp := authorBase.FirstLiveTime - (authorBase.FirstLiveTime % 86400)
