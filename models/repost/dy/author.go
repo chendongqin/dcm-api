@@ -82,6 +82,7 @@ type DyAuthorBaseVideoCount struct {
 	VideoCount       int64   `json:"video_count"`
 	Video30Count     int64   `json:"video_30_count"`
 	AvgDigg          int64   `json:"avg_digg"`
+	Avg30Digg        int64   `json:"avg_30_digg"`
 	DiggFollowerRate float64 `json:"digg_follower_rate"`
 	Predict30Sales   float64 `json:"predict_30_sales"`
 	Predict30Gmv     float64 `json:"predict_30_gmv"`
