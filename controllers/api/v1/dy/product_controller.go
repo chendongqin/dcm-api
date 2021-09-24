@@ -1113,7 +1113,11 @@ func (receiver *ProductController) ProductWords() {
 	if len(info.Word) == 0 {
 		info.Word = []entity.DyAuthorWord{}
 	}
-	receiver.SuccReturn(info.Word)
+	receiver.SuccReturn(map[string]interface{}{
+		"hot_words":  info.Word,
+		"use_id_num": info.ContextNum["use_id_num"],
+		"msg_id_num": info.ContextNum["msg_id_num"],
+	})
 	return
 }
 

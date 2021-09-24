@@ -44,6 +44,7 @@ var DyProductMap = HbaseEntity{
 	"province":         {Json, "province"},
 	"city":             {Json, "city"},
 	"word":             {AJson, "word"},
+	"context_num":      {Json, "context_num"},
 	"ageDistrinbution": {Json, "age_distrinbution"},
 	//"tb_small_images":        {AJson, "tb_small_images"},
 }
@@ -97,7 +98,8 @@ type DyProduct struct {
 	City             []DyAuthorFansCity     `json:"city"`
 	AgeDistrinbution []DyAuthorFansAge      `json:"age_distrinbution"`
 	//弹幕热词
-	Word []DyAuthorWord `json:"word"`
+	Word       []DyAuthorWord   `json:"word"`
+	ContextNum map[string]int64 `json:"context_num"`
 	//TbSmallImages       []interface{} `json:"tb_small_images"`
 }
 
