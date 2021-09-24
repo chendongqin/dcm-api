@@ -917,7 +917,7 @@ func (a *AuthorBusiness) NewGetAuthorProductAnalyse(authorId, keyword, firstCate
 		}
 	}
 	for _, v := range awemeList {
-		if v.ShopId != "" {
+		if v.ShopId == shopId && shopId != "" {
 			hasShop = true
 		} else {
 			isRecommend = true
