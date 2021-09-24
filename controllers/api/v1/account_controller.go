@@ -366,7 +366,7 @@ func (receiver *AccountController) AddCollect() {
 	var comErr global.CommonError
 	switch platform {
 	case 1:
-		comErr = business.NewCollectBusiness().AddDyCollect(collectId, collectType, tagId, receiver.UserInfo.Id)
+		comErr = business.NewCollectBusiness().AddDyCollect(collectId, collectType, tagId, receiver.UserInfo.Id, receiver.HasAuth)
 	}
 	if comErr != nil {
 		receiver.FailReturn(comErr)
