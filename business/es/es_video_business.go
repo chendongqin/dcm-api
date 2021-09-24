@@ -274,27 +274,136 @@ func (e *EsVideoBusiness) SearchByProductId(productId, awemeId, keyword, sortStr
 }
 
 //获取达人带货商品数据
-func (e *EsVideoBusiness) SearchAwemeProductByAuthor(authorId, keyword, category, brandName, shopId string, startTime, endTime time.Time) (list []es.EsDyAuthorAwemeProduct, total int, comErr global.CommonError) {
+func (e *EsVideoBusiness) ScanAwemeProductByAuthor(authorId, keyword, category, secondCategory, thirdCategory, brandName, shopId string, shopType int, startTime, endTime time.Time, page, pageSize int) (list []es.EsDyAuthorAwemeProduct, total int, comErr global.CommonError) {
+	if shopType == 1 && shopId == "" {
+		return
+	}
 	esTable, connection, err := GetESTableByTime(es.DyAuthorAwemeProductTable, startTime, endTime)
 	if err != nil {
 		comErr = global.NewError(4000)
 		return
 	}
 	esQuery, esMultiQuery := elasticsearch.NewElasticQueryGroup()
-
+	esQuery.SetRange("aweme_create_time", map[string]interface{}{
+		"gte": startTime.Unix(),
+		"lt":  endTime.AddDate(0, 0, 1).Unix(),
+	})
 	esQuery.SetTerm("author_id", authorId)
 	if keyword != "" {
 		esQuery.SetMatchPhrase("title", keyword)
+	}
+	if category != "" {
+		esQuery.SetMatchPhrase("dcm_level_first.keyword", category)
+	}
+	if secondCategory != "" {
+		esQuery.SetMatchPhrase("first_cname.keyword", secondCategory)
+	}
+	if thirdCategory != "" {
+		esQuery.SetMatchPhrase("second_cname.keyword", thirdCategory)
+	}
+	if brandName != "" {
+		esQuery.SetTerm("brand_name.keyword", brandName)
+	}
+	if shopType == 1 {
+		esQuery.SetTerm("shop_id", shopId)
+	} else if shopType == 2 {
+		if shopId != "" {
+			esQuery.AddCondition(map[string]interface{}{
+				"bool": map[string]interface{}{
+					"must_not": map[string]interface{}{
+						"term": map[string]interface{}{
+							"shop_id": shopId,
+						},
+					},
+				},
+			})
+		}
 	}
 	results := esMultiQuery.
 		SetConnection(connection).
 		SetTable(esTable).
 		SetCache(600).
 		AddMust(esQuery.Condition).
-		SetLimit(0, 10000).
+		SetLimit((page-1)*pageSize, pageSize).
 		SetMultiQuery().
 		Query()
 	utils.MapToStruct(results, &list)
 	total = esMultiQuery.Count
+	return
+}
+
+//获取达人带货视频聚合
+func (e *EsVideoBusiness) AuthorProductAwemeSumList(authorId, productId, shopId, sortStr, orderBy string, startTime, endTime time.Time, page, pageSize int) (list []es.DyProductAwemeSum, total int, comErr global.CommonError) {
+	esTable, connection, err := GetESTableByTime(es.DyAuthorAwemeProductTable, startTime, endTime)
+	if err != nil {
+		comErr = global.NewError(4000)
+		return
+	}
+	esQuery, esMultiQuery := elasticsearch.NewElasticQueryGroup()
+	esQuery.SetRange("aweme_create_time", map[string]interface{}{
+		"gte": startTime.Unix(),
+		"lt":  endTime.AddDate(0, 0, 1).Unix(),
+	})
+	if authorId != "" {
+		esQuery.SetTerm("author_id", authorId)
+	}
+	if productId != "" {
+		esQuery.SetTerm("product_id", productId)
+	}
+	if shopId != "" {
+		esQuery.SetTerm("shop_id", shopId)
+
+	}
+	results := esMultiQuery.
+		SetConnection(connection).
+		SetTable(esTable).
+		SetCache(600).
+		AddMust(esQuery.Condition).
+		RawQuery(map[string]interface{}{
+			"query": map[string]interface{}{
+				"bool": map[string]interface{}{
+					"must": esQuery.Condition,
+				},
+			},
+			"size": 0,
+			"aggs": map[string]interface{}{
+				"awemes": map[string]interface{}{
+					"terms": map[string]interface{}{
+						"field": "aweme_id.keyword",
+						"size":  10000,
+					},
+					"aggs": map[string]interface{}{
+						"total_sales": map[string]interface{}{
+							"sum": map[string]interface{}{
+								"field": "sales",
+							},
+						},
+						"total_gmv": map[string]interface{}{
+							"sum": map[string]interface{}{
+								"field": "gmv",
+							},
+						},
+						"r_bucket_sort": map[string]interface{}{
+							"bucket_sort": map[string]interface{}{
+								"sort": map[string]interface{}{
+									"total_" + sortStr: map[string]interface{}{
+										"order": orderBy,
+									},
+								},
+								"from": (page - 1) * pageSize,
+								"size": pageSize,
+							},
+						},
+					},
+				},
+			},
+		})
+	res := elasticsearch.GetBuckets(results, "awemes")
+	utils.MapToStruct(res, &list)
+	if h, ok := results["hits"]; ok {
+		if t, ok2 := h.(map[string]interface{})["total"]; ok2 {
+			total = utils.ToInt(t.(float64))
+		}
+	}
 	return
 }

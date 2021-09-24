@@ -202,6 +202,23 @@ func GetAuthorFansClub(authorId string) (data entity.DyLiveFansClub, comErr glob
 	return
 }
 
+//达人小店|品牌
+func GetAuthorStore(authorId string) (data entity.DyAuthorStore, comErr global.CommonError) {
+	query := hbasehelper.NewQuery()
+	result, err := query.SetTable(hbaseService.HbaseDyAuthorStore).GetByRowKey([]byte(authorId))
+	if err != nil {
+		comErr = global.NewMsgError(err.Error())
+		return
+	}
+	if result.Row == nil {
+		comErr = global.NewError(4040)
+		return
+	}
+	reputationMap := hbaseService.HbaseFormat(result, entity.DyAuthorStoreMap)
+	utils.MapToStruct(reputationMap, &data)
+	return
+}
+
 //达人（带货）口碑
 func GetAuthorReputation(authorId string) (data entity.DyReputation, comErr global.CommonError) {
 	query := hbasehelper.NewQuery()

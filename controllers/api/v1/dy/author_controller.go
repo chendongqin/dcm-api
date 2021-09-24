@@ -208,6 +208,7 @@ func (receiver *AuthorController) AuthorBaseData() {
 		ForwardCount:         authorBase.ForwardCount,
 		ForwardCountBefore:   basicBefore.ForwardCount,
 	}
+	authorStore, _ := hbase.GetAuthorStore(authorId)
 	returnMap := map[string]interface{}{
 		"author_base": authorBase.Data,
 		"room_count":  authorBase.LiveCount,
@@ -222,6 +223,10 @@ func (receiver *AuthorController) AuthorBaseData() {
 		"rank":      nil,
 		"tags":      authorBase.Tags,
 		"basic":     basic,
+		"shop": dy2.DyAuthorStoreSimple{
+			ShopId:   authorStore.Id,
+			ShopName: authorStore.ShopName,
+		},
 	}
 	receiver.SuccReturn(returnMap)
 	return
@@ -839,7 +844,7 @@ func (receiver *AuthorController) AuthorProductAnalyse() {
 		firstCate = ""
 	}
 	authorBusiness := business.NewAuthorBusiness()
-	list, analysisCount, cateList, brandList, total, comErr := authorBusiness.GetAuthorProductAnalyse(authorId, keyword, firstCate, secondCate, thirdCate, brandName, sortStr, orderBy, shopType, startTime, endTime, page, pageSize)
+	list, analysisCount, cateList, brandList, total, comErr := authorBusiness.NewGetAuthorProductAnalyse(authorId, keyword, firstCate, secondCate, thirdCate, brandName, sortStr, orderBy, shopType, startTime, endTime, page, pageSize)
 	if comErr != nil {
 		receiver.FailReturn(comErr)
 		return
