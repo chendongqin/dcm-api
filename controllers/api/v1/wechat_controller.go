@@ -73,9 +73,11 @@ func (receiver *WechatController) Receive() {
 		server.SkipValidate(true)
 	}
 	server.SetMessageHandler(func(msg *message.MixMessage) *message.Reply {
-		logs.Error("[微信回调]=>请求参数:[%s],事件内容:[%s]", inputData, msg)
+		logs.Error("[微信回调]=>请求参数:[%s]", inputData)
 		//回复消息：演示回复用户发送的消息
-		userWechat, err := business.NewWechatBusiness().GetInfoByOpenId(msg.GetOpenID())
+		openId := msg.GetOpenID()
+		userWechat, err := business.NewWechatBusiness().GetInfoByOpenId(openId)
+		logs.Error("openId:%+v,userWechat:%+v", openId, userWechat)
 		if err != nil {
 			logs.Error("[微信回调] 获取用户信息失败, err: %s", err)
 			return nil
@@ -83,8 +85,8 @@ func (receiver *WechatController) Receive() {
 		var text *message.Text
 		text = message.NewText(global.WECHATLOGINMSG) //TODO 事件推送返回信息 可以抽象出来 也可以后台配置
 		//msg.EventKey 返回场景基本都是qrscene_你自己定义场景key
+		logs.Error("MsgType:%s,Event:%s,EventKey:%s", msg.MsgType, msg.Event, msg.EventKey)
 		if msg.MsgType == message.MsgTypeEvent {
-			logs.Error("MsgType:%s,Event:%s", msg.MsgType, msg.Event)
 			switch msg.Event {
 			case message.EventSubscribe:
 				//自定义evnet_key 解析
