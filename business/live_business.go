@@ -21,13 +21,11 @@ func NewLiveBusiness() *LiveBusiness {
 
 func (l *LiveBusiness) RoomCurAndPmtProductById(roomId, productId string) (curProductCount dy.LiveCurProductCount, ptmSales []dy.LiveRoomProductSaleStatus, ptmPv int64, comErr global.CommonError) {
 	roomProduct, comErr := hbase.GetRoomProductInfo(roomId + "_" + productId)
-	if comErr != nil {
-		return
-	}
+	roomCurProduct, comErr := hbase.GetRoomCurProduct(roomId + "_" + productId)
 	curProductCount = dy.LiveCurProductCount{
 		CurList: []dy.LiveCurProduct{},
 	}
-	for k, v := range roomProduct.Promotion {
+	for k, v := range roomCurProduct.Promotion {
 		if v.EndTime == 0 {
 			continue
 		}
