@@ -47,6 +47,39 @@ func GetRoomProductInfo(rowKey string) (data entity.DyRoomProduct, comErr global
 	return
 }
 
+//直播间全网销量
+func GetRoomProductTrend(rowKey string) (data entity.DyRoomProductTrendInfo, comErr global.CommonError) {
+	query := hbasehelper.NewQuery()
+	result, err := query.SetTable(hbaseService.HbaseDyRoomProductTrend).GetByRowKey([]byte(rowKey))
+	if err != nil {
+		comErr = global.NewMsgError(err.Error())
+		return
+	}
+	if result.Row == nil {
+		comErr = global.NewError(4040)
+		return
+	}
+	infoMap := hbaseService.HbaseFormat(result, entity.DyRoomProductTrendMap)
+	utils.MapToStruct(infoMap, &data)
+	return
+}
+
+func GetRoomCurProduct(rowKey string) (data entity.DyRoomCurProduct, comErr global.CommonError) {
+	query := hbasehelper.NewQuery()
+	result, err := query.SetTable(hbaseService.HbaseDyRoomCurProduct).GetByRowKey([]byte(rowKey))
+	if err != nil {
+		comErr = global.NewMsgError(err.Error())
+		return
+	}
+	if result.Row == nil {
+		comErr = global.NewError(4040)
+		return
+	}
+	infoMap := hbaseService.HbaseFormat(result, entity.DyRoomCurProductMap)
+	utils.MapToStruct(infoMap, &data)
+	return
+}
+
 func GetRoomProductInfoRangDate(startRowKey, stopRowKey string) (data map[string]entity.DyRoomProduct, comErr global.CommonError) {
 	query := hbasehelper.NewQuery()
 	results, err := query.

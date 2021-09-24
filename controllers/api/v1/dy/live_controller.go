@@ -522,7 +522,7 @@ func (receiver *LiveController) LiveProductSaleChart() {
 		receiver.FailReturn(global.NewError(4000))
 		return
 	}
-	info, _ := hbase.GetRoomProductInfo(roomId + "_" + productId)
+	info, _ := hbase.GetRoomProductTrend(roomId + "_" + productId)
 	trends := business.RoomProductTrendOrderByTime(info.TrendData)
 	timestamps := make([]int64, 0)
 	sales := make([]float64, 0)
