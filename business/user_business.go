@@ -14,6 +14,13 @@ import (
 	"time"
 )
 
+//用户等级
+const (
+	//用户状态
+	UserStatusNormal  = 1 //正常状态
+	UserStatusDisable = 0 //禁用状态
+)
+
 type UserBusiness struct {
 }
 

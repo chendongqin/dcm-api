@@ -629,3 +629,19 @@ func (receiver *AccountController) BindWeChat() {
 	})
 	return
 }
+
+//用户注销
+func (receiver *AccountController) Cancel() {
+	userBusiness := business.NewUserBusiness()
+	updateData := map[string]interface{}{
+		"status": business.UserStatusDisable,
+	}
+	affect, _ := userBusiness.UpdateUserAndClearCache(nil, receiver.UserId, updateData)
+	if affect == 0 {
+		receiver.FailReturn(global.NewError(4216))
+		return
+	}
+	receiver.Logout()
+	receiver.SuccReturn(nil)
+	return
+}
