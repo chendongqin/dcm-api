@@ -692,6 +692,9 @@ func (receiver *RankController) VideoProductRank() {
 	if !receiver.HasAuth && total > receiver.MaxTotal {
 		total = receiver.MaxTotal
 	}
+	for i := 0; i < len(list); i++ {
+		list[i].ProductId = business.IdDecrypt(list[i].ProductId)
+	}
 	ret := map[string]interface{}{
 		"list":      list,
 		"has_login": receiver.HasLogin,
@@ -711,6 +714,17 @@ func (receiver *RankController) LiveProductRank() {
 	orderBy := receiver.GetString("order_by", "desc")
 	page := receiver.GetPage("page")
 	pageSize := receiver.GetPageSize("page_size", 10, 100)
+	switch sortStr {
+	case "live_count":
+		sortStr = "awemenum"
+		break
+	case "gmv":
+		sortStr = "saleroom"
+		break
+	case "cos_fee":
+		sortStr = "fee"
+		break
+	}
 	if date == "" {
 		receiver.FailReturn(global.NewError(4000))
 		return
@@ -810,7 +824,7 @@ func (receiver *RankController) LiveProductRank() {
 	list := make([]entity.DyLiveProductSaleTopRank, 0)
 	for i := 0; i < len(orginList); i++ {
 		tempData := entity.DyLiveProductSaleTopRank{}
-		tempData.ProductId = orginList[i].ProductId
+		tempData.ProductId = business.IdEncrypt(orginList[i].ProductId)
 		tempData.Images = orginList[i].Image
 		tempData.Title = orginList[i].Title
 		tempData.LiveCount = orginList[i].RoomNum
