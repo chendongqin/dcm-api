@@ -623,7 +623,6 @@ func (receiver *RankController) VideoProductRank() {
 			receiver.FailReturn(global.NewError(4000))
 			return
 		}
-
 		weekRange := startTime.Format("20060102") + firstDay + endDay
 		key := weekRange + "_" + fCate + "_" + sortStr
 		rowKey = utils.Md5_encode(key)
@@ -760,7 +759,7 @@ func (receiver *RankController) LiveProductRank() {
 	end := page * pageSize
 	total := 0
 	finished := false
-	orginList := make([]entity.ShortVideoProduct, 0)
+	orginList := make([]entity.LiveProduct, 0)
 	if orderBy == "asc" {
 		for i := 0; i < 5; i++ {
 			tempData, _ := hbase.GetLiveProductRank(rowKey, i)
@@ -814,12 +813,13 @@ func (receiver *RankController) LiveProductRank() {
 		tempData.ProductId = orginList[i].ProductId
 		tempData.Images = orginList[i].Image
 		tempData.Title = orginList[i].Title
-		tempData.LiveCount = orginList[i].AwemeNum
+		tempData.LiveCount = orginList[i].RoomNum
 		tempData.PlatformLabel = orginList[i].PlatformLabel
 		tempData.Price = orginList[i].Price
 		tempData.CosFee = orginList[i].CosFee
 		tempData.CosRatio = orginList[i].CosRatio
 		tempData.Gmv = orginList[i].Saleroom
+		tempData.Sales = float64(orginList[i].Sales)
 		list = append(list, tempData)
 	}
 
