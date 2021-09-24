@@ -279,10 +279,11 @@ func IdDecrypt(id string) string {
 		return ""
 	}
 	if strings.Index(id, "==") != 0 {
-		if global.IsDev() {
-			return id
-		}
-		return ""
+		return id
+		//if global.IsDev() {
+		//	return id
+		//}
+		//return ""
 	}
 	id = strings.Replace(id, "==", "", 1)
 	key := []byte("dwVRjLVUN4RMGAKSEvuvPV696PKrEuRT")

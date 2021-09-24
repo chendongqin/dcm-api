@@ -50,3 +50,12 @@ type DyShopBaseDetail struct {
 	D30Pct       int64   `json:"30d_pct"`        //30天客单价
 	D30Rate      float64 `json:"30d_rate"`       //30天转化率
 }
+
+//小店商品品类销售额TOP
+type GoodsCatTop struct {
+	Name  string `json:"name"`  //品类名称
+	Value int64  `json:"value"` //商品数量
+	Gmv   int64  `json:"gmv"`   //销售额
+	Sales int64  `json:"sales"` //销量
+
+}
