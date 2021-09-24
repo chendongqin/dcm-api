@@ -440,6 +440,7 @@ func (receiver *AuthorController) AuthorViewData() {
 	if authorBase.AwemeCount != 0 {
 		data.VideoCount.AvgDigg = authorBase.DiggCount / int64(authorBase.AwemeCount)
 	}
+	data.VideoCount.Avg30Digg = videoSumData.AvgDigg
 	firstLiveTimestamp := authorBase.FirstLiveTime - (authorBase.FirstLiveTime % 86400)
 	firstVideoTimestamp := authorBase.FirstAwemeTime - (authorBase.FirstAwemeTime % 86400)
 	if firstLiveTimestamp > 0 {

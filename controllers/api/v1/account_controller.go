@@ -203,8 +203,8 @@ func (receiver *AccountController) Info() {
 	return
 }
 
-//登出
-func (receiver *AccountController) Logout() {
+//登出清楚缓存
+func logOutClear(receiver *AccountController) {
 	cacheKey := cache.GetCacheKey(cache.UserPlatformUniqueToken, receiver.AppId, receiver.UserId)
 	_ = global.Cache.Delete(cacheKey)
 	//执行登出事件
@@ -215,9 +215,14 @@ func (receiver *AccountController) Logout() {
 	userBusiness.DeleteUserInfoCache(receiver.UserInfo.Id)
 	//退出登录成功
 	business.NewWechatBusiness().LoginOutWechatMsg(&receiver.UserInfo)
+
+}
+
+//登出
+func (receiver *AccountController) Logout() {
+	logOutClear(receiver)
 	receiver.SuccReturn("success")
 	return
-
 }
 
 func (receiver *AccountController) DyUserSearchSave() {
@@ -634,14 +639,16 @@ func (receiver *AccountController) BindWeChat() {
 func (receiver *AccountController) Cancel() {
 	userBusiness := business.NewUserBusiness()
 	updateData := map[string]interface{}{
-		"status": business.UserStatusDisable,
+		"status": business.UserStatusCancel,
 	}
 	affect, _ := userBusiness.UpdateUserAndClearCache(nil, receiver.UserId, updateData)
 	if affect == 0 {
 		receiver.FailReturn(global.NewError(4216))
 		return
 	}
-	receiver.Logout()
-	receiver.SuccReturn(nil)
+	logOutClear(receiver)
+	receiver.SuccReturn(map[string]interface{}{
+		"msg": "注销申请成功，将在3-7日内删除！",
+	})
 	return
 }
