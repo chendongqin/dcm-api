@@ -568,10 +568,8 @@ func (a *AuthorBusiness) GetAuthorProductAnalyse(authorId, keyword, firstCate, s
 	cateList = []dy.DyCate{}
 	brandList = []dy.NameValueChart{}
 	shopId := ""
-	if shopType != 0 {
-		authorReputation, _ := a.HbaseGetAuthorReputation(authorId)
-		shopId = authorReputation.EncryptShopID
-	}
+	authorStore, _ := hbase.GetAuthorStore(authorId)
+	shopId = authorStore.Id
 	if shopType == 1 && shopId == "" {
 		return
 	}
@@ -810,10 +808,8 @@ func (a *AuthorBusiness) NewGetAuthorProductAnalyse(authorId, keyword, firstCate
 	cateList = []dy.DyCate{}
 	brandList = []dy.NameValueChart{}
 	shopId := ""
-	if shopType != 0 {
-		authorReputation, _ := a.HbaseGetAuthorReputation(authorId)
-		shopId = authorReputation.EncryptShopID
-	}
+	authorStore, _ := hbase.GetAuthorStore(authorId)
+	shopId = authorStore.Id
 	if shopType == 1 && shopId == "" {
 		return
 	}

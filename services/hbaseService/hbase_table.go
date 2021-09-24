@@ -12,6 +12,7 @@ const (
 	HbaseDyRoomProduct              = "dy_room_product"                //直播间商品全网销量
 	HbaseDyLiveRankTrend            = "dy_live_rank_trend"             //直播间榜单排名数据
 	HbaseDyReputation               = "dy_reputation"                  //带货口碑
+	HbaseDyAuthorStore              = "dy_author_store"                //达人小店
 	HbaseDyAuthorProductDateMapping = "dy_author_product_date_mapping" //达人带货
 
 	HbaseDyAweme                        = "dy_aweme"                            //抖音视频
