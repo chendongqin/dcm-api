@@ -32,7 +32,14 @@ func (receiver *PayController) DySurplusValue() {
 	}
 	surplusDay := vip.Expiration.Sub(time.Now()).Hours() / 24
 	if surplusDay <= 0 || !receiver.HasAuth {
-		receiver.FailReturn(global.NewMsgError("非会员无法扩充团队"))
+		receiver.SuccReturn(map[string]interface{}{
+			"now_surplus_day": 0,
+			"now_value":       0,
+			"value":           0,
+			"prime_value":     0,
+			"price_config":    0,
+		})
+		return
 	}
 	//当前团队续费金额
 	total := business.NewVipBusiness().GetVipLevel(receiver.UserId, 1).SubNum
