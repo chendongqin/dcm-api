@@ -12,6 +12,7 @@ func init() {
 			beego.NSRouter("/password", &v1.AccountController{}, "put:ResetPwd"),
 			beego.NSRouter("/info", &v1.AccountController{}, "get:Info"),
 			beego.NSRouter("/logout", &v1.AccountController{}, "get:Logout"),
+			beego.NSRouter("/cancel", &v1.AccountController{}, "get:Cancel"),
 			beego.NSRouter("/wechat/bind", &v1.AccountController{}, "put:BindWeChat"),
 			beego.NSRouter("/mobile/change", &v1.AccountController{}, "put:ChangeMobile"),
 			beego.NSRouter("/mobile/exist", &v1.AccountController{}, "get:MobileExist"),
