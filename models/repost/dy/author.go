@@ -136,3 +136,8 @@ type DyAuthorIncome struct {
 	UniqueId     string `json:"unique_id"`
 	IsCollection int    `json:"is_collection"`
 }
+
+type DyAuthorStoreSimple struct {
+	ShopId   string `json:"shop_id"`
+	ShopName string `json:"shop_name"`
+}
