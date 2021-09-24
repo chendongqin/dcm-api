@@ -187,6 +187,12 @@ func (receiver *CollectBusiness) AddDyCollect(collectId string, collectType, tag
 	} else if count > 0 && !hasAuth {
 		comErr = global.NewError(4004)
 		return comErr
+	} else if collectType == 4 && count >= 500 {
+		comErr = global.NewMsgError("小店收藏上限500条")
+		return comErr
+	} else if count >= 1000 {
+		comErr = global.NewMsgError("收藏上限1000条")
+		return comErr
 	}
 	exist, err := dbCollect.Where("user_id=? AND collect_type=? AND collect_id=?", userId, collectType, collectId).Get(&collect)
 	if err != nil {
