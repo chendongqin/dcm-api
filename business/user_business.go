@@ -192,6 +192,11 @@ func (receiver *UserBusiness) SmsLogin(mobile, code, password, unionid string, a
 	} else {
 		user.Nickname = mobile[:3] + "****" + mobile[7:]
 	}
+	_, err = dcm.GetDbSession().Update(&user)
+	if err != nil {
+		comErr = global.NewError(5000)
+		return
+	}
 	tokenString, expire, err = receiver.CreateToken(appId, user.Id, 604800)
 	if err != nil {
 		comErr = global.NewError(5000)
