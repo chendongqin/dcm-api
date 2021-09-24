@@ -1156,7 +1156,7 @@ func (a *AuthorBusiness) GetAuthorProductRooms(authorId, productId string, start
 			Sales:        math.Floor(room.TotalSales.Value),
 		}
 		if r, exist := rooms[room.Key]; exist {
-			item.Title = dyimg.Fix(r.Title)
+			item.Title = r.Title
 			item.Cover = dyimg.Fix(r.Cover)
 		}
 		list = append(list, item)
