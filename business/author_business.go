@@ -834,7 +834,7 @@ func (a *AuthorBusiness) NewGetAuthorProductAnalyse(authorId, keyword, firstCate
 	liveList, _, _ := es.NewEsLiveBusiness().ScanLiveProductByAuthor(authorId, keyword, firstCate, secondCate, thirdCate, brandName, shopId, shopType, startTime, endTime, 1, 10000)
 	awemeList, _, _ := es.NewEsVideoBusiness().ScanAwemeProductByAuthor(authorId, keyword, firstCate, secondCate, thirdCate, brandName, shopId, shopType, startTime, endTime, 1, 10000)
 	for _, v := range liveList {
-		if v.ShopId != "" {
+		if v.ShopId == shopId && shopId != "" {
 			hasShop = true
 		} else {
 			isRecommend = true
