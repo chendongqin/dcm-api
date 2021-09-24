@@ -392,6 +392,13 @@ func (c *ApiBaseController) GetPageSize(key string, defSize int, maxSize int) (s
 	return
 }
 
+func (c *ApiBaseController) CheckPageSize(pageSize int) (size int) {
+	if c.AppId == (10004) {
+		return 50
+	}
+	return pageSize
+}
+
 func (c *ApiBaseController) GetStringWithQualified(key string, def string, qualified ...string) string {
 	str := c.GetString(key, def)
 	if str != def {
