@@ -12,7 +12,6 @@ import (
 	"dongchamao/models/repost/dy"
 	"dongchamao/services/dyimg"
 	"math"
-	"strconv"
 	"time"
 )
 
@@ -617,13 +616,14 @@ func (receiver *RankController) VideoProductRank() {
 	case 2: //周榜
 		startTime := dateTime
 		lastWeekStartTime := dateTime.AddDate(0, 0, -7)
-		firstDay := strconv.Itoa(lastWeekStartTime.Day())
+		firstDay := lastWeekStartTime.Format("02")
 		lastWeekEndTime := dateTime.AddDate(0, 0, -1)
-		endDay := strconv.Itoa(lastWeekEndTime.Day())
+		endDay := lastWeekEndTime.Format("02")
 		if startTime.Weekday() != 1 {
 			receiver.FailReturn(global.NewError(4000))
 			return
 		}
+
 		weekRange := startTime.Format("20060102") + firstDay + endDay
 		key := weekRange + "_" + fCate + "_" + sortStr
 		rowKey = utils.Md5_encode(key)
@@ -732,9 +732,9 @@ func (receiver *RankController) LiveProductRank() {
 	case 2: //周榜
 		startTime := dateTime
 		lastWeekStartTime := dateTime.AddDate(0, 0, -7)
-		firstDay := strconv.Itoa(lastWeekStartTime.Day())
+		firstDay := lastWeekStartTime.Format("02")
 		lastWeekEndTime := dateTime.AddDate(0, 0, -1)
-		endDay := strconv.Itoa(lastWeekEndTime.Day())
+		endDay := lastWeekEndTime.Format("02")
 		if startTime.Weekday() != 1 {
 			receiver.FailReturn(global.NewError(4000))
 			return
