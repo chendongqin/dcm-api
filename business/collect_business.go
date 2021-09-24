@@ -178,10 +178,16 @@ func (receiver *CollectBusiness) GetDyCollectLabel(userId, collectType int) (dat
 }
 
 //收藏达人
-func (receiver *CollectBusiness) AddDyCollect(collectId string, collectType, tagId, userId int) (comErr global.CommonError) {
+func (receiver *CollectBusiness) AddDyCollect(collectId string, collectType, tagId, userId int, hasAuth bool) (comErr global.CommonError) {
 	collect := dcm.DcUserDyCollect{}
 	dbCollect := dcm.GetDbSession().Table(collect)
 	defer dbCollect.Close()
+	if count, err := dbCollect.Where("user_id=? and collect_type=? and status=?", userId, collectType, 1).Count(); err != nil {
+		return nil
+	} else if count > 0 && !hasAuth {
+		comErr = global.NewError(4004)
+		return comErr
+	}
 	exist, err := dbCollect.Where("user_id=? AND collect_type=? AND collect_id=?", userId, collectType, collectId).Get(&collect)
 	if err != nil {
 		comErr = global.NewError(5000)
