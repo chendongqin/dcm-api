@@ -672,6 +672,10 @@ func (receiver *ProductController) ProductAuthorView() {
 		return
 	}
 	salesTop3, liveSalesTop3, awemeSalesTop3, comErr := business.NewProductBusiness().ProductAuthorView(productId, startTime, endTime)
+	if comErr != nil {
+		receiver.FailReturn(comErr)
+		return
+	}
 	receiver.SuccReturn(map[string]interface{}{
 		"sales_top3":       salesTop3,
 		"live_sales_top3":  liveSalesTop3,
