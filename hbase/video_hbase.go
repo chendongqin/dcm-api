@@ -35,7 +35,7 @@ func GetVideoByIds(awemeIds []string) (map[string]entity.DyAweme, error) {
 		duration := math.Ceil(float64(data.Data.Duration) / 1000)
 		data.Data.Duration = utils.ToInt(duration)
 		data.AwemeID = string(v.Row)
-		data.Data.AwemeTitle = data.AwemeTitle
+		data.AwemeTitle = data.Data.AwemeTitle
 		data.Data.CrawlTime = data.CrawlTime
 		data.Data.AwemeCover = dyimg.Fix(data.Data.AwemeCover)
 		infoMap[data.AwemeID] = data
@@ -60,7 +60,7 @@ func GetVideo(awemeId string) (data entity.DyAweme, comErr global.CommonError) {
 	duration := math.Ceil(float64(data.Data.Duration) / 1000)
 	data.Data.Duration = utils.ToInt(duration)
 	data.AwemeID = string(result.Row)
-	data.Data.AwemeTitle = data.AwemeTitle
+	data.AwemeTitle = data.Data.AwemeTitle
 	data.Data.CrawlTime = data.CrawlTime
 	data.Data.AwemeCover = dyimg.Fix(data.Data.AwemeCover)
 	return
