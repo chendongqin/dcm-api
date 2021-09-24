@@ -449,6 +449,10 @@ func (receiver *AccountController) UpdCollectTag() {
 
 //抖音达人收藏分组
 func (receiver *AccountController) GetDyCollectTags() {
+	if !receiver.HasLogin {
+		receiver.SuccReturn(map[string]interface{}{"total": 0, "list": []repost.CollectTagRet{}})
+		return
+	}
 	collectType, err := receiver.GetInt("collect_type", 1)
 	if err != nil {
 		receiver.FailReturn(global.NewError(5000))
