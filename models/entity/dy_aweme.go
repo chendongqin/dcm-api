@@ -7,11 +7,11 @@ var DyAwemeMap = HbaseEntity{
 	"data":             {Json, "data"},
 	"hot_word_show":    {Json, "hot_word_show"},
 	"context_num":      {Json, "context_num"},
-	"gender":           {Json, "gender"},
-	"province":         {Json, "province"},
-	"city":             {Json, "city"},
+	"gender":           {AJson, "gender"},
+	"province":         {AJson, "province"},
+	"city":             {AJson, "city"},
 	"word":             {AJson, "word"},
-	"ageDistrinbution": {Json, "age_distrinbution"},
+	"ageDistrinbution": {AJson, "age_distrinbution"},
 }
 
 type DyAweme struct {
