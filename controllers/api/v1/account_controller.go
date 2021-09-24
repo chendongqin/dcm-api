@@ -10,7 +10,6 @@ import (
 	"dongchamao/models/dcm"
 	"dongchamao/models/repost"
 	"dongchamao/models/repost/dy"
-	"fmt"
 	jsoniter "github.com/json-iterator/go"
 	"strings"
 	"time"
@@ -640,14 +639,13 @@ func (receiver *AccountController) BindWeChat() {
 func (receiver *AccountController) Cancel() {
 	userBusiness := business.NewUserBusiness()
 	updateData := map[string]interface{}{
-		"status": business.UserStatusDisable,
+		"status": business.UserStatusCancel,
 	}
 	affect, _ := userBusiness.UpdateUserAndClearCache(nil, receiver.UserId, updateData)
 	if affect == 0 {
 		receiver.FailReturn(global.NewError(4216))
 		return
 	}
-	fmt.Println("aaaa")
 	logOutClear(receiver)
 	receiver.SuccReturn(map[string]interface{}{
 		"msg": "注销申请成功，将在3-7日内删除！",

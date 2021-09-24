@@ -17,8 +17,9 @@ import (
 //用户等级
 const (
 	//用户状态
-	UserStatusNormal  = 1 //正常状态
-	UserStatusDisable = 0 //禁用状态
+	UserStatusNormal  = 1  //正常状态
+	UserStatusDisable = 0  //禁用状态
+	UserStatusCancel  = -1 //注销状态
 )
 
 type UserBusiness struct {
@@ -121,7 +122,11 @@ func (receiver *UserBusiness) LoginByPwd(username, pwd string, appId int) (user 
 		return
 	}
 	if user.Status != 1 {
-		comErr = global.NewError(4212)
+		if user.Status == 0 {
+			comErr = global.NewError(4212)
+			return
+		}
+		comErr = global.NewError(4217)
 		return
 	}
 	expire = 604800
