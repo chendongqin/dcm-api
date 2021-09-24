@@ -472,8 +472,8 @@ func (receiver *LiveMonitorBusiness) CheckRepeat(userId int, authorId string, st
 func (receiver *LiveMonitorBusiness) AddLiveMonitor(liveMonitor *dcm.DcLiveMonitor) (lastId int64, err error) {
 	dbSession := dcm.GetDbSession()
 	defer dbSession.Close()
-
-	if liveMonitor.StartTime.Before(time.Now()) {
+	now := time.Now()
+	if liveMonitor.StartTime.Before(now) {
 		liveMonitor.Status = 1
 	}
 	_ = dbSession.Begin()
@@ -498,7 +498,7 @@ func (receiver *LiveMonitorBusiness) AddLiveMonitor(liveMonitor *dcm.DcLiveMonit
 	}
 	lastId = int64(liveMonitor.Id)
 	author, _ := hbase.GetAuthor(liveMonitor.AuthorId)
-	if author.RoomId != "" {
+	if liveMonitor.StartTime.Before(now) && liveMonitor.EndTime.After(now) && author.RoomId != "" {
 		if room, err := hbase.GetLiveInfo(author.RoomId); err == nil {
 			receiver.AddByMonitor(dbSession, liveMonitor, &room)
 		}
