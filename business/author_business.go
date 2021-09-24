@@ -367,6 +367,7 @@ func (a *AuthorBusiness) CountLiveRoomAnalyse(authorId string, startTime, endTim
 	roomsMap, _ := hbase.GetAuthorRoomsRangDate(authorId, startTime, endTime)
 	liveDataList := make([]dy.DyLiveRoomAnalyse, 0)
 	roomNum := 0
+	productRoomNum := 0
 	for _, rooms := range roomsMap {
 		roomNum += len(rooms)
 	}
@@ -428,6 +429,9 @@ func (a *AuthorBusiness) CountLiveRoomAnalyse(authorId string, startTime, endTim
 		}
 		if _, ok := dateRoomMap[date]; !ok {
 			dateRoomMap[date] = []dy.DyLiveRoomChart{}
+		}
+		if v.PromotionNum > 0 {
+			productRoomNum++
 		}
 		dateRoomMap[date] = append(dateRoomMap[date], dy.DyLiveRoomChart{
 			RoomId:    v.RoomId,
@@ -531,6 +535,8 @@ func (a *AuthorBusiness) CountLiveRoomAnalyse(authorId string, startTime, endTim
 	if data.UserData.AvgUserTotal > 0 {
 		data.SaleData.SaleRate = float64(data.SaleData.AvgVolume) / float64(data.UserData.AvgUserTotal)
 	}
+	data.UserData.PromotionLiveNum = productRoomNum
+	data.UserData.LiveNum = len(liveDataList)
 	data.UserTotalChart = dy.DyUserTotalChart{
 		Date:       dateChart,
 		CountValue: userTotalChart,

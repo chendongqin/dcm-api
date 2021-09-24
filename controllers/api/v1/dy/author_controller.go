@@ -224,7 +224,7 @@ func (receiver *AuthorController) AuthorBaseData() {
 		"tags":      authorBase.Tags,
 		"basic":     basic,
 		"shop": dy2.DyAuthorStoreSimple{
-			ShopId:   authorStore.Id,
+			ShopId:   business.IdEncrypt(authorStore.Id),
 			ShopName: authorStore.ShopName,
 		},
 	}
@@ -429,6 +429,7 @@ func (receiver *AuthorController) AuthorViewData() {
 		},
 		VideoCount: dy2.DyAuthorBaseVideoCount{
 			VideoCount:       int64(authorBase.AwemeCount),
+			Video30Count:     int64(videoSumData.Total),
 			DiggFollowerRate: authorBase.DiggFollowerRate,
 			Predict30Sales:   float64(videoSumData.Sales),
 			Predict30Gmv:     videoSumData.Gmv,
