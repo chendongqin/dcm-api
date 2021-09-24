@@ -94,7 +94,7 @@ func (receiver *CommonController) Sms() {
 	code := utils.GetRandomInt(6)
 	res, smsErr := aliSms.SmsCode(mobile, code)
 	if !res || logger.CheckError(smsErr) != nil {
-		business.NewMonitorBusiness().SendErr("短信验证码错误", fmt.Sprintf("%s,code:%s", smsErr.Error(), code))
+		business.NewMonitorBusiness().SendErr("短信验证码错误", fmt.Sprintf("env:%s,error:%s,mobile:%s,code:%s", global.IsDev(), smsErr.Error(), mobile, code))
 		receiver.FailReturn(global.NewError(6000))
 		return
 	}
