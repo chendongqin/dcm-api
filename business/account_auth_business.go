@@ -38,9 +38,9 @@ var LoginWitheUri = []string{
 	"/v1/dy/author/reputation",
 	"/v1/dy/xt/author/index",
 	"/v1/dy/author/fans/list",
-	"v1/dy/live/monitor/calc",
+	"/v1/dy/live/monitor/calc",
 	//达人收藏
-	"v1/account/collect/dy/tag/list",
+	"/v1/account/collect/dy/tag/list",
 	"/v1/account/collect/exist",
 	"/v1/dy/author/view",
 	"/v1/dy/author/basic/chart",
