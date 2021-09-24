@@ -194,7 +194,7 @@ func (receiver *AuthorController) AuthorBaseData() {
 	reputation, _ := authorBusiness.HbaseGetAuthorReputation(authorId)
 	fansClub, _ := hbase.GetAuthorFansClub(authorId)
 	//todo 昨天数据取前天
-	basicBefore, _ := hbase.GetAuthorBasic(authorId, time.Now().AddDate(0, 0, -2).Format("20060102"))
+	basicBefore, _ := hbase.GetAuthorBasic(authorId, time.Now().AddDate(0, 0, -1).Format("20060102"))
 	authorBase.Data.ID = business.IdEncrypt(authorBase.Data.ID)
 	authorBase.Data.RoomID = business.IdEncrypt(authorBase.Data.RoomID)
 	basic := entity.DyAuthorBasic{
