@@ -1137,22 +1137,52 @@ func (a *AuthorBusiness) GetAuthorProductHbaseList(authorId, keyword string, sta
 //达人电商分析直播列表
 func (a *AuthorBusiness) GetAuthorProductRooms(authorId, productId string, startTime, stopTime time.Time, page, pageSize int, sortStr, orderBy string) (list []dy.DyAuthorProductRoom, total int, comErr global.CommonError) {
 	esLiveBusiness := es.NewEsLiveBusiness()
-	rooms, total, comErr := esLiveBusiness.GetAuthorProductSearchRoomList(authorId, productId, startTime, stopTime, page, pageSize, sortStr, orderBy)
+	roomSumList, total, comErr := esLiveBusiness.GetAuthorProductSearchRoomSumList(authorId, productId, startTime, stopTime, page, pageSize, sortStr, orderBy)
 	list = []dy.DyAuthorProductRoom{}
 	if total == 0 || comErr != nil {
 		return
 	}
-	for _, room := range rooms {
-		list = append(list, dy.DyAuthorProductRoom{
-			RoomId:       IdEncrypt(room.RoomID),
-			Cover:        dyimg.Fix(room.Cover),
-			CreateTime:   room.LiveCreateTime,
-			Title:        room.Title,
-			MaxUserCount: room.MaxUserCount,
-			Gmv:          room.PredictGmv,
-			Sales:        math.Floor(room.PredictSales),
-		})
+	roomIds := []string{}
+	for _, v := range roomSumList {
+		roomIds = append(roomIds, v.Key)
 	}
+	rooms, _ := hbase.GetLiveInfoByIds(roomIds)
+	for _, room := range roomSumList {
+		item := dy.DyAuthorProductRoom{
+			RoomId:       IdEncrypt(room.Key),
+			CreateTime:   room.LiveCreateTime.Value,
+			MaxUserCount: room.MaxUserCount.Value,
+			Gmv:          room.TotalGmv.Value,
+			Sales:        math.Floor(room.TotalSales.Value),
+		}
+		if r, exist := rooms[room.Key]; exist {
+			item.Title = dyimg.Fix(r.Title)
+			item.Cover = dyimg.Fix(r.Cover)
+		}
+		list = append(list, item)
+	}
+	sort.Slice(list, func(i, j int) bool {
+		switch sortStr {
+		case "sales":
+			if orderBy == "desc" {
+				return list[i].Sales > list[j].Sales
+			} else {
+				return list[j].Sales > list[i].Sales
+			}
+		case "gmv":
+			if orderBy == "desc" {
+				return list[i].Gmv > list[j].Gmv
+			} else {
+				return list[j].Gmv > list[i].Gmv
+			}
+		default:
+			if orderBy == "desc" {
+				return list[i].CreateTime > list[j].CreateTime
+			} else {
+				return list[j].CreateTime > list[i].CreateTime
+			}
+		}
+	})
 	return
 }
 

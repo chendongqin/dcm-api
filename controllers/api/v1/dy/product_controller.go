@@ -186,8 +186,12 @@ func (receiver *ProductController) ProductBaseAnalysis() {
 		dstr := time.Unix(v.StartTime, 0).Format("20060102")
 		priceMap[dstr] = v.Price
 	}
+	stopTime := endTime
+	if stopTime.Format("20060102") == time.Now().Format("20060102") {
+		stopTime = stopTime.AddDate(0, 0, -1)
+	}
 	for {
-		if beginTime.After(endTime) {
+		if beginTime.After(stopTime) {
 			break
 		}
 		dateStr := beginTime.Format("01/02")
