@@ -35,6 +35,11 @@ func GetProductByIds(productIds []string) (map[string]entity.DyProduct, error) {
 			data.TbCouponInfo = ""
 		}
 		infoMap[data.ProductID] = data
+		if data.ManmadeCategory.FirstCname != "" {
+			data.Label = data.ManmadeCategory.FirstCname
+		} else if data.AiCategory.FirstCname != "" {
+			data.Label = data.AiCategory.FirstCname
+		}
 	}
 	return infoMap, nil
 }
@@ -57,6 +62,11 @@ func GetProductInfo(productId string) (data entity.DyProduct, comErr global.Comm
 	if data.TbCouponInfo == "null" {
 		data.TbCouponInfo = ""
 	}
+	if data.ManmadeCategory.FirstCname != "" {
+		data.Label = data.ManmadeCategory.FirstCname
+	} else if data.AiCategory.FirstCname != "" {
+		data.Label = data.AiCategory.FirstCname
+	}
 	return
 }
 
@@ -74,6 +84,9 @@ func GetDyProductBrand(productId string) (data entity.DyProductBrand, comErr glo
 	}
 	detailMap := hbaseService.HbaseFormat(result, entity.DyProductBrandMap)
 	utils.MapToStruct(detailMap, &data)
+	if data.ManmadeCategory.FirstCname != "" {
+		data.DcmLevelFirst = data.ManmadeCategory.FirstCname
+	}
 	return
 }
 
