@@ -551,6 +551,106 @@ func (receiver *EsLiveBusiness) GetAuthorProductSearchRoomList(authorId, product
 	return
 }
 
+func (receiver *EsLiveBusiness) GetAuthorProductSearchRoomSumList(authorId, productId string, startTime, stopTime time.Time, page, pageSize int, sortStr, orderBy string) (list []es.DyProductLiveRoomSum, total int, comErr global.CommonError) {
+	esTable, connection, err := GetESTableByTime(es.DyRoomProductRecordsTable, startTime, stopTime)
+	if err != nil {
+		comErr = global.NewError(4000)
+		return
+	}
+	if sortStr == "" {
+		sortStr = "live_create_time"
+	}
+	if sortStr != "live_create_time" {
+		sortStr = "total_" + sortStr
+	}
+	esQuery, esMultiQuery := elasticsearch.NewElasticQueryGroup()
+	if authorId != "" {
+		esQuery.SetTerm("author_id", authorId)
+	}
+	if productId != "" {
+		esQuery.SetTerm("product_id", productId)
+	}
+	if startTime.Unix() != stopTime.Unix() {
+		esQuery.SetRange("shelf_time", map[string]interface{}{
+			"gte": startTime.Unix(),
+			"lt":  stopTime.AddDate(0, 0, 1).Unix(),
+		})
+	}
+	if sortStr == "" {
+		sortStr = "shelf_time"
+	}
+	if orderBy == "" {
+		orderBy = "desc"
+	}
+	results := esMultiQuery.
+		SetConnection(connection).
+		SetTable(esTable).
+		AddMust(esQuery.Condition).
+		RawQuery(map[string]interface{}{
+			"query": map[string]interface{}{
+				"bool": map[string]interface{}{
+					"must": esQuery.Condition,
+				},
+			},
+			"size": 0,
+			"aggs": map[string]interface{}{
+				"rooms": map[string]interface{}{
+					"terms": map[string]interface{}{
+						"field": "room_id.keyword",
+						"size":  10000,
+					},
+					"aggs": map[string]interface{}{
+						"total_sales": map[string]interface{}{
+							"sum": map[string]interface{}{
+								"field": "predict_sales",
+							},
+						},
+						"total_gmv": map[string]interface{}{
+							"sum": map[string]interface{}{
+								"field": "predict_gmv",
+							},
+						},
+						"max_user_count": map[string]interface{}{
+							"max": map[string]interface{}{
+								"field": "max_user_count",
+							},
+						},
+						"live_create_time": map[string]interface{}{
+							"max": map[string]interface{}{
+								"field": "live_create_time",
+							},
+						},
+						"r_bucket_sort": map[string]interface{}{
+							"bucket_sort": map[string]interface{}{
+								"sort": map[string]interface{}{
+									sortStr: map[string]interface{}{
+										"order": orderBy,
+									},
+								},
+								"from": (page - 1) * pageSize,
+								"size": pageSize,
+							},
+						},
+					},
+				},
+			},
+		})
+	res := elasticsearch.GetBuckets(results, "rooms")
+	utils.MapToStruct(res, &list)
+	if h, ok := results["hits"]; ok {
+		if t, ok2 := h.(map[string]interface{})["total"]; ok2 {
+			total = utils.ToInt(t.(float64))
+		}
+	}
+	total = esMultiQuery.Count
+	if total == 0 {
+		list = []es.DyProductLiveRoomSum{}
+	} else {
+		utils.MapToStruct(results, &list)
+	}
+	return
+}
+
 //商品直播间搜索
 func (receiver *EsLiveBusiness) SearchProductRooms(productId, keyword, sortStr, orderBy string,
 	page, size int, startTime, endTime time.Time) (list []es.EsAuthorLiveProduct, total int, comErr global.CommonError) {
