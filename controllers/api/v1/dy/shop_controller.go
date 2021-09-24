@@ -46,6 +46,7 @@ func (receiver *ShopController) SearchBase() {
 	orderBy := receiver.GetString("order_by", "desc")
 	page := receiver.GetPage("page")
 	pageSize := receiver.GetPageSize("page_size", 10, 100)
+	pageSize = receiver.CheckPageSize(pageSize)
 	receiver.KeywordBan(keyword)
 	if !receiver.HasLogin && keyword != "" {
 		receiver.FailReturn(global.NewError(4001))
