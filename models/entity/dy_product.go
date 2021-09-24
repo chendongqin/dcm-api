@@ -46,7 +46,20 @@ var DyProductMap = HbaseEntity{
 	"word":             {AJson, "word"},
 	"context_num":      {Json, "context_num"},
 	"ageDistrinbution": {Json, "age_distrinbution"},
+	"ai_category":      {Json, "ai_category"},
 	//"tb_small_images":        {AJson, "tb_small_images"},
+}
+
+type DyProductAiCategory struct {
+	FirstCid    int    `json:"first_cid"`
+	FirstCname  string `json:"first_cname"`
+	FourthCid   int    `json:"fourth_cid"`
+	FourthCname string `json:"fourth_cname"`
+	IsLeaf      bool   `json:"is_leaf"`
+	SecondCid   int    `json:"second_cid"`
+	SecondCname string `json:"second_cname"`
+	ThirdCid    int    `json:"third_cid"`
+	ThirdCname  string `json:"third_cname"`
 }
 
 type DyProduct struct {
@@ -92,6 +105,7 @@ type DyProduct struct {
 	CosRatio            float64                  `json:"cos_ratio"`
 	PriceTrends         []DyProductPriceTrend    `json:"price_trends"`
 	ManmadeCategory     DyProductManmadeCategory `json:"manmade_category"`
+	AiCategory          DyProductAiCategory      `json:"ai_category"`
 	//粉丝分析数据
 	Gender           []DyAuthorFansGender   `json:"gender"`
 	Province         []DyAuthorFansProvince `json:"province"`

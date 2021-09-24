@@ -92,7 +92,7 @@ func (e *EsVideoBusiness) SearchByAuthor(authorId, keyword, sortStr, orderBy str
 		comErr = global.NewError(4000)
 		return
 	}
-	esTable, connection, err := GetESTableByMonthTime(es.DyVideoTable, startTime, endTime)
+	esTable, connection, err := GetESTableByTime(es.DyVideoTable, startTime, endTime)
 	if err != nil {
 		comErr = global.NewError(4000)
 		return
@@ -133,7 +133,7 @@ func (e *EsVideoBusiness) SumDataByAuthor(authorId string, startTime, endTime ti
 		"lt":  endTime.AddDate(0, 0, 1).Unix(),
 	})
 	esQuery.SetTerm("author_id", authorId)
-	esTable, connection, err := GetESTableByMonthTime(es.DyVideoTable, startTime, endTime)
+	esTable, connection, err := GetESTableByTime(es.DyVideoTable, startTime, endTime)
 	if err != nil {
 		return
 	}
@@ -205,7 +205,7 @@ func (e *EsVideoBusiness) CountAwemeByAuthor(authorId string, hasProduct int, st
 	if hasProduct == 1 {
 		esQuery.SetExist("field", "product_ids")
 	}
-	esTable, connection, err := GetESTableByMonthTime(es.DyVideoTable, startTime, endTime)
+	esTable, connection, err := GetESTableByTime(es.DyVideoTable, startTime, endTime)
 	if err != nil {
 		return 0, err
 	}
@@ -232,7 +232,7 @@ func (e *EsVideoBusiness) SearchByProductId(productId, awemeId, keyword, sortStr
 		comErr = global.NewError(4000)
 		return
 	}
-	esTable, connection, err := GetESTableByMonthTime(es.DyVideoTable, startTime, endTime)
+	esTable, connection, err := GetESTableByTime(es.DyVideoTable, startTime, endTime)
 	if err != nil {
 		comErr = global.NewError(4000)
 		return
