@@ -83,3 +83,31 @@ type DyLiveCategoryRateByGmv struct {
 		Value float64 `json:"value"`
 	} `json:"total_gmv"`
 }
+
+type DyProductAwemeSum struct {
+	DocCount int    `json:"doc_count"`
+	Key      string `json:"key"`
+	TotalGmv struct {
+		Value float64 `json:"value"`
+	} `json:"total_gmv"`
+	TotalSales struct {
+		Value int64 `json:"value"`
+	} `json:"total_sales"`
+}
+
+type DyProductLiveRoomSum struct {
+	DocCount int    `json:"doc_count"`
+	Key      string `json:"key"`
+	TotalGmv struct {
+		Value float64 `json:"value"`
+	} `json:"total_gmv"`
+	TotalSales struct {
+		Value float64 `json:"value"`
+	} `json:"total_sales"`
+	LiveCreateTime struct {
+		Value int64 `json:"value"`
+	} `json:"live_create_time"`
+	MaxUserCount struct {
+		Value int64 `json:"value"`
+	} `json:"max_user_count"`
+}

@@ -10,8 +10,11 @@ const (
 	HbaseDyLiveCurProduct           = "dy_live_cur_product"
 	HbaseDyLiveRoomUserInfo         = "dy_live_room_user_info"         //直播粉丝数据
 	HbaseDyRoomProduct              = "dy_room_product"                //直播间商品全网销量
+	HbaseDyRoomProductTrend         = "dy_room_product_trend"          //直播间商品全网销量
+	HbaseDyRoomCurProduct           = "dy_room_cur_product"            //直播间商品讲解
 	HbaseDyLiveRankTrend            = "dy_live_rank_trend"             //直播间榜单排名数据
 	HbaseDyReputation               = "dy_reputation"                  //带货口碑
+	HbaseDyAuthorStore              = "dy_author_store"                //达人小店
 	HbaseDyAuthorProductDateMapping = "dy_author_product_date_mapping" //达人带货
 
 	HbaseDyAweme                        = "dy_aweme"                            //抖音视频

@@ -1,17 +1,17 @@
 package entity
 
 var DyAwemeMap = HbaseEntity{
-	"aweme_id":         {String, "aweme_id"},
-	"crawl_time":       {Long, "crawl_time"},
-	"aweme_title":      {String, "aweme_title"},
-	"data":             {Json, "data"},
-	"hot_word_show":    {Json, "hot_word_show"},
-	"context_num":      {Json, "context_num"},
-	"gender":           {Json, "gender"},
-	"province":         {Json, "province"},
-	"city":             {Json, "city"},
-	"word":             {AJson, "word"},
-	"ageDistrinbution": {Json, "age_distrinbution"},
+	"aweme_id":          {String, "aweme_id"},
+	"crawl_time":        {Long, "crawl_time"},
+	"aweme_title":       {String, "aweme_title"},
+	"data":              {Json, "data"},
+	"hot_word_show":     {Json, "hot_word_show"},
+	"context_num":       {Json, "context_num"},
+	"gender":            {AJson, "gender"},
+	"province":          {AJson, "province"},
+	"city":              {AJson, "city"},
+	"word":              {AJson, "word"},
+	"age_distrinbution": {AJson, "age_distrinbution"},
 }
 
 type DyAweme struct {

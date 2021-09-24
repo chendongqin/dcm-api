@@ -208,6 +208,7 @@ func (receiver *AuthorController) AuthorBaseData() {
 		ForwardCount:         authorBase.ForwardCount,
 		ForwardCountBefore:   basicBefore.ForwardCount,
 	}
+	authorStore, _ := hbase.GetAuthorStore(authorId)
 	returnMap := map[string]interface{}{
 		"author_base": authorBase.Data,
 		"room_count":  authorBase.LiveCount,
@@ -222,6 +223,10 @@ func (receiver *AuthorController) AuthorBaseData() {
 		"rank":      nil,
 		"tags":      authorBase.Tags,
 		"basic":     basic,
+		"shop": dy2.DyAuthorStoreSimple{
+			ShopId:   business.IdEncrypt(authorStore.Id),
+			ShopName: authorStore.ShopName,
+		},
 	}
 	receiver.SuccReturn(returnMap)
 	return
@@ -424,6 +429,7 @@ func (receiver *AuthorController) AuthorViewData() {
 		},
 		VideoCount: dy2.DyAuthorBaseVideoCount{
 			VideoCount:       int64(authorBase.AwemeCount),
+			Video30Count:     int64(videoSumData.Total),
 			DiggFollowerRate: authorBase.DiggFollowerRate,
 			Predict30Sales:   float64(videoSumData.Sales),
 			Predict30Gmv:     videoSumData.Gmv,

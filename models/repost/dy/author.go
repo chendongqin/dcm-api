@@ -80,6 +80,7 @@ type DyAuthorBaseLiveCount struct {
 
 type DyAuthorBaseVideoCount struct {
 	VideoCount       int64   `json:"video_count"`
+	Video30Count     int64   `json:"video_30_count"`
 	AvgDigg          int64   `json:"avg_digg"`
 	DiggFollowerRate float64 `json:"digg_follower_rate"`
 	Predict30Sales   float64 `json:"predict_30_sales"`
@@ -135,4 +136,9 @@ type DyAuthorIncome struct {
 	Nickname     string `json:"nickname"`
 	UniqueId     string `json:"unique_id"`
 	IsCollection int    `json:"is_collection"`
+}
+
+type DyAuthorStoreSimple struct {
+	ShopId   string `json:"shop_id"`
+	ShopName string `json:"shop_name"`
 }

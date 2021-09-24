@@ -186,8 +186,12 @@ func (receiver *ProductController) ProductBaseAnalysis() {
 		dstr := time.Unix(v.StartTime, 0).Format("20060102")
 		priceMap[dstr] = v.Price
 	}
+	stopTime := endTime
+	if stopTime.Format("20060102") == time.Now().Format("20060102") {
+		stopTime = stopTime.AddDate(0, 0, -1)
+	}
 	for {
-		if beginTime.After(endTime) {
+		if beginTime.After(stopTime) {
 			break
 		}
 		dateStr := beginTime.Format("01/02")
@@ -672,6 +676,10 @@ func (receiver *ProductController) ProductAuthorView() {
 		return
 	}
 	salesTop3, liveSalesTop3, awemeSalesTop3, comErr := business.NewProductBusiness().ProductAuthorView(productId, startTime, endTime)
+	if comErr != nil {
+		receiver.FailReturn(comErr)
+		return
+	}
 	receiver.SuccReturn(map[string]interface{}{
 		"sales_top3":       salesTop3,
 		"live_sales_top3":  liveSalesTop3,
@@ -845,8 +853,15 @@ func (receiver *ProductController) ProductAuthorAwemes() {
 	}
 	page := receiver.GetPage("page")
 	pageSize := receiver.GetPageSize("page_size", 5, 10)
-	sortStr := receiver.GetString("sort", "aweme_gmv")
+	sortStr := receiver.GetString("sort", "gmv")
 	orderBy := receiver.GetString("order_by", "desc")
+	if sortStr == "aweme_gmv" {
+		sortStr = "gmv"
+	}
+	if !utils.InArrayString(sortStr, []string{"gmv", "sales"}) {
+		receiver.FailReturn(global.NewError(4000))
+		return
+	}
 	list, total := business.NewProductBusiness().ProductAuthorAwemes(productId, "", authorId, startTime, endTime, sortStr, orderBy, page, pageSize)
 	for k, v := range list {
 		list[k].AwemeCover = dyimg.Fix(v.AwemeCover)
@@ -1102,7 +1117,11 @@ func (receiver *ProductController) ProductWords() {
 	if len(info.Word) == 0 {
 		info.Word = []entity.DyAuthorWord{}
 	}
-	receiver.SuccReturn(info.Word)
+	receiver.SuccReturn(map[string]interface{}{
+		"hot_words":  info.Word,
+		"use_id_num": info.ContextNum["use_id_num"],
+		"msg_id_num": info.ContextNum["msg_id_num"],
+	})
 	return
 }
 

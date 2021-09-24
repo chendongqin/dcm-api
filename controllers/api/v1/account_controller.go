@@ -366,7 +366,7 @@ func (receiver *AccountController) AddCollect() {
 	var comErr global.CommonError
 	switch platform {
 	case 1:
-		comErr = business.NewCollectBusiness().AddDyCollect(collectId, collectType, tagId, receiver.UserInfo.Id)
+		comErr = business.NewCollectBusiness().AddDyCollect(collectId, collectType, tagId, receiver.UserInfo.Id, receiver.HasAuth)
 	}
 	if comErr != nil {
 		receiver.FailReturn(comErr)
@@ -449,6 +449,10 @@ func (receiver *AccountController) UpdCollectTag() {
 
 //抖音达人收藏分组
 func (receiver *AccountController) GetDyCollectTags() {
+	if !receiver.HasLogin {
+		receiver.SuccReturn(map[string]interface{}{"total": 0, "list": []repost.CollectTagRet{}})
+		return
+	}
 	collectType, err := receiver.GetInt("collect_type", 1)
 	if err != nil {
 		receiver.FailReturn(global.NewError(5000))
@@ -623,5 +627,21 @@ func (receiver *AccountController) BindWeChat() {
 			ExpTime:     expire,
 		},
 	})
+	return
+}
+
+//用户注销
+func (receiver *AccountController) Cancel() {
+	userBusiness := business.NewUserBusiness()
+	updateData := map[string]interface{}{
+		"status": business.UserStatusDisable,
+	}
+	affect, _ := userBusiness.UpdateUserAndClearCache(nil, receiver.UserId, updateData)
+	if affect == 0 {
+		receiver.FailReturn(global.NewError(4216))
+		return
+	}
+	receiver.Logout()
+	receiver.SuccReturn(nil)
 	return
 }

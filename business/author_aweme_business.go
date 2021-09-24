@@ -23,7 +23,10 @@ func (a *AuthorAwemeBusiness) GetVideoAggRangeDate(authorId string, startTime, e
 	esVideoBusiness := es.NewEsVideoBusiness()
 	results, total, _ := esVideoBusiness.SearchByAuthor(authorId, "", "", "", 0, 1, 10000, startTime, endTime)
 	videoNum = int64(total)
-	var diggMax, diggMin, diggCount, commentMax, commentMin, commentCount, forwardMax, forwardMin, forwardCount int64
+	var diggMax, diggCount, commentMax, commentCount, forwardMax, forwardCount int64
+	var diggMin int64 = -1
+	var commentMin int64 = -1
+	var forwardMin int64 = -1
 	durationChartMap := map[string]int{
 		"up_120": 0,
 		"up_60":  0,
@@ -71,19 +74,19 @@ func (a *AuthorAwemeBusiness) GetVideoAggRangeDate(authorId string, startTime, e
 		if v.DiggCount > diggMax {
 			diggMax = v.DiggCount
 		}
-		if diggMin == 0 || diggMin > v.DiggCount {
+		if diggMin == -1 || diggMin > v.DiggCount {
 			diggMin = v.DiggCount
 		}
 		if v.CommentCount > commentMax {
 			commentMax = v.CommentCount
 		}
-		if commentMin == 0 || commentMin > v.CommentCount {
+		if commentMin == -1 || commentMin > v.CommentCount {
 			commentMin = v.CommentCount
 		}
 		if v.ShareCount > forwardMax {
 			forwardMax = v.ShareCount
 		}
-		if forwardMin == 0 || forwardMin > v.ShareCount {
+		if forwardMin == -1 || forwardMin > v.ShareCount {
 			forwardMin = v.ShareCount
 		}
 		//视频趋势数据处理
@@ -104,6 +107,15 @@ func (a *AuthorAwemeBusiness) GetVideoAggRangeDate(authorId string, startTime, e
 			}
 		}(v.AwemeId, createTime, endTime)
 		//}
+	}
+	if diggMin == -1 {
+		diggMin = 0
+	}
+	if commentMin == -1 {
+		commentMin = 0
+	}
+	if forwardMin == -1 {
+		forwardMin = 0
 	}
 	wg.Wait()
 	if videoNum > 0 {

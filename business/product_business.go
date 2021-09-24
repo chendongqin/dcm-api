@@ -667,23 +667,49 @@ func (receiver *ProductBusiness) ProductAwemeAuthorAnalysis(productId, keyword, 
 
 func (receiver *ProductBusiness) ProductAuthorAwemes(productId, shopId, authorId string, startTime, endTime time.Time, sortStr, orderBy string, page, pageSize int) (list []entity.DyProductAuthorRelatedAweme, total int) {
 	list = []entity.DyProductAuthorRelatedAweme{}
-	//cacheKey := cache.GetCacheKey(cache.ProductAuthorAwemesList, startTime.Format("20060102"), endTime.Format("20060102"))
-	//cacheStr := global.Cache.Get(cacheKey)
-	//if cacheStr != "" {
-	//	cacheStr = utils.DeserializeData(cacheStr)
-	//	_ = jsoniter.Unmarshal([]byte(cacheStr), &list)
-	//} else {
-	esProductBusiness := es.NewEsProductBusiness()
-	allList, _, _ := esProductBusiness.SearchAwemeRangeDateList(productId, shopId, authorId, startTime, endTime, 1, 10000)
-	for _, v := range allList {
-		rowKey := v.ProductId + "_" + v.CreateSdf + "_" + v.AuthorId
-		data, err := hbase.GetProductAwemeAuthorAnalysis(rowKey)
-		if err == nil {
-			list = append(list, data.RelatedAwemes...)
-		}
-	}
-	//_ = global.Cache.Set(cacheKey, utils.SerializeData(list), 180)
+	//esProductBusiness := es.NewEsProductBusiness()
+	//allList, _, _ := esProductBusiness.SearchAwemeRangeDateList(productId, shopId, authorId, startTime, endTime, 1, 10000)
+	//for _, v := range allList {
+	//	rowKey := v.ProductId + "_" + v.CreateSdf + "_" + v.AuthorId
+	//	data, err := hbase.GetProductAwemeAuthorAnalysis(rowKey)
+	//	if err == nil {
+	//		list = append(list, data.RelatedAwemes...)
+	//	}
 	//}
+	sumList, total, err := es.NewEsVideoBusiness().AuthorProductAwemeSumList(authorId, productId, shopId, sortStr, orderBy, startTime, endTime, page, pageSize)
+	if err != nil {
+		return
+	}
+	awemeIds := []string{}
+	awemeGmvMap := map[string]float64{}
+	awemeSalesMap := map[string]int64{}
+	for _, v := range sumList {
+		awemeIds = append(awemeIds, v.Key)
+		awemeGmvMap[v.Key] = v.TotalGmv.Value
+		awemeSalesMap[v.Key] = v.TotalSales.Value
+	}
+	awemes, _ := hbase.GetVideoByIds(awemeIds)
+	for _, v := range awemes {
+		var gmv float64 = 0
+		var sales int64 = 0
+		if n, exist := awemeGmvMap[v.AwemeID]; exist {
+			gmv = n
+		}
+		if n, exist := awemeSalesMap[v.AwemeID]; exist {
+			sales = n
+		}
+		list = append(list, entity.DyProductAuthorRelatedAweme{
+			CommentCount:    v.Data.CommentCount,
+			AwemeTitle:      v.Data.AwemeTitle,
+			AwemeId:         v.AwemeID,
+			Sales:           sales,
+			AwemeGmv:        gmv,
+			DiggCount:       v.Data.DiggCount,
+			ForwardCount:    v.Data.ForwardCount,
+			AwemeCover:      v.Data.AwemeCover,
+			AwemeCreateTime: v.Data.AwemeCreateTime,
+		})
+	}
 	sort.Slice(list, func(i, j int) bool {
 		switch sortStr {
 		case "sales":
@@ -706,13 +732,13 @@ func (receiver *ProductBusiness) ProductAuthorAwemes(productId, shopId, authorId
 			}
 		}
 	})
-	total = len(list)
-	start := (page - 1) * pageSize
-	end := start + pageSize
-	if total < end {
-		end = total
-	}
-	list = list[start:end]
+	//total = len(list)
+	//start := (page - 1) * pageSize
+	//end := start + pageSize
+	//if total < end {
+	//	end = total
+	//}
+	//list = list[start:end]
 	return
 }
 
