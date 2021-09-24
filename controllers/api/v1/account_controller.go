@@ -10,6 +10,7 @@ import (
 	"dongchamao/models/dcm"
 	"dongchamao/models/repost"
 	"dongchamao/models/repost/dy"
+	"fmt"
 	jsoniter "github.com/json-iterator/go"
 	"strings"
 	"time"
@@ -203,8 +204,8 @@ func (receiver *AccountController) Info() {
 	return
 }
 
-//登出
-func (receiver *AccountController) Logout() {
+//登出清楚缓存
+func logOutClear(receiver *AccountController) {
 	cacheKey := cache.GetCacheKey(cache.UserPlatformUniqueToken, receiver.AppId, receiver.UserId)
 	_ = global.Cache.Delete(cacheKey)
 	//执行登出事件
@@ -215,9 +216,14 @@ func (receiver *AccountController) Logout() {
 	userBusiness.DeleteUserInfoCache(receiver.UserInfo.Id)
 	//退出登录成功
 	business.NewWechatBusiness().LoginOutWechatMsg(&receiver.UserInfo)
+
+}
+
+//登出
+func (receiver *AccountController) Logout() {
+	logOutClear(receiver)
 	receiver.SuccReturn("success")
 	return
-
 }
 
 func (receiver *AccountController) DyUserSearchSave() {
@@ -641,7 +647,10 @@ func (receiver *AccountController) Cancel() {
 		receiver.FailReturn(global.NewError(4216))
 		return
 	}
-	receiver.Logout()
-	receiver.SuccReturn(nil)
+	fmt.Println("aaaa")
+	logOutClear(receiver)
+	receiver.SuccReturn(map[string]interface{}{
+		"msg": "注销申请成功，将在3-7日内删除！",
+	})
 	return
 }
