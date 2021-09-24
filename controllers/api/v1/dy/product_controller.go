@@ -1111,7 +1111,7 @@ func (receiver *ProductController) ProductWords() {
 		return
 	}
 	if len(info.Word) == 0 {
-		info.Word = []entity.DyAuthorWord{{Word: "ggg", WordNum: "123"}}
+		info.Word = []entity.DyAuthorWord{}
 	}
 	receiver.SuccReturn(map[string]interface{}{
 		"hot_words":  info.Word,
