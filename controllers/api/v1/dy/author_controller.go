@@ -532,6 +532,9 @@ func (receiver *AuthorController) Reputation() {
 func (receiver *AuthorController) AuthorAwemesByDay() {
 	authorId := business.IdDecrypt(receiver.Ctx.Input.Param(":author_id"))
 	startDay, endDay, comErr := receiver.GetRangeDate()
+	if !receiver.HasAuth && startDay.Sub(endDay).Hours()/24 > 30 {
+		receiver.FailReturn(global.NewError(4004))
+	}
 	if comErr != nil {
 		receiver.FailReturn(comErr)
 		return
