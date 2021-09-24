@@ -192,7 +192,7 @@ func (receiver *ProductController) ProductBaseAnalysis() {
 		stopTime = stopTime.AddDate(0, 0, -1)
 	}
 	for {
-		if beginTime.After(stopTime) {
+		if beginTime.After(endTime) {
 			break
 		}
 		dateStr := beginTime.Format("01/02")
@@ -262,16 +262,19 @@ func (receiver *ProductController) ProductBaseAnalysis() {
 		gpmChart = append(gpmChart, gpm)
 		countData.OrderCount += order
 		countData.PvCount += pv
-		orderList = append(orderList, dy2.ProductOrderDaily{
-			Date:       dateStr,
-			OrderCount: order,
-			PvCount:    pv,
-			Rate:       rate,
-			Gpm:        gpm,
-			AwemeNum:   awemeNum,
-			RoomNum:    roomNum,
-			AuthorNum:  authorNum,
-		})
+		if beginTime.Unix() <= stopTime.Unix() {
+			orderList = append(orderList, dy2.ProductOrderDaily{
+				Date:       dateStr,
+				OrderCount: order,
+				PvCount:    pv,
+				Rate:       rate,
+				Gpm:        gpm,
+				AwemeNum:   awemeNum,
+				RoomNum:    roomNum,
+				AuthorNum:  authorNum,
+			})
+		}
+
 		beginTime = beginTime.AddDate(0, 0, 1)
 	}
 	countData.AwemeNum = len(videoMap)
