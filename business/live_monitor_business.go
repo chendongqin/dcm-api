@@ -496,9 +496,14 @@ func (receiver *LiveMonitorBusiness) AddLiveMonitor(liveMonitor *dcm.DcLiveMonit
 			return
 		}
 	}
-	_ = dbSession.Commit()
 	lastId = int64(liveMonitor.Id)
 	author, _ := hbase.GetAuthor(liveMonitor.AuthorId)
+	if author.RoomId != "" {
+		if room, err := hbase.GetLiveInfo(author.RoomId); err == nil {
+			receiver.AddByMonitor(dbSession, liveMonitor, &room)
+		}
+	}
+	_ = dbSession.Commit()
 	go NewSpiderBusiness().AddLive(liveMonitor.AuthorId, author.FollowerCount, AddLiveTopMonitored, liveMonitor.EndTime.Unix())
 	return
 }
