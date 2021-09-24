@@ -108,6 +108,15 @@ func (a *AuthorAwemeBusiness) GetVideoAggRangeDate(authorId string, startTime, e
 		}(v.AwemeId, createTime, endTime)
 		//}
 	}
+	if diggMin == -1 {
+		diggMin = 0
+	}
+	if commentMin == -1 {
+		commentMin = 0
+	}
+	if forwardMin == -1 {
+		forwardMin = 0
+	}
 	wg.Wait()
 	if videoNum > 0 {
 		data.AvgDiggCount = diggCount / videoNum
