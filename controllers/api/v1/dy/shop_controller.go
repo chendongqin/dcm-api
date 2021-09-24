@@ -209,12 +209,14 @@ func (receiver *ShopController) ShopBaseAnalysis() {
 		beginTime = beginTime.AddDate(0, 0, 1)
 	}
 	priceSection := make([]dy.NameValueInt64Chart, 0)
-	goodsCatTop := make([]dy.NameValueInt64Chart, 0)
+	goodsCatTop := make([]entity.GoodsCatTop, 0)
 
 	for k, v := range goodsCatTopMap {
-		goodsCatTop = append(priceSection, dy.NameValueInt64Chart{
+		goodsCatTop = append(goodsCatTop, entity.GoodsCatTop{
 			Name:  k,
 			Value: v,
+			Gmv:   0,
+			Sales: 0,
 		})
 	}
 	sort.Slice(goodsCatTop, func(i, j int) bool {
