@@ -29,7 +29,7 @@ func (receiver *VipActiveBusiness) BirthdayPriceActivity(userId int, dyVipValue 
 		return dyVipValue
 	}
 	exist, _ := dcm.GetSlaveDbSession().
-		Where("user_id=? AND status = 1", userId).
+		Where("user_id=? AND status = 1 AND order_type < 6", userId).
 		Get(new(dcm.DcVipOrder))
 	if exist {
 		return dyVipValue
