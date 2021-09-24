@@ -163,6 +163,7 @@ func (receiver *RankController) DyLiveHourSellRank() {
 	}
 	data, _ := hbase.GetDyLiveHourSellRank(dateTime.Format("2006010215"))
 	for k, v := range data.Ranks {
+		data.Ranks[k].Rank = k + 1
 		data.Ranks[k].LiveInfo.User.Id = business.IdEncrypt(v.LiveInfo.User.Id)
 		data.Ranks[k].RoomId = business.IdEncrypt(v.RoomId)
 		data.Ranks[k].LiveInfo.Cover = dyimg.Fix(v.LiveInfo.Cover)
