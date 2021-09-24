@@ -53,6 +53,7 @@ func (receiver *ProductController) Search() {
 	relateAweme, _ := receiver.GetInt("relate_aweme", 0)
 	page := receiver.GetPage("page")
 	pageSize := receiver.GetPageSize("page_size", 10, 100)
+	pageSize = receiver.CheckPageSize(pageSize)
 	receiver.KeywordBan(keyword)
 	if !receiver.HasAuth {
 		if category != "" || sortStr != "order_account" || orderBy != "desc" || secondCategory != "" || thirdCategory != "" || platform != "" || minCommissionRate > 0 || minPrice > 0 || maxPrice > 0 || commerceType > 0 ||
