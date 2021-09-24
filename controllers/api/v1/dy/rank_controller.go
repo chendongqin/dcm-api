@@ -634,7 +634,7 @@ func (receiver *RankController) VideoProductRank() {
 		break
 	}
 	if !receiver.HasAuth {
-		if page != 1 {
+		if page != 1 || dataType > 1 {
 			receiver.FailReturn(global.NewError(4004))
 			return
 		}
@@ -763,7 +763,7 @@ func (receiver *RankController) LiveProductRank() {
 		break
 	}
 	if !receiver.HasAuth {
-		if page != 1 {
+		if page != 1 || dataType > 1 {
 			receiver.FailReturn(global.NewError(4004))
 			return
 		}
