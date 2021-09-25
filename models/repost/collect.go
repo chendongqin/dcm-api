@@ -41,6 +41,10 @@ type CollectAwemeRet struct {
 	AuthorAvatar    string
 	AuthorNickname  string
 }
+type CollectShopRet struct {
+	dcm.DcUserDyCollect
+	Shop entity.DyShop `json:"shop"`
+}
 
 type CollectTagRet struct {
 	dcm.DcUserDyCollectTag
