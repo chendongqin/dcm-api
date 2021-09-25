@@ -523,7 +523,7 @@ func (receiver *RankController) DyAuthorTakeGoodsRank() {
 		tempData.AuthorId = v.AuthorId
 		tempData.UniqueId = v.ShortId
 		tempData.Nickname = v.Nickname
-		tempData.AuthorCover = v.Avatar
+		tempData.AuthorCover = dyimg.Fix(v.Avatar)
 		tempData.VerificationType, _ = strconv.Atoi(v.VerificationType)
 		tempData.VerifyName = v.VerifyName
 		tempData.Tags = v.Tags
