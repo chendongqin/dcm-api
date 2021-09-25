@@ -195,19 +195,20 @@ func (receiver *AuthorController) AuthorBaseData() {
 	fansClub, _ := hbase.GetAuthorFansClub(authorId)
 	//todo 昨天数据取前天
 	basicBefore, _ := hbase.GetAuthorBasic(authorId, time.Now().AddDate(0, 0, -1).Format("20060102"))
+	yseBasicBefore, _ := hbase.GetAuthorBasic(authorId, time.Now().AddDate(0, 0, -2).Format("20060102"))
 	authorBase.Data.ID = business.IdEncrypt(authorBase.Data.ID)
 	authorBase.Data.RoomID = business.IdEncrypt(authorBase.Data.RoomID)
 	basic := entity.DyAuthorBasic{
-		FollowerCount:        authorBase.FollowerCount,
-		FollowerCountBefore:  basicBefore.FollowerCount,
-		TotalFansCount:       authorBase.TotalFansCount,
-		TotalFansCountBefore: basicBefore.TotalFansCount,
-		TotalFavorited:       authorBase.TotalFavorited,
-		TotalFavoritedBefore: basicBefore.TotalFavorited,
-		CommentCount:         authorBase.CommentCount,
-		CommentCountBefore:   basicBefore.CommentCount,
-		ForwardCount:         authorBase.ForwardCount,
-		ForwardCountBefore:   basicBefore.ForwardCount,
+		FollowerCount:        basicBefore.FollowerCount,
+		FollowerCountBefore:  yseBasicBefore.FollowerCount,
+		TotalFansCount:       basicBefore.TotalFansCount,
+		TotalFansCountBefore: yseBasicBefore.TotalFansCount,
+		TotalFavorited:       basicBefore.TotalFavorited,
+		TotalFavoritedBefore: yseBasicBefore.TotalFavorited,
+		CommentCount:         basicBefore.CommentCount,
+		CommentCountBefore:   yseBasicBefore.CommentCount,
+		ForwardCount:         basicBefore.ForwardCount,
+		ForwardCountBefore:   yseBasicBefore.ForwardCount,
 	}
 	authorStore, _ := hbase.GetAuthorStore(authorId)
 	returnMap := map[string]interface{}{
