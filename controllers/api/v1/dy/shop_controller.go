@@ -137,7 +137,7 @@ func (receiver *ShopController) ShopBase() {
 	if comErr != nil { //今天取不到，取昨日数据
 		shopDetailData, _ = hbase.GetShopDetailByDate(shopId, time.Now().AddDate(0, 0, -1).Format("20060102"))
 	}
-
+	returnRes.DetailData.ProductCnt = shopDetailData.ProductCnt
 	returnRes.DetailData.Sales = shopDetailData.Sales
 	returnRes.DetailData.Gmv = shopDetailData.Gmv
 	returnRes.DetailData.D30LiveCnt = shopDetailData.D30LiveCnt
@@ -146,7 +146,7 @@ func (receiver *ShopController) ShopBase() {
 	returnRes.DetailData.D30Sales = shopDetailData.D30Sales
 	returnRes.DetailData.D30Gmv = shopDetailData.D30Gmv
 	returnRes.DetailData.D30Pct = shopDetailData.D30Pct
-
+	returnRes.DetailData.ShopCName = shopDetailData.ShopCName
 	receiver.SuccReturn(returnRes)
 	return
 }
