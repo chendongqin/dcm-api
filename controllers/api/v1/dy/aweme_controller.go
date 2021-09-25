@@ -14,6 +14,7 @@ import (
 	"github.com/astaxie/beego/logs"
 	jsoniter "github.com/json-iterator/go"
 	"sort"
+	"strings"
 	"time"
 )
 
@@ -414,21 +415,27 @@ func (receiver *AwemeController) AwemeFanAnalyse() {
 	var cityTotal int64 = 0
 	var provinceTotal int64 = 0
 	genderChart := make([]entity.XtDistributionsList, 0)
+	genderMap := make(map[string]entity.XtDistributionsList, 0)
 	ageChart := make([]entity.XtDistributionsList, 0)
 	cityChart := make([]entity.XtDistributionsList, 0)
+	cityMap := make(map[string]entity.XtDistributionsList, 0)
 	provinceChart := make([]entity.XtDistributionsList, 0)
-	var genDerMap = map[string]string{"男": "male", "女": "female"}
+	provinceMap := make(map[string]entity.XtDistributionsList, 0)
+	var genderFormat = map[string]string{"男": "male", "女": "female"}
 	for _, v := range info.Gender {
-		gender := genDerMap[v.Gender]
+		gender := genderFormat[v.Gender]
 		if gender == "" {
 			continue
 		}
 		genderNum := utils.ToInt64(v.GenderNum)
+		genderData := genderMap[gender]
 		genderTotal += genderNum
-		genderChart = append(genderChart, entity.XtDistributionsList{
-			DistributionKey:   gender,
-			DistributionValue: genderNum,
-		})
+		genderData.DistributionKey = gender
+		genderData.DistributionValue = genderNum
+		genderMap[gender] = genderData
+	}
+	for _, v := range genderMap {
+		genderChart = append(genderChart, v)
 	}
 	for _, v := range info.AgeDistrinbution {
 		if v.AgeDistrinbution == "" {
@@ -445,23 +452,31 @@ func (receiver *AwemeController) AwemeFanAnalyse() {
 		if v.City == "" {
 			continue
 		}
+		v.City = strings.Replace(v.City, "市", "", -1)
 		cityNum := utils.ToInt64(v.CityNum)
 		cityTotal += cityNum
-		cityChart = append(cityChart, entity.XtDistributionsList{
-			DistributionKey:   v.City,
-			DistributionValue: cityNum,
-		})
+		city := cityMap[v.City]
+		city.DistributionKey = v.City
+		city.DistributionValue += cityNum
+		cityMap[v.City] = city
+	}
+	for _, v := range cityMap {
+		cityChart = append(cityChart, v)
 	}
 	for _, v := range info.Province {
 		if v.Province == "" {
 			continue
 		}
+		v.Province = strings.Replace(v.Province, "省", "", -1)
 		distributionValue := utils.ToInt64(v.ProvinceNum)
 		provinceTotal += distributionValue
-		provinceChart = append(provinceChart, entity.XtDistributionsList{
-			DistributionKey:   v.Province,
-			DistributionValue: distributionValue,
-		})
+		province := provinceMap[v.Province]
+		province.DistributionKey = v.Province
+		province.DistributionValue += distributionValue
+		provinceMap[v.Province] = province
+	}
+	for _, v := range provinceMap {
+		provinceChart = append(provinceChart, v)
 	}
 	sort.Slice(cityChart, func(i, j int) bool {
 		return cityChart[i].DistributionValue > cityChart[j].DistributionValue
