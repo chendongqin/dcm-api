@@ -1049,6 +1049,7 @@ func (receiver *EsLiveBusiness) ScanLiveProductByAuthor(authorId, keyword, categ
 	results := esMultiQuery.
 		SetConnection(connection).
 		SetTable(esTable).
+		SetCache(300).
 		AddMust(esQuery.Condition).
 		SetLimit((page-1)*pageSize, pageSize).
 		SetMultiQuery().
