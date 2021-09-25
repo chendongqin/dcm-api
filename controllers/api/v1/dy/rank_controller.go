@@ -522,7 +522,7 @@ func (receiver *RankController) DyAuthorTakeGoodsRank() {
 		total, _ = strconv.Atoi(v.RnMax)
 		tempData := dy.TakeGoodsRankRet{}
 		tempData.Rank = (page-1)*pageSize + k + 1
-		tempData.AuthorId = v.AuthorId
+		tempData.AuthorId = business.IdDecrypt(v.AuthorId)
 		tempData.UniqueId = v.ShortId
 		tempData.Nickname = v.Nickname
 		tempData.AuthorCover = dyimg.Fix(v.Avatar)
@@ -676,7 +676,7 @@ func (receiver *RankController) DyAuthorFollowerRank() {
 		total, _ = strconv.Atoi(v.RnMax)
 		tempData := dy.AuthorFansRankRet{}
 		tempData.Rank = (page-1)*pageSize + k + 1
-		tempData.AuthorId = v.AuthorId
+		tempData.AuthorId = business.IdDecrypt(v.AuthorId)
 		if v.UniqueId != "" {
 			tempData.UniqueId = v.UniqueId
 		} else {
