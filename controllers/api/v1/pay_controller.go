@@ -150,13 +150,14 @@ func (receiver *PayController) CreateDyOrder() {
 	}
 	payBusiness := business.NewPayBusiness()
 	var surplusValue float64 = 0
+	var trueSurplusValue float64 = 0
 	vipOrderType := 1
 	if userVip.Level > 0 {
 		vipOrderType = 2
+		trueSurplusValue, _ = payBusiness.GetDyAddValue(int(surplusDay))
 		surplusValue, _ = payBusiness.GetDySurplusValue(int(surplusDay))
 		if surplusDay > 0 {
-			valueAdd, _ := payBusiness.GetDyAddValue(int(surplusDay))
-			surplusUnit = valueAdd / float64(surplusDay)
+			surplusUnit = trueSurplusValue / float64(surplusDay)
 		}
 	}
 	checkActivity := false
@@ -191,7 +192,7 @@ func (receiver *PayController) CreateDyOrder() {
 		//先续费再购买
 		if userVip.SubNum > 0 {
 			if userVip.SubExpiration.Before(time.Now()) {
-				amount += surplusValue * float64(userVip.SubNum)
+				amount += trueSurplusValue * float64(userVip.SubNum)
 			} else {
 				if userVip.Expiration.After(userVip.SubExpiration) {
 					surplusSubDay := math.Ceil((userVip.Expiration.Sub(userVip.SubExpiration)).Hours() / 24)
@@ -221,8 +222,22 @@ func (receiver *PayController) CreateDyOrder() {
 		title = "团队成员续费"
 		totalPeople := userVip.SubNum + 1
 		amount = utils.CeilFloat64One(price.Price * float64(totalPeople))
+		//先续费再购买
+		if userVip.SubNum > 0 {
+			if userVip.SubExpiration.Before(time.Now()) {
+				amount += trueSurplusValue * float64(userVip.SubNum)
+			} else {
+				if userVip.Expiration.After(userVip.SubExpiration) {
+					surplusSubDay := math.Ceil((userVip.Expiration.Sub(userVip.SubExpiration)).Hours() / 24)
+					surplusSubsValue := surplusUnit * surplusSubDay
+					tmpAmount := float64(userVip.SubNum) * utils.CeilFloat64One(surplusSubsValue)
+					remark = fmt.Sprintf("已有子账号续费：%.1f元", tmpAmount)
+					amount += tmpAmount
+				}
+			}
+		}
 		orderInfo.BuyDays = buyDays
-		orderInfo.Amount = amount
+		orderInfo.Amount = utils.FriendlyFloat64(amount)
 		orderInfo.People = totalPeople
 		orderInfo.Title = "团队成员续费"
 		vipOrderType = 5
