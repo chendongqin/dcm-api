@@ -78,6 +78,7 @@ func (receiver *LoginController) Login() {
 	receiver.SuccReturn(map[string]interface{}{
 		"vip":          setPassword,
 		"set_password": setPassword,
+		"is_new":       isNew,
 		"token_info": dy.RepostAccountToken{
 			UserId:      user.Id,
 			TokenString: authToken,
