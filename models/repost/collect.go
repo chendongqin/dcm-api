@@ -46,9 +46,9 @@ type CollectShopRet struct {
 	dcm.DcUserDyCollect
 	Logo           string  `json:"logo"` //logo
 	Name           string  `json:"name"` //名称
-	Predict30Sales float64 `json:"predict_30_sales"`
+	Predict30Sales int64   `json:"predict_30_sales"`
 	Predict30Gmv   float64 `json:"predict_30_gmv"`
-	RelateAuthors  int     `json:"relate_authors"`
+	RelateAuthors  int64   `json:"relate_authors"`
 }
 
 type CollectTagRet struct {

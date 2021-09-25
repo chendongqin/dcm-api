@@ -167,6 +167,23 @@ func (receiver *EsShopBusiness) SimpleSearch(keyword, category, secondCategory, 
 	return
 }
 
+//小店库简易查询
+func (receiver *EsShopBusiness) IdsSearch(shopIds []string) (list []es.DyShop) {
+	list = []es.DyShop{}
+	esTable, connection := GetESTable(es.DyShopTable)
+	esQuery, esMultiQuery := elasticsearch.NewElasticQueryGroup()
+	esQuery.SetTerms("shopId", shopIds)
+	results := esMultiQuery.
+		SetConnection(connection).
+		SetTable(esTable).
+		SetCache(180).
+		AddMust(esQuery.Condition).
+		SetMultiQuery().
+		Query()
+	utils.MapToStruct(results, &list)
+	return
+}
+
 //获取小店直播达人所有商品id
 func (receiver *EsShopBusiness) GetShopLiveAuthorRowKeys(shopId, authorId, keyword string, startTime, endTime time.Time) (list []es.EsGroupByData, total int, comErr global.CommonError) {
 	esTable, connection, err := GetESTableByTime(es.DyProductAuthorAnalysisTable, startTime, endTime)
@@ -175,7 +192,6 @@ func (receiver *EsShopBusiness) GetShopLiveAuthorRowKeys(shopId, authorId, keywo
 		return
 	}
 	esQuery, esMultiQuery := elasticsearch.NewElasticQueryGroup()
-	esQuery.SetTerm("shopId", shopId)
 	if authorId != "" {
 		esQuery.SetTerm("authorId", authorId)
 	}
@@ -238,7 +254,6 @@ func (receiver *EsShopBusiness) GetShopVideoAuthorRowKeys(shopId, authorId, keyw
 		return
 	}
 	esQuery, esMultiQuery := elasticsearch.NewElasticQueryGroup()
-	esQuery.SetTerm("shopId", shopId)
 	if authorId != "" {
 		esQuery.SetTerm("authorId", authorId)
 	}
