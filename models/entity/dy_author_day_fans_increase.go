@@ -3,6 +3,7 @@ package entity
 var DyAuthorDayFansIncreaseMap = HbaseEntity{
 	"author_id":                {String, "author_id"},
 	"short_id":                 {String, "short_id"},
+	"unique_id":                {String, "unique_id"},
 	"nickname":                 {String, "nickname"},
 	"avatar":                   {String, "avatar"},
 	"verification_type":        {String, "verification_type"},
@@ -21,6 +22,7 @@ var DyAuthorDayFansIncreaseMap = HbaseEntity{
 type DyAuthorDayFansIncrease struct {
 	AuthorId               string `json:"author_id"`
 	ShortId                string `json:"short_id"`
+	UniqueId               string `json:"unique_id"`
 	Nickname               string `json:"nickname"`
 	Avatar                 string `json:"avatar"`
 	VerificationType       string `json:"verification_type"`
