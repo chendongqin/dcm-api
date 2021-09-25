@@ -105,11 +105,6 @@ func (receiver *CollectBusiness) GetDyCollect(tagId, collectType int, keywords, 
 			data[k].OrderAccount = productInfo.OrderAccount
 			data[k].WeekOrderAccount = productInfo.MonthOrderAccount
 			data[k].PlatformLabel = productInfo.PlatformLabel
-			if data[k].PlatformLabel == "小店" {
-				if brand, e := hbase.GetDyProductBrand(v.CollectId); e == nil {
-					data[k].ShopName = brand.ShopName
-				}
-			}
 			data[k].Undercarriage = productInfo.Undercarriage
 			data[k].IsCoupon = productInfo.IsCoupon
 			data[k].WeekRelateAuthor = productInfo.RelateAuthor
