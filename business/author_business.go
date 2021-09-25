@@ -526,12 +526,17 @@ func (a *AuthorBusiness) CountLiveRoomAnalyse(authorId string, startTime, endTim
 		data.UserData.AvgInteractRate /= float64(data.UserData.LiveNum)
 		data.UserData.AvgIncFansRate /= float64(data.UserData.LiveNum)
 	}
+	//todo 数据同源处理
+	liveSumData, _ := es.NewEsLiveBusiness().SumDataByAuthor(authorId, startTime, endTime)
 	if data.UserData.PromotionLiveNum > 0 {
-		data.SaleData.AvgVolume /= int64(data.UserData.PromotionLiveNum)
-		data.SaleData.AvgAmount /= float64(data.UserData.PromotionLiveNum)
+		//data.SaleData.AvgVolume /= int64(data.UserData.PromotionLiveNum)
+		//data.SaleData.AvgAmount /= float64(data.UserData.PromotionLiveNum)
+		data.SaleData.AvgVolume = int64(math.Floor(liveSumData.TotalSales.Sum / float64(data.UserData.PromotionLiveNum)))
+		data.SaleData.AvgAmount = utils.FriendlyFloat64(liveSumData.TotalGmv.Sum / float64(data.UserData.PromotionLiveNum))
 		data.SaleData.AvgUv /= float64(data.UserData.PromotionLiveNum)
 		data.SaleData.AvgPerPrice /= float64(data.UserData.PromotionLiveNum)
 	}
+	data.SaleData.AvgAmount /= float64(data.UserData.PromotionLiveNum)
 	if data.UserData.AvgUserTotal > 0 {
 		data.SaleData.SaleRate = float64(data.SaleData.AvgVolume) / float64(data.UserData.AvgUserTotal)
 	}
