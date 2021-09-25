@@ -413,10 +413,10 @@ func (receiver *AuthorController) AuthorViewData() {
 			_ = global.Cache.Set(cacheKey, utils.SerializeData(productCount), 600)
 		}
 	}
-	productCount.ProductNum = authorBase.ProductCount
+	productCount.ProductNum = int(esLiveBusiness.CountRoomProductByAuthorId(authorId, startTime, yesterday))
 	videoSumData := es.NewEsVideoBusiness().SumDataByAuthor(authorId, startTime, yesterday)
-	liveSumData := es.NewEsLiveBusiness().SumDataByAuthor(authorId, startTime, yesterday)
-	dayLiveRoomNum := es.NewEsLiveBusiness().CountRoomByDayByAuthorId(authorId, 1, startTime, yesterday)
+	liveSumData := esLiveBusiness.SumDataByAuthor(authorId, startTime, yesterday)
+	dayLiveRoomNum := esLiveBusiness.CountRoomByDayByAuthorId(authorId, 1, startTime, yesterday)
 	var avgGmv float64 = 0
 	var avgSales float64 = 0
 	if dayLiveRoomNum > 0 {
