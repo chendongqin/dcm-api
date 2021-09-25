@@ -700,9 +700,9 @@ func (receiver *RankController) DyAuthorFollowerRank() {
 	if total > 0 {
 		if start > 0 {
 			lens := end - start
-			list = data[0 : lens-1]
+			list = data[0:lens]
 		} else {
-			list = data[start : end-1]
+			list = data[start:end]
 		}
 	}
 	ret = map[string]interface{}{
