@@ -23,7 +23,7 @@ const (
 	WechatMsgTemplateBindNotice        = "-O4v3TG7c8hV1xeVwt5jUdHLP0bLKghvfsxWMUCPeU8" //绑定通知 - 模板id
 	WechatMsgTemplateLoginNotice       = "lbk1OMOLE1x-tSQIqap8otYWlAu-7d8mTmTnT0R4k50" //登录成功通知-模板id
 	WechatMsgTemplateLoginOutNotice    = "e-tT-wntWlj-tVpb2YktMaPN5CnkBdKxGK11lq_ccUQ" //退出成功通知-模板id
-	WechatMsgTemplateAmountExpire      = "e-tT-wntWlj-tVpb2YktMaPN5CnkBdKxGK11lq_ccUQ" //会员到期通知-模板id
+	WechatMsgTemplateAmountExpire      = "ElTeIyQ0g5sx3XM5N2obCNtjhAyxGB8-pZPLy8NnL4s" //会员到期通知-模板id
 
 )
 
