@@ -605,7 +605,7 @@ func (receiver *RankController) DyAuthorTakeGoodsRank() {
 	return
 }
 
-//达人带货榜
+//达人涨粉榜
 func (receiver *RankController) DyAuthorFollowerRank() {
 	date := receiver.Ctx.Input.Param(":date")
 	startDate, err := time.ParseInLocation("2006-01-02", date, time.Local)
@@ -617,7 +617,7 @@ func (receiver *RankController) DyAuthorFollowerRank() {
 	sortStr := receiver.GetString("sort", "sum_sales")
 	orderBy := receiver.GetString("order_by", "desc")
 	page := receiver.GetPage("page")
-	pageSize := receiver.GetPageSize("page_size", 10, 100)
+	pageSize := receiver.GetPageSize("page_size", 10, 200)
 	var sortMap = map[string]string{"live_inc_follower_count": "live_fans_inc", "inc_follower_count": "fans_inc", "aweme_inc_follower_count": "aweme_fans_inc"}
 	if sortMap[sortStr] != "" {
 		sortStr = sortMap[sortStr]
@@ -663,7 +663,11 @@ func (receiver *RankController) DyAuthorFollowerRank() {
 		tempData := dy.AuthorFansRankRet{}
 		tempData.Rank = (page-1)*pageSize + k + 1
 		tempData.AuthorId = v.AuthorId
-		tempData.UniqueId = v.ShortId
+		if v.UniqueId != "" {
+			tempData.UniqueId = v.UniqueId
+		} else {
+			tempData.UniqueId = v.ShortId
+		}
 		tempData.Nickname = v.Nickname
 		tempData.AuthorCover = dyimg.Fix(v.Avatar)
 		tempData.VerificationType = VerificationTypeMap[v.VerificationType]
