@@ -268,6 +268,7 @@ func (receiver *AuthorController) AuthorViewData() {
 		cacheStr = utils.DeserializeData(cacheStr)
 		_ = jsoniter.Unmarshal([]byte(cacheStr), &productCount)
 	} else {
+		productMap := map[string]string{}
 		liveList, _, _ := es.NewEsLiveBusiness().ScanLiveProductByAuthor(authorId, "", "", "", "", "", "", 0, startTime, yesterday, 1, 10000)
 		awemeList, _, _ := es.NewEsVideoBusiness().ScanAwemeProductByAuthor(authorId, "", "", "", "", "", "", 0, startTime, yesterday, 1, 10000)
 		brandSaleMap := map[string]float64{}
@@ -277,6 +278,9 @@ func (receiver *AuthorController) AuthorViewData() {
 		var totalGmv float64
 		var totalSales float64
 		for _, v := range liveList {
+			if _, exist := productMap[v.ProductID]; exist {
+				productMap[v.ProductID] = v.ProductID
+			}
 			totalGmv += v.PredictGmv
 			totalSales += math.Floor(v.PredictSales)
 			category := v.DcmLevelFirst
@@ -317,6 +321,9 @@ func (receiver *AuthorController) AuthorViewData() {
 			}
 		}
 		for _, v := range awemeList {
+			if _, exist := productMap[v.ProductId]; exist {
+				productMap[v.ProductId] = v.ProductId
+			}
 			totalGmv += v.Gmv
 			totalSales += float64(v.Sales)
 			category := v.DcmLevelFirst
@@ -436,6 +443,7 @@ func (receiver *AuthorController) AuthorViewData() {
 			ProductNum30Top3:      topNumCates,
 			Sales30Top3Chart:      topBrandSaleList,
 			ProductNum30Top3Chart: topBrandNumList,
+			ProductNum:            len(productMap),
 			//Predict30Sales:        totalSales,
 			//Predict30Gmv:          totalGmv,
 			Sales30Chart: []dy2.DyAuthorBaseProductPriceChart{},
@@ -451,7 +459,7 @@ func (receiver *AuthorController) AuthorViewData() {
 		_ = global.Cache.Set(cacheKey, utils.SerializeData(productCount), 600)
 
 	}
-	productCount.ProductNum = int(esLiveBusiness.CountRoomProductByAuthorId(authorId, startTime, yesterday))
+	//productCount.ProductNum = int(esLiveBusiness.CountRoomProductByAuthorId(authorId, startTime, yesterday))
 	videoSumData := es.NewEsVideoBusiness().SumDataByAuthor(authorId, startTime, yesterday)
 	liveSumData, room30Count := esLiveBusiness.SumDataByAuthor(authorId, startTime, yesterday)
 	dayLiveRoomNum := esLiveBusiness.CountRoomByDayByAuthorId(authorId, 1, startTime, yesterday)
