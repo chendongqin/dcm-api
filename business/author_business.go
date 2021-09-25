@@ -536,7 +536,6 @@ func (a *AuthorBusiness) CountLiveRoomAnalyse(authorId string, startTime, endTim
 		data.SaleData.AvgUv /= float64(data.UserData.PromotionLiveNum)
 		data.SaleData.AvgPerPrice /= float64(data.UserData.PromotionLiveNum)
 	}
-	data.SaleData.AvgAmount /= float64(data.UserData.PromotionLiveNum)
 	if data.UserData.AvgUserTotal > 0 {
 		data.SaleData.SaleRate = float64(data.SaleData.AvgVolume) / float64(data.UserData.AvgUserTotal)
 	}
