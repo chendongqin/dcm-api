@@ -115,19 +115,14 @@ func (receiver *EsLiveBusiness) CountRoomProductByAuthorId(authorId string, star
 			"size": 0,
 			"aggs": map[string]interface{}{
 				"product": map[string]interface{}{
-					"terms": map[string]interface{}{
+					"cardinality": map[string]interface{}{
 						"field": "product_id.keyword",
-						"size":  1,
 					},
 				},
 			},
 		})
 	var total int64 = 0
-	if h, ok := countResult["hits"]; ok {
-		if t, ok2 := h.(map[string]interface{})["total"]; ok2 {
-			total = utils.ToInt64(t.(float64))
-		}
-	}
+	total = int64(elasticsearch.GetBucketsCount(countResult, "product"))
 	return total
 }
 
@@ -161,19 +156,14 @@ func (receiver *EsLiveBusiness) CountRoomByDayByAuthorId(authorId string, hasPro
 			"size": 0,
 			"aggs": map[string]interface{}{
 				"live": map[string]interface{}{
-					"terms": map[string]interface{}{
+					"cardinality": map[string]interface{}{
 						"field": "dt.keyword",
-						"size":  1,
 					},
 				},
 			},
 		})
 	var total int64 = 0
-	if h, ok := countResult["hits"]; ok {
-		if t, ok2 := h.(map[string]interface{})["total"]; ok2 {
-			total = utils.ToInt64(t.(float64))
-		}
-	}
+	total = int64(elasticsearch.GetBucketsCount(countResult, "live"))
 	return total
 }
 

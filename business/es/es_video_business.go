@@ -394,16 +394,22 @@ func (e *EsVideoBusiness) AuthorProductAwemeSumList(authorId, productId, shopId,
 								"size": pageSize,
 							},
 						},
+						"count": map[string]interface{}{
+							"cardinality": map[string]interface{}{
+								"field": "aweme_id.keyword",
+							},
+						},
+					},
+				},
+				"count": map[string]interface{}{
+					"sum_bucket": map[string]interface{}{
+						"buckets_path": "awemes>count.value",
 					},
 				},
 			},
 		})
 	res := elasticsearch.GetBuckets(results, "awemes")
 	utils.MapToStruct(res, &list)
-	if h, ok := results["hits"]; ok {
-		if t, ok2 := h.(map[string]interface{})["total"]; ok2 {
-			total = utils.ToInt(t.(float64))
-		}
-	}
+	total = elasticsearch.GetBucketsCount(results, "count")
 	return
 }
