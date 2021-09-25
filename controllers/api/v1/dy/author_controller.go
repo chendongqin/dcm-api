@@ -868,6 +868,8 @@ func (receiver *AuthorController) AuthorLiveRooms() {
 		list[k].AuthorId = business.IdEncrypt(v.AuthorId)
 		list[k].PredictSales = math.Floor(v.PredictSales)
 		list[k].PredictGmv = math.Floor(v.PredictGmv)
+		list[k].Cover = dyimg.Fix(v.Cover)
+		list[k].Avatar = dyimg.Fix(v.Avatar)
 		roomIds = append(roomIds, v.RoomId)
 	}
 	if listType == 1 {

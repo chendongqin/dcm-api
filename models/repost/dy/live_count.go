@@ -43,9 +43,25 @@ type EsLiveSumDataCategoryLevel struct {
 		Avg   float64 `json:"avg"`
 		Sum   float64 `json:"sum"`
 	} `json:"stats_customer_unit_price"`
+	CustomerUnitPrice struct {
+		Values []struct {
+			Key   float64 `json:"key"`
+			Value float64 `json:"value"`
+		} `json:"values"`
+	} `json:"customer_unit_price"`
 	TotalGmv struct {
 		Value float64 `json:"value"`
 	} `json:"total_gmv"`
+}
+
+type EsLiveSumDataCategoryCustomerUnitPriceLevel struct {
+	Key               string `json:"key"`
+	CustomerUnitPrice struct {
+		Values []struct {
+			Key   float64 `json:"key"`
+			Value float64 `json:"value"`
+		} `json:"values"`
+	} `json:"customer_unit_price"`
 }
 
 type LiveSumDataCategoryLevel struct {
@@ -58,8 +74,9 @@ type LiveSumDataCategoryLevel struct {
 	AvgGmv            float64 `json:"avg_gmv"`
 	GmvPer            float64 `json:"gmv_per"`
 	CustomerUnitPrice struct {
-		Min float64 `json:"min"`
-		Max float64 `json:"max"`
+		Median float64 `json:"median"`
+		Min    float64 `json:"min"`
+		Max    float64 `json:"max"`
 	} `json:"customer_unit_price"`
 }
 
