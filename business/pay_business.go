@@ -126,8 +126,8 @@ func (receiver *PayBusiness) GetVipPriceConfig() (priceMap map[int]float64, prim
 	return
 }
 
-//扩充团队价格与原价
-func (receiver *PayBusiness) GetDySurplusValue(surplusDay int) (value float64, primeValue float64) {
+//已有的自账号续费单价计算
+func (receiver *PayBusiness) GetDyAddValue(surplusDay int) (value float64, primeValue float64) {
 	price := receiver.GetVipPrice()
 	if surplusDay >= yearDay {
 		value = float64(surplusDay) * price.Year.Price / float64(yearDay)
@@ -148,6 +148,12 @@ func (receiver *PayBusiness) GetDySurplusValue(surplusDay int) (value float64, p
 		value = float64(surplusDay) * price.Month.Price / float64(monthDay)
 		primeValue = float64(surplusDay) * price.Month.OriginalPrice / float64(monthDay)
 	}
+	return
+}
+
+//扩充团队价格与原价
+func (receiver *PayBusiness) GetDySurplusValue(surplusDay int) (value float64, primeValue float64) {
+	value, primeValue = receiver.GetDyAddValue(surplusDay)
 	if value < 100 {
 		value = 100
 	}

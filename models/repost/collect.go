@@ -25,7 +25,6 @@ type CollectProductRet struct {
 	WeekRelateAuthor int
 	WeekOrderAccount int64
 	PlatformLabel    string
-	ShopName         string
 	Undercarriage    int
 	IsCoupon         int
 }

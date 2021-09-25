@@ -16,6 +16,7 @@ type DyProduct struct {
 	IsCoupon          int     `json:"is_coupon"`
 	CommerceType      int     `json:"commerce_type"`
 	PlatformLabel     string  `json:"platform_label"`
+	ShopName          string  `json:"shop_name"`
 	RelateAweme       int     `json:"relate_aweme"`
 	RelateRoom        int     `json:"relate_room"`
 	RelateAuthor      int     `json:"relate_author"`

@@ -110,6 +110,11 @@ func (receiver *ProductController) Search() {
 		list[k].Image = dyimg.Fix(v.Image)
 		productIds = append(productIds, v.ProductId)
 		list[k].ProductId = business.IdEncrypt(v.ProductId)
+		if list[k].PlatformLabel == "小店" {
+			if brand, e := hbase.GetDyProductBrand(v.ProductId); e == nil {
+				list[k].ShopName = brand.ShopName
+			}
+		}
 	}
 	if receiver.HasLogin {
 		collect, comErr := business.NewCollectBusiness().DyListCollect(2, receiver.UserId, productIds)
