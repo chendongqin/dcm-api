@@ -623,7 +623,7 @@ func (receiver *RankController) DyAuthorFollowerRank() {
 	sortStr := receiver.GetString("sort", "sum_sales")
 	orderBy := receiver.GetString("order_by", "desc")
 	page := receiver.GetPage("page")
-	pageSize := receiver.GetPageSize("page_size", 10, 200)
+	pageSize := receiver.GetPageSize("page_size", 10, 50)
 	var sortMap = map[string]string{"live_inc_follower_count": "live_fans_inc", "inc_follower_count": "fans_inc", "aweme_inc_follower_count": "aweme_fans_inc"}
 	if sortMap[sortStr] != "" {
 		sortStr = sortMap[sortStr]
@@ -644,20 +644,32 @@ func (receiver *RankController) DyAuthorFollowerRank() {
 	}
 	var ret map[string]interface{}
 	var originList []entity.DyAuthorDayFansIncrease
-	startRow := sortStr + "_" + startDate.Format("20060102") + "_" + tags
-	endRow := sortStr + "_" + startDate.Format("20060102") + "_" + tags
+	rowKey := sortStr + "_" + startDate.Format("20060102") + "_" + tags
+	var rowKeys [][]byte
 	if orderBy == "desc" {
-		startRow = utils.Md5_encode(startRow) + "_" + strconv.Itoa(start+1)
-		endRow = utils.Md5_encode(endRow) + "_" + strconv.Itoa(end+1)
-		originList, _ = hbase.GetFansAuthorRank(startRow, endRow)
+		startTemp := start
+		for {
+			rowKeys = append(rowKeys, []byte(utils.Md5_encode(rowKey)+"_"+strconv.Itoa(startTemp+1)))
+			startTemp++
+			if startTemp > end {
+				break
+			}
+		}
+		originList, _ = hbase.GetFansAuthorRank(rowKeys)
 	} else {
-		rowKey := utils.Md5_encode(startRow) + "_" + strconv.Itoa(1)
-		firstRow, _ := hbase.GetFansAuthorRow(rowKey)
+		firstRow, _ := hbase.GetFansAuthorRow(utils.Md5_encode(rowKey) + "_" + strconv.Itoa(1))
 		maxRow, _ := strconv.Atoi(firstRow.RnMax)
 		if maxRow > 0 {
-			endRow = utils.Md5_encode(startRow) + "_" + strconv.Itoa(maxRow-start)
-			startRow = utils.Md5_encode(endRow) + "_" + strconv.Itoa(maxRow-end)
-			originList, _ = hbase.GetFansAuthorRank(startRow, endRow)
+			startTemp := maxRow - end
+			endTemp := maxRow - start
+			for {
+				rowKeys = append(rowKeys, []byte(utils.Md5_encode(rowKey)+"_"+strconv.Itoa(startTemp+1)))
+				startTemp++
+				if startTemp >= endTemp {
+					break
+				}
+			}
+			originList, _ = hbase.GetFansAuthorRank(rowKeys)
 		}
 	}
 	data := make([]dy.AuthorFansRankRet, 0)
@@ -692,9 +704,9 @@ func (receiver *RankController) DyAuthorFollowerRank() {
 	if total > 0 {
 		if start > 0 {
 			lens := end - start
-			list = data[0:lens]
+			list = data[0 : lens-1]
 		} else {
-			list = data[start:end]
+			list = data[start : end-1]
 		}
 	}
 	ret = map[string]interface{}{

@@ -233,12 +233,9 @@ func GetSaleAuthorRow(rowKey string) (data entity.DyAuthorDaySalesRank, comErr g
 	return
 }
 
-func GetFansAuthorRank(startRow, endRow string) (data []entity.DyAuthorDayFansIncrease, comErr global.CommonError) {
+func GetFansAuthorRank(rowKey [][]byte) (data []entity.DyAuthorDayFansIncrease, comErr global.CommonError) {
 	query := hbasehelper.NewQuery()
-	results, err := query.SetTable(hbaseService.HbaseDyAuthorFansIncrRank).
-		SetStartRow([]byte(startRow)).
-		SetStopRow([]byte(endRow)).
-		Scan(1000)
+	results, err := query.SetTable(hbaseService.HbaseDyAuthorFansIncrRank).GetByRowKeys(rowKey)
 	if err != nil {
 		comErr = global.NewMsgError(err.Error())
 		return
