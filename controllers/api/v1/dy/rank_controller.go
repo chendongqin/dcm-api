@@ -498,26 +498,22 @@ func (receiver *RankController) DyAuthorTakeGoodsRank() {
 	//} else {
 
 	var originList []entity.DyAuthorDaySalesRank
-	startRow := sortStr + "_" + startDate.Format("20060102") + "_" + tags
-	endRow := sortStr + "_" + startDate.Format("20060102") + "_" + tags
+	key := sortStr + "_" + startDate.Format("20060102") + "_" + tags
+	rowKeys := make([][]byte, 0)
 	if orderBy == "desc" {
-		startRow = utils.Md5_encode(startRow) + "_" + strconv.Itoa(start+1)
-		endRow = utils.Md5_encode(endRow) + "_" + strconv.Itoa(end+1)
-		originList, _ = hbase.GetSaleAuthorRank(startRow, endRow)
+		for i := start + 1; i <= end; i++ {
+			rowKeys = append(rowKeys, []byte(utils.Md5_encode(key)+"_"+strconv.Itoa(i)))
+		}
+		originList, _ = hbase.GetSaleAuthorRank(rowKeys)
 	} else {
-		rowKey := utils.Md5_encode(startRow) + "_" + strconv.Itoa(1)
+		rowKey := utils.Md5_encode(key) + "_" + strconv.Itoa(1)
 		firstRow, _ := hbase.GetSaleAuthorRow(rowKey)
 		maxRow, _ := strconv.Atoi(firstRow.RnMax)
 		if maxRow > 0 {
-			startRow = utils.Md5_encode(startRow) + "_" + strconv.Itoa(maxRow-end+1)
-			endRow = utils.Md5_encode(endRow) + "_" + strconv.Itoa(maxRow-start+1)
-		}
-		originList, _ = hbase.GetSaleAuthorRank(startRow, endRow)
-		length := len(originList)
-		for j := 0; j < length/2; j++ { //倒序
-			temp := originList[length-1-j]
-			originList[length-1-j] = originList[j]
-			originList[j] = temp
+			for i := maxRow - start; i >= maxRow-end+1; i-- {
+				rowKeys = append(rowKeys, []byte(utils.Md5_encode(key)+"_"+strconv.Itoa(i)))
+			}
+			originList, _ = hbase.GetSaleAuthorRank(rowKeys)
 		}
 	}
 	data := make([]dy.TakeGoodsRankRet, 0)
@@ -623,7 +619,7 @@ func (receiver *RankController) DyAuthorFollowerRank() {
 	sortStr := receiver.GetString("sort", "sum_sales")
 	orderBy := receiver.GetString("order_by", "desc")
 	page := receiver.GetPage("page")
-	pageSize := receiver.GetPageSize("page_size", 10, 200)
+	pageSize := receiver.GetPageSize("page_size", 10, 50)
 	var sortMap = map[string]string{"live_inc_follower_count": "live_fans_inc", "inc_follower_count": "fans_inc", "aweme_inc_follower_count": "aweme_fans_inc"}
 	if sortMap[sortStr] != "" {
 		sortStr = sortMap[sortStr]
@@ -644,20 +640,32 @@ func (receiver *RankController) DyAuthorFollowerRank() {
 	}
 	var ret map[string]interface{}
 	var originList []entity.DyAuthorDayFansIncrease
-	startRow := sortStr + "_" + startDate.Format("20060102") + "_" + tags
-	endRow := sortStr + "_" + startDate.Format("20060102") + "_" + tags
+	rowKey := sortStr + "_" + startDate.Format("20060102") + "_" + tags
+	var rowKeys [][]byte
 	if orderBy == "desc" {
-		startRow = utils.Md5_encode(startRow) + "_" + strconv.Itoa(start+1)
-		endRow = utils.Md5_encode(endRow) + "_" + strconv.Itoa(end+1)
-		originList, _ = hbase.GetFansAuthorRank(startRow, endRow)
+		startTemp := start
+		for {
+			rowKeys = append(rowKeys, []byte(utils.Md5_encode(rowKey)+"_"+strconv.Itoa(startTemp+1)))
+			startTemp++
+			if startTemp > end {
+				break
+			}
+		}
+		originList, _ = hbase.GetFansAuthorRank(rowKeys)
 	} else {
-		rowKey := utils.Md5_encode(startRow) + "_" + strconv.Itoa(1)
-		firstRow, _ := hbase.GetFansAuthorRow(rowKey)
+		firstRow, _ := hbase.GetFansAuthorRow(utils.Md5_encode(rowKey) + "_" + strconv.Itoa(1))
 		maxRow, _ := strconv.Atoi(firstRow.RnMax)
 		if maxRow > 0 {
-			endRow = utils.Md5_encode(startRow) + "_" + strconv.Itoa(maxRow-start)
-			startRow = utils.Md5_encode(endRow) + "_" + strconv.Itoa(maxRow-end)
-			originList, _ = hbase.GetFansAuthorRank(startRow, endRow)
+			startTemp := maxRow - end
+			endTemp := maxRow - start
+			for {
+				rowKeys = append(rowKeys, []byte(utils.Md5_encode(rowKey)+"_"+strconv.Itoa(startTemp+1)))
+				startTemp++
+				if startTemp >= endTemp {
+					break
+				}
+			}
+			originList, _ = hbase.GetFansAuthorRank(rowKeys)
 		}
 	}
 	data := make([]dy.AuthorFansRankRet, 0)

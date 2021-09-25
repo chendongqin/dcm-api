@@ -25,6 +25,7 @@ type RepostAccountVipLevel struct {
 	LevelName         string `json:"level_name"`
 	ExpirationTime    string `json:"expiration_time"`
 	ExpirationDays    int    `json:"expiration_days"`
+	SubExpirationDays int    `json:"sub_expiration_days"`
 	SubNum            int    `json:"sub_num"`
 	IsSub             int    `json:"is_sub"`
 	SubExpirationTime string `json:"sub_expiration_time"`
