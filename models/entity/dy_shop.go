@@ -46,8 +46,8 @@ type DyShopBaseDetail struct {
 	D30LiveCnt   int64   `json:"30d_live_cnt"`   //30天直播数
 	D30AuthorCnt int64   `json:"30d_author_cnt"` //30天达人数
 	D30Sales     int64   `json:"30d_sales"`      //30天销量
-	D30Gmv       int64   `json:"30d_gmv"`        //30天gmv
-	D30Pct       int64   `json:"30d_pct"`        //30天客单价
+	D30Gmv       float64 `json:"30d_gmv"`        //30天gmv
+	D30Pct       float64 `json:"30d_pct"`        //30天客单价
 	D30Rate      float64 `json:"30d_rate"`       //30天转化率
 }
 
