@@ -54,4 +54,7 @@ const (
 
 	//脚本锁
 	DyMonitorUpdateRoomLock KeyName = "dcm:cmd:monitor:update:room:%s"
+
+	//定时任务的键
+	AmountExpireWechatNotice KeyName = "dcm:cmd:account:expire:notice:%d" //天数
 )

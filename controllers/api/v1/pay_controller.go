@@ -55,9 +55,10 @@ func (receiver *PayController) DySurplusValue() {
 			nowValue = value
 		} else {
 			if vip.Expiration != startTime && vip.Expiration.After(time.Now()) {
+				valueAdd, _ := payBusiness.GetDyAddValue(int(math.Ceil(surplusDay)))
 				subTime := vip.Expiration.Sub(startTime)
 				nowSurplusDay = subTime.Hours() / 24
-				surplusUnit := value / math.Ceil(surplusDay)
+				surplusUnit := valueAdd / math.Ceil(surplusDay)
 				nowValue = utils.CeilFloat64One(surplusUnit * (math.Ceil(nowSurplusDay)))
 			}
 		}
@@ -70,6 +71,7 @@ func (receiver *PayController) DySurplusValue() {
 		"value":           utils.CeilFloat64One(value),
 		"prime_value":     primeValue,
 		"price_config":    priceConfig,
+		"surplus_day":     math.Ceil(nowSurplusDay),
 	})
 	return
 }
@@ -153,7 +155,8 @@ func (receiver *PayController) CreateDyOrder() {
 		vipOrderType = 2
 		surplusValue, _ = payBusiness.GetDySurplusValue(int(surplusDay))
 		if surplusDay > 0 {
-			surplusUnit = surplusValue / float64(surplusDay)
+			valueAdd, _ := payBusiness.GetDyAddValue(int(surplusDay))
+			surplusUnit = valueAdd / float64(surplusDay)
 		}
 	}
 	checkActivity := false
