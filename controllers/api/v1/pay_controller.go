@@ -131,7 +131,7 @@ func (receiver *PayController) CreateDyOrder() {
 		return
 	}
 	subExpiration := userVip.SubExpiration
-	if orderType == 2 {
+	if utils.InArrayInt(orderType, []int{2, 3}) {
 		subExpiration = time.Now()
 	} else {
 		if subExpiration.Before(time.Now()) {
@@ -178,7 +178,7 @@ func (receiver *PayController) CreateDyOrder() {
 	orderInfo := repost.VipOrderInfo{
 		SurplusValue: surplusValue,
 	}
-	if utils.InArrayInt(orderType, []int{2, 4}) {
+	if utils.InArrayInt(orderType, []int{2, 3, 4}) {
 		//先续费再购买
 		if userVip.SubNum > 0 {
 			if userVip.SubExpiration.Before(time.Now()) {
@@ -217,12 +217,15 @@ func (receiver *PayController) CreateDyOrder() {
 	} else if orderType == 3 { //协同账号续费
 		totalPeople := userVip.SubNum
 		title = fmt.Sprintf("协同账号续费%d人", totalPeople)
-		amount = utils.CeilFloat64One(trueSurplusValue * float64(totalPeople))
+		//amount = utils.CeilFloat64One(trueSurplusValue * float64(totalPeople))
 		orderInfo.BuyDays = int(surplusDay)
-		orderInfo.Amount = amount
+		orderInfo.Amount = utils.CeilFloat64One(amount)
 		orderInfo.People = totalPeople
 		orderInfo.Title = "协同账号续费"
 		vipOrderType = 4
+		if remark == "" {
+			remark = price.ActiveComment
+		}
 	} else if orderType == 4 {
 		title = "团队成员续费"
 		totalPeople := userVip.SubNum + 1
@@ -233,6 +236,9 @@ func (receiver *PayController) CreateDyOrder() {
 		orderInfo.People = totalPeople
 		orderInfo.Title = "团队成员续费"
 		vipOrderType = 5
+		if remark == "" {
+			remark = price.ActiveComment
+		}
 	}
 	uniqueID, _ := utils.Snow.GetSnowflakeId()
 	tradeNo := fmt.Sprintf("%s%d", time.Now().Format("060102"), uniqueID)
