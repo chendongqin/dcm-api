@@ -189,7 +189,14 @@ func (l *LiveBusiness) LiveRoomAnalyse(roomId string) (data dy.DyLiveRoomAnalyse
 	data.Volume = int64(math.Floor(salesData.Sales))
 	data.Amount = salesData.Gmv
 	esLiveBusiness := es.NewEsLiveBusiness()
-	data.PromotionNum = esLiveBusiness.CountRoomProductByRoomId(liveInfo)
+	if salesData.Gmv > 0 {
+		data.PromotionNum = true
+	} else {
+		temNum := esLiveBusiness.CountRoomProductByRoomId(liveInfo)
+		if temNum > 0 {
+			data.PromotionNum = true
+		}
+	}
 	if salesData.Sales > 0 {
 		data.PerPrice = salesData.Gmv / salesData.Sales
 	}

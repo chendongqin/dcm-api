@@ -416,14 +416,21 @@ func (receiver *AuthorController) AuthorViewData() {
 	productCount.ProductNum = authorBase.ProductCount
 	videoSumData := es.NewEsVideoBusiness().SumDataByAuthor(authorId, startTime, yesterday)
 	liveSumData := es.NewEsLiveBusiness().SumDataByAuthor(authorId, startTime, yesterday)
+	dayLiveRoomNum := es.NewEsLiveBusiness().CountRoomByDayByAuthorId(authorId, 1, startTime, yesterday)
+	var avgGmv float64 = 0
+	var avgSales float64 = 0
+	if dayLiveRoomNum > 0 {
+		avgSales = math.Floor(liveSumData.TotalSales.Sum / float64(dayLiveRoomNum))
+		avgGmv = math.Floor(liveSumData.TotalGmv.Sum / float64(dayLiveRoomNum))
+	}
 	productCount.Predict30Gmv = liveSumData.TotalGmv.Sum + videoSumData.Gmv
 	productCount.Predict30Sales = utils.ToInt64(math.Floor(liveSumData.TotalSales.Sum)) + videoSumData.Sales
 	data := dy2.DyAuthorBaseCount{
 		LiveCount: dy2.DyAuthorBaseLiveCount{
 			RoomCount:      int64(authorBase.LiveCount),
 			Room30Count:    room30Count,
-			Predict30Sales: math.Floor(liveSumData.TotalSales.Avg),
-			Predict30Gmv:   utils.FriendlyFloat64(liveSumData.TotalGmv.Avg),
+			Predict30Sales: avgSales,
+			Predict30Gmv:   utils.FriendlyFloat64(avgGmv),
 			AgeDuration:    authorBase.AgeLiveDuration,
 			WeekRoomCount:  weekRoom,
 			MonthRoomCount: monthRoom,

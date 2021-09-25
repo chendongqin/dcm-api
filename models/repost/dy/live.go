@@ -89,7 +89,7 @@ type DyLiveRoomAnalyse struct {
 	Volume         int64   `json:"volume"`
 	Amount         float64 `json:"amount"`
 	Uv             float64 `json:"uv"`
-	PromotionNum   int64   `json:"promotion_num"`
+	PromotionNum   bool    `json:"promotion_num"`
 	SaleRate       float64 `json:"sale_rate"`
 	PerPrice       float64 `json:"per_price"`
 	LiveLongTime   int64   `json:"live_long_time"`

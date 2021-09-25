@@ -430,7 +430,7 @@ func (a *AuthorBusiness) CountLiveRoomAnalyse(authorId string, startTime, endTim
 		if _, ok := dateRoomMap[date]; !ok {
 			dateRoomMap[date] = []dy.DyLiveRoomChart{}
 		}
-		if v.PromotionNum > 0 {
+		if v.PromotionNum {
 			productRoomNum++
 		}
 		dateRoomMap[date] = append(dateRoomMap[date], dy.DyLiveRoomChart{
@@ -460,7 +460,7 @@ func (a *AuthorBusiness) CountLiveRoomAnalyse(authorId string, startTime, endTim
 			d.LiveStartTime = v.LiveStartTime
 			avgOnlineTime := (d.AvgOnlineTime + v.AvgOnlineTime) / 2
 			d.AvgOnlineTime = avgOnlineTime
-			if d.PromotionNum == 0 {
+			if !d.PromotionNum {
 				d.PromotionNum = v.PromotionNum
 			}
 			sumData[date] = d
@@ -510,9 +510,8 @@ func (a *AuthorBusiness) CountLiveRoomAnalyse(authorId string, startTime, endTim
 		onlineUserChart = append(onlineUserChart, v.AvgOnlineTime)
 		uvChart = append(uvChart, v.Uv)
 		amountChart = append(amountChart, v.Amount)
-		if v.PromotionNum > 0 {
+		if v.PromotionNum {
 			data.UserData.PromotionLiveNum += 1
-			data.SaleData.PromotionNum += v.PromotionNum
 		}
 		if rv, ok := dateRoomMap[date]; ok {
 			roomChart = append(roomChart, rv)
@@ -520,6 +519,7 @@ func (a *AuthorBusiness) CountLiveRoomAnalyse(authorId string, startTime, endTim
 			roomChart = append(roomChart, []dy.DyLiveRoomChart{})
 		}
 	}
+	data.SaleData.PromotionNum = es.NewEsLiveBusiness().CountRoomProductByAuthorId(authorId, startTime, endTime)
 	if data.UserData.LiveNum > 0 {
 		data.UserData.AvgUserTotal /= int64(data.UserData.LiveNum)
 		data.UserData.AvgUserCount /= int64(data.UserData.LiveNum)
