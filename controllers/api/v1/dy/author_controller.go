@@ -413,7 +413,7 @@ func (receiver *AuthorController) AuthorViewData() {
 			_ = global.Cache.Set(cacheKey, utils.SerializeData(productCount), 600)
 		}
 	}
-	productCount.ProductNum = int(esLiveBusiness.CountRoomProductByAuthorId(authorId, startTime, yesterday))
+	productCount.ProductNum = authorBase.ProductCount
 	videoSumData := es.NewEsVideoBusiness().SumDataByAuthor(authorId, startTime, yesterday)
 	liveSumData := esLiveBusiness.SumDataByAuthor(authorId, startTime, yesterday)
 	dayLiveRoomNum := esLiveBusiness.CountRoomByDayByAuthorId(authorId, 1, startTime, yesterday)
