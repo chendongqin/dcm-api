@@ -65,6 +65,16 @@ func GetBuckets(resp map[string]interface{}, name string) []interface{} {
 	return nil
 }
 
+func GetBucketsCount(resp map[string]interface{}, name string) int {
+	if aggregations, ok := resp["aggregations"].(map[string]interface{}); ok {
+		data := aggregations[name].(map[string]interface{})
+		if v, ok1 := data["value"]; ok1 {
+			return utils.ToInt(v)
+		}
+	}
+	return 0
+}
+
 func NewWritableClient() (client *elasticsearch.Client, err error) {
 	host := global.Cfg.String("es_host")
 	user := global.Cfg.String("es_write_user")

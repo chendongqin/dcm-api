@@ -102,16 +102,69 @@ func (receiver *EsLiveBusiness) CountRoomProductByAuthorId(authorId string, star
 		"gte": startTime.Unix(),
 		"lt":  endTime.AddDate(0, 0, 1).Unix(),
 	})
-	_ = esMultiQuery.
+	countResult := esMultiQuery.
 		SetConnection(connection).
+		SetCache(180).
 		SetTable(esTable).
-		SetCollapse("product_id.keyword").
-		SetFields("product_id").
-		AddMust(esQuery.Condition).
-		SetMultiQuery().
-		Query()
-	total := esMultiQuery.Count
-	return int64(total)
+		RawQuery(map[string]interface{}{
+			"query": map[string]interface{}{
+				"bool": map[string]interface{}{
+					"must": esQuery.Condition,
+				},
+			},
+			"size": 0,
+			"aggs": map[string]interface{}{
+				"product": map[string]interface{}{
+					"cardinality": map[string]interface{}{
+						"field": "product_id.keyword",
+					},
+				},
+			},
+		})
+	var total int64 = 0
+	total = int64(elasticsearch.GetBucketsCount(countResult, "product"))
+	return total
+}
+
+//直播间场次统计（天）
+func (receiver *EsLiveBusiness) CountRoomByDayByAuthorId(authorId string, hasProduct int, startTime, endTime time.Time) int64 {
+	esTable, connection, err := GetESTableByTime(es.DyLiveInfoBaseTable, startTime, endTime)
+	if err != nil {
+		return 0
+	}
+	esQuery, esMultiQuery := elasticsearch.NewElasticQueryGroup()
+	esQuery.SetTerm("author_id", authorId)
+	esQuery.SetRange("create_time", map[string]interface{}{
+		"gte": startTime.Unix(),
+		"lt":  endTime.AddDate(0, 0, 1).Unix(),
+	})
+	if hasProduct == 1 {
+		esQuery.SetRange("num_product", map[string]interface{}{
+			"gt": 0,
+		})
+	}
+	countResult := esMultiQuery.
+		SetConnection(connection).
+		SetCache(300).
+		SetTable(esTable).
+		RawQuery(map[string]interface{}{
+			"query": map[string]interface{}{
+				"bool": map[string]interface{}{
+					"must": esQuery.Condition,
+				},
+			},
+			"size": 0,
+			"aggs": map[string]interface{}{
+				"live": map[string]interface{}{
+					"cardinality": map[string]interface{}{
+						"field": "dt.keyword",
+					},
+				},
+			},
+		})
+	var total int64 = 0
+	total = int64(elasticsearch.GetBucketsCount(countResult, "live"))
+	return total
 }
 
 //直播间筛选
@@ -885,7 +938,7 @@ func (receiver *EsLiveBusiness) GetRoomsByAuthorIds(authorIds []string, date str
 }
 
 //达人直播间统计
-func (receiver *EsLiveBusiness) SumDataByAuthor(authorId string, startTime, endTime time.Time) (data es.DyLiveSumCount) {
+func (receiver *EsLiveBusiness) SumDataByAuthor(authorId string, startTime, endTime time.Time) (data es.DyLiveSumCount, total int) {
 	data = es.DyLiveSumCount{}
 	esTable, connection, err := GetESTableByTime(es.DyLiveInfoBaseTable, startTime, endTime)
 	if err != nil {
@@ -925,6 +978,11 @@ func (receiver *EsLiveBusiness) SumDataByAuthor(authorId string, startTime, endT
 
 	if r, ok := countResult["aggregations"]; ok {
 		utils.MapToStruct(r, &data)
+	}
+	if hits, ok := countResult["hits"]; ok {
+		if v, ok1 := hits.(map[string]interface{})["total"]; ok1 {
+			total = int(v.(float64))
+		}
 	}
 	return
 }
@@ -996,6 +1054,7 @@ func (receiver *EsLiveBusiness) ScanLiveProductByAuthor(authorId, keyword, categ
 	results := esMultiQuery.
 		SetConnection(connection).
 		SetTable(esTable).
+		SetCache(300).
 		AddMust(esQuery.Condition).
 		SetLimit((page-1)*pageSize, pageSize).
 		SetMultiQuery().

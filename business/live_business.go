@@ -181,7 +181,7 @@ func (l *LiveBusiness) LiveRoomAnalyse(roomId string) (data dy.DyLiveRoomAnalyse
 	//}
 	//}
 	if liveInfo.TotalUser > 0 {
-		data.Uv = (salesData.Gmv + float64(salesData.TicketCount)/10) / float64(liveInfo.TotalUser)
+		data.Uv = (salesData.Gmv + float64(liveInfo.RoomTicketCount)/10) / float64(liveInfo.TotalUser)
 		data.SaleRate = salesData.Sales / float64(liveInfo.TotalUser)
 		data.IncFansRate = float64(data.IncFans) / float64(liveInfo.TotalUser)
 		data.InteractRate = float64(liveInfo.BarrageUserCount) / float64(liveInfo.TotalUser)
@@ -189,7 +189,14 @@ func (l *LiveBusiness) LiveRoomAnalyse(roomId string) (data dy.DyLiveRoomAnalyse
 	data.Volume = int64(math.Floor(salesData.Sales))
 	data.Amount = salesData.Gmv
 	esLiveBusiness := es.NewEsLiveBusiness()
-	data.PromotionNum = esLiveBusiness.CountRoomProductByRoomId(liveInfo)
+	if salesData.Gmv > 0 {
+		data.PromotionNum = true
+	} else {
+		temNum := esLiveBusiness.CountRoomProductByRoomId(liveInfo)
+		if temNum > 0 {
+			data.PromotionNum = true
+		}
+	}
 	if salesData.Sales > 0 {
 		data.PerPrice = salesData.Gmv / salesData.Sales
 	}

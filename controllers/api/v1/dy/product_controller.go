@@ -110,6 +110,11 @@ func (receiver *ProductController) Search() {
 		list[k].Image = dyimg.Fix(v.Image)
 		productIds = append(productIds, v.ProductId)
 		list[k].ProductId = business.IdEncrypt(v.ProductId)
+		if list[k].PlatformLabel == "小店" {
+			if brand, e := hbase.GetDyProductBrand(v.ProductId); e == nil {
+				list[k].ShopName = brand.ShopName
+			}
+		}
 	}
 	if receiver.HasLogin {
 		collect, comErr := business.NewCollectBusiness().DyListCollect(2, receiver.UserId, productIds)
@@ -286,6 +291,9 @@ func (receiver *ProductController) ProductBaseAnalysis() {
 	sort.Slice(orderList, func(i, j int) bool {
 		return orderList[i].Date > orderList[j].Date
 	})
+	if len(orderList) > 0 {
+		countData.Gpm = utils.FriendlyFloat64(countData.Gpm / float64(len(orderList)))
+	}
 	receiver.SuccReturn(map[string]interface{}{
 		"author_chart": dy2.ProductAuthorChart{
 			Date:             dateChart,

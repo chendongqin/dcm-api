@@ -278,6 +278,7 @@ func (receiver *LiveCountController) LiveSumByCategoryLevel() {
 	living, _ := receiver.GetInt("living", 0)
 	esLiveDataBusiness := es.NewEsLiveDataBusiness()
 	_, dataList := esLiveDataBusiness.ProductLiveDataCategoryLevel(startTime, endTime, category, living)
+	CustomerUnitPriceList := esLiveDataBusiness.ProductLiveDataCategoryCustomerUnitPriceLevel(startTime, endTime, category, living)
 	levelsArr := []string{"E", "D", "C", "B", "A", "S"}
 	levelMap := map[string]dy.LiveSumDataCategoryLevel{}
 	var allGmv float64 = 0
@@ -304,6 +305,16 @@ func (receiver *LiveCountController) LiveSumByCategoryLevel() {
 		item.CustomerUnitPrice.Min = v.StatsCustomerUnitPrice.Min
 		item.CustomerUnitPrice.Max = v.StatsCustomerUnitPrice.Max
 		levelMap[v.Key] = item
+	}
+	for _, v := range CustomerUnitPriceList {
+		if item, exist := levelMap[v.Key]; exist {
+			for _, c := range v.CustomerUnitPrice.Values {
+				if c.Key == 50 {
+					item.CustomerUnitPrice.Median = c.Value
+					levelMap[v.Key] = item
+				}
+			}
+		}
 	}
 	list := make([]dy.LiveSumDataCategoryLevel, 0)
 	for _, key := range levelsArr {
@@ -389,7 +400,7 @@ func (receiver *LiveCountController) LiveSumByCategoryLevelTwo() {
 				if d, exist := v[i]; exist {
 					itemMap = d
 				}
-				for j := 0; j <= 10; j++ {
+				for j := 1; j <= 10; j++ {
 					tmp := dy.LiveSumDataCategoryLevelTwo{
 						FlowLevel: level + utils.ToString(i),
 						StayLevel: j,

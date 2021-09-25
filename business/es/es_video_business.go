@@ -133,6 +133,7 @@ func (e *EsVideoBusiness) SumDataByAuthor(authorId string, startTime, endTime ti
 		"lt":  endTime.AddDate(0, 0, 1).Unix(),
 	})
 	esQuery.SetTerm("author_id", authorId)
+	esQuery.SetTerm("exist", 1)
 	esTable, connection, err := GetESTableByTime(es.DyVideoTable, startTime, endTime)
 	if err != nil {
 		return
@@ -322,7 +323,7 @@ func (e *EsVideoBusiness) ScanAwemeProductByAuthor(authorId, keyword, category, 
 	results := esMultiQuery.
 		SetConnection(connection).
 		SetTable(esTable).
-		SetCache(600).
+		SetCache(300).
 		AddMust(esQuery.Condition).
 		SetLimit((page-1)*pageSize, pageSize).
 		SetMultiQuery().
@@ -394,16 +395,22 @@ func (e *EsVideoBusiness) AuthorProductAwemeSumList(authorId, productId, shopId,
 								"size": pageSize,
 							},
 						},
+						"count": map[string]interface{}{
+							"cardinality": map[string]interface{}{
+								"field": "aweme_id.keyword",
+							},
+						},
+					},
+				},
+				"count": map[string]interface{}{
+					"sum_bucket": map[string]interface{}{
+						"buckets_path": "awemes>count.value",
 					},
 				},
 			},
 		})
 	res := elasticsearch.GetBuckets(results, "awemes")
 	utils.MapToStruct(res, &list)
-	if h, ok := results["hits"]; ok {
-		if t, ok2 := h.(map[string]interface{})["total"]; ok2 {
-			total = utils.ToInt(t.(float64))
-		}
-	}
+	total = elasticsearch.GetBucketsCount(results, "count")
 	return
 }

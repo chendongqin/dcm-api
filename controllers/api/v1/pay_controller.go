@@ -55,9 +55,10 @@ func (receiver *PayController) DySurplusValue() {
 			nowValue = value
 		} else {
 			if vip.Expiration != startTime && vip.Expiration.After(time.Now()) {
+				valueAdd, _ := payBusiness.GetDyAddValue(int(math.Ceil(surplusDay)))
 				subTime := vip.Expiration.Sub(startTime)
 				nowSurplusDay = subTime.Hours() / 24
-				surplusUnit := value / math.Ceil(surplusDay)
+				surplusUnit := valueAdd / math.Ceil(surplusDay)
 				nowValue = utils.CeilFloat64One(surplusUnit * (math.Ceil(nowSurplusDay)))
 			}
 		}
@@ -70,6 +71,7 @@ func (receiver *PayController) DySurplusValue() {
 		"value":           utils.CeilFloat64One(value),
 		"prime_value":     primeValue,
 		"price_config":    priceConfig,
+		"surplus_day":     math.Ceil(nowSurplusDay),
 	})
 	return
 }
@@ -128,32 +130,30 @@ func (receiver *PayController) CreateDyOrder() {
 		receiver.FailReturn(global.NewMsgError("购买协同账号请先开通会员"))
 		return
 	}
-	subExpiration := userVip.SubExpiration
-	if orderType == 2 {
-		subExpiration = time.Now()
-	} else {
-		if subExpiration.Before(time.Now()) {
-			subExpiration = time.Now()
-		}
+	if userVip.Expiration.Format("20060102") == userVip.SubExpiration.Format("20060102") && orderType == 3 {
+		receiver.FailReturn(global.NewMsgError("协同账号到期时间与账户会员时间一致，不需要续费～"))
+		return
 	}
 	var remark = ""
 	var surplusDay int64 = 0
 	var surplusUnit float64 = 0
 	if userVip.Expiration.After(time.Now()) {
-		surplusDay = int64(math.Ceil(userVip.Expiration.Sub(subExpiration).Hours() / 24))
-		if surplusDay == 0 && orderType == 3 {
+		surplusDay = int64(math.Ceil(userVip.Expiration.Sub(time.Now()).Hours() / 24))
+		if surplusDay == 0 {
 			receiver.FailReturn(global.NewMsgError("协同账号到期时间与账户会员时间一致，不需要续费～"))
 			return
 		}
 	}
 	payBusiness := business.NewPayBusiness()
 	var surplusValue float64 = 0
+	var trueSurplusValue float64 = 0
 	vipOrderType := 1
 	if userVip.Level > 0 {
 		vipOrderType = 2
+		trueSurplusValue, _ = payBusiness.GetDyAddValue(int(surplusDay))
 		surplusValue, _ = payBusiness.GetDySurplusValue(int(surplusDay))
 		if surplusDay > 0 {
-			surplusUnit = surplusValue / float64(surplusDay)
+			surplusUnit = trueSurplusValue / float64(surplusDay)
 		}
 	}
 	checkActivity := false
@@ -174,21 +174,11 @@ func (receiver *PayController) CreateDyOrder() {
 	orderInfo := repost.VipOrderInfo{
 		SurplusValue: surplusValue,
 	}
-	//购买会员
-	if orderType == 1 {
-		amount = price.Price
-		orderInfo.BuyDays = buyDays
-		orderInfo.Amount = amount
-		orderInfo.People = 1
-		orderInfo.Title = "会员购买"
-		remark = price.ActiveComment
-	} else if orderType == 2 { //购买协同账号
-		title = fmt.Sprintf("购买协同账号%d人", groupPeople)
-		amount = surplusValue * float64(groupPeople)
+	if utils.InArrayInt(orderType, []int{2, 3, 4}) {
 		//先续费再购买
 		if userVip.SubNum > 0 {
 			if userVip.SubExpiration.Before(time.Now()) {
-				amount += surplusValue * float64(userVip.SubNum)
+				amount += trueSurplusValue * float64(userVip.SubNum)
 			} else {
 				if userVip.Expiration.After(userVip.SubExpiration) {
 					surplusSubDay := math.Ceil((userVip.Expiration.Sub(userVip.SubExpiration)).Hours() / 24)
@@ -199,31 +189,52 @@ func (receiver *PayController) CreateDyOrder() {
 				}
 			}
 		}
+	}
+	//购买会员
+	if orderType == 1 {
+		amount = price.Price
+		orderInfo.BuyDays = buyDays
+		orderInfo.Amount = amount
+		orderInfo.People = 1
+		orderInfo.Title = "会员购买"
+		remark = price.ActiveComment
+	} else if orderType == 2 { //购买协同账号
+		title = fmt.Sprintf("购买协同账号%d人", groupPeople)
+		amount += surplusValue * float64(groupPeople)
 		amount = utils.CeilFloat64One(amount)
 		orderInfo.BuyDays = int(surplusDay)
 		orderInfo.Amount = amount
 		orderInfo.People = groupPeople
 		orderInfo.Title = "协同账号购买"
 		vipOrderType = 3
+		if remark == "" {
+			remark = price.ActiveComment
+		}
 	} else if orderType == 3 { //协同账号续费
 		totalPeople := userVip.SubNum
 		title = fmt.Sprintf("协同账号续费%d人", totalPeople)
-		amount = utils.CeilFloat64One(surplusValue * float64(totalPeople))
+		//amount = utils.CeilFloat64One(trueSurplusValue * float64(totalPeople))
 		orderInfo.BuyDays = int(surplusDay)
-		orderInfo.Amount = amount
+		orderInfo.Amount = utils.CeilFloat64One(amount)
 		orderInfo.People = totalPeople
 		orderInfo.Title = "协同账号续费"
 		vipOrderType = 4
+		if remark == "" {
+			remark = price.ActiveComment
+		}
 	} else if orderType == 4 {
 		title = "团队成员续费"
 		totalPeople := userVip.SubNum + 1
-		amount = utils.CeilFloat64One(price.Price * float64(totalPeople))
+		amount = utils.CeilFloat64One(amount + price.Price*float64(totalPeople))
+		remark = price.ActiveComment
 		orderInfo.BuyDays = buyDays
-		orderInfo.Amount = amount
+		orderInfo.Amount = utils.FriendlyFloat64(amount)
 		orderInfo.People = totalPeople
 		orderInfo.Title = "团队成员续费"
 		vipOrderType = 5
-		remark = price.ActiveComment
+		if remark == "" {
+			remark = price.ActiveComment
+		}
 	}
 	uniqueID, _ := utils.Snow.GetSnowflakeId()
 	tradeNo := fmt.Sprintf("%s%d", time.Now().Format("060102"), uniqueID)

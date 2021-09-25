@@ -200,3 +200,61 @@ func GetLiveProductRank(rowKey string, hPage int) (data []entity.LiveProduct, co
 	data = hData.Ranks
 	return
 }
+
+func GetSaleAuthorRank(rowKeys [][]byte) (data []entity.DyAuthorDaySalesRank, comErr global.CommonError) {
+	query := hbasehelper.NewQuery()
+	results, err := query.SetTable(hbaseService.HbaseDyAuthorDaySalesRank).GetByRowKeys(rowKeys)
+	if err != nil {
+		comErr = global.NewMsgError(err.Error())
+		return
+	}
+	data = make([]entity.DyAuthorDaySalesRank, 0)
+	for _, v := range results {
+		dataMap := hbaseService.HbaseFormat(v, entity.DyAuthorDaySalesRankMap)
+		hData := entity.DyAuthorDaySalesRank{}
+		utils.MapToStruct(dataMap, &hData)
+		data = append(data, hData)
+	}
+	return
+}
+
+func GetSaleAuthorRow(rowKey string) (data entity.DyAuthorDaySalesRank, comErr global.CommonError) {
+	query := hbasehelper.NewQuery()
+	result, err := query.SetTable(hbaseService.HbaseDyAuthorDaySalesRank).GetByRowKey([]byte(rowKey))
+	if err != nil {
+		comErr = global.NewMsgError(err.Error())
+		return
+	}
+	dataMap := hbaseService.HbaseFormat(result, entity.DyAuthorDaySalesRankMap)
+	utils.MapToStruct(dataMap, &data)
+	return
+}
+
+func GetFansAuthorRank(rowKey [][]byte) (data []entity.DyAuthorDayFansIncrease, comErr global.CommonError) {
+	query := hbasehelper.NewQuery()
+	results, err := query.SetTable(hbaseService.HbaseDyAuthorFansIncrRank).GetByRowKeys(rowKey)
+	if err != nil {
+		comErr = global.NewMsgError(err.Error())
+		return
+	}
+	data = make([]entity.DyAuthorDayFansIncrease, 0)
+	for _, v := range results {
+		dataMap := hbaseService.HbaseFormat(v, entity.DyAuthorDayFansIncreaseMap)
+		hData := entity.DyAuthorDayFansIncrease{}
+		utils.MapToStruct(dataMap, &hData)
+		data = append(data, hData)
+	}
+	return
+}
+
+func GetFansAuthorRow(rowKey string) (data entity.DyAuthorDaySalesRank, comErr global.CommonError) {
+	query := hbasehelper.NewQuery()
+	result, err := query.SetTable(hbaseService.HbaseDyAuthorFansIncrRank).GetByRowKey([]byte(rowKey))
+	if err != nil {
+		comErr = global.NewMsgError(err.Error())
+		return
+	}
+	dataMap := hbaseService.HbaseFormat(result, entity.DyAuthorDayFansIncreaseMap)
+	utils.MapToStruct(dataMap, &data)
+	return
+}

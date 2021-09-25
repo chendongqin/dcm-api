@@ -3,6 +3,7 @@ package business
 import (
 	"dongchamao/global"
 	"dongchamao/models/dcm"
+	"fmt"
 	jsoniter "github.com/json-iterator/go"
 	"github.com/pkg/errors"
 	"github.com/silenceper/wechat/v2/officialaccount/basic"
@@ -22,6 +23,7 @@ const (
 	WechatMsgTemplateBindNotice        = "-O4v3TG7c8hV1xeVwt5jUdHLP0bLKghvfsxWMUCPeU8" //绑定通知 - 模板id
 	WechatMsgTemplateLoginNotice       = "lbk1OMOLE1x-tSQIqap8otYWlAu-7d8mTmTnT0R4k50" //登录成功通知-模板id
 	WechatMsgTemplateLoginOutNotice    = "e-tT-wntWlj-tVpb2YktMaPN5CnkBdKxGK11lq_ccUQ" //退出成功通知-模板id
+	WechatMsgTemplateAmountExpire      = "ElTeIyQ0g5sx3XM5N2obCNtjhAyxGB8-pZPLy8NnL4s" //会员到期通知-模板id
 
 )
 
@@ -274,6 +276,44 @@ func (receiver *WechatBusiness) LoginOutWechatMsg(user *dcm.DcUser) {
 		},
 	}
 	err := NewWechatBusiness().SendMsg(user.Openid, WechatMsgTemplateLoginOutNotice, msgMap, DyDcmUrl)
+	if err != nil {
+		return
+	}
+	return
+}
+
+func (receiver *WechatBusiness) AmountExpireWechatNotice(user *dcm.UserVipJpinCombine) {
+	fmt.Printf("%+v\n", user)
+	if user.DcJoinUser.Openid == "" {
+		return
+	}
+	//DcUserVip
+	vipBusiness := NewVipBusiness()
+	levels := vipBusiness.GetUserLevels()
+
+	msgMap := map[string]*message.TemplateDataItem{
+		"first": {
+			Value: "会员即将到期",
+			Color: "red",
+		},
+		"keyword1": {
+			Value: "会员等级",
+			Color: "",
+		},
+		"keyword2": {
+			Value: levels[user.DcJoinUserVip.Level],
+			Color: "",
+		},
+		"keyword3": {
+			Value: user.DcJoinUserVip.Expiration,
+			Color: "",
+		},
+		"keyword4": {
+			Value: user.DcJoinUser.Username,
+			Color: "",
+		},
+	}
+	err := NewWechatBusiness().SendMsg(user.Openid, WechatMsgTemplateAmountExpire, msgMap, DyDcmUrl)
 	if err != nil {
 		return
 	}

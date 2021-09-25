@@ -49,12 +49,13 @@ func (receiver *CollectBusiness) GetDyCollect(tagId, collectType int, keywords, 
 		comErr = global.NewError(5000)
 		return nil, total, comErr
 	}
+	var collectIds []string
+	_ = dbCollect.Table(dcm.DcUserDyCollect{}).Where(query).Limit(pageSize, (page-1)*pageSize).Select("collect_id").Find(&collectIds)
 	switch collectType {
 	case 1:
 		data := make([]repost.CollectAuthorRet, len(collects))
 		startTime := time.Now().AddDate(0, 0, -31)
 		yesterday := time.Now().AddDate(0, 0, -1)
-		var authorIds []string
 		for k, v := range collects {
 			data[k].DcUserDyCollect = v
 			data[k].DcUserDyCollect.CollectId = IdEncrypt(v.CollectId)
@@ -64,9 +65,8 @@ func (receiver *CollectBusiness) GetDyCollect(tagId, collectType int, keywords, 
 			data[k].FollowerCount = basicData.FollowerCount
 			data[k].FollowerIncreCount = basicData.FollowerCount - YesBasicData.FollowerCount
 			data[k].Avatar = dyimg.Avatar(dyAuthor.Data.Avatar)
-			authorIds = append(authorIds, v.CollectId)
 		}
-		liveSumData := es.NewEsLiveBusiness().SumDataByAuthors(authorIds, startTime, yesterday)
+		liveSumData := es.NewEsLiveBusiness().SumDataByAuthors(collectIds, startTime, yesterday)
 		for k, v := range collects {
 			authorBase, comErr := NewAuthorBusiness().HbaseGetAuthor(v.CollectId)
 			if comErr != nil {
@@ -82,13 +82,11 @@ func (receiver *CollectBusiness) GetDyCollect(tagId, collectType int, keywords, 
 		return data, total, nil
 	case 2:
 		data := make([]repost.CollectProductRet, len(collects))
-		var productIds []string
 		for k, v := range collects {
 			v.CollectId = IdEncrypt(v.CollectId)
 			data[k].DcUserDyCollect = v
-			productIds = append(productIds, v.CollectId)
 		}
-		products, _, commonError := es.NewEsProductBusiness().SearchProducts(productIds)
+		products, _, commonError := es.NewEsProductBusiness().SearchProducts(collectIds)
 		var productMap = make(map[string]es2.DyProduct, len(products))
 		for _, v := range products {
 			v.ProductId = IdEncrypt(v.ProductId)
@@ -153,9 +151,19 @@ func (receiver *CollectBusiness) GetDyCollect(tagId, collectType int, keywords, 
 		return data, total, nil
 	case 4:
 		data := make([]repost.CollectShopRet, len(collects))
+		var shopInfo map[string]es2.DyShop
+		search := es.NewEsShopBusiness().IdsSearch(collectIds)
+		for _, v := range search {
+			shopInfo[v.ShopId] = v
+		}
 		for k, v := range collects {
 			data[k].DcUserDyCollect = v
-			data[k].Shop, comErr = hbase.GetShop(v.CollectId)
+			shop, _ := hbase.GetShop(v.CollectId)
+			data[k].Logo = shop.Logo
+			data[k].Name = shop.Name
+			data[k].Predict30Sales = shopInfo[v.CollectId].MonthSales
+			data[k].Predict30Gmv = shopInfo[v.CollectId].MonthGmv
+			data[k].RelateAuthors = shopInfo[v.CollectId].RelateAuthor
 		}
 		return data, total, nil
 	}
