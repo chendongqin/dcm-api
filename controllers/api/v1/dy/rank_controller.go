@@ -498,26 +498,22 @@ func (receiver *RankController) DyAuthorTakeGoodsRank() {
 	//} else {
 
 	var originList []entity.DyAuthorDaySalesRank
-	startRow := sortStr + "_" + startDate.Format("20060102") + "_" + tags
-	endRow := sortStr + "_" + startDate.Format("20060102") + "_" + tags
+	key := sortStr + "_" + startDate.Format("20060102") + "_" + tags
+	rowKeys := make([][]byte, 0)
 	if orderBy == "desc" {
-		startRow = utils.Md5_encode(startRow) + "_" + strconv.Itoa(start+1)
-		endRow = utils.Md5_encode(endRow) + "_" + strconv.Itoa(end+1)
-		originList, _ = hbase.GetSaleAuthorRank(startRow, endRow)
+		for i := start + 1; i <= end; i++ {
+			rowKeys = append(rowKeys, []byte(utils.Md5_encode(key)+"_"+strconv.Itoa(i)))
+		}
+		originList, _ = hbase.GetSaleAuthorRank(rowKeys)
 	} else {
-		rowKey := utils.Md5_encode(startRow) + "_" + strconv.Itoa(1)
+		rowKey := utils.Md5_encode(key) + "_" + strconv.Itoa(1)
 		firstRow, _ := hbase.GetSaleAuthorRow(rowKey)
 		maxRow, _ := strconv.Atoi(firstRow.RnMax)
 		if maxRow > 0 {
-			startRow = utils.Md5_encode(startRow) + "_" + strconv.Itoa(maxRow-end+1)
-			endRow = utils.Md5_encode(endRow) + "_" + strconv.Itoa(maxRow-start+1)
-		}
-		originList, _ = hbase.GetSaleAuthorRank(startRow, endRow)
-		length := len(originList)
-		for j := 0; j < length/2; j++ { //倒序
-			temp := originList[length-1-j]
-			originList[length-1-j] = originList[j]
-			originList[j] = temp
+			for i := maxRow - start; i >= maxRow-end+1; i-- {
+				rowKeys = append(rowKeys, []byte(utils.Md5_encode(key)+"_"+strconv.Itoa(i)))
+			}
+			originList, _ = hbase.GetSaleAuthorRank(rowKeys)
 		}
 	}
 	data := make([]dy.TakeGoodsRankRet, 0)
