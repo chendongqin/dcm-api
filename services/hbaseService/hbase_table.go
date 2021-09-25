@@ -62,4 +62,5 @@ const (
 
 	HbaseShortVideoProductRank = "shortvideo_commodity_topN" //视频商品榜
 	HbaseLiveProductRank       = "live_commodity_TopN"       //直播商品榜
+	HbaseDyAuthorDaySalesRank  = "dy_author_day_sales"       //达人带货榜
 )
