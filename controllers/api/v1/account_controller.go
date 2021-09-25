@@ -177,10 +177,10 @@ func (receiver *AccountController) Info() {
 		if v.ExpirationTime.After(time.Now()) {
 			expiration = v.ExpirationTime.Format("2006-01-02 15:04:05")
 			expirationDays = int(v.ExpirationTime.Sub(time.Now()).Hours() / 24)
-			subExpirationDays = int(v.ExpirationTime.Sub(time.Now()).Hours() / 24)
 		}
 		if v.SubExpirationTime.After(time.Now()) {
 			subExpiration = v.SubExpirationTime.Format("2006-01-02 15:04:05")
+			subExpirationDays = int(v.SubExpirationTime.Sub(time.Now()).Hours() / 24)
 		}
 		vipLevel := dy.RepostAccountVipLevel{
 			Level:             v.Level,
