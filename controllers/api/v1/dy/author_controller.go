@@ -260,158 +260,196 @@ func (receiver *AuthorController) AuthorViewData() {
 	weekRoom := esLiveBusiness.CountDataByAuthor(authorId, lastWeekDay, todayTime)
 	room30Count := esLiveBusiness.CountDataByAuthor(authorId, lastMonthDay, todayTime)
 	productCount := dy2.DyAuthorBaseProductCount{}
-	startTime := time.Now().AddDate(0, 0, -31)
-	yesterday := time.Now().AddDate(0, 0, -1)
+	startTime := todayTime.AddDate(0, 0, -31)
+	yesterday := todayTime.AddDate(0, 0, -1)
 	cacheKey := cache.GetCacheKey(cache.AuthorViewProductAllList, authorId, startTime.Format("20060102"), yesterday.Format("20060102"))
 	cacheStr := global.Cache.Get(cacheKey)
 	if cacheStr != "" {
 		cacheStr = utils.DeserializeData(cacheStr)
 		_ = jsoniter.Unmarshal([]byte(cacheStr), &productCount)
 	} else {
-		hbaseDataList, err := authorBusiness.GetAuthorProductHbaseList(authorId, "", startTime, yesterday)
-		if err == nil {
-			brandSaleMap := map[string]float64{}
-			brandNumMap := map[string]int{}
-			priceNumMap := map[string]int{}
-			priceSaleMap := map[string]float64{}
-			var totalGmv float64
-			var totalSales float64
-			for _, v := range hbaseDataList {
-				v.Gmv = v.LivePredictGmv + v.AwemePredictGmv
-				v.Sales = math.Floor(v.LivePredictSales) + math.Floor(v.AwemePredictSales)
-				totalGmv += v.Gmv
-				totalSales += v.Sales
-				category := v.DcmLevelFirst
-				if category == "" || category == "null" {
-					category = "其他"
-				}
-				var priceStr string
-				if v.Price > 500 {
-					priceStr = "500+"
-				} else if v.Price > 300 {
-					priceStr = "300-500"
-				} else if v.Price > 100 {
-					priceStr = "100-300"
-				} else if v.Price > 50 {
-					priceStr = "50-100"
-				} else {
-					priceStr = "0-50"
-				}
-				if _, ok := brandSaleMap[category]; !ok {
-					brandSaleMap[category] = v.Sales
-				} else {
-					brandSaleMap[category] += v.Sales
-				}
-				if _, ok := brandNumMap[category]; !ok {
-					brandNumMap[category] = 1
-				} else {
-					brandNumMap[category] += 1
-				}
-				if _, ok := priceSaleMap[priceStr]; !ok {
-					priceSaleMap[priceStr] = v.Sales
-				} else {
-					priceSaleMap[priceStr] += v.Sales
-				}
-				if _, ok := priceNumMap[priceStr]; !ok {
-					priceNumMap[priceStr] = 1
-				} else {
-					priceNumMap[priceStr] += 1
-				}
+		liveList, _, _ := es.NewEsLiveBusiness().ScanLiveProductByAuthor(authorId, "", "", "", "", "", "", 0, startTime, yesterday, 1, 10000)
+		awemeList, _, _ := es.NewEsVideoBusiness().ScanAwemeProductByAuthor(authorId, "", "", "", "", "", "", 0, startTime, yesterday, 1, 10000)
+		brandSaleMap := map[string]float64{}
+		brandNumMap := map[string]int{}
+		priceNumMap := map[string]int{}
+		priceSaleMap := map[string]float64{}
+		var totalGmv float64
+		var totalSales float64
+		for _, v := range liveList {
+			totalGmv += v.PredictGmv
+			totalSales += math.Floor(v.PredictSales)
+			category := v.DcmLevelFirst
+			if category == "" || category == "null" {
+				category = "其他"
 			}
-			brandSaleList := make([]dy2.NameValueInt64Chart, 0)
-			brandNumList := make([]dy2.NameValueChart, 0)
-			for c, v := range brandSaleMap {
-				brandSaleList = append(brandSaleList, dy2.NameValueInt64Chart{
-					Name:  c,
-					Value: utils.ToInt64(v),
-				})
+			var priceStr string
+			if v.Price > 500 {
+				priceStr = "500+"
+			} else if v.Price > 300 {
+				priceStr = "300-500"
+			} else if v.Price > 100 {
+				priceStr = "100-300"
+			} else if v.Price > 50 {
+				priceStr = "50-100"
+			} else {
+				priceStr = "0-50"
 			}
-			for c, v := range brandNumMap {
-				brandNumList = append(brandNumList, dy2.NameValueChart{
-					Name:  c,
-					Value: v,
-				})
+			if _, ok := brandSaleMap[category]; !ok {
+				brandSaleMap[category] = math.Floor(v.PredictSales)
+			} else {
+				brandSaleMap[category] += math.Floor(v.PredictSales)
 			}
-			sort.Slice(brandSaleList, func(i, j int) bool {
-				return brandSaleList[j].Value < brandSaleList[i].Value
-			})
-			sort.Slice(brandNumList, func(i, j int) bool {
-				return brandNumList[j].Value < brandNumList[i].Value
-			})
-			listLen := len(brandSaleList)
-			topBrandSaleList := make([]dy2.NameValueInt64Chart, 0)
-			topBrandNumList := make([]dy2.NameValueChart, 0)
-			topSaleCates := make([]string, 0)
-			topNumCates := make([]string, 0)
-			if listLen > 0 {
-				salesStopKey := 0
-				numtopKey := 0
-				var sale int64
-				var num int
-				for _, v := range brandSaleList {
-					if v.Value == 0 {
-						break
-					}
-					if v.Name == "其他" {
-						sale += v.Value
-					} else {
-						if salesStopKey < 3 {
-							topBrandSaleList = append(topBrandSaleList, v)
-							topSaleCates = append(topSaleCates, v.Name)
-							salesStopKey++
-						} else {
-							sale += v.Value
-						}
-					}
-				}
-				if sale > 0 {
-					topBrandSaleList = append(topBrandSaleList, dy2.NameValueInt64Chart{
-						Name:  "其他",
-						Value: sale,
-					})
-				}
-				for _, v := range brandNumList {
-					if v.Value == 0 {
-						break
-					}
-					if v.Name == "其他" {
-						num += v.Value
-					} else {
-						if numtopKey < 3 {
-							topBrandNumList = append(topBrandNumList, v)
-							topNumCates = append(topNumCates, v.Name)
-							numtopKey++
-						} else {
-							num += v.Value
-						}
-					}
-				}
-				if num > 0 {
-					topBrandNumList = append(topBrandNumList, dy2.NameValueChart{
-						Name:  "其他",
-						Value: num,
-					})
-				}
+			if _, ok := brandNumMap[category]; !ok {
+				brandNumMap[category] = 1
+			} else {
+				brandNumMap[category] += 1
 			}
-			productCount = dy2.DyAuthorBaseProductCount{
-				Sales30Top3:           topSaleCates,
-				ProductNum30Top3:      topNumCates,
-				Sales30Top3Chart:      topBrandSaleList,
-				ProductNum30Top3Chart: topBrandNumList,
-				//Predict30Sales:        totalSales,
-				//Predict30Gmv:          totalGmv,
-				Sales30Chart: []dy2.DyAuthorBaseProductPriceChart{},
+			if _, ok := priceSaleMap[priceStr]; !ok {
+				priceSaleMap[priceStr] = math.Floor(v.PredictSales)
+			} else {
+				priceSaleMap[priceStr] += math.Floor(v.PredictSales)
 			}
-			for p, v := range priceSaleMap {
-				num := priceNumMap[p]
-				productCount.Sales30Chart = append(productCount.Sales30Chart, dy2.DyAuthorBaseProductPriceChart{
-					Name:       p,
-					Sales:      utils.ToInt64(v),
-					ProductNum: num,
-				})
+			if _, ok := priceNumMap[priceStr]; !ok {
+				priceNumMap[priceStr] = 1
+			} else {
+				priceNumMap[priceStr] += 1
 			}
-			_ = global.Cache.Set(cacheKey, utils.SerializeData(productCount), 600)
 		}
+		for _, v := range awemeList {
+			totalGmv += v.Gmv
+			totalSales += float64(v.Sales)
+			category := v.DcmLevelFirst
+			if category == "" || category == "null" {
+				category = "其他"
+			}
+			var priceStr string
+			if v.Price > 500 {
+				priceStr = "500+"
+			} else if v.Price > 300 {
+				priceStr = "300-500"
+			} else if v.Price > 100 {
+				priceStr = "100-300"
+			} else if v.Price > 50 {
+				priceStr = "50-100"
+			} else {
+				priceStr = "0-50"
+			}
+			if _, ok := brandSaleMap[category]; !ok {
+				brandSaleMap[category] = float64(v.Sales)
+			} else {
+				brandSaleMap[category] += float64(v.Sales)
+			}
+			if _, ok := brandNumMap[category]; !ok {
+				brandNumMap[category] = 1
+			} else {
+				brandNumMap[category] += 1
+			}
+			if _, ok := priceSaleMap[priceStr]; !ok {
+				priceSaleMap[priceStr] = float64(v.Sales)
+			} else {
+				priceSaleMap[priceStr] += float64(v.Sales)
+			}
+			if _, ok := priceNumMap[priceStr]; !ok {
+				priceNumMap[priceStr] = 1
+			} else {
+				priceNumMap[priceStr] += 1
+			}
+		}
+		brandSaleList := make([]dy2.NameValueInt64Chart, 0)
+		brandNumList := make([]dy2.NameValueChart, 0)
+		for c, v := range brandSaleMap {
+			brandSaleList = append(brandSaleList, dy2.NameValueInt64Chart{
+				Name:  c,
+				Value: utils.ToInt64(v),
+			})
+		}
+		for c, v := range brandNumMap {
+			brandNumList = append(brandNumList, dy2.NameValueChart{
+				Name:  c,
+				Value: v,
+			})
+		}
+		sort.Slice(brandSaleList, func(i, j int) bool {
+			return brandSaleList[j].Value < brandSaleList[i].Value
+		})
+		sort.Slice(brandNumList, func(i, j int) bool {
+			return brandNumList[j].Value < brandNumList[i].Value
+		})
+		listLen := len(brandSaleList)
+		topBrandSaleList := make([]dy2.NameValueInt64Chart, 0)
+		topBrandNumList := make([]dy2.NameValueChart, 0)
+		topSaleCates := make([]string, 0)
+		topNumCates := make([]string, 0)
+		if listLen > 0 {
+			salesStopKey := 0
+			numtopKey := 0
+			var sale int64
+			var num int
+			for _, v := range brandSaleList {
+				if v.Value == 0 {
+					break
+				}
+				if v.Name == "其他" {
+					sale += v.Value
+				} else {
+					if salesStopKey < 3 {
+						topBrandSaleList = append(topBrandSaleList, v)
+						topSaleCates = append(topSaleCates, v.Name)
+						salesStopKey++
+					} else {
+						sale += v.Value
+					}
+				}
+			}
+			if sale > 0 {
+				topBrandSaleList = append(topBrandSaleList, dy2.NameValueInt64Chart{
+					Name:  "其他",
+					Value: sale,
+				})
+			}
+			for _, v := range brandNumList {
+				if v.Value == 0 {
+					break
+				}
+				if v.Name == "其他" {
+					num += v.Value
+				} else {
+					if numtopKey < 3 {
+						topBrandNumList = append(topBrandNumList, v)
+						topNumCates = append(topNumCates, v.Name)
+						numtopKey++
+					} else {
+						num += v.Value
+					}
+				}
+			}
+			if num > 0 {
+				topBrandNumList = append(topBrandNumList, dy2.NameValueChart{
+					Name:  "其他",
+					Value: num,
+				})
+			}
+		}
+		productCount = dy2.DyAuthorBaseProductCount{
+			Sales30Top3:           topSaleCates,
+			ProductNum30Top3:      topNumCates,
+			Sales30Top3Chart:      topBrandSaleList,
+			ProductNum30Top3Chart: topBrandNumList,
+			//Predict30Sales:        totalSales,
+			//Predict30Gmv:          totalGmv,
+			Sales30Chart: []dy2.DyAuthorBaseProductPriceChart{},
+		}
+		for p, v := range priceSaleMap {
+			num := priceNumMap[p]
+			productCount.Sales30Chart = append(productCount.Sales30Chart, dy2.DyAuthorBaseProductPriceChart{
+				Name:       p,
+				Sales:      utils.ToInt64(v),
+				ProductNum: num,
+			})
+		}
+		_ = global.Cache.Set(cacheKey, utils.SerializeData(productCount), 600)
+
 	}
 	productCount.ProductNum = authorBase.ProductCount
 	videoSumData := es.NewEsVideoBusiness().SumDataByAuthor(authorId, startTime, yesterday)

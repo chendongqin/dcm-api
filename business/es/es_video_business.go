@@ -322,7 +322,7 @@ func (e *EsVideoBusiness) ScanAwemeProductByAuthor(authorId, keyword, category, 
 	results := esMultiQuery.
 		SetConnection(connection).
 		SetTable(esTable).
-		SetCache(600).
+		SetCache(300).
 		AddMust(esQuery.Condition).
 		SetLimit((page-1)*pageSize, pageSize).
 		SetMultiQuery().
