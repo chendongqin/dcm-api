@@ -39,6 +39,7 @@ var DyLiveInfoMap = HbaseEntity{
 	"other_predict_gmv":             {Double, "predict_gmv"},
 	"other_real_sales":              {Double, "real_sales"},
 	"other_real_gmv":                {Double, "real_gmv"},
+	"other_total_gmv":               {Double, "total_gmv"},
 	"trends_follower_count_trends":  {AJson, "follower_count_trends"},
 	"trends_fans_club_count_trends": {AJson, "fans_club_count_trends"},
 }
@@ -79,6 +80,7 @@ type DyLiveInfo struct {
 	PredictGmv           float64                    `json:"predict_gmv"`
 	RealSales            float64                    `json:"real_sales"`
 	RealGmv              float64                    `json:"real_gmv"`
+	TotalGmv             float64                    `json:"total_gmv"`
 	SalesTrends          []DyLiveInfoSalesTrend     `json:"sales_trends"`
 	OnlineTrends         []DyLiveOnlineTrends       `json:"online_trends"`
 	FollowerCountTrends  []LiveFollowerCountTrends  `json:"follower_count_trends"`

@@ -169,7 +169,7 @@ func (receiver *LiveController) LiveInfoData() {
 		ReputationLevel: reputation.AuthorReputation.Level,
 		RoomId:          authorInfo.RoomId,
 	}
-	liveSaleData, _ := hbase.GetLiveSalesData(roomId)
+	//liveSaleData, _ := hbase.GetLiveSalesData(roomId)
 	incOnlineTrends, maxOnlineTrends, avgUserCount := liveBusiness.DealOnlineTrends(liveInfo)
 	var incFansRate, interactRate float64
 	incFansRate = 0
@@ -189,7 +189,7 @@ func (receiver *LiveController) LiveInfoData() {
 	if liveInfo.TotalUser > 0 {
 		incFansRate = float64(liveInfo.FollowCount) / float64(liveInfo.TotalUser)
 		interactRate = float64(liveInfo.BarrageUserCount) / float64(liveInfo.TotalUser)
-		liveSale.Uv = (gmv + float64(liveSaleData.TicketCount)/10) / float64(liveInfo.TotalUser)
+		liveSale.Uv = (gmv + float64(liveInfo.RoomTicketCount)/10) / float64(liveInfo.TotalUser)
 		liveSale.SaleRate = sales / float64(liveInfo.TotalUser)
 	}
 	avgOnlineTime := liveBusiness.CountAvgOnlineTime(liveInfo.OnlineTrends, liveInfo.CreateTime, liveInfo.TotalUser)
@@ -945,7 +945,7 @@ func (receiver *LiveController) LivingSaleData() {
 		return
 	}
 	var gmv = liveInfo.PredictGmv
-	liveSaleData, _ := hbase.GetLiveSalesData(roomId)
+	//liveSaleData, _ := hbase.GetLiveSalesData(roomId)
 	//if liveInfo.RoomStatus == 4 {
 	//	if liveSaleData.Gmv > 0 {
 	//		gmv = liveSaleData.Gmv
@@ -966,7 +966,7 @@ func (receiver *LiveController) LivingSaleData() {
 		livingInfo.LiveTime = time.Now().Unix() - liveInfo.CreateTime
 	}
 	if liveInfo.TotalUser > 0 {
-		livingInfo.Uv = (gmv + float64(liveSaleData.TicketCount)/10) / float64(liveInfo.TotalUser)
+		livingInfo.Uv = (gmv + float64(liveInfo.RoomTicketCount)/10) / float64(liveInfo.TotalUser)
 		livingInfo.BarrageRate = float64(liveInfo.BarrageUserCount) / float64(liveInfo.TotalUser)
 	}
 	livingInfo.AvgOnlineTime = business.NewLiveBusiness().CountAvgOnlineTime(liveInfo.OnlineTrends, liveInfo.CreateTime, liveInfo.TotalUser)

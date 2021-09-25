@@ -353,6 +353,13 @@ func (receiver *EsLiveDataBusiness) ProductLiveDataCategoryLevel(startTime, endT
 								"field": "customer_unit_price",
 							},
 						},
+						"customer_unit_price": map[string]interface{}{
+							"percentiles": map[string]interface{}{
+								"field":    "customer_unit_price",
+								"percents": []int{50},
+								"keyed":    false,
+							},
+						},
 					},
 				},
 			},
@@ -364,6 +371,69 @@ func (receiver *EsLiveDataBusiness) ProductLiveDataCategoryLevel(startTime, endT
 			total = utils.ToInt(t.(float64))
 		}
 	}
+	return
+}
+
+func (receiver *EsLiveDataBusiness) ProductLiveDataCategoryCustomerUnitPriceLevel(startTime, endTime time.Time, category string, living int) (data []dy.EsLiveSumDataCategoryCustomerUnitPriceLevel) {
+	data = []dy.EsLiveSumDataCategoryCustomerUnitPriceLevel{}
+	esTable, connection, err := GetESTableByTime(es.DyLiveInfoBaseTable, startTime, endTime)
+	if err != nil {
+		return
+	}
+	esQuery, esMultiQuery := elasticsearch.NewElasticQueryGroup()
+	esQuery.SetRange("create_time", map[string]interface{}{
+		"gte": startTime.Unix(),
+		"lt":  endTime.AddDate(0, 0, 1).Unix(),
+	})
+	esQuery.SetRange("num_product", map[string]interface{}{
+		"gt": 0,
+	})
+	esQuery.SetRange("customer_unit_price", map[string]interface{}{
+		"gt": 0,
+	})
+	if category != "" {
+		esQuery.SetMatchPhrase("dcm_level_first", category)
+	}
+	if living == 1 {
+		esQuery.SetTerm("room_status", 2)
+	}
+	var cacheTime time.Duration = 300
+	today := time.Now().Format("20060102")
+	if today != endTime.Format("20060102") {
+		cacheTime = 86400
+	}
+	countResult := esMultiQuery.
+		SetConnection(connection).
+		SetCache(cacheTime).
+		SetTable(esTable).
+		SetMust(esQuery.Condition).
+		RawQuery(map[string]interface{}{
+			"query": map[string]interface{}{
+				"bool": map[string]interface{}{
+					"must": esQuery.Condition,
+				},
+			},
+			"size": 0,
+			"aggs": map[string]interface{}{
+				"live": map[string]interface{}{
+					"terms": map[string]interface{}{
+						"field": "flow_rates_index.keyword",
+						"size":  10,
+					},
+					"aggs": map[string]interface{}{
+						"customer_unit_price": map[string]interface{}{
+							"percentiles": map[string]interface{}{
+								"field":    "customer_unit_price",
+								"percents": []float64{50},
+								"keyed":    false,
+							},
+						},
+					},
+				},
+			},
+		})
+	res := elasticsearch.GetBuckets(countResult, "live")
+	utils.MapToStruct(res, &data)
 	return
 }
 
@@ -380,6 +450,9 @@ func (receiver *EsLiveDataBusiness) ProductLiveDataCategoryLevelTwoShow(startTim
 		"lt":  endTime.AddDate(0, 0, 1).Unix(),
 	})
 	esQuery.SetRange("num_product", map[string]interface{}{
+		"gt": 0,
+	})
+	esQuery.SetRange("avg_stay_index", map[string]interface{}{
 		"gt": 0,
 	})
 	if category != "" {

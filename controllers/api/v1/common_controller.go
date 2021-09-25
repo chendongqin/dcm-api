@@ -230,7 +230,7 @@ func (receiver *CommonController) RedAuthorRoom() {
 		authorCacheData = utils.DeserializeData(authorCacheData)
 		_ = jsoniter.Unmarshal([]byte(authorCacheData), &authorDataMap)
 	} else {
-		authorMap := authorBusiness.GetAuthorFormPool(authorIds, 10)
+		authorMap, _ := hbase.GetAuthorByIds(authorIds)
 		utils.MapToStruct(authorMap, &authorDataMap)
 		_ = global.Cache.Set(authorCacheKey, utils.SerializeData(authorDataMap), 600)
 	}
