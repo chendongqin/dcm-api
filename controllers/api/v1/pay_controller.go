@@ -130,20 +130,16 @@ func (receiver *PayController) CreateDyOrder() {
 		receiver.FailReturn(global.NewMsgError("购买协同账号请先开通会员"))
 		return
 	}
-	subExpiration := userVip.SubExpiration
-	if utils.InArrayInt(orderType, []int{2, 3}) {
-		subExpiration = time.Now()
-	} else {
-		if subExpiration.Before(time.Now()) {
-			subExpiration = time.Now()
-		}
+	if userVip.Expiration.Format("20060102") == userVip.SubExpiration.Format("20060102") && orderType == 3 {
+		receiver.FailReturn(global.NewMsgError("协同账号到期时间与账户会员时间一致，不需要续费～"))
+		return
 	}
 	var remark = ""
 	var surplusDay int64 = 0
 	var surplusUnit float64 = 0
 	if userVip.Expiration.After(time.Now()) {
-		surplusDay = int64(math.Ceil(userVip.Expiration.Sub(subExpiration).Hours() / 24))
-		if surplusDay == 0 && orderType == 3 {
+		surplusDay = int64(math.Ceil(userVip.Expiration.Sub(time.Now()).Hours() / 24))
+		if surplusDay == 0 {
 			receiver.FailReturn(global.NewMsgError("协同账号到期时间与账户会员时间一致，不需要续费～"))
 			return
 		}
