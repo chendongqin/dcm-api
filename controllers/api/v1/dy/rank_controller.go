@@ -509,9 +509,15 @@ func (receiver *RankController) DyAuthorTakeGoodsRank() {
 		firstRow, _ := hbase.GetSaleAuthorRow(rowKey)
 		maxRow, _ := strconv.Atoi(firstRow.RnMax)
 		if maxRow > 0 {
-			endRow = utils.Md5_encode(startRow) + "_" + strconv.Itoa(maxRow-start)
-			startRow = utils.Md5_encode(endRow) + "_" + strconv.Itoa(maxRow-end)
-			originList, _ = hbase.GetSaleAuthorRank(startRow, endRow)
+			startRow = utils.Md5_encode(startRow) + "_" + strconv.Itoa(maxRow-end+1)
+			endRow = utils.Md5_encode(endRow) + "_" + strconv.Itoa(maxRow-start+1)
+		}
+		originList, _ = hbase.GetSaleAuthorRank(startRow, endRow)
+		length := len(originList)
+		for j := 0; j < length/2; j++ { //倒序
+			temp := originList[length-1-j]
+			originList[length-1-j] = originList[j]
+			originList[j] = temp
 		}
 	}
 	data := make([]dy.TakeGoodsRankRet, 0)
