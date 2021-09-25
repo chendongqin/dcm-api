@@ -30,9 +30,10 @@ func GetAuthorByIds(authorIds []string) (map[string]entity.DyAuthor, error) {
 		detailMap := hbaseService.HbaseFormat(v, entity.DyAuthorMap)
 		utils.MapToStruct(detailMap, &data)
 		data.AuthorID = data.Data.ID
-		if data.Data.RoomID == "0" {
-			data.Data.RoomID = ""
+		if data.RoomStatus != 2 {
+			data.RoomId = ""
 		}
+		data.Data.RoomID = data.RoomId
 		if data.Tags == "0" {
 			data.Tags = ""
 		}
@@ -67,9 +68,10 @@ func GetAuthor(authorId string) (data entity.DyAuthor, comErr global.CommonError
 	authorMap := hbaseService.HbaseFormat(result, entity.DyAuthorMap)
 	utils.MapToStruct(authorMap, &data)
 	data.AuthorID = data.Data.ID
-	if data.Data.RoomID == "0" {
-		data.Data.RoomID = ""
+	if data.RoomStatus != 2 {
+		data.RoomId = ""
 	}
+	data.Data.RoomID = data.RoomId
 	if data.Tags == "0" {
 		data.Tags = ""
 	}

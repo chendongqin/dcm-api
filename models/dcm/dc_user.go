@@ -29,3 +29,20 @@ type DcUser struct {
 	Channel          string    `xorm:"not null default '' comment('渠道') VARCHAR(50)"`
 	ChannelWords     string    `xorm:"not null comment('渠道关键词') VARCHAR(50)"`
 }
+
+//用户到期消息推送-关联查询结构体
+type DcJoinUser struct {
+	Id       int64
+	Openid   string `xorm:"not null default '' comment('openid') VARCHAR(100)"`
+	Username string `xorm:"not null default '' comment('用户名（手机号）') unique CHAR(11)"`
+}
+type DcJoinUserVip struct {
+	Platform   int    `xorm:"not null default 1 comment('1抖音2小红书3淘宝') unique(USER_LEVEL) TINYINT(1)"`
+	ParentId   int    `xorm:"not null default 0 comment('主账户id') INT(11)"`
+	Level      int    `xorm:"not null default 0 comment('等级：0普通，1vip，2svip,3专业版') TINYINT(1)"`
+	Expiration string `xorm:"comment('过期时间') TIMESTAMP"`
+}
+type UserVipJpinCombine struct {
+	DcJoinUser    `xorm:"extends"`
+	DcJoinUserVip `xorm:"extends"`
+}

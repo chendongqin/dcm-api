@@ -6,6 +6,8 @@ var DyAuthorMap = HbaseEntity{
 	"crawl_time":               {Long, "crawl_time"},
 	"data":                     {Json, "data"},
 	"tags":                     {String, "tags"},
+	"room_id":                  {String, "room_id"},
+	"room_status":              {Int, "room_status"},
 	"tags_level_two":           {String, "tags_level_two"},
 	"other_aweme_list":         {AJson, "aweme_list"},
 	"other_room_list":          {AJson, "room_list"},

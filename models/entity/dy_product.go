@@ -46,7 +46,7 @@ var DyProductMap = HbaseEntity{
 	"word":             {AJson, "word"},
 	"context_num":      {AJson, "context_num"},
 	"ageDistrinbution": {AJson, "age_distrinbution"},
-	"ai_category":      {AJson, "ai_category"},
+	"ai_category":      {Json, "ai_category"},
 	//"tb_small_images":        {AJson, "tb_small_images"},
 }
 

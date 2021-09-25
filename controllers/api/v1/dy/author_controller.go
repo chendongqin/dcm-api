@@ -874,7 +874,9 @@ func (receiver *AuthorController) AuthorLiveRooms() {
 		for k, v := range list {
 			if liveInfo, exist := liveMap[v.RoomId]; exist {
 				list[k].RoomStatus = liveInfo.RoomStatus
-				list[k].FinishTime = liveInfo.FinishTime
+				if liveInfo.RoomStatus == 4 {
+					list[k].FinishTime = liveInfo.FinishTime
+				}
 			}
 		}
 	}
