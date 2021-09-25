@@ -278,7 +278,7 @@ func (receiver *AuthorController) AuthorViewData() {
 		var totalGmv float64
 		var totalSales float64
 		for _, v := range liveList {
-			if _, exist := productMap[v.ProductID]; exist {
+			if _, exist := productMap[v.ProductID]; !exist {
 				productMap[v.ProductID] = v.ProductID
 			}
 			totalGmv += v.PredictGmv
@@ -321,7 +321,7 @@ func (receiver *AuthorController) AuthorViewData() {
 			}
 		}
 		for _, v := range awemeList {
-			if _, exist := productMap[v.ProductId]; exist {
+			if _, exist := productMap[v.ProductId]; !exist {
 				productMap[v.ProductId] = v.ProductId
 			}
 			totalGmv += v.Gmv
