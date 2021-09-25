@@ -861,14 +861,21 @@ func (receiver *AuthorController) AuthorLiveRooms() {
 	}
 	esLiveBusiness := es.NewEsLiveBusiness()
 	list, total, comErr := esLiveBusiness.SearchAuthorRooms(authorId, keyword, sortStr, orderBy, page, size, t1, t2)
+	roomIds := []string{}
 	for k, v := range list {
 		list[k].RoomId = business.IdEncrypt(v.RoomId)
 		list[k].AuthorId = business.IdEncrypt(v.AuthorId)
 		list[k].PredictSales = math.Floor(v.PredictSales)
 		list[k].PredictGmv = math.Floor(v.PredictGmv)
-		if listType == 1 {
-			liveInfo, _ := hbase.GetLiveInfo(v.RoomId)
-			list[k].FinishTime = liveInfo.FinishTime
+		roomIds = append(roomIds, v.RoomId)
+	}
+	if listType == 1 {
+		liveMap, _ := hbase.GetLiveInfoByIds(roomIds)
+		for k, v := range list {
+			if liveInfo, exist := liveMap[v.RoomId]; exist {
+				list[k].RoomStatus = liveInfo.RoomStatus
+				list[k].FinishTime = liveInfo.FinishTime
+			}
 		}
 	}
 	if comErr != nil {
