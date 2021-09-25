@@ -222,6 +222,7 @@ func (receiver *PayController) CreateDyOrder() {
 		title = "团队成员续费"
 		totalPeople := userVip.SubNum + 1
 		amount = utils.CeilFloat64One(price.Price * float64(totalPeople))
+		remark = price.ActiveComment
 		//先续费再购买
 		if userVip.SubNum > 0 {
 			if userVip.SubExpiration.Before(time.Now()) {
@@ -241,7 +242,6 @@ func (receiver *PayController) CreateDyOrder() {
 		orderInfo.People = totalPeople
 		orderInfo.Title = "团队成员续费"
 		vipOrderType = 5
-		remark = price.ActiveComment
 	}
 	uniqueID, _ := utils.Snow.GetSnowflakeId()
 	tradeNo := fmt.Sprintf("%s%d", time.Now().Format("060102"), uniqueID)
