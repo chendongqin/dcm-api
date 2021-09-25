@@ -309,7 +309,7 @@ func (receiver *LiveCountController) LiveSumByCategoryLevel() {
 	for _, v := range CustomerUnitPriceList {
 		if item, exist := levelMap[v.Key]; exist {
 			for _, c := range v.CustomerUnitPrice.Values {
-				if c.Key == 99 {
+				if c.Key == 50 {
 					item.CustomerUnitPrice.Median = c.Value
 					levelMap[v.Key] = item
 				}

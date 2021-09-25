@@ -178,7 +178,7 @@ func (receiver *PayController) CreateDyOrder() {
 	orderInfo := repost.VipOrderInfo{
 		SurplusValue: surplusValue,
 	}
-	if utils.InArrayInt(orderType, []int{2, 3, 4}) {
+	if utils.InArrayInt(orderType, []int{2, 4}) {
 		//先续费再购买
 		if userVip.SubNum > 0 {
 			if userVip.SubExpiration.Before(time.Now()) {
@@ -204,7 +204,7 @@ func (receiver *PayController) CreateDyOrder() {
 		remark = price.ActiveComment
 	} else if orderType == 2 { //购买协同账号
 		title = fmt.Sprintf("购买协同账号%d人", groupPeople)
-		amount = surplusValue * float64(groupPeople)
+		amount += surplusValue * float64(groupPeople)
 		amount = utils.CeilFloat64One(amount)
 		orderInfo.BuyDays = int(surplusDay)
 		orderInfo.Amount = amount
@@ -217,7 +217,7 @@ func (receiver *PayController) CreateDyOrder() {
 	} else if orderType == 3 { //协同账号续费
 		totalPeople := userVip.SubNum
 		title = fmt.Sprintf("协同账号续费%d人", totalPeople)
-		amount = utils.CeilFloat64One(surplusValue * float64(totalPeople))
+		amount = utils.CeilFloat64One(trueSurplusValue * float64(totalPeople))
 		orderInfo.BuyDays = int(surplusDay)
 		orderInfo.Amount = amount
 		orderInfo.People = totalPeople
@@ -226,7 +226,7 @@ func (receiver *PayController) CreateDyOrder() {
 	} else if orderType == 4 {
 		title = "团队成员续费"
 		totalPeople := userVip.SubNum + 1
-		amount = utils.CeilFloat64One(price.Price * float64(totalPeople))
+		amount = utils.CeilFloat64One(amount + price.Price*float64(totalPeople))
 		remark = price.ActiveComment
 		orderInfo.BuyDays = buyDays
 		orderInfo.Amount = utils.FriendlyFloat64(amount)
