@@ -938,7 +938,7 @@ func (receiver *EsLiveBusiness) GetRoomsByAuthorIds(authorIds []string, date str
 }
 
 //达人直播间统计
-func (receiver *EsLiveBusiness) SumDataByAuthor(authorId string, startTime, endTime time.Time) (data es.DyLiveSumCount) {
+func (receiver *EsLiveBusiness) SumDataByAuthor(authorId string, startTime, endTime time.Time) (data es.DyLiveSumCount, total int) {
 	data = es.DyLiveSumCount{}
 	esTable, connection, err := GetESTableByTime(es.DyLiveInfoBaseTable, startTime, endTime)
 	if err != nil {
@@ -978,6 +978,11 @@ func (receiver *EsLiveBusiness) SumDataByAuthor(authorId string, startTime, endT
 
 	if r, ok := countResult["aggregations"]; ok {
 		utils.MapToStruct(r, &data)
+	}
+	if hits, ok := countResult["hits"]; ok {
+		if v, ok1 := hits.(map[string]interface{})["total"]; ok1 {
+			total = int(v.(float64))
+		}
 	}
 	return
 }

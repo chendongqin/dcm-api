@@ -250,7 +250,7 @@ func (receiver *AuthorController) AuthorViewData() {
 	monthString := time.Now().Format("200601")
 	todayTime, _ := time.ParseInLocation("20060102", todayString, time.Local)
 	monthTime, _ := time.ParseInLocation("20060102", monthString+"01", time.Local)
-	lastMonthDay := todayTime.AddDate(0, 0, -29)
+	//lastMonthDay := todayTime.AddDate(0, 0, -29)
 	nowWeek := int(time.Now().Weekday())
 	if nowWeek == 0 {
 		nowWeek = 7
@@ -258,10 +258,10 @@ func (receiver *AuthorController) AuthorViewData() {
 	lastWeekDay := todayTime.AddDate(0, 0, -(nowWeek - 1))
 	monthRoom := esLiveBusiness.CountDataByAuthor(authorId, monthTime, todayTime)
 	weekRoom := esLiveBusiness.CountDataByAuthor(authorId, lastWeekDay, todayTime)
-	room30Count := esLiveBusiness.CountDataByAuthor(authorId, lastMonthDay, todayTime)
 	productCount := dy2.DyAuthorBaseProductCount{}
 	startTime := todayTime.AddDate(0, 0, -31)
 	yesterday := todayTime.AddDate(0, 0, -1)
+	//room30Count := esLiveBusiness.CountDataByAuthor(authorId, startTime, yesterday)
 	cacheKey := cache.GetCacheKey(cache.AuthorViewProductAllList, authorId, startTime.Format("20060102"), yesterday.Format("20060102"))
 	cacheStr := global.Cache.Get(cacheKey)
 	if cacheStr != "" {
@@ -451,9 +451,9 @@ func (receiver *AuthorController) AuthorViewData() {
 		_ = global.Cache.Set(cacheKey, utils.SerializeData(productCount), 600)
 
 	}
-	productCount.ProductNum = authorBase.ProductCount
+	productCount.ProductNum = int(esLiveBusiness.CountRoomProductByAuthorId(authorId, startTime, yesterday))
 	videoSumData := es.NewEsVideoBusiness().SumDataByAuthor(authorId, startTime, yesterday)
-	liveSumData := esLiveBusiness.SumDataByAuthor(authorId, startTime, yesterday)
+	liveSumData, room30Count := esLiveBusiness.SumDataByAuthor(authorId, startTime, yesterday)
 	dayLiveRoomNum := esLiveBusiness.CountRoomByDayByAuthorId(authorId, 1, startTime, yesterday)
 	var avgGmv float64 = 0
 	var avgSales float64 = 0
@@ -466,7 +466,7 @@ func (receiver *AuthorController) AuthorViewData() {
 	data := dy2.DyAuthorBaseCount{
 		LiveCount: dy2.DyAuthorBaseLiveCount{
 			RoomCount:      int64(authorBase.LiveCount),
-			Room30Count:    room30Count,
+			Room30Count:    int64(room30Count),
 			Predict30Sales: avgSales,
 			Predict30Gmv:   utils.FriendlyFloat64(avgGmv),
 			AgeDuration:    authorBase.AgeLiveDuration,
