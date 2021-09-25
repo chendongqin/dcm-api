@@ -40,15 +40,17 @@ type DyShopBaseBasic struct {
 }
 
 type DyShopBaseDetail struct {
-	Sales        int64   `json:"sales"`          //日销量
-	Gmv          float64 `json:"gmv"`            //每日gmv
-	D30AwemeCnt  int64   `json:"30d_aweme_cnt"`  //30天视频数
-	D30LiveCnt   int64   `json:"30d_live_cnt"`   //30天直播数
-	D30AuthorCnt int64   `json:"30d_author_cnt"` //30天达人数
-	D30Sales     int64   `json:"30d_sales"`      //30天销量
-	D30Gmv       float64 `json:"30d_gmv"`        //30天gmv
-	D30Pct       float64 `json:"30d_pct"`        //30天客单价
-	D30Rate      float64 `json:"30d_rate"`       //30天转化率
+	Sales        int64       `json:"sales"`          //日销量
+	Gmv          float64     `json:"gmv"`            //每日gmv
+	D30AwemeCnt  int64       `json:"30d_aweme_cnt"`  //30天视频数
+	D30LiveCnt   int64       `json:"30d_live_cnt"`   //30天直播数
+	D30AuthorCnt int64       `json:"30d_author_cnt"` //30天达人数
+	D30Sales     int64       `json:"30d_sales"`      //30天销量
+	D30Gmv       float64     `json:"30d_gmv"`        //30天gmv
+	D30Pct       float64     `json:"30d_pct"`        //30天客单价
+	D30Rate      float64     `json:"30d_rate"`       //30天转化率
+	ProductCnt   int64       `json:"product_cnt"`    //商品数
+	ShopCName    []ShopCName `json:"shop_cname"`
 }
 
 //小店商品品类销售额TOP

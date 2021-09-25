@@ -12,10 +12,14 @@ var DyShopDetailMap = HbaseEntity{
 	"30d_live_cnt":    {Long, "30d_live_cnt"},
 	"30d_author_cnt":  {Long, "30d_author_cnt"},
 	"product_cnt":     {Long, "product_cnt"},
-	"shop_cname":      {String, "shop_cname"},
+	"shop_cname":      {AJson, "shop_cname"},
 	"30d_sales":       {Long, "30d_sales"},
 	"30d_gmv":         {Double, "30d_gmv"},
 	"30d_pct":         {Double, "30d_pct"},
+}
+
+type ShopCName struct {
+	Type string `json:"type"`
 }
 
 type DyShopDetail struct {
@@ -33,4 +37,6 @@ type DyShopDetail struct {
 	D30Sales        int64            `json:"30d_sales"`
 	D30Gmv          float64          `json:"30d_gmv"`
 	D30Pct          float64          `json:"30d_pct"`
+	ProductCnt      int64            `json:"product_cnt"`
+	ShopCName       []ShopCName      `json:"shop_cname"`
 }
