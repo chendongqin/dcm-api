@@ -8,10 +8,10 @@ import (
 	"dongchamao/global/utils"
 	"dongchamao/hbase"
 	"dongchamao/models/entity"
-	es2 "dongchamao/models/es"
 	"dongchamao/models/repost/dy"
 	"dongchamao/services/dyimg"
 	"math"
+	"strconv"
 	"time"
 )
 
@@ -456,19 +456,38 @@ func (receiver *RankController) DyAuthorTakeGoodsRank() {
 		receiver.FailReturn(global.NewError(4000))
 		return
 	}
-	dateType, _ := receiver.GetInt("date_type", 1)
-	tags := receiver.GetString("tags")
-	verified, _ := receiver.GetInt("verified")
-	sortStr := receiver.GetString("sort", "sum_gmv")
+	//dateType, _ := receiver.GetInt("date_type", 1)
+	tags := receiver.GetString("tags", "all")
+	//verified, _ := receiver.GetInt("verified")
+	sortStr := receiver.GetString("sort", "sum_sales")
 	orderBy := receiver.GetString("order_by", "desc")
 	page := receiver.GetPage("page")
 	pageSize := receiver.GetPageSize("page_size", 10, 100)
+	switch sortStr {
+	case "sum_sales":
+		sortStr = "predict_sales_sum"
+		break
+	case "sum_gmv":
+		sortStr = "predict_gmv_sum"
+		break
+	case "avg_price":
+		sortStr = "per_price"
+		break
+	}
+	if tags == "其他" {
+		tags = "null"
+	}
 	if !receiver.HasAuth {
-		dateType = 1
+		//dateType = 1
 		page = 1
 		if pageSize > receiver.MaxTotal {
 			pageSize = receiver.MaxTotal
 		}
+	}
+	start := (page - 1) * pageSize
+	end := page * pageSize
+	if end > receiver.MaxTotal {
+		end = receiver.MaxTotal
 	}
 	var ret map[string]interface{}
 	//cacheKey := cache.GetCacheKey(cache.DyRankCache, "author_take_goods", utils.Md5_encode(fmt.Sprintf("%s%d%s%s%s%d%d%d", startDate, dateType, tags, sortStr, orderBy, verified, page, pageSize)))
@@ -477,49 +496,100 @@ func (receiver *RankController) DyAuthorTakeGoodsRank() {
 	//	cacheStr = utils.DeserializeData(cacheStr)
 	//	_ = jsoniter.Unmarshal([]byte(cacheStr), &ret)
 	//} else {
-	list, total, _ := es.NewEsAuthorBusiness().SaleAuthorRankCount(startDate, dateType, tags, sortStr, orderBy, verified, page, pageSize)
-	var structData []es2.DyAuthorTakeGoodsCount
-	utils.MapToStruct(list, &structData)
-	data := make([]dy.TakeGoodsRankRet, len(structData))
-	for k, v := range structData {
-		hits := v.Hit.Hits.Hits
-		uniqueId := hits[0].Source.UniqueID
-		if uniqueId == "" {
-			uniqueId = hits[0].Source.ShortID
-		}
-		var roomList = make([]map[string]interface{}, 0, len(hits))
-		for _, v := range hits {
-			roomList = append(roomList, map[string]interface{}{
-				"room_cover":     dyimg.Fix(v.Source.RoomCover),
-				"room_id":        business.IdEncrypt(v.Source.RoomID),
-				"room_title":     v.Source.RoomTitle,
-				"date_time":      v.Source.CreateTime,
-				"max_user_count": v.Source.MaxUserCount,
-				"gmv":            v.Source.PredictGmv,
-				"sales":          v.Source.PredictSales,
-			})
-		}
-		data[k] = dy.TakeGoodsRankRet{
-			Rank:             (page-1)*pageSize + k + 1,
-			Nickname:         hits[0].Source.Nickname,
-			VerificationType: hits[0].Source.VerificationType,
-			VerifyName:       hits[0].Source.VerifyName,
-			AuthorCover:      dyimg.Avatar(hits[0].Source.AuthorCover),
-			SumGmv:           v.SumGmv.Value,
-			SumSales:         v.SumSales.Value,
-			AvgPrice:         v.AvgPrice.Value,
-			AuthorId:         business.IdEncrypt(utils.ToString(v.Key.AuthorID)),
-			RoomCount:        len(hits),
-			Tags:             hits[0].Source.Tags,
-			UniqueId:         business.IdEncrypt(utils.ToString(uniqueId)),
-			RoomList:         roomList,
+
+	var originList []entity.DyAuthorDaySalesRank
+	startRow := sortStr + "_" + startDate.Format("20060102") + "_" + tags
+	endRow := sortStr + "_" + startDate.Format("20060102") + "_" + tags
+	if orderBy == "desc" {
+		startRow = utils.Md5_encode(startRow) + "_" + strconv.Itoa(start+1)
+		endRow = utils.Md5_encode(endRow) + "_" + strconv.Itoa(end+1)
+		originList, _ = hbase.GetSaleAuthorRank(startRow, endRow)
+	} else {
+		rowKey := utils.Md5_encode(startRow) + "_" + strconv.Itoa(1)
+		firstRow, _ := hbase.GetSaleAuthorRow(rowKey)
+		maxRow, _ := strconv.Atoi(firstRow.RnMax)
+		if maxRow > 0 {
+			endRow = utils.Md5_encode(startRow) + "_" + strconv.Itoa(maxRow-start)
+			startRow = utils.Md5_encode(endRow) + "_" + strconv.Itoa(maxRow-end)
+			originList, _ = hbase.GetSaleAuthorRank(startRow, endRow)
 		}
 	}
+	data := make([]dy.TakeGoodsRankRet, 0)
+	total := 0
+	for k, v := range originList {
+		total, _ = strconv.Atoi(v.RnMax)
+		tempData := dy.TakeGoodsRankRet{}
+		tempData.Rank = (page-1)*pageSize + k + 1
+		tempData.AuthorId = v.AuthorId
+		tempData.UniqueId = v.ShortId
+		tempData.Nickname = v.Nickname
+		tempData.AuthorCover = v.Avatar
+		tempData.VerificationType, _ = strconv.Atoi(v.VerificationType)
+		tempData.VerifyName = v.VerifyName
+		tempData.Tags = v.Tags
+		tempData.SumSales, _ = strconv.ParseFloat(v.PredictSalesSum, 64)
+		tempData.SumGmv, _ = strconv.ParseFloat(v.PredictGmvSum, 64)
+		tempData.AvgPrice, _ = strconv.ParseFloat(v.PerPrice, 64)
+		tempData.RoomCount, _ = strconv.Atoi(v.RoomIdCount)
+		var roomList = []map[string]interface{}{}
+		tempData.RoomList = roomList
+		data = append(data, tempData)
+	}
+
+	//list, total, _ := es.NewEsAuthorBusiness().SaleAuthorRankCount(startDate, dateType, tags, sortStr, orderBy, verified, page, pageSize)
+	//var structData []es2.DyAuthorTakeGoodsCount
+	//utils.MapToStruct(list, &structData)
+	//data := make([]dy.TakeGoodsRankRet, len(structData))
+	//for k, v := range structData {
+	//	hits := v.Hit.Hits.Hits
+	//	uniqueId := hits[0].Source.UniqueID
+	//	if uniqueId == "" {
+	//		uniqueId = hits[0].Source.ShortID
+	//	}
+	//	var roomList = make([]map[string]interface{}, 0, len(hits))
+	//	for _, v := range hits {
+	//		roomList = append(roomList, map[string]interface{}{
+	//			"room_cover":     dyimg.Fix(v.Source.RoomCover),
+	//			"room_id":        business.IdEncrypt(v.Source.RoomID),
+	//			"room_title":     v.Source.RoomTitle,
+	//			"date_time":      v.Source.CreateTime,
+	//			"max_user_count": v.Source.MaxUserCount,
+	//			"gmv":            v.Source.PredictGmv,
+	//			"sales":          v.Source.PredictSales,
+	//		})
+	//	}
+	//	data[k] = dy.TakeGoodsRankRet{
+	//		Rank:             (page-1)*pageSize + k + 1,
+	//		Nickname:         hits[0].Source.Nickname,
+	//		VerificationType: hits[0].Source.VerificationType,
+	//		VerifyName:       hits[0].Source.VerifyName,
+	//		AuthorCover:      dyimg.Avatar(hits[0].Source.AuthorCover),
+	//		SumGmv:           v.SumGmv.Value,
+	//		SumSales:         v.SumSales.Value,
+	//		AvgPrice:         v.AvgPrice.Value,
+	//		AuthorId:         business.IdEncrypt(utils.ToString(v.Key.AuthorID)),
+	//		RoomCount:        len(hits),
+	//		Tags:             hits[0].Source.Tags,
+	//		UniqueId:         business.IdEncrypt(utils.ToString(uniqueId)),
+	//		RoomList:         roomList,
+	//	}
+	//}
 	if total > receiver.MaxTotal {
 		total = receiver.MaxTotal
 	}
+
+	list := make([]dy.TakeGoodsRankRet, 0)
+	if total > 0 {
+		if start > 0 {
+			lens := end - start
+			list = data[0:lens]
+		} else {
+			list = data[start:end]
+		}
+	}
+
 	ret = map[string]interface{}{
-		"list":  data,
+		"list":  list,
 		"total": total,
 	}
 	//	if startDate.Format("20060102") != time.Now().Format("20060102") {
