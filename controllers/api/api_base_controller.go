@@ -127,6 +127,9 @@ func (this *ApiBaseController) CheckIp() {
 }
 
 func (this *ApiBaseController) InitUserToken() {
+	if !utils.InArrayInt(this.AppId, []int{10000, 10001, 10002, 10003, 10004, 10005}) {
+		return
+	}
 	tokenString := this.Ctx.Input.Cookie(global.LOGINCOOKIENAME)
 	//cookie没有身份信息  从头部获取
 	if tokenString == "" {
@@ -263,6 +266,8 @@ func (this *ApiBaseController) CheckSign() {
 		}
 		//赋予权限
 		this.UserId = 1
+		this.HasAuth = true
+		this.HasLogin = true
 		this.DyLevel = 3
 		this.XhsLevel = 3
 		this.TbLevel = 3
