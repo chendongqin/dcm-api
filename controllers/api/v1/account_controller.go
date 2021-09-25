@@ -11,7 +11,6 @@ import (
 	"dongchamao/models/repost"
 	"dongchamao/models/repost/dy"
 	jsoniter "github.com/json-iterator/go"
-	"math"
 	"strings"
 	"time"
 )
@@ -174,9 +173,11 @@ func (receiver *AccountController) Info() {
 		expiration := "-"
 		subExpiration := "-"
 		expirationDays := 0
+		subExpirationDays := 0
 		if v.ExpirationTime.After(time.Now()) {
 			expiration = v.ExpirationTime.Format("2006-01-02 15:04:05")
-			expirationDays = int(math.Ceil(v.ExpirationTime.Sub(time.Now()).Hours() / 24))
+			expirationDays = int(v.ExpirationTime.Sub(time.Now()).Hours() / 24)
+			subExpirationDays = int(v.ExpirationTime.Sub(time.Now()).Hours() / 24)
 		}
 		if v.SubExpirationTime.After(time.Now()) {
 			subExpiration = v.SubExpirationTime.Format("2006-01-02 15:04:05")
@@ -190,6 +191,7 @@ func (receiver *AccountController) Info() {
 			SubExpirationTime: subExpiration,
 			ParentId:          v.ParentId,
 			ExpirationDays:    expirationDays,
+			SubExpirationDays: subExpirationDays,
 		}
 		if v.PlatForm == business.VipPlatformDouYin {
 			account.DyLevel = vipLevel
