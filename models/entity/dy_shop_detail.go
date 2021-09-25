@@ -31,6 +31,6 @@ type DyShopDetail struct {
 	D30AuthorCnt    int64            `json:"30d_author_cnt"`
 	ShopName        string           `json:"shop_name"`
 	D30Sales        int64            `json:"30d_sales"`
-	D30Gmv          int64            `json:"30d_gmv"`
-	D30Pct          int64            `json:"30d_pct"`
+	D30Gmv          float64          `json:"30d_gmv"`
+	D30Pct          float64          `json:"30d_pct"`
 }
