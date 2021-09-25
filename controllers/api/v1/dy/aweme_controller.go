@@ -417,6 +417,7 @@ func (receiver *AwemeController) AwemeFanAnalyse() {
 	genderChart := make([]entity.XtDistributionsList, 0)
 	genderMap := make(map[string]entity.XtDistributionsList, 0)
 	ageChart := make([]entity.XtDistributionsList, 0)
+	ageMap := make(map[string]entity.XtDistributionsList, 0)
 	cityChart := make([]entity.XtDistributionsList, 0)
 	cityMap := make(map[string]entity.XtDistributionsList, 0)
 	provinceChart := make([]entity.XtDistributionsList, 0)
@@ -443,10 +444,10 @@ func (receiver *AwemeController) AwemeFanAnalyse() {
 		}
 		ageDistributionNum := utils.ToInt64(v.AgeDistrinbutionNum)
 		ageTotal += ageDistributionNum
-		ageChart = append(ageChart, entity.XtDistributionsList{
-			DistributionKey:   v.AgeDistrinbution,
-			DistributionValue: ageDistributionNum,
-		})
+		age := ageMap[v.AgeDistrinbution]
+		age.DistributionKey = v.AgeDistrinbution
+		age.DistributionValue += ageDistributionNum
+		ageMap[v.AgeDistrinbution] = age
 	}
 	for _, v := range info.City {
 		if v.City == "" {
@@ -459,6 +460,9 @@ func (receiver *AwemeController) AwemeFanAnalyse() {
 		city.DistributionKey = v.City
 		city.DistributionValue += cityNum
 		cityMap[v.City] = city
+	}
+	for _, v := range ageMap {
+		ageChart = append(ageChart, v)
 	}
 	for _, v := range cityMap {
 		cityChart = append(cityChart, v)
