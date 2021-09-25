@@ -151,6 +151,13 @@ func (receiver *CollectBusiness) GetDyCollect(tagId, collectType int, keywords, 
 			data[k].AuthorNickname = awemeAuthor.Data.Nickname
 		}
 		return data, total, nil
+	case 4:
+		data := make([]repost.CollectShopRet, len(collects))
+		for k, v := range collects {
+			data[k].DcUserDyCollect = v
+			data[k].Shop, comErr = hbase.GetShop(v.CollectId)
+		}
+		return data, total, nil
 	}
 	return nil, 0, nil
 }
