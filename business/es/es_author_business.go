@@ -137,11 +137,7 @@ func (receiver *EsAuthorBusiness) BaseSearch(
 		esQuery.SetTerm("brand", 1)
 	}
 	if verification != 0 {
-		if verification == 1 {
-			esQuery.SetTerm("verification_type", 0)
-		} else if verification == 2 {
-			esQuery.SetTerm("verification_type", 1)
-		}
+		esQuery.SetTerm("verification_type", verification)
 	}
 	if secondCategory != "" {
 		esQuery.SetTerm("tags_level_two.keyword", secondCategory)

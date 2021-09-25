@@ -123,6 +123,7 @@ type RedAuthorRoom struct {
 	TotalUser          int64   `json:"total_user"`
 	Tags               string  `json:"tags"`
 	RoomCount          int     `json:"room_count"`
+	Weight             int     `json:"-"`
 	CreateTime         int64   `json:"create_time"`
 }
 

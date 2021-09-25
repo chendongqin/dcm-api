@@ -219,7 +219,9 @@ func (receiver *CommonController) RedAuthorRoom() {
 		Desc("weight").
 		Find(&list)
 	authorIds := make([]string, 0)
+	authorSortMap := map[string]int{}
 	for _, v := range list {
+		authorSortMap[v.AuthorId] = v.Weight
 		authorIds = append(authorIds, v.AuthorId)
 	}
 	authorBusiness := business.NewAuthorBusiness()
@@ -280,9 +282,21 @@ func (receiver *CommonController) RedAuthorRoom() {
 					v.RoomCount = a.LiveCount
 					v.AuthorLivingRoomId = a.RoomId
 				}
+				if weight, ok := authorSortMap[v.AuthorId]; ok {
+					v.Weight = weight
+				}
 				tmpList = append(tmpList, v)
 				total++
 			}
+			sort.Slice(roomList, func(i, j int) bool {
+				if roomList[i].RoomStatus == 2 && roomList[j].RoomStatus == 4 {
+					return true
+				}
+				if roomList[i].RoomStatus == 4 && roomList[j].RoomStatus == 2 {
+					return false
+				}
+				return roomList[i].Weight > roomList[j].Weight
+			})
 			data = append(data, dy2.RedAuthorRoomBox{
 				Date: date,
 				List: tmpList,
@@ -348,9 +362,11 @@ func (receiver *CommonController) RedAuthorLivingRoom() {
 
 //抖音首页查询
 func (receiver *CommonController) DyUnionSearch() {
-	if !business.UserActionLock(receiver.TrueUri, receiver.Ip, 2) {
-		receiver.FailReturn(global.NewError(4211))
-		return
+	if !receiver.HasLogin {
+		if !business.UserActionLock(receiver.TrueUri, receiver.Ip, 2) {
+			receiver.FailReturn(global.NewError(4211))
+			return
+		}
 	}
 	keyword := receiver.GetString("keyword", "")
 	if keyword == "" {

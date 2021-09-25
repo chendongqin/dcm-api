@@ -25,7 +25,7 @@ func (receiver *ShopController) Prepare() {
 	receiver.CheckDyUserGroupRight(business.DyJewelBaseMinShowNum, business.DyJewelBaseLoginMinShowNum, business.DyJewelBaseShowNum)
 }
 
-//小店基本数据
+//小店库
 func (receiver *ShopController) SearchBase() {
 	keyword := receiver.GetString("keyword", "")
 	category := receiver.GetString("category", "")
@@ -135,7 +135,10 @@ func (receiver *ShopController) ShopBase() {
 	}
 	shopDetailData, comErr := hbase.GetShopDetailByDate(shopId, time.Now().Format("20060102"))
 	if comErr != nil { //今天取不到，取昨日数据
-		shopDetailData, _ = hbase.GetShopDetailByDate(shopId, time.Now().AddDate(0, 0, -1).Format("20060102"))
+		shopDetailData, comErr = hbase.GetShopDetailByDate(shopId, time.Now().AddDate(0, 0, -1).Format("20060102"))
+		if comErr != nil {
+			returnRes.BaseData.CrawlTime = time.Unix(returnRes.BaseData.CrawlTime, 0).AddDate(0, 0, -1).Unix()
+		}
 	}
 	returnRes.DetailData.ProductCnt = shopDetailData.ProductCnt
 	returnRes.DetailData.Sales = shopDetailData.Sales
