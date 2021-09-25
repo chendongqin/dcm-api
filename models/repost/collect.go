@@ -25,6 +25,7 @@ type CollectProductRet struct {
 	WeekRelateAuthor int
 	WeekOrderAccount int64
 	PlatformLabel    string
+	ShopName         string
 	Undercarriage    int
 	IsCoupon         int
 }
@@ -43,7 +44,11 @@ type CollectAwemeRet struct {
 }
 type CollectShopRet struct {
 	dcm.DcUserDyCollect
-	Shop entity.DyShop `json:"shop"`
+	Logo           string  `json:"logo"` //logo
+	Name           string  `json:"name"` //名称
+	Predict30Sales int64   `json:"predict_30_sales"`
+	Predict30Gmv   float64 `json:"predict_30_gmv"`
+	RelateAuthors  int64   `json:"relate_authors"`
 }
 
 type CollectTagRet struct {
