@@ -133,6 +133,7 @@ func (e *EsVideoBusiness) SumDataByAuthor(authorId string, startTime, endTime ti
 		"lt":  endTime.AddDate(0, 0, 1).Unix(),
 	})
 	esQuery.SetTerm("author_id", authorId)
+	esQuery.SetTerm("exist", 1)
 	esTable, connection, err := GetESTableByTime(es.DyVideoTable, startTime, endTime)
 	if err != nil {
 		return

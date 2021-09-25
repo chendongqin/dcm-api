@@ -178,17 +178,7 @@ func (receiver *PayController) CreateDyOrder() {
 	orderInfo := repost.VipOrderInfo{
 		SurplusValue: surplusValue,
 	}
-	//购买会员
-	if orderType == 1 {
-		amount = price.Price
-		orderInfo.BuyDays = buyDays
-		orderInfo.Amount = amount
-		orderInfo.People = 1
-		orderInfo.Title = "会员购买"
-		remark = price.ActiveComment
-	} else if orderType == 2 { //购买协同账号
-		title = fmt.Sprintf("购买协同账号%d人", groupPeople)
-		amount = surplusValue * float64(groupPeople)
+	if utils.InArrayInt(orderType, []int{2, 3, 4}) {
 		//先续费再购买
 		if userVip.SubNum > 0 {
 			if userVip.SubExpiration.Before(time.Now()) {
@@ -203,12 +193,27 @@ func (receiver *PayController) CreateDyOrder() {
 				}
 			}
 		}
+	}
+	//购买会员
+	if orderType == 1 {
+		amount = price.Price
+		orderInfo.BuyDays = buyDays
+		orderInfo.Amount = amount
+		orderInfo.People = 1
+		orderInfo.Title = "会员购买"
+		remark = price.ActiveComment
+	} else if orderType == 2 { //购买协同账号
+		title = fmt.Sprintf("购买协同账号%d人", groupPeople)
+		amount = surplusValue * float64(groupPeople)
 		amount = utils.CeilFloat64One(amount)
 		orderInfo.BuyDays = int(surplusDay)
 		orderInfo.Amount = amount
 		orderInfo.People = groupPeople
 		orderInfo.Title = "协同账号购买"
 		vipOrderType = 3
+		if remark == "" {
+			remark = price.ActiveComment
+		}
 	} else if orderType == 3 { //协同账号续费
 		totalPeople := userVip.SubNum
 		title = fmt.Sprintf("协同账号续费%d人", totalPeople)
@@ -223,20 +228,6 @@ func (receiver *PayController) CreateDyOrder() {
 		totalPeople := userVip.SubNum + 1
 		amount = utils.CeilFloat64One(price.Price * float64(totalPeople))
 		remark = price.ActiveComment
-		//先续费再购买
-		if userVip.SubNum > 0 {
-			if userVip.SubExpiration.Before(time.Now()) {
-				amount += trueSurplusValue * float64(userVip.SubNum)
-			} else {
-				if userVip.Expiration.After(userVip.SubExpiration) {
-					surplusSubDay := math.Ceil((userVip.Expiration.Sub(userVip.SubExpiration)).Hours() / 24)
-					surplusSubsValue := surplusUnit * surplusSubDay
-					tmpAmount := float64(userVip.SubNum) * utils.CeilFloat64One(surplusSubsValue)
-					remark = fmt.Sprintf("已有子账号续费：%.1f元", tmpAmount)
-					amount += tmpAmount
-				}
-			}
-		}
 		orderInfo.BuyDays = buyDays
 		orderInfo.Amount = utils.FriendlyFloat64(amount)
 		orderInfo.People = totalPeople
