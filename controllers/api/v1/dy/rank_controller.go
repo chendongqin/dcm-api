@@ -605,57 +605,152 @@ func (receiver *RankController) DyAuthorTakeGoodsRank() {
 	return
 }
 
-//达人涨粉榜
+//达人带货榜
 func (receiver *RankController) DyAuthorFollowerRank() {
 	date := receiver.Ctx.Input.Param(":date")
-	tags := receiver.GetString("tags", "")
-	province := receiver.GetString("province", "")
-	city := receiver.GetString("city", "")
-	sortStr := receiver.GetString("sort", "")
-	orderBy := receiver.GetString("order_by", "")
-	isDelivery, _ := receiver.GetInt("is_delivery", 0)
+	startDate, err := time.ParseInLocation("2006-01-02", date, time.Local)
+	if err != nil {
+		receiver.FailReturn(global.NewError(4000))
+		return
+	}
+	tags := receiver.GetString("tags", "all")
+	sortStr := receiver.GetString("sort", "sum_sales")
+	orderBy := receiver.GetString("order_by", "desc")
 	page := receiver.GetPage("page")
 	pageSize := receiver.GetPageSize("page_size", 10, 100)
+	var sortMap = map[string]string{"live_inc_follower_count": "live_fans_inc", "inc_follower_count": "fans_inc", "aweme_inc_follower_count": "aweme_fans_inc"}
+	if sortMap[sortStr] != "" {
+		sortStr = sortMap[sortStr]
+	}
+	if tags == "其他" {
+		tags = "null"
+	}
 	if !receiver.HasAuth {
 		page = 1
 		if pageSize > receiver.MaxTotal {
 			pageSize = receiver.MaxTotal
 		}
 	}
-	dateTime, err := time.ParseInLocation("2006-01-02", date, time.Local)
-	if err != nil {
-		receiver.FailReturn(global.NewError(4000))
-		return
+	start := (page - 1) * pageSize
+	end := page * pageSize
+	if end > receiver.MaxTotal {
+		end = receiver.MaxTotal
 	}
-	data, total, comErr := es.NewEsAuthorBusiness().DyAuthorFollowerIncRank(dateTime.Format("20060102"), tags, province, city, sortStr, orderBy, isDelivery, page, pageSize)
-	form := (page - 1) * pageSize
-	for k, v := range data {
-
-		data[k].Rank = k + form + 1
-		if data[k].UniqueID == "" {
-			data[k].UniqueID = v.ShortID
+	var ret map[string]interface{}
+	var originList []entity.DyAuthorDayFansIncrease
+	startRow := sortStr + "_" + startDate.Format("20060102") + "_" + tags
+	endRow := sortStr + "_" + startDate.Format("20060102") + "_" + tags
+	if orderBy == "desc" {
+		startRow = utils.Md5_encode(startRow) + "_" + strconv.Itoa(start+1)
+		endRow = utils.Md5_encode(endRow) + "_" + strconv.Itoa(end+1)
+		originList, _ = hbase.GetFansAuthorRank(startRow, endRow)
+	} else {
+		rowKey := utils.Md5_encode(startRow) + "_" + strconv.Itoa(1)
+		firstRow, _ := hbase.GetFansAuthorRow(rowKey)
+		maxRow, _ := strconv.Atoi(firstRow.RnMax)
+		if maxRow > 0 {
+			endRow = utils.Md5_encode(startRow) + "_" + strconv.Itoa(maxRow-start)
+			startRow = utils.Md5_encode(endRow) + "_" + strconv.Itoa(maxRow-end)
+			originList, _ = hbase.GetFansAuthorRank(startRow, endRow)
 		}
-		data[k].AuthorID = business.IdEncrypt(v.AuthorID)
-		data[k].AuthorCover = dyimg.Fix(v.AuthorCover)
 	}
-	if comErr != nil {
-		receiver.FailReturn(global.NewError(4000))
-		return
+	data := make([]dy.AuthorFansRankRet, 0)
+	total := 0
+	//0未认证；1蓝v；2黄v
+	var VerificationTypeMap = map[string]int{"没有认证": 0, "蓝v": 1, "黄v": 2}
+	for k, v := range originList {
+		total, _ = strconv.Atoi(v.RnMax)
+		tempData := dy.AuthorFansRankRet{}
+		tempData.Rank = (page-1)*pageSize + k + 1
+		tempData.AuthorId = v.AuthorId
+		tempData.UniqueId = v.ShortId
+		tempData.Nickname = v.Nickname
+		tempData.AuthorCover = dyimg.Fix(v.Avatar)
+		tempData.VerificationType = VerificationTypeMap[v.VerificationType]
+		tempData.VerifyName = v.VerifyName
+		tempData.FollowerCount, _ = strconv.Atoi(v.FollowerCount)
+		tempData.IncFollowerCount, _ = strconv.Atoi(v.FansInc)
+		tempData.LiveIncFollowerCount, _ = strconv.Atoi(v.LiveFansInc)
+		tempData.AwemeIncFollowerCount, _ = strconv.Atoi(v.AwemeFansInc)
+		tempData.Tags = v.Tags
+		data = append(data, tempData)
 	}
 	if total > receiver.MaxTotal {
 		total = receiver.MaxTotal
 	}
-	ret := map[string]interface{}{
-		"list": data,
+	list := make([]dy.AuthorFansRankRet, 0)
+	if total > 0 {
+		if start > 0 {
+			lens := end - start
+			list = data[0:lens]
+		} else {
+			list = data[start:end]
+		}
+	}
+	ret = map[string]interface{}{
+		"list":  list,
+		"total": total,
 	}
 	ret["has_login"] = receiver.HasLogin
 	ret["has_auth"] = receiver.HasAuth
-	if !receiver.HasAuth && total > receiver.MaxTotal {
+	if !receiver.HasAuth && utils.ToInt(ret["total"]) > receiver.MaxTotal {
 		ret["total"] = receiver.MaxTotal
 	}
 	receiver.SuccReturn(ret)
 	return
 }
+
+////达人涨粉榜
+//func (receiver *RankController) DyAuthorFollowerRank() {
+//	date := receiver.Ctx.Input.Param(":date")
+//	tags := receiver.GetString("tags", "")
+//	province := receiver.GetString("province", "")
+//	city := receiver.GetString("city", "")
+//	sortStr := receiver.GetString("sort", "")
+//	orderBy := receiver.GetString("order_by", "")
+//	isDelivery, _ := receiver.GetInt("is_delivery", 0)
+//	page := receiver.GetPage("page")
+//	pageSize := receiver.GetPageSize("page_size", 10, 100)
+//	if !receiver.HasAuth {
+//		page = 1
+//		if pageSize > receiver.MaxTotal {
+//			pageSize = receiver.MaxTotal
+//		}
+//	}
+//	dateTime, err := time.ParseInLocation("2006-01-02", date, time.Local)
+//	if err != nil {
+//		receiver.FailReturn(global.NewError(4000))
+//		return
+//	}
+//	data, total, comErr := es.NewEsAuthorBusiness().DyAuthorFollowerIncRank(dateTime.Format("20060102"), tags, province, city, sortStr, orderBy, isDelivery, page, pageSize)
+//	form := (page - 1) * pageSize
+//	for k, v := range data {
+//
+//		data[k].Rank = k + form + 1
+//		if data[k].UniqueID == "" {
+//			data[k].UniqueID = v.ShortID
+//		}
+//		data[k].AuthorID = business.IdEncrypt(v.AuthorID)
+//		data[k].AuthorCover = dyimg.Fix(v.AuthorCover)
+//	}
+//	if comErr != nil {
+//		receiver.FailReturn(global.NewError(4000))
+//		return
+//	}
+//	if total > receiver.MaxTotal {
+//		total = receiver.MaxTotal
+//	}
+//	ret := map[string]interface{}{
+//		"list": data,
+//	}
+//	ret["has_login"] = receiver.HasLogin
+//	ret["has_auth"] = receiver.HasAuth
+//	if !receiver.HasAuth && total > receiver.MaxTotal {
+//		ret["total"] = receiver.MaxTotal
+//	}
+//	receiver.SuccReturn(ret)
+//	return
+//}
 
 //短视频商品排行榜
 func (receiver *RankController) VideoProductRank() {

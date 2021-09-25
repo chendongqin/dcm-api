@@ -232,3 +232,35 @@ func GetSaleAuthorRow(rowKey string) (data entity.DyAuthorDaySalesRank, comErr g
 	utils.MapToStruct(dataMap, &data)
 	return
 }
+
+func GetFansAuthorRank(startRow, endRow string) (data []entity.DyAuthorDayFansIncrease, comErr global.CommonError) {
+	query := hbasehelper.NewQuery()
+	results, err := query.SetTable(hbaseService.HbaseDyAuthorFansIncrRank).
+		SetStartRow([]byte(startRow)).
+		SetStopRow([]byte(endRow)).
+		Scan(1000)
+	if err != nil {
+		comErr = global.NewMsgError(err.Error())
+		return
+	}
+	data = make([]entity.DyAuthorDayFansIncrease, 0)
+	for _, v := range results {
+		dataMap := hbaseService.HbaseFormat(v, entity.DyAuthorDayFansIncreaseMap)
+		hData := entity.DyAuthorDayFansIncrease{}
+		utils.MapToStruct(dataMap, &hData)
+		data = append(data, hData)
+	}
+	return
+}
+
+func GetFansAuthorRow(rowKey string) (data entity.DyAuthorDaySalesRank, comErr global.CommonError) {
+	query := hbasehelper.NewQuery()
+	result, err := query.SetTable(hbaseService.HbaseDyAuthorFansIncrRank).GetByRowKey([]byte(rowKey))
+	if err != nil {
+		comErr = global.NewMsgError(err.Error())
+		return
+	}
+	dataMap := hbaseService.HbaseFormat(result, entity.DyAuthorDayFansIncreaseMap)
+	utils.MapToStruct(dataMap, &data)
+	return
+}
