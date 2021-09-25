@@ -107,6 +107,11 @@ func (receiver *CollectBusiness) GetDyCollect(tagId, collectType int, keywords, 
 			data[k].OrderAccount = productInfo.OrderAccount
 			data[k].WeekOrderAccount = productInfo.MonthOrderAccount
 			data[k].PlatformLabel = productInfo.PlatformLabel
+			if data[k].PlatformLabel == "小店" {
+				if brand, e := hbase.GetDyProductBrand(v.CollectId); e == nil {
+					data[k].ShopName = brand.ShopName
+				}
+			}
 			data[k].Undercarriage = productInfo.Undercarriage
 			data[k].IsCoupon = productInfo.IsCoupon
 			data[k].WeekRelateAuthor = productInfo.RelateAuthor
@@ -155,7 +160,10 @@ func (receiver *CollectBusiness) GetDyCollect(tagId, collectType int, keywords, 
 		data := make([]repost.CollectShopRet, len(collects))
 		for k, v := range collects {
 			data[k].DcUserDyCollect = v
-			data[k].Shop, comErr = hbase.GetShop(v.CollectId)
+			shop, _ := hbase.GetShop(v.CollectId)
+			data[k].Logo = shop.Logo
+			data[k].Name = shop.Name
+			data[k].RelateAuthors = 0
 		}
 		return data, total, nil
 	}
