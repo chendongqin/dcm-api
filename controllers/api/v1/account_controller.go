@@ -364,7 +364,7 @@ func (receiver *AccountController) AddCollect() {
 		receiver.FailReturn(global.NewError(4000))
 		return
 	}
-	collectId := receiver.GetString("collect_id")
+	collectId := business.IdDecrypt(receiver.GetString("collect_id"))
 	if collectId == "" {
 		receiver.FailReturn(global.NewError(4000))
 		return

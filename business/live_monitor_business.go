@@ -501,7 +501,7 @@ func (receiver *LiveMonitorBusiness) AddLiveMonitor(liveMonitor *dcm.DcLiveMonit
 	}
 	lastId = int64(liveMonitor.Id)
 	author, _ := hbase.GetAuthor(liveMonitor.AuthorId)
-	if liveMonitor.StartTime.Before(now) && liveMonitor.EndTime.After(now) && author.RoomId != "" {
+	if liveMonitor.StartTime.Before(now) && liveMonitor.EndTime.After(now) && author.RoomStatus == 2 {
 		if room, err := hbase.GetLiveInfo(author.RoomId); err == nil {
 			receiver.AddByMonitor(dbSession, liveMonitor, &room)
 		}
