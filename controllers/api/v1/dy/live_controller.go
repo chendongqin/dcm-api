@@ -919,13 +919,13 @@ func (receiver *LiveController) LivingBaseData() {
 	}
 	authorData, _ := hbase.GetAuthor(liveInfo.User.ID)
 	livingInfo := dy2.LivingInfo{
-		RoomId:   business.IdDecrypt(liveInfo.RoomID),
-		AuthorId: business.IdDecrypt(liveInfo.User.ID),
+		RoomId:   business.IdEncrypt(liveInfo.RoomID),
+		AuthorId: business.IdEncrypt(liveInfo.User.ID),
 		Author: dy2.LivingAuthorInfo{
 			Avatar:        dyimg.Fix(authorData.Data.Avatar),
 			Nickname:      authorData.Data.Nickname,
 			FollowerCount: authorData.Data.FollowerCount,
-			RoomId:        business.IdDecrypt(authorData.RoomId),
+			RoomId:        business.IdEncrypt(authorData.RoomId),
 		},
 		Title:        liveInfo.Title,
 		Cover:        dyimg.Fix(liveInfo.Cover),
