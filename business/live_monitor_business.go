@@ -673,6 +673,7 @@ func (receiver *LiveMonitorBusiness) LiveMonitorRoomList(userId int, status int,
 		list[k].Nickname = nickname
 		list[k].UniqueID = finalUniqueId
 		list[k].Avatar = dyimg.Avatar(avatar, dyimg.AvatarLittle)
+		list[k].AuthorId = IdEncrypt(v.AuthorId)
 	}
 	return
 }
