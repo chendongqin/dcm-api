@@ -236,7 +236,7 @@ func (receiver *RankController) DyLiveHourPopularityRank() {
 
 //抖音直播达人分享周榜
 func (receiver *RankController) DyLiveShareWeekRank() {
-	start, end, comErr := receiver.GetRangeDate()
+	start, end, comErr := receiver.GetRealRangeDate()
 	if comErr != nil {
 		receiver.FailReturn(comErr)
 		return
