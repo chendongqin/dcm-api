@@ -650,7 +650,7 @@ func (receiver *RankController) DyAuthorFollowerRank() {
 		for {
 			rowKeys = append(rowKeys, []byte(utils.Md5_encode(rowKey)+"_"+strconv.Itoa(startTemp+1)))
 			startTemp++
-			if startTemp > end {
+			if startTemp >= end {
 				break
 			}
 		}
