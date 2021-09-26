@@ -370,12 +370,15 @@ func (receiver *ProductController) ProductBase() {
 		productInfo.MinPrice = productInfo.Price
 	}
 	shopName := brandInfo.ShopName
-	if shopName == "" {
-		shopName = productInfo.TbNick
-	}
+	shopId := business.IdEncrypt(brandInfo.ShopId)
+	//if shopName == "" {
+	//	shopName = productInfo.TbNick
+	//}
 	label := productInfo.DcmLevelFirst
 	if productInfo.PlatformLabel == "小店" {
 		label = brandInfo.DcmLevelFirst
+	} else {
+		shopId = ""
 	}
 	if label == "" {
 		label = "其他"
@@ -388,7 +391,7 @@ func (receiver *ProductController) ProductBase() {
 		URL:                 productBusiness.GetProductUrl(productInfo.PlatformLabel, productInfo.ProductID),
 		Image:               dyimg.Product(productInfo.Image),
 		Status:              productInfo.Status,
-		ShopId:              business.IdEncrypt(productInfo.ShopID),
+		ShopId:              shopId,
 		ShopName:            shopName,
 		Label:               label,
 		Undercarriage:       productInfo.Undercarriage,
@@ -952,7 +955,7 @@ func (receiver *ProductController) ProductAwemeSalesTrend() {
 
 //商品视频列表
 func (receiver *ProductController) ProductAweme() {
-	productId := receiver.Ctx.Input.Param(":product_id")
+	productId := business.IdDecrypt(receiver.Ctx.Input.Param(":product_id"))
 	startTime, endTime, comErr := receiver.GetRangeDate()
 	if comErr != nil {
 		receiver.FailReturn(comErr)
@@ -1091,7 +1094,7 @@ func (receiver *ProductController) ProductSpeed() {
 		receiver.FailReturn(global.NewError(6000))
 		return
 	}
-	productId := receiver.Ctx.Input.Param(":product_id")
+	productId := business.IdDecrypt(receiver.Ctx.Input.Param(":product_id"))
 	if productId == "" {
 		receiver.FailReturn(global.NewError(4000))
 		return

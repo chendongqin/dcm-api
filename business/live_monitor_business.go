@@ -106,12 +106,17 @@ func (receiver *LiveMonitorBusiness) checkRoom(monitorRoom dcm.DcLiveMonitorRoom
 	//	}
 	//} else
 	if roomInfo.RoomStatus == 4 { //下播
-		_ = receiver.UpdateLiveRoomMonitor(&roomInfo)
+		if monitorRoom.FinishTime <= 0 {
+			_ = receiver.UpdateLiveRoomMonitor(&roomInfo)
+		}
 		// 不存在微信openId则不继续推送
 		if monitorRoom.OpenId == "" {
 			return
 		}
 		//推送下播通知
+		if monitorRoom.FinishNotice != 1 {
+			return
+		}
 		receiver.SendFinishNotice(monitorRoom, roomInfo)
 	} else {
 		cacheKey := cache.GetCacheKey(cache.DyMonitorUpdateRoomLock, roomInfo.RoomID)
@@ -157,6 +162,9 @@ func (receiver *LiveMonitorBusiness) SendFinishNotice(monitorRoom dcm.DcLiveMoni
 	if err != nil {
 		return
 	}
+	_, _ = dcm.GetDbSession().Table(new(dcm.DcLiveMonitorRoom)).Where("id=?", monitorRoom.Id).Update(map[string]interface{}{
+		"finish_notice": -1,
+	})
 	return
 }
 
@@ -502,8 +510,20 @@ func (receiver *LiveMonitorBusiness) AddLiveMonitor(liveMonitor *dcm.DcLiveMonit
 	lastId = int64(liveMonitor.Id)
 	author, _ := hbase.GetAuthor(liveMonitor.AuthorId)
 	if liveMonitor.StartTime.Before(now) && liveMonitor.EndTime.After(now) && author.RoomStatus == 2 {
-		if room, err := hbase.GetLiveInfo(author.RoomId); err == nil {
-			receiver.AddByMonitor(dbSession, liveMonitor, &room)
+		if room, err1 := hbase.GetLiveInfo(author.RoomId); err1 == nil {
+			if liveMonitor.NextTime <= room.CreateTime {
+				receiver.AddByMonitor(dbSession, liveMonitor, &room)
+				affect, err2 := dbSession.
+					Table(new(dcm.DcLiveMonitor)).
+					Where("id=?", liveMonitor.Id).
+					Update(map[string]interface{}{"next_time": room.CreateTime + 1})
+				if affect == 0 || err2 != nil {
+					NewMonitorBusiness().SendErr("直播监控", fmt.Sprintf("[live monitor] add live monitor failed. err: %s", err1))
+					_ = dbSession.Rollback()
+					err = err2
+					return
+				}
+			}
 		}
 	}
 	_ = dbSession.Commit()
@@ -517,7 +537,11 @@ func (receiver *LiveMonitorBusiness) UpdateLiveRoomMonitor(roomInfo *entity.DyLi
 		"gmv":         roomInfo.PredictGmv,
 		"sales":       roomInfo.PredictSales,
 		"user_total":  roomInfo.TotalUser,
+		"status":      roomInfo.RoomStatus,
 		"update_time": time.Now().Format("2006-01-02 15:04:05"),
+	}
+	if roomInfo.RoomStatus == 4 {
+		updateMap["finish_time"] = roomInfo.FinishTime
 	}
 	_, err = dcm.GetDbSession().
 		Table(new(dcm.DcLiveMonitorRoom)).
