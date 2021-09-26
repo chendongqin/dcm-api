@@ -129,7 +129,10 @@ func (receiver *LiveCountController) LiveCompositeByCategory() {
 		if v.Value == 0 {
 			continue
 		}
-		value := v.Value / totalSum
+		var value float64 = 0
+		if totalSum > 0 {
+			value = v.Value / totalSum
+		}
 		newRateData = append(newRateData, dy.NameValueFloat64Chart{
 			Name:  v.Name,
 			Value: value,
