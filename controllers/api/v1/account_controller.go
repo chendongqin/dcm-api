@@ -220,7 +220,7 @@ func logOutClear(receiver *AccountController) {
 	_ = userBusiness.AddOrUpdateUniqueToken(receiver.UserId, receiver.AppId, "")
 	userBusiness.DeleteUserInfoCache(receiver.UserInfo.Id)
 	//退出登录成功
-	business.NewWechatBusiness().LoginOutWechatMsg(&receiver.UserInfo)
+	//business.NewWechatBusiness().LoginOutWechatMsg(&receiver.UserInfo)
 
 }
 
