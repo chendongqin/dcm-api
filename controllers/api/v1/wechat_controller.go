@@ -251,9 +251,8 @@ func (receiver *WechatController) WechatPhone() {
 		if affect == 0 || err != nil {
 			receiver.FailReturn(global.NewError(5000))
 			return
-		} else {
-			business.NewUserBusiness().SendUserVip(&userModel, 7)
 		}
+		business.NewUserBusiness().SendUserVip(&userModel, 7)
 	}
 	//开始更新用户信息
 	if userModel.Unionid != "" {
