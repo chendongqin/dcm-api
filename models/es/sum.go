@@ -74,6 +74,18 @@ type DyLiveCategoryRateByWatchCnt struct {
 	} `json:"total_watch_cnt"`
 }
 
+type LiveCategoryWatchCnt struct {
+	TotalWatchCnt struct {
+		Value int `json:"value"`
+	} `json:"total_watch_cnt"`
+}
+
+type LiveCategoryGmv struct {
+	TotalGmv struct {
+		Value int `json:"value"`
+	} `json:"total_gmv"`
+}
+
 type DyLiveCategoryRateByGmv struct {
 	DocCount int `json:"doc_count"`
 	Key      struct {

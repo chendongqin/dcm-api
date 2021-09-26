@@ -168,7 +168,7 @@ func (receiver *EsLiveDataBusiness) LiveCompositeByCategory(startTime, endTime t
 }
 
 //商品占比
-func (receiver *EsLiveDataBusiness) LiveCompositeByCategoryOne(startTime, endTime time.Time, rateType, living int, category string) (total int, res []interface{}) {
+func (receiver *EsLiveDataBusiness) LiveCompositeByCategoryOne(startTime, endTime time.Time, rateType, living int, category string) (total int, res interface{}) {
 	res = []interface{}{}
 	esTable, connection, err := GetESTableByTime(es.DyLiveInfoBaseTable, startTime, endTime)
 	if err != nil {

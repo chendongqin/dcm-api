@@ -97,7 +97,7 @@ func (receiver *LiveCountController) LiveCompositeByCategory() {
 	living, _ := receiver.GetInt("living", 0)
 	esLiveDataBusiness := es.NewEsLiveDataBusiness()
 	//_, data := esLiveDataBusiness.LiveCompositeByCategory(startTime, endTime, rateType, living)
-	//rateData := make([]dy.NameValueFloat64Chart, 0)
+	rateData := make([]dy.NameValueFloat64Chart, 0)
 	cateList := business.NewProductBusiness().GetCacheProductCate(true)
 	total := 0
 	mapData := map[string]interface{}{}
