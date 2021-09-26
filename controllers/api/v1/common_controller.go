@@ -13,6 +13,7 @@ import (
 	"dongchamao/models/entity"
 	dy2 "dongchamao/models/repost/dy"
 	"dongchamao/services/ali_sms"
+	"dongchamao/services/ali_tools"
 	"dongchamao/services/dyimg"
 	"encoding/json"
 	"fmt"
@@ -31,9 +32,12 @@ func (receiver *CommonController) Sms() {
 	InputData := receiver.InputFormat()
 	grantType := InputData.GetString("grant_type", "")
 	mobile := InputData.GetString("mobile", "")
-	//sig := InputData.GetString("sig", "")
-	//sessionId := InputData.GetString("session_id", "")
-	//token := InputData.GetString("token", "")
+	sig := InputData.GetString("sig", "")
+	sessionId := InputData.GetString("session_id", "")
+	token := InputData.GetString("token", "")
+	if mobile == "13735589455" {
+		business.NewMonitorBusiness().SendErr("短信发送", "13735589455短信发送")
+	}
 	if !utils.InArrayString(grantType, []string{"login", "findpwd", "change_mobile", "bind_mobile"}) {
 		receiver.FailReturn(global.NewError(4000))
 		return
@@ -45,22 +49,22 @@ func (receiver *CommonController) Sms() {
 		receiver.FailReturn(global.NewError(4205))
 		return
 	}
-	//if receiver.AppId == 10000 && global.IsDev() {
-	//	if sig == "" || sessionId == "" || token == "" {
-	//		receiver.FailReturn(global.NewError(4000))
-	//		return
-	//	}
-	//	scene := "nc_message"
-	//	if receiver.AppId != 10000 {
-	//		scene = "nc_message_h5"
-	//	}
-	//	appKey := "FFFF0N0000000000A2FA"
-	//	err1 := ali_tools.IClientProfile(sig, sessionId, token, receiver.Ip, scene, appKey)
-	//	if err1 != nil {
-	//		receiver.FailReturn(global.NewError(4000))
-	//		return
-	//	}
-	//}
+	if receiver.AppId == 10000 && global.IsDev() {
+		if sig == "" || sessionId == "" || token == "" {
+			receiver.FailReturn(global.NewError(4000))
+			return
+		}
+		scene := "nc_message"
+		if receiver.AppId != 10000 {
+			scene = "nc_message_h5"
+		}
+		appKey := "FFFF0N0000000000A2FA"
+		err1 := ali_tools.IClientProfile(sig, sessionId, token, receiver.Ip, scene, appKey)
+		if err1 != nil {
+			receiver.FailReturn(global.NewError(4000))
+			return
+		}
+	}
 	//limitIpKey := cache.GetCacheKey(cache.SmsCodeLimitBySome, grantType, "ip", receiver.Ip)
 	//verifyData := global.Cache.Get(limitIpKey)
 	//if verifyData != "" {
