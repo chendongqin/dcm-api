@@ -119,7 +119,7 @@ func (receiver *ShopBusiness) ShopProductAnalysis(shopId, keyword, category, sor
 func (receiver *ShopBusiness) ShopProductAnalysisCount(shopId, keyword string, startTime, stopTime time.Time) (
 	count []dy.DyCate, comError global.CommonError) {
 	hbaseList := make([]entity.DyShopProductAnalysis, 0)
-	cacheKey := cache.GetCacheKey(cache.ShopProductAnalysisScanList, startTime.Format("20060102"), stopTime.Format("20060102"))
+	cacheKey := cache.GetCacheKey(cache.ShopProductAnalysisCountScanList, startTime.Format("20060102"), stopTime.Format("20060102"), shopId)
 	cacheStr := global.Cache.Get(cacheKey)
 	if cacheStr != "" {
 		cacheStr = utils.DeserializeData(cacheStr)
