@@ -1066,6 +1066,7 @@ func (receiver *AuthorController) AuthorSearch() {
 		return
 	}
 	for k, v := range list {
+		list[k].AuthorId = business.IdEncrypt(v.AuthorId)
 		list[k].Avatar = dyimg.Fix(v.Avatar)
 		if v.UniqueId == "" || v.UniqueId == "0" {
 			list[k].UniqueId = v.ShortId
