@@ -37,7 +37,7 @@ func (receiver *EsShopBusiness) BaseSearch(
 	if orderBy == "" {
 		orderBy = "desc"
 	}
-	if !utils.InArrayString(sortStr, []string{"month_sales", "month_gmv", "score", "month_single_price"}) {
+	if !utils.InArrayString(sortStr, []string{"month_sales", "month_gmv", "score", "month_single_price", "product_num", "relate_author"}) {
 		comErr = global.NewError(4000)
 		return
 	}
