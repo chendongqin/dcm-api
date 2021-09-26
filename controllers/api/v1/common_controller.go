@@ -288,14 +288,14 @@ func (receiver *CommonController) RedAuthorRoom() {
 				tmpList = append(tmpList, v)
 				total++
 			}
-			sort.Slice(roomList, func(i, j int) bool {
-				if roomList[i].RoomStatus == 2 && roomList[j].RoomStatus == 4 {
+			sort.Slice(tmpList, func(i, j int) bool {
+				if tmpList[i].RoomStatus == 2 && tmpList[j].RoomStatus == 4 {
 					return true
 				}
-				if roomList[i].RoomStatus == 4 && roomList[j].RoomStatus == 2 {
+				if tmpList[i].RoomStatus == 4 && tmpList[j].RoomStatus == 2 {
 					return false
 				}
-				return roomList[i].Weight > roomList[j].Weight
+				return tmpList[i].Weight > tmpList[j].Weight
 			})
 			data = append(data, dy2.RedAuthorRoomBox{
 				Date: date,
