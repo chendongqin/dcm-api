@@ -167,6 +167,76 @@ func (receiver *EsLiveDataBusiness) LiveCompositeByCategory(startTime, endTime t
 	return
 }
 
+//商品占比
+func (receiver *EsLiveDataBusiness) LiveCompositeByCategoryOne(startTime, endTime time.Time, rateType, living int, category string) (total int, res interface{}) {
+	res = []interface{}{}
+	esTable, connection, err := GetESTableByTime(es.DyLiveInfoBaseTable, startTime, endTime)
+	if err != nil {
+		return
+	}
+	esQuery, esMultiQuery := elasticsearch.NewElasticQueryGroup()
+	esQuery.SetRange("create_time", map[string]interface{}{
+		"gte": startTime.Unix(),
+		"lt":  endTime.AddDate(0, 0, 1).Unix(),
+	})
+	esQuery.SetRange("num_product", map[string]interface{}{
+		"gt": 0,
+	})
+	if living == 1 {
+		esQuery.SetTerm("room_status", 2)
+	}
+	if category != "" {
+		esQuery.SetMatchPhrase("dcm_level_first", category)
+	}
+	var cacheTime time.Duration = 600
+	today := time.Now().Format("20060102")
+	if today != endTime.Format("20060102") {
+		cacheTime = 86400
+	}
+	sumMap := map[string]interface{}{}
+	sumTitle := ""
+	if rateType == 1 {
+		sumTitle = "total_watch_cnt"
+		sumMap = map[string]interface{}{
+			"sum": map[string]interface{}{
+				"field": "watch_cnt",
+			},
+		}
+	} else {
+		sumTitle = "total_gmv"
+		sumMap = map[string]interface{}{
+			"sum": map[string]interface{}{
+				"field": "predict_gmv",
+			},
+		}
+	}
+	countResult := esMultiQuery.
+		SetConnection(connection).
+		SetCache(cacheTime).
+		SetTable(esTable).
+		SetMust(esQuery.Condition).
+		RawQuery(map[string]interface{}{
+			"query": map[string]interface{}{
+				"bool": map[string]interface{}{
+					"must": esQuery.Condition,
+				},
+			},
+			"size": 0,
+			"aggs": map[string]interface{}{
+				sumTitle: sumMap,
+			},
+		})
+	if v, ok := countResult["aggregations"]; ok {
+		res = v
+	}
+	if h, ok := countResult["hits"]; ok {
+		if t, ok2 := h.(map[string]interface{})["total"]; ok2 {
+			total = utils.ToInt(t.(float64))
+		}
+	}
+	return
+}
+
 //榜单
 func (receiver *EsLiveDataBusiness) LiveRankByCategory(startTime, endTime time.Time, category, sortStr string, living int) (list []es.EsDyLiveDetail, comErr global.CommonError) {
 	if sortStr == "" {
