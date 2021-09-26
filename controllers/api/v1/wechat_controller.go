@@ -122,7 +122,7 @@ func (receiver *WechatController) Receive() {
 					}
 					//设置 openid 缓存 前端监听
 					_ = global.Cache.Set("unionid:"+msg.EventKey, userWechat.UnionID, 1800)
-					return &message.Reply{MsgType: message.MsgTypeText, MsgData: text}
+					return &message.Reply{MsgType: message.MsgTypeText, MsgData: message.NewText("扫码登陆成功！！\n\n" + global.WECHATLOGINMSG)}
 				}
 			case message.EventClick:
 				click, _ := business.NewWechatBusiness().GetMenuClick(msg.EventKey)
