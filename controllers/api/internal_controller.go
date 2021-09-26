@@ -177,6 +177,11 @@ func (receiver *InternalController) ClearCache() {
 			cacheKey = cache.GetCacheKey(cache.ConfigKeyCache, val)
 			break
 		}
+	case "cate":
+		{
+			cacheKey = cache.GetCacheKey(cache.LongTimeConfigKeyCache)
+			break
+		}
 	}
 	global.Cache.Delete(cacheKey)
 	receiver.SuccReturn(nil)
