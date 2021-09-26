@@ -106,7 +106,9 @@ func (receiver *LiveMonitorBusiness) checkRoom(monitorRoom dcm.DcLiveMonitorRoom
 	//	}
 	//} else
 	if roomInfo.RoomStatus == 4 { //下播
-		_ = receiver.UpdateLiveRoomMonitor(&roomInfo)
+		if monitorRoom.FinishTime <= 0 {
+			_ = receiver.UpdateLiveRoomMonitor(&roomInfo)
+		}
 		// 不存在微信openId则不继续推送
 		if monitorRoom.OpenId == "" {
 			return
