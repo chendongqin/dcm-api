@@ -952,7 +952,7 @@ func (receiver *ProductController) ProductAwemeSalesTrend() {
 
 //商品视频列表
 func (receiver *ProductController) ProductAweme() {
-	productId := receiver.Ctx.Input.Param(":product_id")
+	productId := business.IdDecrypt(receiver.Ctx.Input.Param(":product_id"))
 	startTime, endTime, comErr := receiver.GetRangeDate()
 	if comErr != nil {
 		receiver.FailReturn(comErr)
@@ -1091,7 +1091,7 @@ func (receiver *ProductController) ProductSpeed() {
 		receiver.FailReturn(global.NewError(6000))
 		return
 	}
-	productId := receiver.Ctx.Input.Param(":product_id")
+	productId := business.IdDecrypt(receiver.Ctx.Input.Param(":product_id"))
 	if productId == "" {
 		receiver.FailReturn(global.NewError(4000))
 		return
