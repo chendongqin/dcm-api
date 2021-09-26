@@ -27,7 +27,7 @@ func NewShopBusiness() *ShopBusiness {
 func (receiver *ShopBusiness) ShopProductAnalysis(shopId, keyword, category, sortStr, orderBy string, startTime, stopTime time.Time, page, pageSize int) (
 	list []entity.DyShopProductAnalysis, total int, comError global.CommonError) {
 	hbaseList := make([]entity.DyShopProductAnalysis, 0)
-	cacheKey := cache.GetCacheKey(cache.ShopProductAnalysisScanList, startTime.Format("20060102"), stopTime.Format("20060102"))
+	cacheKey := cache.GetCacheKey(cache.ShopProductAnalysisScanList, startTime.Format("20060102"), stopTime.Format("20060102"), shopId)
 	cacheStr := global.Cache.Get(cacheKey)
 	if cacheStr != "" {
 		cacheStr = utils.DeserializeData(cacheStr)

@@ -676,7 +676,7 @@ func (receiver *RankController) DyAuthorFollowerRank() {
 		total, _ = strconv.Atoi(v.RnMax)
 		tempData := dy.AuthorFansRankRet{}
 		tempData.Rank = (page-1)*pageSize + k + 1
-		tempData.AuthorId = business.IdDecrypt(v.AuthorId)
+		tempData.AuthorId = v.AuthorId
 		if v.UniqueId != "" {
 			tempData.UniqueId = v.UniqueId
 		} else {
