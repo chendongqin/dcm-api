@@ -1088,6 +1088,7 @@ func (a *AuthorBusiness) NewGetAuthorProductAnalyse(authorId, keyword, firstCate
 			list[k].AwemeCount = int64(len(n))
 		}
 		list[k].Image = dyimg.Product(v.Image)
+		list[k].ShopId = IdEncrypt(v.ShopId)
 		list[k].AuthorId = IdEncrypt(v.AuthorId)
 		list[k].ProductId = IdEncrypt(v.ProductId)
 		productIds = append(productIds, v.ProductId)
