@@ -8,7 +8,7 @@ var DyAuthorDayFansIncreaseMap = HbaseEntity{
 	"avatar":                   {String, "avatar"},
 	"verification_type":        {String, "verification_type"},
 	"verify_name":              {String, "verify_name"},
-	"follower_count":           {String, "follower_count"},
+	"follow_count":             {String, "follower_count"},
 	"author_id_date":           {String, "author_id_date"},
 	"yesterday_follower_count": {String, "yesterday_follower_count"},
 	"fans_inc":                 {String, "fans_inc"},
