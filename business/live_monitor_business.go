@@ -537,6 +537,7 @@ func (receiver *LiveMonitorBusiness) UpdateLiveRoomMonitor(roomInfo *entity.DyLi
 		"gmv":         roomInfo.PredictGmv,
 		"sales":       roomInfo.PredictSales,
 		"user_total":  roomInfo.TotalUser,
+		"status":      roomInfo.RoomStatus,
 		"update_time": time.Now().Format("2006-01-02 15:04:05"),
 	}
 	if roomInfo.RoomStatus == 4 {

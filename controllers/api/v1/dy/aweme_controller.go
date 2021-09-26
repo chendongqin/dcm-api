@@ -85,7 +85,7 @@ func (receiver *AwemeController) AwemeBaseData() {
 }
 
 func (receiver *AwemeController) AwemeChart() {
-	awemeId := business.IdEncrypt(receiver.Ctx.Input.Param(":aweme_id"))
+	awemeId := business.IdDecrypt(receiver.Ctx.Input.Param(":aweme_id"))
 	if awemeId == "" {
 		receiver.FailReturn(global.NewError(4000))
 		return
@@ -528,7 +528,7 @@ func (receiver *AwemeController) AwemeSpeed() {
 		receiver.FailReturn(global.NewError(6000))
 		return
 	}
-	awemeId := receiver.Ctx.Input.Param(":aweme_id")
+	awemeId := business.IdDecrypt(receiver.Ctx.Input.Param(":aweme_id"))
 	if awemeId == "" {
 		receiver.FailReturn(global.NewError(4000))
 		return
