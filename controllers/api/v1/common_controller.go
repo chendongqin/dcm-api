@@ -396,10 +396,15 @@ func (receiver *CommonController) DyUnionSearch() {
 	for k, v := range productList {
 		productList[k].ProductId = business.IdEncrypt(v.ProductId)
 	}
+	shopList, _, _ := es.NewEsShopBusiness().SimpleSearch(keyword, "", "", "", 1, 2, "", "")
+	for k, v := range shopList {
+		shopList[k].ShopId = business.IdEncrypt(v.ShopId)
+	}
 	ret := map[string]interface{}{
 		"author":  authorList,
 		"live":    liveList,
 		"product": productList,
+		"shop":    shopList,
 	}
 	receiver.SuccReturn(ret)
 	return
