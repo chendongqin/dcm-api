@@ -76,13 +76,13 @@ type DyLiveCategoryRateByWatchCnt struct {
 
 type LiveCategoryWatchCnt struct {
 	TotalWatchCnt struct {
-		Value int `json:"value"`
+		Value int64 `json:"value"`
 	} `json:"total_watch_cnt"`
 }
 
 type LiveCategoryGmv struct {
 	TotalGmv struct {
-		Value int `json:"value"`
+		Value float64 `json:"value"`
 	} `json:"total_gmv"`
 }
 
