@@ -271,6 +271,8 @@ func (receiver *WechatController) WechatPhone() {
 		"unionid":     wechatModel.Unionid,
 		"nickname":    wechatModel.NickName,
 		"avatar":      wechatModel.Avatar,
+		"login_time":  utils.GetNowTimeStamp(),
+		"login_ip":    receiver.Ip,
 		"update_time": utils.GetNowTimeStamp(),
 	}
 	affect, _ := userBusiness.UpdateUserAndClearCache(nil, userModel.Id, updateData)
