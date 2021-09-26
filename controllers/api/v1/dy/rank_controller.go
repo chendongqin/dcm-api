@@ -522,7 +522,7 @@ func (receiver *RankController) DyAuthorTakeGoodsRank() {
 		total, _ = strconv.Atoi(v.RnMax)
 		tempData := dy.TakeGoodsRankRet{}
 		tempData.Rank = (page-1)*pageSize + k + 1
-		tempData.AuthorId = business.IdDecrypt(v.AuthorId)
+		tempData.AuthorId = business.IdEncrypt(v.AuthorId)
 		tempData.UniqueId = v.ShortId
 		tempData.Nickname = v.Nickname
 		tempData.AuthorCover = dyimg.Fix(v.Avatar)
@@ -676,7 +676,7 @@ func (receiver *RankController) DyAuthorFollowerRank() {
 		total, _ = strconv.Atoi(v.RnMax)
 		tempData := dy.AuthorFansRankRet{}
 		tempData.Rank = (page-1)*pageSize + k + 1
-		tempData.AuthorId = business.IdDecrypt(v.AuthorId)
+		tempData.AuthorId = business.IdEncrypt(v.AuthorId)
 		if v.UniqueId != "" {
 			tempData.UniqueId = v.UniqueId
 		} else {
@@ -876,7 +876,7 @@ func (receiver *RankController) VideoProductRank() {
 		total = receiver.MaxTotal
 	}
 	for k, v := range list {
-		list[k].ProductId = business.IdDecrypt(v.ProductId)
+		list[k].ProductId = business.IdEncrypt(v.ProductId)
 	}
 	ret := map[string]interface{}{
 		"list":      list,

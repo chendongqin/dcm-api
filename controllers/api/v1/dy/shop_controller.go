@@ -243,9 +243,9 @@ func (receiver *ShopController) ShopBaseAnalysis() {
 		"gt1000": ">1000",
 	}
 
-	for k, v := range priceMap {
+	for k, _ := range priceMap {
 		priceSection = append(priceSection, dy.NameValueInt64Chart{
-			Name:  priceMap[v],
+			Name:  priceMap[k],
 			Value: priceSectionMap[k],
 		})
 	}
