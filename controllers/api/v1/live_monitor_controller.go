@@ -72,6 +72,10 @@ func (receiver *LiveMonitorController) AddLiveMonitor() {
 		receiver.FailReturn(global.NewError(4000))
 		return
 	}
+	if endTime.Before(startTime) {
+		receiver.FailReturn(global.NewError(4000))
+		return
+	}
 	liveMonitorBusiness := business.NewLiveMonitorBusiness()
 	if liveMonitorBusiness.CheckRepeat(receiver.UserId, authorId, startTime, endTime) {
 		receiver.FailReturn(global.NewMsgError("所选时段存在相同达人监控，无法重复添加。"))
