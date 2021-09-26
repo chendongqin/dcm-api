@@ -35,9 +35,6 @@ func (receiver *CommonController) Sms() {
 	sig := InputData.GetString("sig", "")
 	sessionId := InputData.GetString("session_id", "")
 	token := InputData.GetString("token", "")
-	if mobile == "13735589455" {
-		business.NewMonitorBusiness().SendErr("短信发送", "13735589455短信发送")
-	}
 	if !utils.InArrayString(grantType, []string{"login", "findpwd", "change_mobile", "bind_mobile"}) {
 		receiver.FailReturn(global.NewError(4000))
 		return
