@@ -6,6 +6,7 @@ import (
 	controllers "dongchamao/controllers/api"
 	"dongchamao/global"
 	"dongchamao/global/utils"
+	es2 "dongchamao/models/es"
 	"dongchamao/models/repost/dy"
 	"dongchamao/services/dyimg"
 	"sort"
@@ -100,14 +101,39 @@ func (receiver *LiveCountController) LiveCompositeByCategory() {
 	rateData := make([]dy.NameValueFloat64Chart, 0)
 	cateList := business.NewProductBusiness().GetCacheProductCate(true)
 	total := 0
-	mapData := map[string]interface{}{}
+	var totalSum float64 = 0
 	for _, v := range cateList {
 		if v.Name == "其他" {
 			continue
 		}
 		temTotal, temRes := esLiveDataBusiness.LiveCompositeByCategoryOne(startTime, endTime, rateType, living, v.Name)
 		total += temTotal
-		mapData[v.Name] = temRes
+		var tempSum float64 = 0
+		if rateType == 1 {
+			tempData := es2.LiveCategoryWatchCnt{}
+			utils.MapToStruct(temRes, &tempData)
+			tempSum = float64(tempData.TotalWatchCnt.Value)
+		} else {
+			tempData := es2.LiveCategoryGmv{}
+			utils.MapToStruct(temRes, &tempData)
+			tempSum = float64(tempData.TotalGmv.Value)
+		}
+		totalSum += tempSum
+		rateData = append(rateData, dy.NameValueFloat64Chart{
+			Name:  v.Name,
+			Value: tempSum,
+		})
+	}
+	newRateData := make([]dy.NameValueFloat64Chart, 0)
+	for _, v := range rateData {
+		if v.Value == 0 {
+			continue
+		}
+		value := v.Value / totalSum
+		newRateData = append(newRateData, dy.NameValueFloat64Chart{
+			Name:  v.Name,
+			Value: value,
+		})
 	}
 	//if rateType == 1 {
 	//	list := make([]es2.DyLiveCategoryRateByWatchCnt, 0)
@@ -170,10 +196,10 @@ func (receiver *LiveCountController) LiveCompositeByCategory() {
 	//		})
 	//	}
 	//}
-	//sort.Slice(rateData, func(i, j int) bool {
-	//	return rateData[i].Value > rateData[j].Value
-	//})
-	receiver.SuccReturn(mapData)
+	sort.Slice(newRateData, func(i, j int) bool {
+		return newRateData[i].Value > newRateData[j].Value
+	})
+	receiver.SuccReturn(newRateData)
 	return
 }
 
