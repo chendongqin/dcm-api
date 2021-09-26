@@ -345,6 +345,9 @@ func (receiver *LiveMonitorBusiness) foundNewLive(monitor *dcm.DcLiveMonitor, ro
 		logs.Error("[live monitor] 直播监控获取直播间数据失败，err: %s", err)
 		return
 	}
+	if roomInfo.RoomID == "" {
+		return
+	}
 	dbSession := dcm.GetDbSession()
 	defer dbSession.Close()
 	_ = dbSession.Begin()
