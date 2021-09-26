@@ -41,9 +41,6 @@ func (receiver *LiveMonitorBusiness) ScanLiveRoom() {
 	startTime := time.Now()
 	totalCount := 0
 	defer func() {
-		if !global.IsDev() {
-			NewMonitorBusiness().SendErr("直播间监控", fmt.Sprintf("[直播间监控] 记录数: %d, 耗时: %s", totalCount, time.Since(startTime)))
-		}
 		logs.Info("[直播间监控] 记录数: %d, 耗时: %s", totalCount, time.Since(startTime))
 	}()
 	list, err := receiver.getNeedNoticeRooms()
