@@ -243,11 +243,15 @@ func (receiver *ShopController) ShopBaseAnalysis() {
 		"gt1000": ">1000",
 	}
 
-	for k, _ := range priceMap {
-		priceSection = append(priceSection, dy.NameValueInt64Chart{
-			Name:  priceMap[k],
-			Value: priceSectionMap[k],
-		})
+	sortSlice := []string{"lt50", "lt100", "lt300", "lt500", "lt1000", "gt1000"}
+	for _, v := range sortSlice {
+		if val, exist := priceSectionMap[v]; exist {
+			priceSection = append(priceSection, dy.NameValueInt64Chart{
+				Name:  priceMap[v],
+				Value: val,
+			})
+		}
+
 	}
 	receiver.SuccReturn(map[string]interface{}{
 		"sales_chart": dy2.ShopSaleChart{
