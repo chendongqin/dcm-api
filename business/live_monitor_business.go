@@ -345,6 +345,9 @@ func (receiver *LiveMonitorBusiness) foundNewLive(monitor *dcm.DcLiveMonitor, ro
 		logs.Error("[live monitor] 直播监控获取直播间数据失败，err: %s", err)
 		return
 	}
+	if roomInfo.RoomID == "" {
+		return
+	}
 	dbSession := dcm.GetDbSession()
 	defer dbSession.Close()
 	_ = dbSession.Begin()
@@ -499,8 +502,20 @@ func (receiver *LiveMonitorBusiness) AddLiveMonitor(liveMonitor *dcm.DcLiveMonit
 	lastId = int64(liveMonitor.Id)
 	author, _ := hbase.GetAuthor(liveMonitor.AuthorId)
 	if liveMonitor.StartTime.Before(now) && liveMonitor.EndTime.After(now) && author.RoomStatus == 2 {
-		if room, err := hbase.GetLiveInfo(author.RoomId); err == nil {
-			receiver.AddByMonitor(dbSession, liveMonitor, &room)
+		if room, err1 := hbase.GetLiveInfo(author.RoomId); err1 == nil {
+			if liveMonitor.NextTime <= room.CreateTime {
+				receiver.AddByMonitor(dbSession, liveMonitor, &room)
+				affect, err2 := dbSession.
+					Table(new(dcm.DcLiveMonitor)).
+					Where("id=?", liveMonitor.Id).
+					Update(map[string]interface{}{"next_time": room.CreateTime + 1})
+				if affect == 0 || err2 != nil {
+					NewMonitorBusiness().SendErr("直播监控", fmt.Sprintf("[live monitor] add live monitor failed. err: %s", err1))
+					_ = dbSession.Rollback()
+					err = err2
+					return
+				}
+			}
 		}
 	}
 	_ = dbSession.Commit()
