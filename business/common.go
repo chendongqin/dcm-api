@@ -257,9 +257,9 @@ func ParseDyShortUrl(url string) (string, bool) {
 
 //id加密
 func IdEncrypt(id string) string {
-	if global.IsDev() {
-		return id
-	}
+	//if global.IsDev() {
+	//	return id
+	//}
 	if id == "" || id == "0" {
 		return ""
 	}
@@ -278,13 +278,13 @@ func IdDecrypt(id string) string {
 	if id == "" {
 		return ""
 	}
-	if strings.Index(id, "==") != 0 {
-		return id
-		//if global.IsDev() {
-		//	return id
-		//}
-		//return ""
-	}
+	//if strings.Index(id, "==") != 0 {
+	//	return id
+	//if global.IsDev() {
+	//	return id
+	//}
+	//return ""
+	//}
 	id = strings.Replace(id, "==", "", 1)
 	key := []byte("dwVRjLVUN4RMGAKSEvuvPV696PKrEuRT")
 	//restful路由避免错误
