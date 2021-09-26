@@ -112,6 +112,9 @@ func (receiver *LiveMonitorBusiness) checkRoom(monitorRoom dcm.DcLiveMonitorRoom
 			return
 		}
 		//推送下播通知
+		if monitorRoom.FinishNotice != 1 {
+			return
+		}
 		receiver.SendFinishNotice(monitorRoom, roomInfo)
 	} else {
 		cacheKey := cache.GetCacheKey(cache.DyMonitorUpdateRoomLock, roomInfo.RoomID)
@@ -157,6 +160,9 @@ func (receiver *LiveMonitorBusiness) SendFinishNotice(monitorRoom dcm.DcLiveMoni
 	if err != nil {
 		return
 	}
+	_, _ = dcm.GetDbSession().Table(new(dcm.DcLiveMonitorRoom)).Where("id=?", monitorRoom.Id).Update(map[string]interface{}{
+		"finish_notice": -1,
+	})
 	return
 }
 
@@ -530,6 +536,9 @@ func (receiver *LiveMonitorBusiness) UpdateLiveRoomMonitor(roomInfo *entity.DyLi
 		"sales":       roomInfo.PredictSales,
 		"user_total":  roomInfo.TotalUser,
 		"update_time": time.Now().Format("2006-01-02 15:04:05"),
+	}
+	if roomInfo.RoomStatus == 4 {
+		updateMap["finish_time"] = roomInfo.FinishTime
 	}
 	_, err = dcm.GetDbSession().
 		Table(new(dcm.DcLiveMonitorRoom)).
