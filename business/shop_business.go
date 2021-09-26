@@ -93,6 +93,9 @@ func (receiver *ShopBusiness) ShopProductAnalysis(shopId, keyword, category, sor
 		case "month_cvr":
 			left = utils.ToFloat64(list[i].MonthCvr)
 			right = utils.ToFloat64(list[j].MonthCvr)
+		case "commission_rate":
+			left = utils.ToFloat64(list[i].CommissionRate)
+			right = utils.ToFloat64(list[j].CommissionRate)
 		}
 		if orderBy == "desc" {
 			return left > right
