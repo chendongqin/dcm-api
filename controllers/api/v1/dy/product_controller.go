@@ -969,6 +969,7 @@ func (receiver *ProductController) ProductAweme() {
 	list, total, comErr := es.NewEsVideoBusiness().SearchAwemeByProduct(productId, keyword, sortStr, orderBy, startTime, endTime, page, pageSize)
 	for k, v := range list {
 		list[k].ProductId = business.IdEncrypt(v.ProductId)
+		list[k].AuthorId = business.IdEncrypt(v.AuthorId)
 		list[k].AwemeId = business.IdEncrypt(v.AwemeId)
 		list[k].Avatar = dyimg.Fix(v.Avatar)
 		list[k].AwemeCover = dyimg.Fix(v.AwemeCover)
