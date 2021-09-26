@@ -568,6 +568,39 @@ func (c *ApiBaseController) CheckCaptcha() (ok bool, err error) {
 }
 
 //获取查询时间并校验
+func (receiver *ApiBaseController) GetRealRangeDate() (startTime, endTime time.Time, commonError global.CommonError) {
+	startDay := receiver.Ctx.Input.Param(":start")
+	endDay := receiver.Ctx.Input.Param(":end")
+	if startDay == "" {
+		commonError = global.NewError(4000)
+		return
+	}
+	if endDay == "" {
+		endDay = time.Now().Format("2006-01-02")
+	}
+	pslTime := "2006-01-02"
+	startTime, err := time.ParseInLocation(pslTime, startDay, time.Local)
+	if err != nil {
+		commonError = global.NewError(4000)
+		return
+	}
+	//时间截止至8.30号
+	if startTime.Unix() < 1630252800 {
+		startTime = time.Unix(1630252800, 0)
+	}
+	endTime, err = time.ParseInLocation(pslTime, endDay, time.Local)
+	if err != nil {
+		commonError = global.NewError(4000)
+		return
+	}
+	if startTime.After(endTime) || endTime.After(startTime.AddDate(0, 0, 90)) || endTime.After(time.Now()) {
+		commonError = global.NewError(4000)
+		return
+	}
+	return
+}
+
+//获取查询时间并校验
 func (receiver *ApiBaseController) GetRangeDate() (startTime, endTime time.Time, commonError global.CommonError) {
 	startDay := receiver.Ctx.Input.Param(":start")
 	endDay := receiver.Ctx.Input.Param(":end")
