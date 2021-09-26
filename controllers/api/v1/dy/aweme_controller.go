@@ -267,6 +267,8 @@ func (receiver *AwemeController) AwemeProductAnalyse() {
 		return
 	}
 	for _, v := range productMap {
+		v.AwemeId = business.IdEncrypt(v.AwemeId)
+		v.ProductId = business.IdEncrypt(v.ProductId)
 		list = append(list, v)
 	}
 	sort.Slice(list, func(i, j int) bool {

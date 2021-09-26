@@ -247,11 +247,14 @@ func (receiver *WechatController) WechatPhone() {
 		userModel.UpdateTime = time.Now()
 		//来源
 		userModel.Entrance = business.AppIdMap[receiver.AppId]
+		userModel.Channel = receiver.Channel
+		userModel.ChannelWords = receiver.ChannelWords
 		affect, err := dcm.Insert(nil, &userModel)
 		if affect == 0 || err != nil {
 			receiver.FailReturn(global.NewError(5000))
 			return
 		}
+		business.NewUserBusiness().SendUserVip(&userModel, 7)
 	}
 	//开始更新用户信息
 	if userModel.Unionid != "" {
