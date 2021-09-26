@@ -52,7 +52,7 @@ func GetShopDetailByDate(shopId, date string) (data entity.DyShopDetail, comErr 
 func GetShopDetailRangDate(shopId string, startTime, endTime time.Time) (data map[string]entity.DyShopDetail, comErr global.CommonError) {
 	query := hbasehelper.NewQuery()
 	startRow := shopId + "_" + startTime.Format("20060102")
-	endRow := shopId + "_" + endTime.Format("20060102")
+	endRow := shopId + "_" + endTime.AddDate(0, 0, 1).Format("20060102")
 	results, err := query.
 		SetTable(hbaseService.HbaseDyShopDetail).
 		SetStartRow([]byte(startRow)).
