@@ -42,9 +42,10 @@ const (
 	RedAuthorLivingRooms      KeyName = "dcm:red:author:living:room"
 	RedAuthorMapCache         KeyName = "dcm:red:author:map:%s"
 	//小店
-	ShopProductAnalysisScanList KeyName = "dcm:shop:product:analysis:%s:%s"
-	ShopLiveAuthorAllList       KeyName = "dcm:shop:live:author:row:%s"
-	ShopAwemeAuthorAllList      KeyName = "dcm:shop:aweme:author:row:%s"
+	ShopProductAnalysisScanList      KeyName = "dcm:shop:product:analysis:%s:%s:%s"
+	ShopProductAnalysisCountScanList KeyName = "dcm:shop:product:analysis:count:%s:%s:%s"
+	ShopLiveAuthorAllList            KeyName = "dcm:shop:live:author:row:%s"
+	ShopAwemeAuthorAllList           KeyName = "dcm:shop:aweme:author:row:%s"
 	//视频商品列表
 	AwemeProductByDate KeyName = "dcm:aweme:product:%s:%s:%s"
 	//榜单数据缓存
