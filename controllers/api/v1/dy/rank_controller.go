@@ -496,18 +496,21 @@ func (receiver *RankController) DyAuthorTakeGoodsRank() {
 	//	cacheStr = utils.DeserializeData(cacheStr)
 	//	_ = jsoniter.Unmarshal([]byte(cacheStr), &ret)
 	//} else {
-
 	var originList []entity.DyAuthorDaySalesRank
 	key := sortStr + "_" + startDate.Format("20060102") + "_" + tags
 	rowKeys := make([][]byte, 0)
+	rowKey := utils.Md5_encode(key) + "_" + strconv.Itoa(1)
+	firstRow, _ := hbase.GetSaleAuthorRow(rowKey)
+	if firstRow.AuthorId == "" && startDate.Format("20060102") == "20210925" {
+		key = sortStr + "_" + startDate.AddDate(0, 0, -1).Format("20060102") + "_" + tags
+		rowKey = utils.Md5_encode(key) + "_" + strconv.Itoa(1)
+	}
 	if orderBy == "desc" {
 		for i := start + 1; i <= end; i++ {
 			rowKeys = append(rowKeys, []byte(utils.Md5_encode(key)+"_"+strconv.Itoa(i)))
 		}
 		originList, _ = hbase.GetSaleAuthorRank(rowKeys)
 	} else {
-		rowKey := utils.Md5_encode(key) + "_" + strconv.Itoa(1)
-		firstRow, _ := hbase.GetSaleAuthorRow(rowKey)
 		maxRow, _ := strconv.Atoi(firstRow.RnMax)
 		if maxRow > 0 {
 			for i := maxRow - start; i >= maxRow-end+1; i-- {
@@ -647,7 +650,7 @@ func (receiver *RankController) DyAuthorFollowerRank() {
 		for {
 			rowKeys = append(rowKeys, []byte(utils.Md5_encode(rowKey)+"_"+strconv.Itoa(startTemp+1)))
 			startTemp++
-			if startTemp > end {
+			if startTemp >= end {
 				break
 			}
 		}
