@@ -6,7 +6,6 @@ import (
 	controllers "dongchamao/controllers/api"
 	"dongchamao/global"
 	"dongchamao/global/utils"
-	es2 "dongchamao/models/es"
 	"dongchamao/models/repost/dy"
 	"dongchamao/services/dyimg"
 	"sort"
@@ -97,73 +96,84 @@ func (receiver *LiveCountController) LiveCompositeByCategory() {
 	}
 	living, _ := receiver.GetInt("living", 0)
 	esLiveDataBusiness := es.NewEsLiveDataBusiness()
-	_, data := esLiveDataBusiness.LiveCompositeByCategory(startTime, endTime, rateType, living)
-	rateData := make([]dy.NameValueFloat64Chart, 0)
-	if rateType == 1 {
-		list := make([]es2.DyLiveCategoryRateByWatchCnt, 0)
-		utils.MapToStruct(data, &list)
-		var totalValue int64 = 0
-		watchCntMap := map[string]int64{}
-		for _, v := range list {
-			categories := strings.Split(v.Key.DcmLevelFirst, ",")
-			for _, c := range categories {
-				c = strings.Trim(c, " ")
-				if c == "" || c == "其他" {
-					continue
-				}
-				if _, exist := watchCntMap[c]; exist {
-					watchCntMap[c] += v.TotalWatchCnt.Value
-				} else {
-					watchCntMap[c] = v.TotalWatchCnt.Value
-				}
-				totalValue += v.TotalWatchCnt.Value
-			}
+	//_, data := esLiveDataBusiness.LiveCompositeByCategory(startTime, endTime, rateType, living)
+	//rateData := make([]dy.NameValueFloat64Chart, 0)
+	cateList := business.NewProductBusiness().GetCacheProductCate(true)
+	total := 0
+	mapData := map[string]interface{}{}
+	for _, v := range cateList {
+		if v.Name == "其他" {
+			continue
 		}
-		for k, v := range watchCntMap {
-			var rate float64 = 0
-			if totalValue > 0 {
-				rate = float64(v) / float64(totalValue)
-			}
-			rateData = append(rateData, dy.NameValueFloat64Chart{
-				Name:  k,
-				Value: rate,
-			})
-		}
-	} else {
-		list := make([]es2.DyLiveCategoryRateByGmv, 0)
-		utils.MapToStruct(data, &list)
-		var totalValue float64 = 0
-		gmvMap := map[string]float64{}
-		for _, v := range list {
-			categories := strings.Split(v.Key.DcmLevelFirst, ",")
-			for _, c := range categories {
-				c = strings.Trim(c, " ")
-				if c == "" || c == "其他" {
-					continue
-				}
-				if _, exist := gmvMap[c]; exist {
-					gmvMap[c] += v.TotalGmv.Value
-				} else {
-					gmvMap[c] = v.TotalGmv.Value
-				}
-				totalValue += v.TotalGmv.Value
-			}
-		}
-		for k, v := range gmvMap {
-			var rate float64 = 0
-			if totalValue > 0 {
-				rate = v / totalValue
-			}
-			rateData = append(rateData, dy.NameValueFloat64Chart{
-				Name:  k,
-				Value: rate,
-			})
-		}
+		temTotal, temRes := esLiveDataBusiness.LiveCompositeByCategoryOne(startTime, endTime, rateType, living, v.Name)
+		total += temTotal
+		mapData[v.Name] = temRes
 	}
-	sort.Slice(rateData, func(i, j int) bool {
-		return rateData[i].Value > rateData[j].Value
-	})
-	receiver.SuccReturn(rateData)
+	//if rateType == 1 {
+	//	list := make([]es2.DyLiveCategoryRateByWatchCnt, 0)
+	//	utils.MapToStruct(data, &list)
+	//	var totalValue int64 = 0
+	//	watchCntMap := map[string]int64{}
+	//	for _, v := range list {
+	//		categories := strings.Split(v.Key.DcmLevelFirst, ",")
+	//		for _, c := range categories {
+	//			c = strings.Trim(c, " ")
+	//			if c == "" || c == "其他" {
+	//				continue
+	//			}
+	//			if _, exist := watchCntMap[c]; exist {
+	//				watchCntMap[c] += v.TotalWatchCnt.Value
+	//			} else {
+	//				watchCntMap[c] = v.TotalWatchCnt.Value
+	//			}
+	//			totalValue += v.TotalWatchCnt.Value
+	//		}
+	//	}
+	//	for k, v := range watchCntMap {
+	//		var rate float64 = 0
+	//		if totalValue > 0 {
+	//			rate = float64(v) / float64(totalValue)
+	//		}
+	//		rateData = append(rateData, dy.NameValueFloat64Chart{
+	//			Name:  k,
+	//			Value: rate,
+	//		})
+	//	}
+	//} else {
+	//	list := make([]es2.DyLiveCategoryRateByGmv, 0)
+	//	utils.MapToStruct(data, &list)
+	//	var totalValue float64 = 0
+	//	gmvMap := map[string]float64{}
+	//	for _, v := range list {
+	//		categories := strings.Split(v.Key.DcmLevelFirst, ",")
+	//		for _, c := range categories {
+	//			c = strings.Trim(c, " ")
+	//			if c == "" || c == "其他" {
+	//				continue
+	//			}
+	//			if _, exist := gmvMap[c]; exist {
+	//				gmvMap[c] += v.TotalGmv.Value
+	//			} else {
+	//				gmvMap[c] = v.TotalGmv.Value
+	//			}
+	//			totalValue += v.TotalGmv.Value
+	//		}
+	//	}
+	//	for k, v := range gmvMap {
+	//		var rate float64 = 0
+	//		if totalValue > 0 {
+	//			rate = v / totalValue
+	//		}
+	//		rateData = append(rateData, dy.NameValueFloat64Chart{
+	//			Name:  k,
+	//			Value: rate,
+	//		})
+	//	}
+	//}
+	//sort.Slice(rateData, func(i, j int) bool {
+	//	return rateData[i].Value > rateData[j].Value
+	//})
+	receiver.SuccReturn(mapData)
 	return
 }
 
