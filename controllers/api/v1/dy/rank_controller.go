@@ -499,18 +499,16 @@ func (receiver *RankController) DyAuthorTakeGoodsRank() {
 	var originList []entity.DyAuthorDaySalesRank
 	key := sortStr + "_" + startDate.Format("20060102") + "_" + tags
 	rowKeys := make([][]byte, 0)
-	//0925无数据特殊处理
-	//if firstRow.AuthorId == "" && startDate.Format("20060102") == "20210925" {
-	//	key = sortStr + "_" + startDate.AddDate(0, 0, -1).Format("20060102") + "_" + tags
-	//	rowKey = utils.Md5_encode(key) + "_" + strconv.Itoa(1)
-	//}
+	firstRow, _ := hbase.GetSaleAuthorRow(utils.Md5_encode(key) + "_" + strconv.Itoa(1))
+	if firstRow.AuthorId == "" && startDate.Format("20060102") == "20210925" {
+		key = sortStr + "_" + startDate.AddDate(0, 0, -1).Format("20060102") + "_" + tags
+	}
 	if orderBy == "desc" {
 		for i := start + 1; i <= end; i++ {
 			rowKeys = append(rowKeys, []byte(utils.Md5_encode(key)+"_"+strconv.Itoa(i)))
 		}
 		originList, _ = hbase.GetSaleAuthorRank(rowKeys)
 	} else {
-		firstRow, _ := hbase.GetSaleAuthorRow(utils.Md5_encode(key) + "_" + strconv.Itoa(1))
 		maxRow, _ := strconv.Atoi(firstRow.RnMax)
 		if maxRow > 0 {
 			for i := maxRow - start; i >= maxRow-end+1; i-- {
