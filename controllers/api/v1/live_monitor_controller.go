@@ -40,7 +40,7 @@ func (receiver *LiveMonitorController) MonitorPrice() {
 //添加监控
 func (receiver *LiveMonitorController) AddLiveMonitor() {
 	inputData := receiver.InputFormat()
-	authorId := inputData.GetString("author_id", "")
+	authorId := business.IdDecrypt(inputData.GetString("author_id", ""))
 	startTimestamp := inputData.GetInt64("start", 0)
 	endTimestamp := inputData.GetInt64("end", 0)
 	notice := inputData.GetBool("notice", false)
@@ -55,6 +55,11 @@ func (receiver *LiveMonitorController) AddLiveMonitor() {
 	startTime := time.Unix(startTimestamp, 0)
 	endTime := time.Unix(endTimestamp, 0)
 	if authorId == "" {
+		receiver.FailReturn(global.NewError(4000))
+		return
+	}
+	_, comErr := hbase.GetAuthor(authorId)
+	if comErr != nil {
 		receiver.FailReturn(global.NewError(4000))
 		return
 	}
