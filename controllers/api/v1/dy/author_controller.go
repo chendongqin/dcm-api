@@ -224,6 +224,7 @@ func (receiver *AuthorController) AuthorBaseData() {
 		"fans_club": fansClub.TotalFansCount,
 		"rank":      nil,
 		"tags":      authorBase.Tags,
+		"tow_tags":  authorBase.TagsLevelTwo,
 		"basic":     basic,
 		"shop": dy2.DyAuthorStoreSimple{
 			ShopId:   business.IdEncrypt(authorStore.Id),
