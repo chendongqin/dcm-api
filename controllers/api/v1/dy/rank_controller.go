@@ -427,11 +427,7 @@ func (receiver *RankController) ProductShareTopDayRank() {
 		}
 		pageSize = receiver.MaxTotal
 	}
-	list, total, comErr := es.NewEsProductBusiness().ProductShareTopDayRank(dateTime.Format("20060102"), fCate, sCate, tCate, sortStr, orderBy, page, pageSize)
-	if comErr != nil {
-		receiver.FailReturn(comErr)
-		return
-	}
+	list, total, _ := es.NewEsProductBusiness().ProductShareTopDayRank(dateTime.Format("20060102"), fCate, sCate, tCate, sortStr, orderBy, page, pageSize)
 	for k, v := range list {
 		list[k].ProductId = business.IdEncrypt(v.ProductId)
 		list[k].Images = dyimg.Fix(v.Images)
