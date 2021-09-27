@@ -298,7 +298,7 @@ func (receiver *CommonController) RedAuthorRoom() {
 					v.Weight = weight
 				}
 				if r, exist := roomInfos[v.RoomId]; exist {
-					v.Gmv = r.TotalGmv
+					v.Gmv = r.PredictGmv
 					v.TotalUser = r.TotalUser
 				}
 				v.AuthorId = business.IdEncrypt(v.AuthorId)
