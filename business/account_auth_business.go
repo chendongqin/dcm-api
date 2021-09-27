@@ -105,13 +105,12 @@ func (receiver *AccountAuthBusiness) CheckSign(timestamp, random, sign string) g
 	if sign != utils.Md5_encode(tmpStr) {
 		return global.NewError(4041)
 	}
-	//todo 去除验签
-	//nowTime := time.Now().Unix() - 120
-	//nowTime2 := time.Now().Unix() + 120
-	//timestampInt64 := utils.ToInt64(timestamp)
-	//if timestampInt64 < nowTime || timestampInt64 > nowTime2 {
-	//	return global.NewError(4041)
-	//}
+	nowTime := time.Now().Unix() - 120
+	nowTime2 := time.Now().Unix() + 120
+	timestampInt64 := utils.ToInt64(timestamp)
+	if timestampInt64 < nowTime || timestampInt64 > nowTime2 {
+		return global.NewError(4041)
+	}
 	return nil
 }
 
