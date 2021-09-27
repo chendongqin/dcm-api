@@ -1245,11 +1245,11 @@ func (a *AuthorBusiness) RedAuthorRoomByDate(authorIds []string, date string) (l
 	liveList := es.NewEsLiveBusiness().GetRoomsByAuthorIds(authorIds, date, 0)
 	for _, v := range liveList {
 		list = append(list, dy.RedAuthorRoom{
-			AuthorId:   IdEncrypt(v.AuthorId),
+			AuthorId:   v.AuthorId,
 			Avatar:     dyimg.Fix(v.Avatar),
 			Nickname:   v.Nickname,
 			LiveTitle:  v.Title,
-			RoomId:     IdEncrypt(v.RoomId),
+			RoomId:     v.RoomId,
 			RoomStatus: v.RoomStatus,
 			Gmv:        v.PredictGmv,
 			Sales:      math.Floor(v.PredictSales),
