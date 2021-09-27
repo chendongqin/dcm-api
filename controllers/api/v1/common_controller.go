@@ -293,6 +293,8 @@ func (receiver *CommonController) RedAuthorRoom() {
 				if r, exist := roomInfos[v.RoomId]; exist {
 					v.Gmv = r.TotalGmv
 				}
+				v.AuthorId = business.IdEncrypt(v.AuthorId)
+				v.RoomId = business.IdEncrypt(v.RoomId)
 				tmpList = append(tmpList, v)
 				total++
 			}
