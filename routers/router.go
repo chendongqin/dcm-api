@@ -35,6 +35,7 @@ func init() {
 		),
 		beego.NSNamespace("/check",
 			beego.NSRouter("/dy/app/:type", &v1.CommonController{}, "get:CheckAppVersion"),
+			beego.NSRouter("/time", &v1.CommonController{}, "get:CheckTime"),
 		),
 	)
 	// 注册路由组
