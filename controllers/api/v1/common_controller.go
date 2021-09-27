@@ -435,3 +435,10 @@ func (receiver *CommonController) CheckAppVersion() {
 		Url:     row.Url,
 	})
 }
+
+//获取时间戳
+func (receiver *CommonController) CheckTime() {
+	receiver.SuccReturn(map[string]interface{}{
+		"time": time.Now().Unix(),
+	})
+}
