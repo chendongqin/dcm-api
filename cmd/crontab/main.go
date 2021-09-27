@@ -59,6 +59,8 @@ func runCMD(ctx *cli.Context) {
 		command.UpdateLiveMonitorStatus()
 	case "amount_expire_wechat_notice":
 		command.AmountExpireWechatNotice()
+	case "check_rank":
+		command.CheckRank()
 	default:
 		panic("undefined ac")
 	}
