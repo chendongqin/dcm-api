@@ -499,9 +499,9 @@ func (receiver *RankController) DyAuthorTakeGoodsRank() {
 	key := sortStr + "_" + startDate.Format("20060102") + "_" + tags
 	rowKeys := make([][]byte, 0)
 	firstRow, _ := hbase.GetSaleAuthorRow(utils.Md5_encode(key) + "_" + strconv.Itoa(1))
-	if firstRow.AuthorId == "" && startDate.Format("20060102") == "20210925" {
-		key = sortStr + "_" + startDate.AddDate(0, 0, -1).Format("20060102") + "_" + tags
-	}
+	//if firstRow.AuthorId == "" && startDate.Format("20060102") == "20210925" {
+	//	key = sortStr + "_" + startDate.AddDate(0, 0, -1).Format("20060102") + "_" + tags
+	//}
 	if orderBy == "desc" {
 		for i := start + 1; i <= end; i++ {
 			rowKeys = append(rowKeys, []byte(utils.Md5_encode(key)+"_"+strconv.Itoa(i)))
