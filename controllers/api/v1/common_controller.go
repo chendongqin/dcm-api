@@ -42,10 +42,10 @@ func (receiver *CommonController) Sms() {
 	if utils.InArrayString(grantType, []string{"change_mobile"}) {
 		mobile = receiver.UserInfo.Username
 	}
-	//if !utils.VerifyMobileFormat(mobile) {
-	//	receiver.FailReturn(global.NewError(4205))
-	//	return
-	//}
+	if !utils.VerifyMobileFormat(mobile) {
+		receiver.FailReturn(global.NewError(4205))
+		return
+	}
 	if receiver.AppId == 10000 && global.IsDev() {
 		if sig == "" || sessionId == "" || token == "" {
 			receiver.FailReturn(global.NewError(4000))
