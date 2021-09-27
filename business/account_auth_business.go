@@ -21,6 +21,8 @@ func NewAccountAuthBusiness() *AccountAuthBusiness {
 
 //无参数路由不需登陆白名单
 var LoginWitheUri = []string{
+	//会员
+	"/v1/pay/price/dy",
 	"/v1/dy/author/live/tags",
 	"/v1/dy/author/cate",
 	"/v1/dy/product/cate",
