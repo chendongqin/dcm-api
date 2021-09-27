@@ -61,6 +61,8 @@ func runCMD(ctx *cli.Context) {
 		command.AmountExpireWechatNotice()
 	case "check_rank":
 		command.CheckRank()
+	case "check_rank_hour":
+		command.CheckRankHour()
 	default:
 		panic("undefined ac")
 	}
