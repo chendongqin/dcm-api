@@ -30,6 +30,7 @@ var LoginWitheUri = []string{
 	"/v1/dy/live/search",
 	"/v1/dy/author/red",
 	"/v1/pay/price/dy",
+	"/v1/check/time",
 	//视频基础详情
 	"/v1/dy/aweme/info",
 	"/v1/dy/aweme/chart",
@@ -56,6 +57,7 @@ var SignWitheUri = []string{
 	"/v1/pay/notify/wechat",
 	"/v1/pay/notify/alipay",
 	"/v1/callback/wechat",
+	"/v1/check/time",
 }
 
 var AuthDyWitheUriMap = []string{}
