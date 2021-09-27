@@ -100,6 +100,9 @@ func (receiver *RankController) DyLiveHourRank() {
 			data.Ranks[k].Category = ""
 		}
 	}
+	if data.Ranks == nil {
+		data.Ranks = []entity.DyLiveHourRank{}
+	}
 	ret = map[string]interface{}{
 		"update_time": data.CrawlTime,
 		"has_login":   receiver.HasLogin,

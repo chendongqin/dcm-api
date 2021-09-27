@@ -277,6 +277,11 @@ func (receiver *CommonController) RedAuthorRoom() {
 			if len(roomList) == 0 {
 				continue
 			}
+			roomIds := []string{}
+			for _, v := range roomList {
+				roomIds = append(roomIds, v.RoomId)
+			}
+			roomInfos, _ := hbase.GetLiveInfoByIds(roomIds)
 			for _, v := range roomList {
 				if a, ok := authorDataMap[v.AuthorId]; ok {
 					v.RoomCount = a.LiveCount
@@ -284,6 +289,9 @@ func (receiver *CommonController) RedAuthorRoom() {
 				}
 				if weight, ok := authorSortMap[v.AuthorId]; ok {
 					v.Weight = weight
+				}
+				if r, exist := roomInfos[v.RoomId]; exist {
+					v.Gmv = r.TotalGmv
 				}
 				tmpList = append(tmpList, v)
 				total++
