@@ -73,8 +73,8 @@ func getRoute(key string) (pathInfo PathDesc) {
 		"live_hour": {fmt.Sprintf("/v1/dy/rank/live/hour/%s/%s:00", toDate, currentHourString), "直播小时榜"},
 		"live_top":  {fmt.Sprintf("/v1/dy/rank/live/top/%s/%s:00", toDate, currentHourString), "直播热榜"},
 		/*********商品*********/
-		"product_sale":           {fmt.Sprintf("/v1/dy/rank/product/sale/%s?data_type=1&first_cate=&order_by=desc&sort=order_count&page=1&page_size=50", toDate), "抖音销量榜"},
-		"product_share":          {fmt.Sprintf("/v1/dy/rank/product/share/%s?first_cate=&data_type=1&order_by=desc&sort=share_count&page=1&page_size=50", toDate), "抖音热推榜"},
+		"product_sale":           {fmt.Sprintf("/v1/dy/rank/product/sale/%s?data_type=1&first_cate=&order_by=desc&sort=order_count&page=1&page_size=50", yesDate), "抖音销量榜"},
+		"product_share":          {fmt.Sprintf("/v1/dy/rank/product/share/%s?first_cate=&data_type=1&order_by=desc&sort=share_count&page=1&page_size=50", yesDate), "抖音热推榜"},
 		"product_live_sale":      {fmt.Sprintf("/v1/dy/rank/product/live/sale/%s?data_type=1&first_cate=&order_by=desc&sort=sales&page=1&page_size=50", yesDate), "直播商品榜"},
 		"product_live_sale_week": {fmt.Sprintf("/v1/dy/rank/product/live/sale/%s?data_type=2&first_cate=&order_by=desc&sort=sales&page=1&page_size=50", toDate), "直播商品榜-周榜"},
 		"product":                {fmt.Sprintf("/v1/dy/rank/product/%s?first_cate=&order_by=desc&sort=sales&data_type=1&page=1&page_size=50", yesDate), "视频商品榜"},
@@ -95,7 +95,7 @@ func getRow(hour string) (taskList []string) {
 	hourGroup := map[string][]string{
 		"every": {"live_hour", "live_top"},
 		"10":    {"product_sale", "live_top", "product_live_sale", "product_live_sale_week", "author_follower_inc", "author_goods"},
-		"13":    {"live_share"},
+		"12":    {"live_share"},
 		"15":    {"product", "product_week", "author_aweme_live"},
 		"16":    {"video_share", "author_aweme_rank"},
 	}
