@@ -45,13 +45,8 @@ func (receiver *EsAuthorBusiness) BaseSearch(
 	esQuery, esMultiQuery := elasticsearch.NewElasticQueryGroup()
 	esQuery.SetTerm("exist", 1)
 	if sortStr == "follower_count" && minFollower == 0 && maxFollower == 0 &&
-		keyword == "" && authorId == "" && category == "" && secondCategory == "" &&
-		sellTags == "" && province == "" && city == "" && fanProvince == "" &&
-		fanCity == "" && fanAge == "" && minWatch == 0 && maxWatch == 0 &&
-		minDigg == 0 && maxDigg == 0 && minGmv == 0 && maxGmv == 0 && gender == 0 &&
-		minAge == 0 && maxAge == 0 && verification == 0 && level == 0 && isDelivery == 0 &&
-		isBrand == 0 && superSeller == 0 && fanGender == 0 {
-		minFollower = 100000
+		keyword == "" && authorId == "" {
+		minFollower = 10000
 	}
 	if keyword != "" {
 		if utils.HasChinese(keyword) {
