@@ -26,6 +26,7 @@ func (receiver *PayController) Prepare() {
 }
 
 func (receiver *PayController) DySurplusValue() {
+	payBusiness := business.NewPayBusiness()
 	var vip dcm.DcUserVip
 	if _, err := dcm.GetDbSession().Where("user_id=? AND platform=1", receiver.UserId).Get(&vip); err != nil {
 		return
@@ -37,7 +38,7 @@ func (receiver *PayController) DySurplusValue() {
 			"now_value":       0,
 			"value":           0,
 			"prime_value":     0,
-			"price_config":    0,
+			"price_config":    payBusiness.GetVipPrice(),
 		})
 		return
 	}
@@ -45,7 +46,6 @@ func (receiver *PayController) DySurplusValue() {
 	total := business.NewVipBusiness().GetVipLevel(receiver.UserId, 1).SubNum
 	var nowValue float64
 	var nowSurplusDay float64
-	payBusiness := business.NewPayBusiness()
 	//扩张团队单人价格
 	value, primeValue := payBusiness.GetDySurplusValue(int(math.Ceil(surplusDay)))
 	if total > 0 {
