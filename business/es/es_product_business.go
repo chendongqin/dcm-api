@@ -98,7 +98,7 @@ func (i *EsProductBusiness) BaseSearch(productId, keyword, category, secondCateg
 		esQuery.SetRange("coupon_price", rangeMap)
 	}
 	sortOrder := elasticsearch.NewElasticOrder().Add(sortStr, orderBy).Order
-	if sortStr == "order_account" {
+	if utils.InArrayString(sortStr, []string{"order_account", "pv"}) {
 		sortOrder = elasticsearch.NewElasticOrder().Add("is_yesterday", "desc").Add(sortStr, orderBy).Order
 	}
 	results := esMultiQuery.
