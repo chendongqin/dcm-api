@@ -793,6 +793,9 @@ func (receiver *RankController) VideoProductRank() {
 	switch dataType {
 	case 1: //日榜
 		day := dateTime.Format("20060102")
+		if day == "20210927" {
+			day = dateTime.AddDate(0, 0, -1).Format("20060102")
+		}
 		key := day + "_" + fCate + "_" + sortStr
 		rowKey = utils.Md5_encode(key)
 		break
