@@ -187,9 +187,8 @@ func (receiver *CommonController) GetConfigList() {
 			iosPayOpen = 0
 		}
 		ret["ios_pay"] = map[string]interface{}{
-			"ios_pay": map[string]interface{}{
-				"open": iosPayOpen,
-			},
+			"ios_pay": iosPayOpen,
+			"open":    1,
 		}
 		receiver.SuccReturn(ret)
 		return
@@ -218,9 +217,8 @@ func (receiver *CommonController) GetConfigList() {
 		iosPayOpen = 0
 	}
 	ret["ios_pay"] = map[string]interface{}{
-		"ios_pay": map[string]interface{}{
-			"open": iosPayOpen,
-		},
+		"ios_pay": iosPayOpen,
+		"open":    1,
 	}
 	receiver.SuccReturn(ret)
 	return
