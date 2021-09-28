@@ -51,7 +51,7 @@ func (receiver *EsAuthorBusiness) BaseSearch(
 		minDigg == 0 && maxDigg == 0 && minGmv == 0 && maxGmv == 0 && gender == 0 &&
 		minAge == 0 && maxAge == 0 && verification == 0 && level == 0 && isDelivery == 0 &&
 		isBrand == 0 && superSeller == 0 && fanGender == 0 {
-		minFollower = 2600000
+		minFollower = 100000
 	}
 	if keyword != "" {
 		if utils.HasChinese(keyword) {
