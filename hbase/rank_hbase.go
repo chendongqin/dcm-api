@@ -94,12 +94,16 @@ func GetDyLiveTopRank(hour string) (data entity.DyLiveTopRanks, comErr global.Co
 		comErr = global.NewMsgError(err.Error())
 		return
 	}
+	data.Ranks = []entity.DyLiveRank{}
 	if result.Row == nil {
 		comErr = global.NewError(4040)
 		return
 	}
 	detailMap := hbaseService.HbaseFormat(result, entity.DyLiveTopMap)
 	utils.MapToStruct(detailMap, &data)
+	if data.Ranks == nil {
+		data.Ranks = []entity.DyLiveRank{}
+	}
 	return
 }
 

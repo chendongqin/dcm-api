@@ -277,6 +277,18 @@ func (receiver *CommonController) RedAuthorRoom() {
 			if len(roomList) == 0 {
 				continue
 			}
+			roomInfos := map[string]entity.DyLiveInfo{}
+			hasLiving := false
+			roomIds := []string{}
+			for _, v := range roomList {
+				roomIds = append(roomIds, v.RoomId)
+				if v.RoomStatus == 2 {
+					hasLiving = true
+				}
+			}
+			if hasLiving {
+				roomInfos, _ = hbase.GetLiveInfoByIds(roomIds)
+			}
 			for _, v := range roomList {
 				if a, ok := authorDataMap[v.AuthorId]; ok {
 					v.RoomCount = a.LiveCount
@@ -285,6 +297,12 @@ func (receiver *CommonController) RedAuthorRoom() {
 				if weight, ok := authorSortMap[v.AuthorId]; ok {
 					v.Weight = weight
 				}
+				if r, exist := roomInfos[v.RoomId]; exist {
+					v.Gmv = r.PredictGmv
+					v.TotalUser = r.TotalUser
+				}
+				v.AuthorId = business.IdEncrypt(v.AuthorId)
+				v.RoomId = business.IdEncrypt(v.RoomId)
 				tmpList = append(tmpList, v)
 				total++
 			}

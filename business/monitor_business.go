@@ -18,7 +18,7 @@ func NewMonitorBusiness() *MonitorBusiness {
 const MonitorPrefix = "洞察猫"
 
 //艾特电话名单
-const AtMobilesGroupGeneral = "18605971553,13665927819,18659328891,13959201421,13386936061"
+const AtMobilesGroupGeneral = "18605971553,13665927819,18659328891,13959201421,13386936061,18269866431,15859817377,18565761628,18259122463"
 
 func (receiver *MonitorBusiness) SendTemplateMessage(level string, event string, content ...string) {
 	color := "#FF0000"

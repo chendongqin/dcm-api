@@ -395,6 +395,7 @@ func (i *EsProductBusiness) ProductShareTopDayRank(day, fCate, sCate, tCate, sor
 	page, pageSize int) (list []es.DyProductShareTopRank, total int, commonError global.CommonError) {
 	esQuery, esMultiQuery := elasticsearch.NewElasticQueryGroup()
 	esTable, connection := GetESTableByDate(es.DyProductShareTopTable, day)
+	list = []es.DyProductShareTopRank{}
 	if sortStr == "" {
 		sortStr = "share_count"
 	}

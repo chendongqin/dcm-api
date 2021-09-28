@@ -448,6 +448,9 @@ func SimpleCurl(url string, method string, postData string, contentType string) 
 	} else {
 		resp, err = http.Get(url)
 	}
+	if err != nil {
+		logs.Error(err)
+	}
 	defer resp.Body.Close()
 	body, err := ioutil.ReadAll(resp.Body)
 	if err != nil {
@@ -1674,7 +1677,7 @@ func GetTimeStamp(t time.Time, layout string) string {
 
 //验证手机号
 func VerifyMobileFormat(mobileNum string) bool {
-	regular := "^((13[0-9])|(14[5,7])|(15[0-3,5-9])|(17[0,3,5-8])|(18[0-9])|166|198|199|(147))\\d{8}$"
+	regular := "^((13[0-9])|(19[0-9])|(14[4,5,7])|(15[0-3,5-9])|(17[0,3,5-8])|(18[0-9])|166|(147))\\d{8}$"
 	reg := regexp.MustCompile(regular)
 	return reg.MatchString(mobileNum)
 }
