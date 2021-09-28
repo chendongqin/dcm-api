@@ -40,13 +40,11 @@ func loopCheck(hour string) {
 	length := len(taskList)
 	if length > 0 {
 		for _, v := range taskList {
-			pathInfo := getRoute(v, hour)
-
+			pathInfo := getRoute(v)
+			monitorEvents = append(monitorEvents, pathInfo.Desc)
 			checkLiveHotRank(pathInfo)
-			monitorBusiness.SendErr(pathInfo.Desc, strings.Join(monitorEvents, ","))
-			fmt.Println(pathInfo)
-			fmt.Println(pathInfo.Desc)
 		}
+		monitorBusiness.SendErr("直播监控", strings.Join(monitorEvents, ","))
 	}
 }
 
@@ -61,20 +59,23 @@ func checkTime(currentTime time.Time, hour, minute int) bool {
 **name:榜单名称
 **hour：小时
  */
-func getRoute(key, hour string) (pathInfo PathDesc) {
-	toDate := time.Now().Format("20060102")
-	yesDate := time.Now().AddDate(0, 0, -1).Format("20060102")
-	BeforeYesDate := time.Now().AddDate(0, 0, -1).Format("20060102")
-	weekDate := time.Now().AddDate(0, 0, -7).Format("20060102")
+func getRoute(key string) (pathInfo PathDesc) {
+	toDate := time.Now().Format("2006-01-02")
+	yesDate := time.Now().AddDate(0, 0, -1).Format("2006-01-02")
+	BeforeYesDate := time.Now().AddDate(0, 0, -1).Format("2006-01-02")
+	weekDate := time.Now().AddDate(0, 0, -7).Format("2006-01-02")
+
+	hour := time.Now().Hour()
+	currentHourString := strconv.Itoa(hour)
 
 	var routeMap = map[string]PathDesc{
 		/*********直播*********/
-		"live_hour": {fmt.Sprintf("/v1/dy/rank/live/hour/%s/%s", toDate, hour), "直播小时榜"},
-		"live_top":  {fmt.Sprintf("/v1/dy/rank/live/hour/%s/%s", toDate, hour), "直播热榜"},
+		"live_hour": {fmt.Sprintf("/v1/dy/rank/live/hour/%s/%s:00", toDate, currentHourString), "直播小时榜"},
+		"live_top":  {fmt.Sprintf("/v1/dy/rank/live/top/%s/%s:00", toDate, currentHourString), "直播热榜"},
 		/*********商品*********/
 		"product_sale":           {fmt.Sprintf("/v1/dy/rank/product/sale/%s?data_type=1&first_cate=&order_by=desc&sort=order_count&page=1&page_size=50", toDate), "抖音销量榜"},
 		"product_share":          {fmt.Sprintf("/v1/dy/rank/product/share/%s?first_cate=&data_type=1&order_by=desc&sort=share_count&page=1&page_size=50", toDate), "抖音热推榜"},
-		"product_live_sale":      {fmt.Sprintf("/v1/dy/rank/product/live/sale/%s?data_type=1&first_cate=&order_by=desc&sort=sales&page=1&page_size=50", toDate), "直播商品榜"},
+		"product_live_sale":      {fmt.Sprintf("/v1/dy/rank/product/live/sale/%s?data_type=1&first_cate=&order_by=desc&sort=sales&page=1&page_size=50", yesDate), "直播商品榜"},
 		"product_live_sale_week": {fmt.Sprintf("/v1/dy/rank/product/live/sale/%s?data_type=2&first_cate=&order_by=desc&sort=sales&page=1&page_size=50", toDate), "直播商品榜-周榜"},
 		"product":                {fmt.Sprintf("/v1/dy/rank/product/%s?first_cate=&order_by=desc&sort=sales&data_type=1&page=1&page_size=50", yesDate), "视频商品榜"},
 		"product_week":           {fmt.Sprintf("/v1/dy/rank/product/%s?first_cate=&order_by=desc&sort=sales&data_type=2&page=1&page_size=50", toDate), "视频商品榜-周榜"},
@@ -104,6 +105,7 @@ func getRow(hour string) (taskList []string) {
 
 //demo
 func checkLiveHotRank(pathInfo PathDesc) {
+	fmt.Println(pathInfo)
 	interBusiness := business.NewInterBusiness()
 	testApi := interBusiness.BuildURL(pathInfo.Path)
 	res, comErr := interBusiness.HttpGet(testApi)
@@ -119,7 +121,7 @@ func checkLiveHotRank(pathInfo PathDesc) {
 		}
 	}
 	if !checkRes {
-		business.NewMonitorBusiness().SendTemplateMessage("S", pathInfo.Desc, fmt.Sprintf("%s挂了", pathInfo.Desc))
+		business.NewMonitorBusiness().SendTemplateMessage("S", pathInfo.Desc, fmt.Sprintf("%s挂了，请求地址：%s", pathInfo.Desc, pathInfo.Path))
 	}
 	return
 }
