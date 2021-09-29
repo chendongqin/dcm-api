@@ -114,21 +114,22 @@ func (l *LiveBusiness) DealOnlineTrends(liveInfo entity.DyLiveInfo) (entity.DyLi
 	lenNum := len(onlineTrends)
 	//平均在线人数
 	var sumUserCount int64 = 0
-	var lastTime int64 = 0
 	for k, v := range onlineTrends {
-		if v.UserCount < 0 || v.UserCount > liveInfo.MaxUserCount {
+		if v.WatchCnt < 0 || v.UserCount > liveInfo.MaxUserCount {
 			continue
 		}
 		sumUserCount += v.UserCount
-		if v.CrawlTime-lastTime < 120 {
+		if v.CrawlTime-beforeTrend.CrawlTime < 120 {
 			continue
 		}
-		lastTime = v.CrawlTime
 		var inc int64 = 0
 		if k != 0 {
 			inc = v.WatchCnt - beforeTrend.WatchCnt
 		} else {
 			maxLiveOnlineTrends = v
+		}
+		if inc > v.WatchCnt {
+			continue
 		}
 		if v.UserCount > maxLiveOnlineTrends.UserCount {
 			maxLiveOnlineTrends = v
