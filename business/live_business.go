@@ -25,6 +25,10 @@ func (l *LiveBusiness) RoomCurAndPmtProductById(roomId, productId string) (curPr
 	curProductCount = dy.LiveCurProductCount{
 		CurList: []dy.LiveCurProduct{},
 	}
+	curKey := -1
+	sort.Slice(roomCurProduct.Promotion, func(i, j int) bool {
+		return roomCurProduct.Promotion[i].StartTime < roomCurProduct.Promotion[j].StartTime
+	})
 	for k, v := range roomCurProduct.Promotion {
 		if v.EndTime == 0 {
 			continue
@@ -56,7 +60,19 @@ func (l *LiveBusiness) RoomCurAndPmtProductById(roomId, productId string) (curPr
 				curProductCount.MinPrice = v.PriceMin
 			}
 		}
+		if curProductCount.CurNum > 0 {
+			currentCur := curProductCount.CurList[curKey]
+			if v.StartTime-currentCur.EndTime < 120 {
+				currentCur.EndTime = v.EndTime
+				currentCur.EndSales = v.EndSales
+				currentCur.AvgUserCount = (avgUserCount + currentCur.AvgUserCount) / 2
+				currentCur.IncSales = v.EndSales - currentCur.IncSales
+				curProductCount.CurList[curKey] = currentCur
+				continue
+			}
+		}
 		curProductCount.CurNum += 1
+		curKey += 1
 		curProductCount.CurList = append(curProductCount.CurList, cur)
 	}
 	sort.Slice(curProductCount.CurList, func(i, j int) bool {
