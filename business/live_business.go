@@ -116,6 +116,9 @@ func (l *LiveBusiness) DealOnlineTrends(liveInfo entity.DyLiveInfo) (entity.DyLi
 	var sumUserCount int64 = 0
 	var lastTime int64 = 0
 	for k, v := range onlineTrends {
+		if v.UserCount < 0 {
+			continue
+		}
 		sumUserCount += v.UserCount
 		if v.CrawlTime-lastTime < 120 {
 			continue
