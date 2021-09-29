@@ -66,7 +66,7 @@ func (l *LiveBusiness) RoomCurAndPmtProductById(roomId, productId string) (curPr
 				currentCur.EndTime = v.EndTime
 				currentCur.EndSales = v.EndSales
 				currentCur.AvgUserCount = (avgUserCount + currentCur.AvgUserCount) / 2
-				currentCur.IncSales = v.EndSales - currentCur.IncSales
+				currentCur.IncSales = v.EndSales - currentCur.StartSales
 				curProductCount.CurList[curKey] = currentCur
 				continue
 			}
