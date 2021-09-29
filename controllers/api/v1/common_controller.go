@@ -302,7 +302,7 @@ func (receiver *CommonController) RedAuthorRoom() {
 			date := dateTime.Format("2006-01-02")
 			tmpList := make([]dy2.RedAuthorRoom, 0)
 			roomList := authorBusiness.RedAuthorRoomByDate(authorIds, dateTime.Format("20060102"))
-			if date == today && time.Now().Hour() < 8 && len(roomList) == 0 {
+			if date == today && len(roomList) == 0 {
 				dateTime = start.AddDate(0, 0, -1)
 				date = dateTime.Format("2006-01-02")
 				roomList = authorBusiness.RedAuthorRoomByDate(authorIds, dateTime.Format("20060102"))
@@ -391,7 +391,7 @@ func (receiver *CommonController) RedAuthorLivingRoom() {
 		}
 		dateStr := time.Now().Format("20060102")
 		liveList := es.NewEsLiveBusiness().GetRoomsByAuthorIds(authorIds, dateStr, 3)
-		if time.Now().Hour() < 8 && len(liveList) == 0 {
+		if len(liveList) == 0 {
 			dateStr = time.Now().AddDate(0, 0, -1).Format("20060102")
 			liveList = es.NewEsLiveBusiness().GetRoomsByAuthorIds(authorIds, dateStr, 3)
 		}
