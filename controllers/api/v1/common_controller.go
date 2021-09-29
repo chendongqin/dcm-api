@@ -333,6 +333,7 @@ func (receiver *CommonController) RedAuthorRoom() {
 				if r, exist := roomInfos[v.RoomId]; exist {
 					v.Gmv = r.PredictGmv
 					v.TotalUser = r.TotalUser
+					v.RoomStatus = r.RoomStatus
 				}
 				v.AuthorId = business.IdEncrypt(v.AuthorId)
 				v.RoomId = business.IdEncrypt(v.RoomId)
