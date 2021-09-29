@@ -56,6 +56,9 @@ func buildURL(prefix, source string) string {
 		return source
 	}
 	source = strings.Replace(source, "https://", "", 1)
+	if source == "" {
+		return ""
+	}
 	return cdnUrl + "/" + source
 	//md5Str := Md5_encode(source)
 	//source = url.QueryEscape(source)
