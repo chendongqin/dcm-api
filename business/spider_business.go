@@ -113,7 +113,7 @@ func (s *SpiderBusiness) AddLive(authorId string, followerCount int64, top int, 
 
 //抖音号搜索
 //搜索抖音号 即时接口 先根据抖音号在es中查找，查找不到在调用该方法，调用爬虫实时接口
-func (s *SpiderBusiness) GetAuthorByKeyword(keyword string) *dy2.DyAuthorIncome {
+func (s *SpiderBusiness) GetAuthorByKeyword(keyword string) (*dy2.DyAuthorIncome, error) {
 	retData := ""
 	keyword = url.QueryEscape(keyword)
 	pushUrl := BaseSpiderUrl + "searchAuthor?" + "keyword=" + keyword
@@ -134,10 +134,10 @@ func (s *SpiderBusiness) GetAuthorByKeyword(keyword string) *dy2.DyAuthorIncome 
 				UniqueId:     uniqueId,
 				IsCollection: 0,
 			}
-			return authorIncome
+			return authorIncome, nil
 		}
 	}
-	return nil
+	return nil, errors.New("系统出了小差，请稍后重试")
 }
 
 // 获取正在直播的达人商品列表

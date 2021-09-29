@@ -181,6 +181,15 @@ func (receiver *CommonController) GetConfigList() {
 	if cacheData != "" {
 		cacheData = utils.DeserializeData(cacheData)
 		_ = jsoniter.Unmarshal([]byte(cacheData), &ret)
+		//校验是否下发支付
+		iosPayOpen := 1
+		if receiver.checkIosPay() {
+			iosPayOpen = 0
+		}
+		ret["ios_pay"] = map[string]interface{}{
+			"ios_pay": iosPayOpen,
+			"open":    1,
+		}
 		receiver.SuccReturn(ret)
 		return
 	}
@@ -202,8 +211,26 @@ func (receiver *CommonController) GetConfigList() {
 		}
 	}
 	_ = global.Cache.Set(cacheKey, utils.SerializeData(ret), 300)
+	//校验是否下发支付
+	iosPayOpen := 1
+	if receiver.checkIosPay() {
+		iosPayOpen = 0
+	}
+	ret["ios_pay"] = map[string]interface{}{
+		"ios_pay": iosPayOpen,
+		"open":    1,
+	}
 	receiver.SuccReturn(ret)
 	return
+}
+
+func (receiver *CommonController) checkIosPay() bool {
+	checkIosVersion := business.GetConfig("check_ios_pay")
+	iosVersion := receiver.Ctx.Input.Header("APPVERSION")
+	if iosVersion == checkIosVersion {
+		return true
+	}
+	return false
 }
 
 func (receiver *CommonController) RedAuthorRoom() {

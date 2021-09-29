@@ -44,8 +44,9 @@ func (receiver *EsAuthorBusiness) BaseSearch(
 	esTable, connection := GetESTable(es.DyAuthorTable)
 	esQuery, esMultiQuery := elasticsearch.NewElasticQueryGroup()
 	esQuery.SetTerm("exist", 1)
-	if sortStr == "follower_count" && minFollower == 0 && maxFollower == 0 && keyword == "" && authorId == "" {
-		minFollower = 2600000
+	if sortStr == "follower_count" && minFollower == 0 && maxFollower == 0 &&
+		keyword == "" && authorId == "" {
+		minFollower = 10000
 	}
 	if keyword != "" {
 		if utils.HasChinese(keyword) {
