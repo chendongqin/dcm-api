@@ -8,7 +8,6 @@ import (
 	"dongchamao/services/hbaseService"
 	"dongchamao/services/hbaseService/hbase"
 	"dongchamao/services/kafka"
-	"github.com/astaxie/beego/logs"
 	jsoniter "github.com/json-iterator/go"
 )
 
@@ -40,8 +39,8 @@ func (receiver *DirtyBusiness) ChangeAuthorCate(authorId, tags, tagsTow string) 
 	if logger.CheckError(err) != nil {
 		return global.NewError(5000)
 	}
-	ret, _ := NewSpiderBusiness().SpiderSpeedUp("author", authorId)
-	logs.Info("达人分类修改，爬虫推送结果：", ret)
+	//ret, _ := NewSpiderBusiness().SpiderSpeedUp("author", authorId)
+	//logs.Info("达人分类修改，爬虫推送结果：", ret)
 	kafka.SendAuthorCateChange(authorId)
 	return nil
 }
@@ -73,8 +72,8 @@ func (receiver *DirtyBusiness) ChangeProductCate(productId, dcmLevelFirst, first
 	if logger.CheckError(err) != nil {
 		return global.NewError(5000)
 	}
-	ret, _ := NewSpiderBusiness().SpiderSpeedUp("product", productId)
-	logs.Info("商品分类修改，爬虫推送结果：", ret)
+	//ret, _ := NewSpiderBusiness().SpiderSpeedUp("product", productId)
+	//logs.Info("商品分类修改，爬虫推送结果：", ret)
 	kafka.SendProductCateChange(productId)
 	return nil
 }
