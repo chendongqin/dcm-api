@@ -481,6 +481,13 @@ func (receiver *CommonController) CheckAppVersion() {
 	})
 }
 
+//获取时间戳
+func (receiver *CommonController) CheckTime() {
+	receiver.SuccReturn(map[string]interface{}{
+		"time": time.Now().Unix(),
+	})
+}
+
 //获取当前版本接口
 func (receiver *CommonController) CountChannelClick() {
 	if receiver.Channel != "" {
