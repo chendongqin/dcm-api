@@ -80,6 +80,9 @@ func (receiver *RankController) DyStartAuthorLiveRank() {
 func (receiver *RankController) DyLiveHourRank() {
 	date := receiver.GetString(":date", "")
 	hour := receiver.GetString(":hour", "")
+	if hour == "-1:00" {
+		hour = "00:00"
+	}
 	dateTime, err := time.ParseInLocation("2006-01-02 15:04", date+" "+hour, time.Local)
 	if err != nil {
 		receiver.FailReturn(global.NewError(4000))
@@ -120,6 +123,9 @@ func (receiver *RankController) DyLiveHourRank() {
 func (receiver *RankController) DyLiveTopRank() {
 	date := receiver.GetString(":date", "")
 	hour := receiver.GetString(":hour", "")
+	if hour == "-1:00" {
+		hour = "00:00"
+	}
 	dateTime, err := time.ParseInLocation("2006-01-02 15:04", date+" "+hour, time.Local)
 	if err != nil {
 		receiver.FailReturn(global.NewError(4000))
