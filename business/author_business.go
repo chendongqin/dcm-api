@@ -1259,9 +1259,6 @@ func (a *AuthorBusiness) RedAuthorRoomByDate(authorIds []string, date string) (l
 		})
 	}
 	var cacheTime time.Duration = 600
-	if date == time.Now().AddDate(0, 0, -1).Format("20060102") {
-		cacheTime = 6 * 3600
-	}
 	if date != time.Now().Format("20060102") {
 		cacheTime = 6 * 6 * 3600
 	}
