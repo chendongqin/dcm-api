@@ -70,6 +70,9 @@ func Md5_encode(str string) string {
 }
 
 func Fix(image string) string {
+	if image == "" {
+		return ""
+	}
 	image = strings.Replace(image, "http://", "https://", 1)
 	image = strings.Replace(image, "-ipv6-test", "", 1)
 	image = strings.Replace(image, "p5-dy-ipv6", "p3-dy", 1)
