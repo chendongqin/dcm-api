@@ -295,12 +295,16 @@ func (receiver *CommonController) RedAuthorRoom() {
 	data := make([]dy2.RedAuthorRoomBox, 0)
 	total := 0
 	if len(list) > 0 {
+		today := time.Now().Format("20060102")
 		start, _ := time.ParseInLocation("20060102", time.Now().Format("20060102"), time.Local)
 		for i := 0; i < 7; i++ {
-			dateTime := start.AddDate(0, 0, -i)
-			date := dateTime.Format("2006-01-02")
+			date := start.AddDate(0, 0, -i).Format("2006-01-02")
 			tmpList := make([]dy2.RedAuthorRoom, 0)
-			roomList := authorBusiness.RedAuthorRoomByDate(authorIds, dateTime.Format("20060102"))
+			roomList := authorBusiness.RedAuthorRoomByDate(authorIds, date)
+			if start.Format("20060102") == today && time.Now().Hour() < 8 && len(roomList) == 0 {
+				date = start.AddDate(0, 0, -1).Format("2006-01-02")
+				roomList = authorBusiness.RedAuthorRoomByDate(authorIds, date)
+			}
 			if len(roomList) == 0 {
 				continue
 			}
@@ -382,7 +386,12 @@ func (receiver *CommonController) RedAuthorLivingRoom() {
 		for _, v := range list {
 			authorIds = append(authorIds, v.AuthorId)
 		}
-		liveList := es.NewEsLiveBusiness().GetRoomsByAuthorIds(authorIds, time.Now().Format("20060102"), 3)
+		dateStr := time.Now().Format("20060102")
+		liveList := es.NewEsLiveBusiness().GetRoomsByAuthorIds(authorIds, dateStr, 3)
+		if time.Now().Hour() < 8 && len(liveList) == 0 {
+			dateStr = time.Now().AddDate(0, 0, -1).Format("20060102")
+			liveList = es.NewEsLiveBusiness().GetRoomsByAuthorIds(authorIds, dateStr, 3)
+		}
 		for _, v := range liveList {
 			data = append(data, dy2.RedAuthorRoom{
 				AuthorId:   business.IdEncrypt(v.AuthorId),
