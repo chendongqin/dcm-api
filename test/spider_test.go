@@ -9,7 +9,7 @@ import (
 
 func TestSpiderApi(t *testing.T) {
 	spiderBusiness := business.NewSpiderBusiness()
-	res := spiderBusiness.SpiderSpeedUp("author", "193965930847527")
+	res, _ := spiderBusiness.SpiderSpeedUp("author", "193965930847527")
 	fmt.Println(res)
 }
 
@@ -20,7 +20,7 @@ func TestSpiderAddLive(t *testing.T) {
 
 func TestGetAuthorByKeyword(t *testing.T) {
 	spiderBusiness := business.NewSpiderBusiness()
-	data := spiderBusiness.GetAuthorByKeyword("luoyonghao")
+	data, _ := spiderBusiness.GetAuthorByKeyword("luoyonghao")
 	fmt.Println(data)
 }
 
