@@ -999,7 +999,11 @@ func (receiver *AuthorController) AuthorIncomeSearch() {
 			"", "", keyword, "", "", 0, 0,
 			1, 1)
 		if total == 0 {
-			authorIncome := spiderBusiness.GetAuthorByKeyword(keyword)
+			authorIncome, err := spiderBusiness.GetAuthorByKeyword(keyword)
+			if err != nil {
+				receiver.FailReturn(global.NewMsgError(err.Error()))
+				return
+			}
 			authorIncome.AuthorId = business.IdEncrypt(authorIncome.AuthorId)
 			authorIncome.Avatar = dyimg.Fix(authorIncome.Avatar)
 			receiver.SuccReturn(authorIncome)

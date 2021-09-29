@@ -105,6 +105,10 @@ func (receiver *ShopBusiness) ShopProductAnalysis(shopId, keyword, category, sor
 	start := (page - 1) * pageSize
 	end := start + pageSize
 	total = len(list)
+	if start > total {
+		list = []entity.DyShopProductAnalysis{}
+		return
+	}
 	if total < end {
 		end = total
 	}
