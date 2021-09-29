@@ -487,3 +487,19 @@ func (receiver *CommonController) CheckTime() {
 		"time": time.Now().Unix(),
 	})
 }
+
+//获取当前版本接口
+func (receiver *CommonController) CountChannelClick() {
+	if receiver.Channel != "" {
+		clickLog := dcm.DcUserChannelLogs{
+			UserId:      receiver.UserId,
+			Channel:     receiver.Channel,
+			ChannelWord: receiver.ChannelWords,
+			AppId:       receiver.AppId,
+			Ip:          receiver.Ip,
+			CreateTime:  time.Now(),
+		}
+		_, _ = dcm.Insert(nil, &clickLog)
+	}
+	receiver.SuccReturn(nil)
+}

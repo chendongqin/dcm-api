@@ -37,6 +37,9 @@ func init() {
 			beego.NSRouter("/dy/app/:type", &v1.CommonController{}, "get:CheckAppVersion"),
 			beego.NSRouter("/time", &v1.CommonController{}, "get:CheckTime"),
 		),
+		beego.NSNamespace("/channel",
+			beego.NSRouter("/click", &v1.CommonController{}, "put:CountChannelClick"),
+		),
 	)
 	// 注册路由组
 	beego.AddNamespace(ns)
