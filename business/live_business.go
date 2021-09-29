@@ -119,9 +119,6 @@ func (l *LiveBusiness) DealOnlineTrends(liveInfo entity.DyLiveInfo) (entity.DyLi
 		if v.WatchCnt < 0 || v.WatchCnt > liveInfo.MaxUserCount {
 			continue
 		}
-		if v.WatchCnt == 0 && v.UserCount > 0 {
-			continue
-		}
 		if v.CrawlTime-beforeTrend.CrawlTime < 120 {
 			continue
 		}
