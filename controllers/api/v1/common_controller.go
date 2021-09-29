@@ -303,9 +303,9 @@ func (receiver *CommonController) RedAuthorRoom() {
 			tmpList := make([]dy2.RedAuthorRoom, 0)
 			roomList := authorBusiness.RedAuthorRoomByDate(authorIds, dateTime.Format("20060102"))
 			if date == today && len(roomList) == 0 {
-				dateTime = start.AddDate(0, 0, -1)
-				date = dateTime.Format("2006-01-02")
-				roomList = authorBusiness.RedAuthorRoomByDate(authorIds, dateTime.Format("20060102"))
+				start = start.AddDate(0, 0, -1)
+				date = start.Format("2006-01-02")
+				roomList = authorBusiness.RedAuthorRoomByDate(authorIds, start.Format("20060102"))
 			}
 			if len(roomList) == 0 {
 				continue
