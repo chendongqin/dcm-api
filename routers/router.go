@@ -1,6 +1,7 @@
 package routers
 
 import (
+	controllers "dongchamao/controllers/api"
 	"dongchamao/controllers/api/v1"
 	"github.com/astaxie/beego"
 	"github.com/json-iterator/go/extra"
@@ -39,6 +40,9 @@ func init() {
 		),
 		beego.NSNamespace("/channel",
 			beego.NSRouter("/click", &v1.CommonController{}, "put:CountChannelClick"),
+		),
+		beego.NSNamespace("/id",
+			beego.NSRouter("/:id", &controllers.InternalController{}, "get:IdEncryptDecrypt"),
 		),
 	)
 	// 注册路由组
