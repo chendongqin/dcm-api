@@ -295,15 +295,17 @@ func (receiver *CommonController) RedAuthorRoom() {
 	data := make([]dy2.RedAuthorRoomBox, 0)
 	total := 0
 	if len(list) > 0 {
-		today := time.Now().Format("20060102")
+		today := time.Now().Format("2006-01-02")
 		start, _ := time.ParseInLocation("20060102", time.Now().Format("20060102"), time.Local)
 		for i := 0; i < 7; i++ {
-			date := start.AddDate(0, 0, -i).Format("2006-01-02")
+			dateTime := start.AddDate(0, 0, -i)
+			date := dateTime.Format("2006-01-02")
 			tmpList := make([]dy2.RedAuthorRoom, 0)
-			roomList := authorBusiness.RedAuthorRoomByDate(authorIds, date)
-			if start.Format("20060102") == today && time.Now().Hour() < 8 && len(roomList) == 0 {
-				date = start.AddDate(0, 0, -1).Format("2006-01-02")
-				roomList = authorBusiness.RedAuthorRoomByDate(authorIds, date)
+			roomList := authorBusiness.RedAuthorRoomByDate(authorIds, dateTime.Format("20060102"))
+			if date == today && time.Now().Hour() < 8 && len(roomList) == 0 {
+				dateTime = start.AddDate(0, 0, -1)
+				date = dateTime.Format("2006-01-02")
+				roomList = authorBusiness.RedAuthorRoomByDate(authorIds, dateTime.Format("20060102"))
 			}
 			if len(roomList) == 0 {
 				continue
