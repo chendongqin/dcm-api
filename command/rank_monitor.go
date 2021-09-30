@@ -14,9 +14,17 @@ type PathDesc struct {
 	Desc string `json:"desc"`
 }
 
-//监听除了小时榜的榜单
+//监听除了小时榜和商品榜的（非整点）榜单
 func CheckRank() {
-	//监控固定时段榜单
+	currentHour := time.Now().Hour()
+	currentHourString := strconv.Itoa(currentHour)
+	currentHourString = fmt.Sprintf("%s:30", currentHourString)
+	loopCheck(currentHourString)
+	return
+}
+
+//监控商品（整点）榜单
+func CheckGoodsRank() {
 	currentHour := time.Now().Hour()
 	currentHourString := strconv.Itoa(currentHour)
 	loopCheck(currentHourString)
@@ -25,7 +33,6 @@ func CheckRank() {
 
 //监听小时榜
 func CheckRankHour() {
-	//监控小时榜
 	currentHourString := "every"
 	loopCheck(currentHourString)
 	return
@@ -94,10 +101,12 @@ func getRoute(key string) (pathInfo PathDesc) {
 func getRow(hour string) (taskList []string) {
 	hourGroup := map[string][]string{
 		"every": {"live_hour", "live_top"},
-		"10":    {"product_sale", "live_top", "product_live_sale", "product_live_sale_week", "author_follower_inc", "author_goods"},
-		"12":    {"live_share"},
-		"15":    {"product", "product_week", "author_aweme_live"},
-		"16":    {"video_share", "author_aweme_rank"},
+		"10":    {"product_live_sale", "product_live_sale_week"},
+		"10:30": {"product_sale", "live_top", "author_follower_inc", "author_goods"},
+		"12:30": {"live_share"},
+		"15":    {"product_week", "author_aweme_live"},
+		"15:30": {"product", "product_week", "author_aweme_live"},
+		"16:30": {"video_share", "author_aweme_rank"},
 	}
 	taskList = hourGroup[hour]
 	return
