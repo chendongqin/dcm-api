@@ -175,7 +175,9 @@ func GetAwemeShareRank(rowKey string) (data entity.DyAwemeShareTops, comErr glob
 
 //视频商品排行榜
 func GetVideoProductRank(rowKey string, hPage int) (data []entity.ShortVideoProduct, comErr global.CommonError) {
-	rowKey = rowKey + strconv.Itoa(hPage)
+	if hPage >= 0 {
+		rowKey = rowKey + strconv.Itoa(hPage)
+	}
 	query := hbasehelper.NewQuery()
 	result, err := query.SetTable(hbaseService.HbaseShortVideoProductRank).GetByRowKey([]byte(rowKey))
 	if err != nil {
@@ -191,7 +193,9 @@ func GetVideoProductRank(rowKey string, hPage int) (data []entity.ShortVideoProd
 
 //直播商品排行榜
 func GetLiveProductRank(rowKey string, hPage int) (data []entity.LiveProduct, comErr global.CommonError) {
-	rowKey = rowKey + strconv.Itoa(hPage)
+	if hPage >= 0 {
+		rowKey = rowKey + strconv.Itoa(hPage)
+	}
 	query := hbasehelper.NewQuery()
 	result, err := query.SetTable(hbaseService.HbaseLiveProductRank).GetByRowKey([]byte(rowKey))
 	if err != nil {
