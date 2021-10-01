@@ -883,6 +883,8 @@ func (receiver *AuthorController) AuthorLiveRooms() {
 				if liveInfo.RoomStatus == 4 {
 					list[k].FinishTime = liveInfo.FinishTime
 				}
+			} else {
+				list[k].FinishTime = time.Now().Unix()
 			}
 		}
 	}
