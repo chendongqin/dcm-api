@@ -864,21 +864,14 @@ func (receiver *AuthorController) AuthorLiveRooms() {
 	}
 	esLiveBusiness := es.NewEsLiveBusiness()
 	list, total, comErr := esLiveBusiness.SearchAuthorRooms(authorId, keyword, sortStr, orderBy, page, size, t1, t2)
-	roomIds := []string{}
-	for k, v := range list {
-		roomIds = append(roomIds, v.RoomId)
-		list[k].RoomId = business.IdEncrypt(v.RoomId)
-		list[k].AuthorId = business.IdEncrypt(v.AuthorId)
-		list[k].PredictSales = math.Floor(v.PredictSales)
-		list[k].PredictGmv = math.Floor(v.PredictGmv)
-		list[k].Cover = dyimg.Fix(v.Cover)
-		list[k].Avatar = dyimg.Fix(v.Avatar)
-	}
 	if listType == 1 {
+		roomIds := []string{}
+		for _, v := range list {
+			roomIds = append(roomIds, v.RoomId)
+		}
 		liveMap, _ := hbase.GetLiveInfoByIds(roomIds)
 		for k, v := range list {
-			roomId := business.IdDecrypt(v.AuthorId)
-			if liveInfo, exist := liveMap[roomId]; exist {
+			if liveInfo, exist := liveMap[v.RoomId]; exist {
 				list[k].RoomStatus = liveInfo.RoomStatus
 				if liveInfo.RoomStatus == 4 {
 					list[k].FinishTime = liveInfo.FinishTime
@@ -887,6 +880,14 @@ func (receiver *AuthorController) AuthorLiveRooms() {
 				list[k].FinishTime = time.Now().Unix()
 			}
 		}
+	}
+	for k, v := range list {
+		list[k].RoomId = business.IdEncrypt(v.RoomId)
+		list[k].AuthorId = business.IdEncrypt(v.AuthorId)
+		list[k].PredictSales = math.Floor(v.PredictSales)
+		list[k].PredictGmv = math.Floor(v.PredictGmv)
+		list[k].Cover = dyimg.Fix(v.Cover)
+		list[k].Avatar = dyimg.Fix(v.Avatar)
 	}
 	if comErr != nil {
 		receiver.FailReturn(comErr)
