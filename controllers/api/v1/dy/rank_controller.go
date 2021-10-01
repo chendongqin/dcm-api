@@ -504,13 +504,13 @@ func (receiver *RankController) DyAuthorTakeGoodsRank() {
 	var originList []entity.DyAuthorDaySalesRank
 	var key string
 	switch dateType {
-	case 1:
+	case 1: //日榜
 		key = sortStr + "_" + startDate.Format("20060102") + "_" + tags
 		break
-	case 2:
+	case 2: //周榜
 		key = sortStr + "_" + startDate.Format("20060102") + "_" + tags
 		break
-	case 3:
+	case 3: //月榜
 		key = sortStr + "_" + startDate.Format("200601") + "_" + tags
 		break
 	default:
@@ -525,14 +525,14 @@ func (receiver *RankController) DyAuthorTakeGoodsRank() {
 		for i := start + 1; i <= end; i++ {
 			rowKeys = append(rowKeys, []byte(utils.Md5_encode(key)+"_"+strconv.Itoa(i)))
 		}
-		originList, _ = hbase.GetSaleAuthorRank(rowKeys)
+		originList, _ = hbase.GetSaleAuthorRank(rowKeys, dateType)
 	} else {
 		maxRow, _ := strconv.Atoi(firstRow.RnMax)
 		if maxRow > 0 {
 			for i := maxRow - start; i >= maxRow-end+1; i-- {
 				rowKeys = append(rowKeys, []byte(utils.Md5_encode(key)+"_"+strconv.Itoa(i)))
 			}
-			originList, _ = hbase.GetSaleAuthorRank(rowKeys)
+			originList, _ = hbase.GetSaleAuthorRank(rowKeys, dateType)
 		}
 	}
 	data := make([]dy.TakeGoodsRankRet, 0)
@@ -548,7 +548,11 @@ func (receiver *RankController) DyAuthorTakeGoodsRank() {
 		tempData.VerificationType, _ = strconv.Atoi(v.VerificationType)
 		tempData.VerifyName = v.VerifyName
 		tempData.Tags = v.Tags
-		tempData.SumSales, _ = strconv.ParseFloat(v.PredictSalesSum, 64)
+		if v.PredictSalesSum == "Infinity" {
+			tempData.SumSales = utils.FriendlyFloat64(0)
+		} else {
+			tempData.SumSales, _ = strconv.ParseFloat(v.PredictSalesSum, 64)
+		}
 		tempData.SumGmv, _ = strconv.ParseFloat(v.PredictGmvSum, 64)
 		tempData.AvgPrice, _ = strconv.ParseFloat(v.PerPrice, 64)
 		tempData.RoomCount, _ = strconv.Atoi(v.RoomIdCount)
@@ -556,18 +560,21 @@ func (receiver *RankController) DyAuthorTakeGoodsRank() {
 		tempData.RoomList = roomList
 		data = append(data, tempData)
 	}
-
+	if total > len(originList) {
+		total = len(originList)
+	}
 	//list, total, _ := es.NewEsAuthorBusiness().SaleAuthorRankCount(startDate, dateType, tags, sortStr, orderBy, verified, page, pageSize)
 	//var structData []es2.DyAuthorTakeGoodsCount
 	//utils.MapToStruct(list, &structData)
 	//data := make([]dy.TakeGoodsRankRet, len(structData))
 	//for k, v := range structData {
 	//	hits := v.Hit.Hits.Hits
-	//	uniqueId := hits[0].Source.UniqueID
+	//	uniqueId := hits[0].Source.UniqueID.
 	//	if uniqueId == "" {
 	//		uniqueId = hits[0].Source.ShortID
 	//	}
-	//	var roomList = make([]map[string]interface{}, 0, len(hits))
+	//	var roomList = make([]map[string]interface{}
+
 	//	for _, v := range hits {
 	//		roomList = append(roomList, map[string]interface{}{
 	//			"room_cover":     dyimg.Fix(v.Source.RoomCover),
