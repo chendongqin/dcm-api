@@ -358,7 +358,7 @@ func (i *EsProductBusiness) ProductSalesTopDayRank(day, fCate, sCate, tCate, sor
 	if orderBy == "" {
 		orderBy = "desc"
 	}
-	if !utils.InArrayString(sortStr, []string{"cos_fee", "order_count"}) {
+	if !utils.InArrayString(sortStr, []string{"cos_fee", "order_count", "order_account_count"}) {
 		commonError = global.NewError(4000)
 	}
 	if !utils.InArrayString(orderBy, []string{"desc", "asc"}) {
