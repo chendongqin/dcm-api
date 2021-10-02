@@ -901,6 +901,18 @@ func (receiver *RankController) VideoProductRank() {
 		}
 	} else {
 		list, _ = hbase.GetVideoProductRank(rowKey, -1)
+		sort.Slice(list, func(i, j int) bool {
+			switch sortStr {
+			case "saleroom":
+				return list[i].Saleroom > list[j].Saleroom
+			case "sales":
+				return list[i].Sales > list[j].Sales
+			case "price":
+				return list[i].Price > list[j].Price
+			default:
+				return list[i].Sales > list[j].Sales
+			}
+		})
 		total = len(list)
 	}
 	if !receiver.HasAuth && total > receiver.MaxTotal {
