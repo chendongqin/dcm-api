@@ -25,6 +25,10 @@ func (l *LiveBusiness) RoomCurAndPmtProductById(roomId, productId string) (curPr
 	curProductCount = dy.LiveCurProductCount{
 		CurList: []dy.LiveCurProduct{},
 	}
+	curKey := -1
+	sort.Slice(roomCurProduct.Promotion, func(i, j int) bool {
+		return roomCurProduct.Promotion[i].StartTime < roomCurProduct.Promotion[j].StartTime
+	})
 	for k, v := range roomCurProduct.Promotion {
 		if v.EndTime == 0 {
 			continue
@@ -56,9 +60,55 @@ func (l *LiveBusiness) RoomCurAndPmtProductById(roomId, productId string) (curPr
 				curProductCount.MinPrice = v.PriceMin
 			}
 		}
+		if curProductCount.CurNum > 0 {
+			currentCur := curProductCount.CurList[curKey]
+			if v.StartTime-currentCur.EndTime < 180 {
+				currentCur.EndTime = v.EndTime
+				currentCur.EndSales = v.EndSales
+				currentCur.AvgUserCount = (avgUserCount + currentCur.AvgUserCount) / 2
+				currentCur.IncSales = v.EndSales - currentCur.StartSales
+				curProductCount.CurList[curKey] = currentCur
+				continue
+			}
+		}
 		curProductCount.CurNum += 1
+		curKey += 1
 		curProductCount.CurList = append(curProductCount.CurList, cur)
 	}
+	//for k, v := range roomCurProduct.Promotion {
+	//	if v.EndTime == 0 {
+	//		continue
+	//	}
+	//	curSecond := v.EndTime - v.StartTime
+	//	incSales := v.EndSales - v.StartSales
+	//	endSales := v.EndSales
+	//	var avgUserCount int64 = 0
+	//	if v.TotalCrawlTimes > 0 {
+	//		avgUserCount = v.AllUserCount / v.TotalCrawlTimes
+	//	}
+	//	cur := dy.LiveCurProduct{
+	//		StartTime:    v.StartTime,
+	//		EndTime:      v.EndTime,
+	//		AvgUserCount: avgUserCount,
+	//		IncSales:     incSales,
+	//		StartSales:   v.StartSales,
+	//		EndSales:     endSales,
+	//	}
+	//	curProductCount.CurSecond += curSecond
+	//	if k == 0 {
+	//		curProductCount.MaxPrice = v.PriceMax
+	//		curProductCount.MinPrice = v.PriceMin
+	//	} else {
+	//		if curProductCount.MaxPrice < v.PriceMax {
+	//			curProductCount.MaxPrice = v.PriceMax
+	//		}
+	//		if curProductCount.MinPrice > v.PriceMin {
+	//			curProductCount.MinPrice = v.PriceMin
+	//		}
+	//	}
+	//	curProductCount.CurNum += 1
+	//	curProductCount.CurList = append(curProductCount.CurList, cur)
+	//}
 	sort.Slice(curProductCount.CurList, func(i, j int) bool {
 		return curProductCount.CurList[i].StartTime < curProductCount.CurList[j].StartTime
 	})
