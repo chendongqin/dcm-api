@@ -11,6 +11,7 @@ import (
 	"dongchamao/models/repost/dy"
 	"dongchamao/services/dyimg"
 	"math"
+	"sort"
 	"strconv"
 	"time"
 )
@@ -549,10 +550,9 @@ func (receiver *RankController) DyAuthorTakeGoodsRank() {
 		tempData.VerifyName = v.VerifyName
 		tempData.Tags = v.Tags
 		if v.PredictSalesSum == "Infinity" {
-			tempData.SumSales = utils.FriendlyFloat64(0)
-		} else {
-			tempData.SumSales, _ = strconv.ParseFloat(v.PredictSalesSum, 64)
+			v.PredictSalesSum = "0"
 		}
+		tempData.SumSales, _ = strconv.ParseFloat(v.PredictSalesSum, 64)
 		tempData.SumGmv, _ = strconv.ParseFloat(v.PredictGmvSum, 64)
 		tempData.AvgPrice, _ = strconv.ParseFloat(v.PerPrice, 64)
 		tempData.RoomCount, _ = strconv.Atoi(v.RoomIdCount)
@@ -1037,6 +1037,18 @@ func (receiver *RankController) LiveProductRank() {
 		}
 	} else {
 		orginList, _ = hbase.GetLiveProductRank(rowKey, -1)
+		sort.Slice(orginList, func(i, j int) bool {
+			switch sortStr {
+			case "saleroom":
+				return orginList[i].Saleroom > orginList[j].Saleroom
+			case "sales":
+				return orginList[i].Sales > orginList[j].Sales
+			case "price":
+				return orginList[i].Price > orginList[j].Price
+			default:
+				return orginList[i].Sales > orginList[j].Sales
+			}
+		})
 		total = len(orginList)
 	}
 	if !receiver.HasAuth && total > receiver.MaxTotal {
