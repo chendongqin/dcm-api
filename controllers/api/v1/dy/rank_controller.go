@@ -560,9 +560,6 @@ func (receiver *RankController) DyAuthorTakeGoodsRank() {
 		tempData.RoomList = roomList
 		data = append(data, tempData)
 	}
-	if total > len(originList) {
-		total = len(originList)
-	}
 	//list, total, _ := es.NewEsAuthorBusiness().SaleAuthorRankCount(startDate, dateType, tags, sortStr, orderBy, verified, page, pageSize)
 	//var structData []es2.DyAuthorTakeGoodsCount
 	//utils.MapToStruct(list, &structData)
