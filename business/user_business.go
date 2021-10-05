@@ -5,6 +5,7 @@ import (
 	"dongchamao/global/cache"
 	"dongchamao/global/utils"
 	"dongchamao/models/dcm"
+	"dongchamao/models/repost/dy"
 	"dongchamao/services/mutex"
 	"fmt"
 	"github.com/dgrijalva/jwt-go"
@@ -472,4 +473,23 @@ func (receiver *UserBusiness) SendUserVip(user *dcm.DcUser, buyDays int) {
 			_ = dbSession.Commit()
 		}
 	}
+}
+
+func (receiver *UserBusiness) CollectSum(userId int) (sum dy.CollectSum) {
+	var collectList []dcm.DcUserDyCollect
+	if err := dcm.GetDbSession().Table("dc_user_dy_collect").Where("user_id=? and status=1", userId).Find(&collectList); err != nil {
+		return
+	}
+	for _, v := range collectList {
+		//1达人2商品3视频
+		switch v.CollectType {
+		case 1:
+			sum.Author++
+		case 2:
+			sum.Product++
+		case 3:
+			sum.Aweme++
+		}
+	}
+	return
 }

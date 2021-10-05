@@ -9,9 +9,16 @@ type RepostAccountData struct {
 	Avatar      string                `json:"avatar"`
 	PasswordSet int                   `json:"password_set"`
 	Wechat      int                   `json:"wechat"`
+	CollectSum  CollectSum            `json:"collect_sum"`
 	DyLevel     RepostAccountVipLevel `json:"dy_level"`
 	XhsLevel    RepostAccountVipLevel `json:"xhs_level"`
 	TbLevel     RepostAccountVipLevel `json:"tb_level"`
+}
+
+type CollectSum struct {
+	Author  int
+	Product int
+	Aweme   int
 }
 
 type RepostAccountToken struct {
