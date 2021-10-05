@@ -15,7 +15,6 @@ import (
 	"dongchamao/services/ali_sms"
 	"dongchamao/services/ali_tools"
 	"dongchamao/services/dyimg"
-	"dongchamao/services/tencent_ad"
 	"encoding/json"
 	"fmt"
 	jsoniter "github.com/json-iterator/go"
@@ -137,7 +136,6 @@ func (receiver *CommonController) CheckSmsCode() {
 }
 
 func (receiver *CommonController) Test() {
-	tencent_ad.AddUserActionSets("0024")
 	receiver.SuccReturn(nil)
 	return
 }
