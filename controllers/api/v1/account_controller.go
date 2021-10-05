@@ -166,6 +166,7 @@ func (receiver *AccountController) Info() {
 		Avatar:      receiver.UserInfo.Avatar,
 		PasswordSet: receiver.UserInfo.SetPassword,
 		Wechat:      isWechat,
+		CollectSum:  business.NewUserBusiness().CollectSum(receiver.UserId),
 	}
 	vipBusiness := business.NewVipBusiness()
 	vipLevels := vipBusiness.GetVipLevels(receiver.UserInfo.Id)
