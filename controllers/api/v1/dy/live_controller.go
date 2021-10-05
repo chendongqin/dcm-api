@@ -655,7 +655,8 @@ func (receiver *LiveController) LiveFanAnalyse() {
 			DistributionValue: v,
 		})
 	}
-	ageMap := map[string]int{"-18": 1, "18-23": 2, "24-30": 3, "31-40": 4, "41-50": 5, "50-": 6}
+	ageWeightMap := map[string]int{"-18": 1, "18-23": 2, "24-30": 3, "31-40": 4, "41-50": 5, "50-": 6}
+	ageMap := map[string]int64{}
 	for k, v := range info.AgeDistrinbution {
 		roomAgePeopleTotal += v
 		if k == "" {
@@ -663,12 +664,19 @@ func (receiver *LiveController) LiveFanAnalyse() {
 		}
 		roomAgeTotal += v
 		name := receiver.liveFansAgeMap(k)
+		if _, exist := ageMap[name]; !exist {
+			ageMap[name] = v
+		} else {
+			ageMap[name] += v
+		}
+	}
+	for k, v := range ageMap {
 		weight := 0
-		if w, exist := ageMap[name]; exist {
+		if w, exist := ageWeightMap[k]; exist {
 			weight = w
 		}
 		ageChart = append(ageChart, entity.XtDistributionsList{
-			DistributionKey:   name,
+			DistributionKey:   k,
 			DistributionValue: v,
 			Weight:            weight,
 		})
