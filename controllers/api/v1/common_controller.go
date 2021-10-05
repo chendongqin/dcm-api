@@ -183,6 +183,15 @@ func (receiver *CommonController) GetConfigList() {
 	if cacheData != "" {
 		cacheData = utils.DeserializeData(cacheData)
 		_ = jsoniter.Unmarshal([]byte(cacheData), &ret)
+		//校验是否下发支付
+		iosPayOpen := 1
+		if receiver.checkIosPay() {
+			iosPayOpen = 0
+		}
+		ret["ios_pay"] = map[string]interface{}{
+			"ios_pay": iosPayOpen,
+			"open":    1,
+		}
 		receiver.SuccReturn(ret)
 		return
 	}
@@ -204,8 +213,26 @@ func (receiver *CommonController) GetConfigList() {
 		}
 	}
 	_ = global.Cache.Set(cacheKey, utils.SerializeData(ret), 300)
+	//校验是否下发支付
+	iosPayOpen := 1
+	if receiver.checkIosPay() {
+		iosPayOpen = 0
+	}
+	ret["ios_pay"] = map[string]interface{}{
+		"ios_pay": iosPayOpen,
+		"open":    1,
+	}
 	receiver.SuccReturn(ret)
 	return
+}
+
+func (receiver *CommonController) checkIosPay() bool {
+	checkIosVersion := business.GetConfig("check_ios_pay")
+	iosVersion := receiver.Ctx.Input.Header("APPVERSION")
+	if iosVersion == checkIosVersion {
+		return true
+	}
+	return false
 }
 
 func (receiver *CommonController) RedAuthorRoom() {
@@ -270,12 +297,18 @@ func (receiver *CommonController) RedAuthorRoom() {
 	data := make([]dy2.RedAuthorRoomBox, 0)
 	total := 0
 	if len(list) > 0 {
+		today := time.Now().Format("2006-01-02")
 		start, _ := time.ParseInLocation("20060102", time.Now().Format("20060102"), time.Local)
 		for i := 0; i < 7; i++ {
 			dateTime := start.AddDate(0, 0, -i)
 			date := dateTime.Format("2006-01-02")
 			tmpList := make([]dy2.RedAuthorRoom, 0)
 			roomList := authorBusiness.RedAuthorRoomByDate(authorIds, dateTime.Format("20060102"))
+			if date == today && len(roomList) == 0 {
+				start = start.AddDate(0, 0, -1)
+				date = start.Format("2006-01-02")
+				roomList = authorBusiness.RedAuthorRoomByDate(authorIds, start.Format("20060102"))
+			}
 			if len(roomList) == 0 {
 				continue
 			}
@@ -302,6 +335,7 @@ func (receiver *CommonController) RedAuthorRoom() {
 				if r, exist := roomInfos[v.RoomId]; exist {
 					v.Gmv = r.PredictGmv
 					v.TotalUser = r.TotalUser
+					v.RoomStatus = r.RoomStatus
 				}
 				v.AuthorId = business.IdEncrypt(v.AuthorId)
 				v.RoomId = business.IdEncrypt(v.RoomId)
@@ -357,7 +391,12 @@ func (receiver *CommonController) RedAuthorLivingRoom() {
 		for _, v := range list {
 			authorIds = append(authorIds, v.AuthorId)
 		}
-		liveList := es.NewEsLiveBusiness().GetRoomsByAuthorIds(authorIds, time.Now().Format("20060102"), 3)
+		dateStr := time.Now().Format("20060102")
+		liveList := es.NewEsLiveBusiness().GetRoomsByAuthorIds(authorIds, dateStr, 3)
+		if len(liveList) == 0 {
+			dateStr = time.Now().AddDate(0, 0, -1).Format("20060102")
+			liveList = es.NewEsLiveBusiness().GetRoomsByAuthorIds(authorIds, dateStr, 3)
+		}
 		for _, v := range liveList {
 			data = append(data, dy2.RedAuthorRoom{
 				AuthorId:   business.IdEncrypt(v.AuthorId),
@@ -461,4 +500,20 @@ func (receiver *CommonController) CheckTime() {
 	receiver.SuccReturn(map[string]interface{}{
 		"time": time.Now().Unix(),
 	})
+}
+
+//获取当前版本接口
+func (receiver *CommonController) CountChannelClick() {
+	if receiver.Channel != "" {
+		clickLog := dcm.DcUserChannelLogs{
+			UserId:      receiver.UserId,
+			Channel:     receiver.Channel,
+			ChannelWord: receiver.ChannelWords,
+			AppId:       receiver.AppId,
+			Ip:          receiver.Ip,
+			CreateTime:  time.Now(),
+		}
+		_, _ = dcm.Insert(nil, &clickLog)
+	}
+	receiver.SuccReturn(nil)
 }

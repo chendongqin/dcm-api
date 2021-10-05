@@ -864,7 +864,23 @@ func (receiver *AuthorController) AuthorLiveRooms() {
 	}
 	esLiveBusiness := es.NewEsLiveBusiness()
 	list, total, comErr := esLiveBusiness.SearchAuthorRooms(authorId, keyword, sortStr, orderBy, page, size, t1, t2)
-	roomIds := []string{}
+	if listType == 1 {
+		roomIds := []string{}
+		for _, v := range list {
+			roomIds = append(roomIds, v.RoomId)
+		}
+		liveMap, _ := hbase.GetLiveInfoByIds(roomIds)
+		for k, v := range list {
+			if liveInfo, exist := liveMap[v.RoomId]; exist {
+				list[k].RoomStatus = liveInfo.RoomStatus
+				if liveInfo.RoomStatus == 4 {
+					list[k].FinishTime = liveInfo.FinishTime
+				} else {
+					list[k].FinishTime = time.Now().Unix()
+				}
+			}
+		}
+	}
 	for k, v := range list {
 		list[k].RoomId = business.IdEncrypt(v.RoomId)
 		list[k].AuthorId = business.IdEncrypt(v.AuthorId)
@@ -872,18 +888,6 @@ func (receiver *AuthorController) AuthorLiveRooms() {
 		list[k].PredictGmv = math.Floor(v.PredictGmv)
 		list[k].Cover = dyimg.Fix(v.Cover)
 		list[k].Avatar = dyimg.Fix(v.Avatar)
-		roomIds = append(roomIds, v.RoomId)
-	}
-	if listType == 1 {
-		liveMap, _ := hbase.GetLiveInfoByIds(roomIds)
-		for k, v := range list {
-			if liveInfo, exist := liveMap[v.RoomId]; exist {
-				list[k].RoomStatus = liveInfo.RoomStatus
-				if liveInfo.RoomStatus == 4 {
-					list[k].FinishTime = liveInfo.FinishTime
-				}
-			}
-		}
 	}
 	if comErr != nil {
 		receiver.FailReturn(comErr)
@@ -999,7 +1003,11 @@ func (receiver *AuthorController) AuthorIncomeSearch() {
 			"", "", keyword, "", "", 0, 0,
 			1, 1)
 		if total == 0 {
-			authorIncome := spiderBusiness.GetAuthorByKeyword(keyword)
+			authorIncome, err1 := spiderBusiness.GetAuthorByKeyword(keyword)
+			if err1 != nil {
+				receiver.FailReturn(global.NewMsgError(err1.Error()))
+				return
+			}
 			authorIncome.AuthorId = business.IdEncrypt(authorIncome.AuthorId)
 			authorIncome.Avatar = dyimg.Fix(authorIncome.Avatar)
 			receiver.SuccReturn(authorIncome)

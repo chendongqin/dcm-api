@@ -60,9 +60,14 @@ func runCMD(ctx *cli.Context) {
 	case "amount_expire_wechat_notice":
 		command.AmountExpireWechatNotice()
 	case "check_rank":
+		//监控-每隔小时的30分监控（目前是除了商品榜和小时榜的榜单）
 		command.CheckRank()
 	case "check_rank_hour":
+		//监控-小时榜
 		command.CheckRankHour()
+	case "check_rank_goods":
+		//监控-每隔小时的10分监控（目前只有商品榜）
+		command.CheckGoodsRank()
 	default:
 		panic("undefined ac")
 	}

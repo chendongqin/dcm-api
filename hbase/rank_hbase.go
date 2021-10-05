@@ -5,6 +5,7 @@ import (
 	"dongchamao/global/utils"
 	"dongchamao/models/entity"
 	"dongchamao/services/hbaseService"
+	"dongchamao/services/hbaseService/hbase"
 	"dongchamao/services/hbaseService/hbasehelper"
 	"strconv"
 )
@@ -175,7 +176,9 @@ func GetAwemeShareRank(rowKey string) (data entity.DyAwemeShareTops, comErr glob
 
 //视频商品排行榜
 func GetVideoProductRank(rowKey string, hPage int) (data []entity.ShortVideoProduct, comErr global.CommonError) {
-	rowKey = rowKey + strconv.Itoa(hPage)
+	if hPage >= 0 {
+		rowKey = rowKey + strconv.Itoa(hPage)
+	}
 	query := hbasehelper.NewQuery()
 	result, err := query.SetTable(hbaseService.HbaseShortVideoProductRank).GetByRowKey([]byte(rowKey))
 	if err != nil {
@@ -191,7 +194,9 @@ func GetVideoProductRank(rowKey string, hPage int) (data []entity.ShortVideoProd
 
 //直播商品排行榜
 func GetLiveProductRank(rowKey string, hPage int) (data []entity.LiveProduct, comErr global.CommonError) {
-	rowKey = rowKey + strconv.Itoa(hPage)
+	if hPage >= 0 {
+		rowKey = rowKey + strconv.Itoa(hPage)
+	}
 	query := hbasehelper.NewQuery()
 	result, err := query.SetTable(hbaseService.HbaseLiveProductRank).GetByRowKey([]byte(rowKey))
 	if err != nil {
@@ -205,9 +210,15 @@ func GetLiveProductRank(rowKey string, hPage int) (data []entity.LiveProduct, co
 	return
 }
 
-func GetSaleAuthorRank(rowKeys [][]byte) (data []entity.DyAuthorDaySalesRank, comErr global.CommonError) {
+func GetSaleAuthorRank(rowKeys [][]byte, dateType int) (data []entity.DyAuthorDaySalesRank, comErr global.CommonError) {
 	query := hbasehelper.NewQuery()
-	results, err := query.SetTable(hbaseService.HbaseDyAuthorDaySalesRank).GetByRowKeys(rowKeys)
+	var results []*hbase.TResult_
+	var err error
+	if dateType == 1 {
+		results, err = query.SetTable(hbaseService.HbaseDyAuthorDaySalesRank).GetByRowKeys(rowKeys) //日榜
+	} else {
+		results, err = query.SetTable(hbaseService.HbaseDyAuthorMonthSalesRank).GetByRowKeys(rowKeys) //月榜
+	}
 	if err != nil {
 		comErr = global.NewMsgError(err.Error())
 		return

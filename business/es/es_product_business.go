@@ -98,7 +98,7 @@ func (i *EsProductBusiness) BaseSearch(productId, keyword, category, secondCateg
 		esQuery.SetRange("coupon_price", rangeMap)
 	}
 	sortOrder := elasticsearch.NewElasticOrder().Add(sortStr, orderBy).Order
-	if sortStr == "order_account" {
+	if utils.InArrayString(sortStr, []string{"order_account", "pv", "cvr"}) {
 		sortOrder = elasticsearch.NewElasticOrder().Add("is_yesterday", "desc").Add(sortStr, orderBy).Order
 	}
 	results := esMultiQuery.
@@ -358,7 +358,7 @@ func (i *EsProductBusiness) ProductSalesTopDayRank(day, fCate, sCate, tCate, sor
 	if orderBy == "" {
 		orderBy = "desc"
 	}
-	if !utils.InArrayString(sortStr, []string{"cos_fee", "order_count"}) {
+	if !utils.InArrayString(sortStr, []string{"cos_fee", "order_count", "order_account_count"}) {
 		commonError = global.NewError(4000)
 	}
 	if !utils.InArrayString(orderBy, []string{"desc", "asc"}) {

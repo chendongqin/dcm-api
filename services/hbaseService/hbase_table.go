@@ -60,8 +60,9 @@ const (
 	HbaseDyShopDetail          = "dy_shop_detail"           //小店详情
 	HbaseDyShopProductAnalysis = "dy_shop_product_analysis" //小店商品分析
 
-	HbaseShortVideoProductRank = "shortvideo_commodity_topN"   //视频商品榜
-	HbaseLiveProductRank       = "live_commodity_TopN"         //直播商品榜
-	HbaseDyAuthorDaySalesRank  = "dy_author_day_sales"         //达人带货榜
-	HbaseDyAuthorFansIncrRank  = "dy_author_day_fans_increase" //达人带货榜
+	HbaseShortVideoProductRank  = "shortvideo_commodity_topN"   //视频商品榜
+	HbaseLiveProductRank        = "live_commodity_TopN"         //直播商品榜
+	HbaseDyAuthorDaySalesRank   = "dy_author_day_sales"         //达人带货日榜
+	HbaseDyAuthorMonthSalesRank = "dy_author_month_sales"       //达人带货月榜
+	HbaseDyAuthorFansIncrRank   = "dy_author_day_fans_increase" //达人带货榜
 )

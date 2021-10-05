@@ -450,6 +450,7 @@ func SimpleCurl(url string, method string, postData string, contentType string) 
 	}
 	if err != nil {
 		logs.Error(err)
+		return ""
 	}
 	defer resp.Body.Close()
 	body, err := ioutil.ReadAll(resp.Body)

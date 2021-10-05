@@ -56,6 +56,9 @@ func buildURL(prefix, source string) string {
 		return source
 	}
 	source = strings.Replace(source, "https://", "", 1)
+	if source == "" {
+		return ""
+	}
 	return cdnUrl + "/" + source
 	//md5Str := Md5_encode(source)
 	//source = url.QueryEscape(source)
@@ -70,6 +73,9 @@ func Md5_encode(str string) string {
 }
 
 func Fix(image string) string {
+	if image == "" {
+		return ""
+	}
 	image = strings.Replace(image, "http://", "https://", 1)
 	image = strings.Replace(image, "-ipv6-test", "", 1)
 	image = strings.Replace(image, "p5-dy-ipv6", "p3-dy", 1)
