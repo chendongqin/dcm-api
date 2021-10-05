@@ -10,7 +10,6 @@ require (
 	github.com/aliyun/alibaba-cloud-sdk-go v1.61.1162
 	github.com/aliyun/aliyun-log-go-sdk v0.1.21
 	github.com/aliyun/aliyun-oss-go-sdk v2.1.8+incompatible
-	github.com/antihax/optional v1.0.0
 	github.com/apache/thrift v0.13.0
 	github.com/astaxie/beego v1.12.3
 	github.com/baiyubin/aliyun-sts-go-sdk v0.0.0-20180326062324-cfa1a18b161f // indirect
@@ -29,10 +28,10 @@ require (
 	github.com/nilorg/go-opentaobao v1.0.0
 	github.com/olivere/elastic v6.2.35+incompatible
 	github.com/pkg/errors v0.9.1
+	github.com/satori/go.uuid v1.2.1-0.20181028125025-b2ce2384e17b // indirect
 	github.com/silenceper/pool v1.0.0
 	github.com/silenceper/wechat/v2 v2.0.6
 	github.com/stretchr/testify v1.7.0
-	github.com/tencentad/marketing-api-go-sdk v1.7.10
 	github.com/tidwall/gjson v1.8.1
 	github.com/urfave/cli v1.22.5
 	github.com/valyala/fasthttp v1.29.0
