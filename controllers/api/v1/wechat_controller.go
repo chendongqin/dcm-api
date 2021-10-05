@@ -254,7 +254,6 @@ func (receiver *WechatController) WechatPhone() {
 			receiver.FailReturn(global.NewError(5000))
 			return
 		}
-		//tencent_ad.AddUserActionSets(userModel.Channel)
 		business.NewUserBusiness().SendUserVip(&userModel, 7)
 	}
 	//开始更新用户信息
