@@ -414,3 +414,20 @@ func (e *EsVideoBusiness) AuthorProductAwemeSumList(authorId, productId, shopId,
 	total = elasticsearch.GetBucketsCount(results, "count")
 	return
 }
+
+//获取视频同款视频
+func (e *EsVideoBusiness) GetByAwemeId(awemeId, date string) (info es.DyAweme, comErr global.CommonError) {
+	esTable, connection := GetESTableByDate(es.DyVideoTable, date)
+	esQuery, esMultiQuery := elasticsearch.NewElasticQueryGroup()
+	esQuery.SetMatchPhrase("aweme_id", awemeId)
+	esQuery.SetTerm("exist", 1)
+	result := esMultiQuery.
+		SetConnection(connection).
+		SetTable(esTable).
+		SetCache(180).
+		AddMust(esQuery.Condition).
+		SetMultiQuery().
+		QueryOne()
+	utils.MapToStruct(result, &info)
+	return
+}

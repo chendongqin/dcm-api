@@ -257,6 +257,10 @@ func (receiver *AwemeController) AwemeProductAnalyse() {
 	}
 	list := make([]dy2.DyAwemeProductSale, 0)
 	lenNum := len(productMap)
+	if lenNum == 0 {
+		receiver.getAwemeProducts(awemeId, page, pageSize)
+		return
+	}
 	start := (page - 1) * pageSize
 	end := start + pageSize
 	if start > lenNum {
@@ -281,6 +285,55 @@ func (receiver *AwemeController) AwemeProductAnalyse() {
 	receiver.SuccReturn(map[string]interface{}{
 		"list":  list,
 		"total": lenNum,
+	})
+	return
+}
+
+func (receiver *AwemeController) getAwemeProducts(awemeId string, page, pageSize int) {
+	info, err := hbase.GetVideo(awemeId)
+	if err != nil {
+		receiver.FailReturn(err)
+		return
+	}
+	dateTime := time.Unix(info.Data.AwemeCreateTime, 0)
+	awemeInfo, _ := es.NewEsVideoBusiness().GetByAwemeId(awemeId, dateTime.Format("20060102"))
+	list := make([]dy2.DyAwemeProductSale, 0)
+	productIds := strings.Split(awemeInfo.ProductIds, ",")
+	total := len(productIds)
+	if total > 0 {
+		products, _ := hbase.GetProductByIds(productIds)
+		awemeEncryptId := business.IdEncrypt(awemeId)
+		for _, v := range products {
+			list = append(list, dy2.DyAwemeProductSale{
+				AwemeId:       awemeEncryptId,
+				ProductId:     business.IdEncrypt(v.ProductID),
+				Gmv:           0,
+				Sales:         0,
+				Price:         v.Price,
+				Title:         v.Title,
+				PlatformLabel: v.PlatformLabel,
+				ProductStatus: v.Status,
+				CouponInfo:    v.TbCouponInfo,
+				Image:         dyimg.Fix(v.Image),
+			})
+		}
+		start := (page - 1) * pageSize
+		end := start + pageSize
+		if start > total {
+			receiver.SuccReturn(map[string]interface{}{
+				"list":  list,
+				"total": total,
+			})
+			return
+		}
+		if end > total {
+			end = total
+		}
+		list = list[start:end]
+	}
+	receiver.SuccReturn(map[string]interface{}{
+		"list":  list,
+		"total": total,
 	})
 	return
 }
