@@ -297,7 +297,14 @@ func (receiver *AwemeController) getAwemeProducts(awemeId string, page, pageSize
 	}
 	dateTime := time.Unix(info.Data.AwemeCreateTime, 0)
 	awemeInfo, _ := es.NewEsVideoBusiness().GetByAwemeId(awemeId, dateTime.Format("20060102"))
-	list := make([]dy2.DyAwemeProductSale, 0)
+	list := []dy2.DyAwemeProductSale{}
+	if awemeInfo.ProductIds == "" {
+		receiver.SuccReturn(map[string]interface{}{
+			"list":  list,
+			"total": 0,
+		})
+		return
+	}
 	productIds := strings.Split(awemeInfo.ProductIds, ",")
 	total := len(productIds)
 	if total > 0 {
