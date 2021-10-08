@@ -676,13 +676,22 @@ func (receiver *ProductBusiness) ProductAuthorAwemes(productId, shopId, authorId
 	//		list = append(list, data.RelatedAwemes...)
 	//	}
 	//}
-	sumList, total, err := es.NewEsVideoBusiness().AuthorProductAwemeSumList(authorId, productId, shopId, sortStr, orderBy, startTime, endTime, page, pageSize)
+	sumList, total, err := es.NewEsVideoBusiness().AuthorProductAwemeSumList(authorId, productId, shopId, sortStr, orderBy, startTime, endTime, 1, 1000)
 	if err != nil {
+		return
+	}
+	if total == 0 {
 		return
 	}
 	awemeIds := []string{}
 	awemeGmvMap := map[string]float64{}
 	awemeSalesMap := map[string]int64{}
+	start := (page - 1) * pageSize
+	end := start + pageSize
+	if total < end {
+		end = total
+	}
+	sumList = sumList[start:end]
 	for _, v := range sumList {
 		awemeIds = append(awemeIds, v.Key)
 		awemeGmvMap[v.Key] = v.TotalGmv.Value
