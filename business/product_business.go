@@ -742,6 +742,28 @@ func (receiver *ProductBusiness) ProductAuthorAwemes(productId, shopId, authorId
 	return
 }
 
+func (receiver *ProductBusiness) NewProductAuthorAwemes(productId, authorId string, startTime, endTime time.Time, sortStr, orderBy string, page, pageSize int) (list []entity.DyProductAuthorRelatedAweme, total int) {
+	list = []entity.DyProductAuthorRelatedAweme{}
+	awemeList, total, err := es.NewEsVideoBusiness().NewAuthorProductAwemeSumList(authorId, productId, sortStr, orderBy, startTime, endTime, page, pageSize)
+	if err != nil {
+		return
+	}
+	for _, v := range awemeList {
+		list = append(list, entity.DyProductAuthorRelatedAweme{
+			CommentCount:    v.CommentCount,
+			AwemeTitle:      v.AwemeTitle,
+			AwemeId:         v.AwemeId,
+			Sales:           v.Sales,
+			AwemeGmv:        v.AwemeGmv,
+			DiggCount:       v.DiggCount,
+			ForwardCount:    v.ShareCount,
+			AwemeCover:      v.AwemeCover,
+			AwemeCreateTime: v.AwemeCreateTime,
+		})
+	}
+	return
+}
+
 func (receiver *ProductBusiness) ProductAwemeAuthorAnalysisCount(productId, keyword string, startTime, endTime time.Time) (countList dy.DyProductAwemeCount, comErr global.CommonError) {
 	countList = dy.DyProductAwemeCount{
 		Tags:  []dy.DyCate{},
