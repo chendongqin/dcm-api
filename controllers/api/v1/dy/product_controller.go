@@ -1083,6 +1083,9 @@ func (receiver *ProductController) ProductFanAnalyse() {
 	sort.Slice(info.Word, func(i, j int) bool {
 		return utils.ToInt(info.Word[i].WordNum) > utils.ToInt(info.Word[j].WordNum)
 	})
+	if len(info.Word) > 10 {
+		info.Word = info.Word[:10]
+	}
 	sort.Slice(info.DiggInfo, func(i, j int) bool {
 		return utils.ToInt(info.DiggInfo[i].DiggCount) > utils.ToInt(info.DiggInfo[j].DiggCount)
 	})
