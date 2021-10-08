@@ -2,13 +2,16 @@ package tencent_ad
 
 import (
 	"dongchamao/global"
+	"dongchamao/global/cache"
 	"encoding/json"
 	"fmt"
 	"github.com/antihax/optional"
+	"github.com/silenceper/wechat/v2/util"
 	"github.com/tencentad/marketing-api-go-sdk/pkg/ads"
 	"github.com/tencentad/marketing-api-go-sdk/pkg/api"
 	"github.com/tencentad/marketing-api-go-sdk/pkg/config"
 	"github.com/tencentad/marketing-api-go-sdk/pkg/errors"
+	"time"
 )
 
 type AccessToken struct {
@@ -25,11 +28,11 @@ func (e *AccessToken) Init() {
 		IsDebug: true,
 	})
 	e.TAds.UseProduction()
-	e.ClientId, _ = global.Cfg.Int64("1112002873")
-	e.ClientSecret = global.Cfg.String("vFQvPWDjwOy4faq0")
+	e.ClientId, _ = global.Cfg.Int64("tencent_ad_client_id")
+	e.ClientSecret = global.Cfg.String("tencent_ad_secret")
 	e.GrantType = "authorization_code"
 	e.OauthTokenOpts = &api.OauthTokenOpts{
-		AuthorizationCode: optional.NewString("YOUR AUTHORIZATION CODE"),
+		AuthorizationCode: optional.NewString(GetAuthorizationCode()),
 	}
 }
 
@@ -48,8 +51,31 @@ func (e *AccessToken) Run() string {
 	return *response.AccessToken
 }
 
-func GetAccessToken() string {
-	e := &AccessToken{}
-	e.Init()
-	return e.Run()
+func GetAuthorizationCode() (code string) {
+	_, _ = util.HTTPGet(fmt.Sprintf("https://developers.e.qq.com/oauth/authorize?client_id=%s&redirect_uri=%s", global.Cfg.String("28072"), global.Cfg.String("tencent_ad_url")))
+	cacheKey := cache.GetCacheKey(cache.TencentAdAuthorizationCode)
+	var flag int
+	for {
+		flag++
+		if flag > 5 {
+			break
+		}
+		code = global.Cache.Get(cacheKey)
+		time.Sleep(1)
+	}
+	return
+}
+
+func GetAccessToken() (token string) {
+	cacheKey := cache.GetCacheKey(cache.TencentAdAccessToken)
+	token = global.Cache.Get(cacheKey)
+	if token == "" {
+		e := &AccessToken{}
+		e.Init()
+		token = e.Run()
+		if err := global.Cache.Set(cacheKey, token, 86400); err != nil {
+			println("tencent_ad_token_err", err.Error())
+		}
+	}
+	return
 }
