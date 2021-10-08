@@ -3,6 +3,7 @@ package controllers
 import (
 	"dongchamao/business"
 	"dongchamao/global"
+	"dongchamao/global/cache"
 	"dongchamao/global/utils"
 	"dongchamao/models/dcm"
 	"dongchamao/services/payer"
@@ -134,5 +135,16 @@ func (receiver *CallbackController) AlipayNotify() {
 		}
 	}
 	_, _ = w.Write([]byte("success"))
+	return
+}
+
+//腾讯广告authCode回调
+func (receiver *CallbackController) TencentAdAuth() {
+	cacheKey := cache.GetCacheKey(cache.TencentAdAuthorizationCode)
+	code := receiver.GetString("authorization_code")
+	if err := global.Cache.Set(cacheKey, code, 300); err != nil {
+		println("tencent_ad_callback", err.Error())
+		return
+	}
 	return
 }

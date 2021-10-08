@@ -40,14 +40,14 @@ var DyProductMap = HbaseEntity{
 	"price_trends":           {AJson, "price_trends"},
 	"other_manmade_category": {Json, "manmade_category"},
 	//粉丝分析数据
-	"gender":           {AJson, "gender"},
-	"province":         {AJson, "province"},
-	"city":             {AJson, "city"},
-	"word":             {AJson, "word"},
-	"context_num":      {AJson, "context_num"},
-	"digg_info":        {AJson, "digg_info"},
-	"ageDistrinbution": {AJson, "age_distrinbution"},
-	"ai_category":      {Json, "ai_category"},
+	"gender":            {AJson, "gender"},
+	"province":          {AJson, "province"},
+	"city":              {AJson, "city"},
+	"word":              {AJson, "word"},
+	"context_num":       {AJson, "context_num"},
+	"digg_info":         {AJson, "digg_info"},
+	"age_distrinbution": {AJson, "age_distrinbution"},
+	"ai_category":       {Json, "ai_category"},
 	//"tb_small_images":        {AJson, "tb_small_images"},
 }
 
