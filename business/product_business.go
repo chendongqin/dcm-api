@@ -750,7 +750,7 @@ func (receiver *ProductBusiness) NewProductAuthorAwemes(productId, authorId stri
 	if sortStr == "gmv" {
 		sortStr = "aweme_gmv"
 	}
-	awemeList, total, err := es.NewEsVideoBusiness().NewAuthorProductAwemeSumList(authorId, "", "", startTime, endTime, 1, 10000)
+	awemeList, _, err := es.NewEsVideoBusiness().NewAuthorProductAwemeSumList(authorId, "", "", startTime, endTime, 1, 10000)
 	if err != nil {
 		return
 	}
@@ -795,6 +795,7 @@ func (receiver *ProductBusiness) NewProductAuthorAwemes(productId, authorId stri
 			}
 		}
 	})
+	total = len(list)
 	start := (page - 1) * pageSize
 	end := start + pageSize
 	if total < end {
