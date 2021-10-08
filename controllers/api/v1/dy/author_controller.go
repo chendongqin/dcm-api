@@ -769,10 +769,18 @@ func (receiver *AuthorController) AuthorFansAnalyse() {
 				DistributionValue: value,
 			})
 		}
+		ageMap := map[string]int64{}
 		for _, v := range authorData.AgeDistrinbution {
+			if _, exist := ageMap[v.AgeDistrinbution]; !exist {
+				ageMap[v.AgeDistrinbution] = utils.ToInt64(v.AgeDistrinbutionNum)
+			} else {
+				ageMap[v.AgeDistrinbution] += utils.ToInt64(v.AgeDistrinbutionNum)
+			}
+		}
+		for k, v := range ageMap {
 			data["age"] = append(data["age"], entity.XtDistributionsList{
-				DistributionKey:   v.AgeDistrinbution,
-				DistributionValue: utils.ToInt64(v.AgeDistrinbutionNum),
+				DistributionKey:   k,
+				DistributionValue: v,
 			})
 		}
 		for _, v := range authorData.Province {

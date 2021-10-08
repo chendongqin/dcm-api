@@ -332,7 +332,7 @@ func (receiver *CommonController) RedAuthorRoom() {
 				}
 				if r, exist := roomInfos[v.RoomId]; exist {
 					v.Gmv = r.PredictGmv
-					v.TotalUser = r.TotalUser
+					v.TotalUser = r.WatchCnt
 					v.RoomStatus = r.RoomStatus
 				}
 				v.AuthorId = business.IdEncrypt(v.AuthorId)
@@ -395,7 +395,24 @@ func (receiver *CommonController) RedAuthorLivingRoom() {
 			dateStr = time.Now().AddDate(0, 0, -1).Format("20060102")
 			liveList = es.NewEsLiveBusiness().GetRoomsByAuthorIds(authorIds, dateStr, 3)
 		}
+		roomInfos := map[string]entity.DyLiveInfo{}
+		hasLiving := false
+		roomIds := []string{}
 		for _, v := range liveList {
+			roomIds = append(roomIds, v.RoomId)
+			if v.RoomStatus == 2 {
+				hasLiving = true
+			}
+		}
+		if hasLiving {
+			roomInfos, _ = hbase.GetLiveInfoByIds(roomIds)
+		}
+		for _, v := range liveList {
+			if r, exist := roomInfos[v.RoomId]; exist {
+				v.PredictGmv = r.PredictGmv
+				v.PredictSales = r.PredictSales
+				v.WatchCnt = r.WatchCnt
+			}
 			data = append(data, dy2.RedAuthorRoom{
 				AuthorId:   business.IdEncrypt(v.AuthorId),
 				Avatar:     dyimg.Fix(v.Avatar),
