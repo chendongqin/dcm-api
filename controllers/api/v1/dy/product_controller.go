@@ -1086,6 +1086,9 @@ func (receiver *ProductController) ProductFanAnalyse() {
 	if len(info.Word) > 10 {
 		info.Word = info.Word[:10]
 	}
+	for k := range info.DiggInfo {
+		info.DiggInfo[k].AwemeCover = dyimg.Fix(info.DiggInfo[k].AwemeCover)
+	}
 	sort.Slice(info.DiggInfo, func(i, j int) bool {
 		return utils.ToInt(info.DiggInfo[i].DiggCount) > utils.ToInt(info.DiggInfo[j].DiggCount)
 	})
