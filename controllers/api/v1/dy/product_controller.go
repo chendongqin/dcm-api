@@ -402,8 +402,6 @@ func (receiver *ProductController) ProductBase() {
 		CosRatioMoney:       productInfo.CosRatio / 100 * productInfo.Price,
 		TbCouponPrice:       productInfo.TbCouponPrice,
 		TbCouponRemainCount: productInfo.TbCouponRemainCount,
-		ContextNum:          productInfo.ContextNum,
-		DiggInfo:            productInfo.DiggInfo,
 	}
 	if simpleInfo.TbCouponRemainCount == 0 || simpleInfo.TbCouponPrice == 0 {
 		simpleInfo.TbCouponPrice = simpleInfo.Price
@@ -1078,6 +1076,16 @@ func (receiver *ProductController) ProductFanAnalyse() {
 			provinceChart[k].DistributionPer = float64(v.DistributionValue) / float64(provinceTotal)
 		}
 	}
+	var contextNum entity.ContextNum
+	if len(info.ContextNum) > 0 {
+		contextNum = info.ContextNum[0]
+	}
+	sort.Slice(info.Word, func(i, j int) bool {
+		return utils.ToInt(info.Word[i].WordNum) > utils.ToInt(info.Word[j].WordNum)
+	})
+	sort.Slice(info.DiggInfo, func(i, j int) bool {
+		return utils.ToInt(info.DiggInfo[i].DiggCount) > utils.ToInt(info.DiggInfo[j].DiggCount)
+	})
 	receiver.SuccReturn(map[string]interface{}{
 		"age_people":      ageTotal,
 		"age_chart":       ageChart,
@@ -1087,6 +1095,9 @@ func (receiver *ProductController) ProductFanAnalyse() {
 		"city_total":      cityTotal,
 		"province_chart":  provinceChart,
 		"province_people": provinceTotal,
+		"word":            info.Word,
+		"context_num":     contextNum,
+		"digg_info":       info.DiggInfo,
 	})
 	return
 }
