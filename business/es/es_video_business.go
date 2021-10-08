@@ -416,7 +416,7 @@ func (e *EsVideoBusiness) AuthorProductAwemeSumList(authorId, productId, shopId,
 }
 
 func (e *EsVideoBusiness) NewAuthorProductAwemeSumList(authorId, productId, sortStr, orderBy string, startTime, endTime time.Time, page, pageSize int) (list []es.DyAweme, total int, comErr global.CommonError) {
-	esTable, connection, err := GetESTableByMonthTime(es.DyVideoTable, startTime, endTime)
+	esTable, connection, err := GetESTableByTime(es.DyVideoTable, startTime, endTime)
 	if err != nil {
 		comErr = global.NewError(4000)
 		return
@@ -445,6 +445,7 @@ func (e *EsVideoBusiness) NewAuthorProductAwemeSumList(authorId, productId, sort
 		AddMust(esQuery.Condition).
 		SetOrderBy(elasticsearch.NewElasticOrder().Add(sortStr, orderBy).Order).
 		SetLimit((page-1)*pageSize, pageSize).
+		SetMultiQuery().
 		Query()
 	utils.MapToStruct(results, &list)
 	total = esMultiQuery.Count
