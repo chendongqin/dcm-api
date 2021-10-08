@@ -744,6 +744,9 @@ func (receiver *ProductBusiness) ProductAuthorAwemes(productId, shopId, authorId
 
 func (receiver *ProductBusiness) NewProductAuthorAwemes(productId, authorId string, startTime, endTime time.Time, sortStr, orderBy string, page, pageSize int) (list []entity.DyProductAuthorRelatedAweme, total int) {
 	list = []entity.DyProductAuthorRelatedAweme{}
+	if sortStr == "gmv" {
+		sortStr = "aweme_gmv"
+	}
 	awemeList, total, err := es.NewEsVideoBusiness().NewAuthorProductAwemeSumList(authorId, productId, sortStr, orderBy, startTime, endTime, page, pageSize)
 	if err != nil {
 		return
