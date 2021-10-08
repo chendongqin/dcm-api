@@ -143,15 +143,31 @@ func (receiver *AuthorController) BaseSearch() {
 			list[k].IsCollect = collect[v.AuthorId]
 		}
 	}
-	authorMap, _ := hbase.GetAuthorByIds(authorIds)
+	authorLiveMap := map[string]string{}
+	cacheKey := cache.GetCacheKey(cache.AuthorLiveMap, utils.Md5_encode(strings.Join(authorIds, ",")))
+	cacheStr := global.Cache.Get(cacheKey)
+	if cacheStr != "" {
+		cacheStr = utils.DeserializeData(cacheStr)
+		_ = jsoniter.Unmarshal([]byte(cacheStr), &authorLiveMap)
+	} else {
+		authorMap, _ := hbase.GetAuthorByIds(authorIds)
+		for k, v := range authorMap {
+			if v.RoomStatus == 2 {
+				authorLiveMap[k] = v.RoomId
+			} else {
+				authorLiveMap[k] = ""
+			}
+		}
+		_ = global.Cache.Set(cacheKey, utils.SerializeData(authorLiveMap), 180)
+	}
 	for k, v := range list {
 		list[k].Avatar = dyimg.Fix(v.Avatar)
 		if v.UniqueId == "" || v.UniqueId == "0" {
 			list[k].UniqueId = v.ShortId
 		}
 		list[k].AuthorId = business.IdEncrypt(v.AuthorId)
-		if a, ok := authorMap[v.AuthorId]; ok {
-			list[k].RoomId = a.RoomId
+		if a, ok := authorLiveMap[v.AuthorId]; ok {
+			list[k].RoomId = business.IdEncrypt(a)
 		} else {
 			authorData, _ := hbase.GetAuthor(v.AuthorId)
 			list[k].RoomId = business.IdEncrypt(authorData.RoomId)
