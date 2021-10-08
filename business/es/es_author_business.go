@@ -160,6 +160,9 @@ func (receiver *EsAuthorBusiness) BaseSearch(
 		}
 		if maxAge > 0 {
 			rangeMap["lt"] = maxAge
+			if minAge == 0 {
+				rangeMap["gte"] = 0
+			}
 		}
 		esQuery.SetRange("birthday", rangeMap)
 	}
