@@ -750,7 +750,7 @@ func (receiver *ProductBusiness) NewProductAuthorAwemes(productId, authorId stri
 	if sortStr == "gmv" {
 		sortStr = "aweme_gmv"
 	}
-	awemeList, total, err := es.NewEsVideoBusiness().NewAuthorProductAwemeSumList(authorId, productId, "", "", startTime, endTime, 1, 10000)
+	awemeList, total, err := es.NewEsVideoBusiness().NewAuthorProductAwemeSumList(authorId, "", "", startTime, endTime, 1, 10000)
 	if err != nil {
 		return
 	}
@@ -758,6 +758,9 @@ func (receiver *ProductBusiness) NewProductAuthorAwemes(productId, authorId stri
 		return
 	}
 	for _, v := range awemeList {
+		if strings.Index(v.ProductIds, productId) < 0 {
+			continue
+		}
 		list = append(list, entity.DyProductAuthorRelatedAweme{
 			CommentCount:    v.CommentCount,
 			AwemeTitle:      v.AwemeTitle,
