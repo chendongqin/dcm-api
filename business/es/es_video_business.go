@@ -326,6 +326,7 @@ func (e *EsVideoBusiness) ScanAwemeProductByAuthor(authorId, keyword, category, 
 		SetCache(300).
 		AddMust(esQuery.Condition).
 		SetLimit((page-1)*pageSize, pageSize).
+		SetOrderBy(elasticsearch.NewElasticOrder().Add("aweme_create_time", "desc").Order).
 		SetMultiQuery().
 		Query()
 	utils.MapToStruct(results, &list)
