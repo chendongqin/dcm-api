@@ -65,6 +65,13 @@ func GetProductInfo(productId string) (data entity.DyProduct, comErr global.Comm
 	} else if data.AiCategory.FirstCname != "" {
 		data.Label = data.AiCategory.FirstCname
 	}
+	//null数据初始化
+	if len(data.ContextNum) == 0 {
+		data.ContextNum = []entity.ContextNum{}
+	}
+	if len(data.DiggInfo) == 0 {
+		data.DiggInfo = []entity.DiggInfo{}
+	}
 	return
 }
 
