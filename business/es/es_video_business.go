@@ -415,7 +415,7 @@ func (e *EsVideoBusiness) AuthorProductAwemeSumList(authorId, productId, shopId,
 	return
 }
 
-func (e *EsVideoBusiness) NewAuthorProductAwemeSumList(authorId, productId, sortStr, orderBy string, startTime, endTime time.Time, page, pageSize int) (list []es.DyAweme, total int, comErr global.CommonError) {
+func (e *EsVideoBusiness) NewAuthorProductAwemeSumList(authorId, sortStr, orderBy string, startTime, endTime time.Time, page, pageSize int) (list []es.DyAweme, total int, comErr global.CommonError) {
 	esTable, connection, err := GetESTableByTime(es.DyVideoTable, startTime, endTime)
 	if err != nil {
 		comErr = global.NewError(4000)
@@ -435,9 +435,9 @@ func (e *EsVideoBusiness) NewAuthorProductAwemeSumList(authorId, productId, sort
 	if authorId != "" {
 		esQuery.SetTerm("author_id", authorId)
 	}
-	if productId != "" {
-		esQuery.SetMatchPhrase("product_ids", productId)
-	}
+	//if productId != "" {
+	//	esQuery.SetMatchPhrase("product_ids", productId)
+	//}
 	results := esMultiQuery.
 		SetConnection(connection).
 		SetTable(esTable).
