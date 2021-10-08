@@ -667,6 +667,9 @@ func (receiver *ProductBusiness) ProductAwemeAuthorAnalysis(productId, keyword, 
 
 func (receiver *ProductBusiness) ProductAuthorAwemes(productId, shopId, authorId string, startTime, endTime time.Time, sortStr, orderBy string, page, pageSize int) (list []entity.DyProductAuthorRelatedAweme, total int) {
 	list = []entity.DyProductAuthorRelatedAweme{}
+	if sortStr == "gmv" {
+		sortStr = "aweme_gmv"
+	}
 	//esProductBusiness := es.NewEsProductBusiness()
 	//allList, _, _ := esProductBusiness.SearchAwemeRangeDateList(productId, shopId, authorId, startTime, endTime, 1, 10000)
 	//for _, v := range allList {
@@ -747,8 +750,11 @@ func (receiver *ProductBusiness) NewProductAuthorAwemes(productId, authorId stri
 	if sortStr == "gmv" {
 		sortStr = "aweme_gmv"
 	}
-	awemeList, total, err := es.NewEsVideoBusiness().NewAuthorProductAwemeSumList(authorId, productId, sortStr, orderBy, startTime, endTime, page, pageSize)
+	awemeList, total, err := es.NewEsVideoBusiness().NewAuthorProductAwemeSumList(authorId, productId, "", "", startTime, endTime, 1, 10000)
 	if err != nil {
+		return
+	}
+	if total == 0 {
 		return
 	}
 	for _, v := range awemeList {
@@ -764,6 +770,34 @@ func (receiver *ProductBusiness) NewProductAuthorAwemes(productId, authorId stri
 			AwemeCreateTime: v.AwemeCreateTime,
 		})
 	}
+	sort.Slice(list, func(i, j int) bool {
+		switch sortStr {
+		case "sales":
+			if orderBy == "desc" {
+				return list[i].Sales > list[j].Sales
+			} else {
+				return list[j].Sales > list[i].Sales
+			}
+		case "aweme_gmv":
+			if orderBy == "desc" {
+				return list[i].AwemeGmv > list[j].AwemeGmv
+			} else {
+				return list[j].AwemeGmv > list[i].AwemeGmv
+			}
+		default:
+			if orderBy == "desc" {
+				return list[i].AwemeCreateTime > list[j].AwemeCreateTime
+			} else {
+				return list[j].AwemeCreateTime > list[i].AwemeCreateTime
+			}
+		}
+	})
+	start := (page - 1) * pageSize
+	end := start + pageSize
+	if total < end {
+		end = total
+	}
+	list = list[start:end]
 	return
 }
 
