@@ -866,6 +866,7 @@ func (receiver *ProductController) ProductAuthorAwemes() {
 		receiver.FailReturn(comErr)
 		return
 	}
+	gainType, _ := receiver.GetInt("type", 0)
 	page := receiver.GetPage("page")
 	pageSize := receiver.GetPageSize("page_size", 5, 10)
 	sortStr := receiver.GetString("sort", "gmv")
@@ -877,8 +878,13 @@ func (receiver *ProductController) ProductAuthorAwemes() {
 		receiver.FailReturn(global.NewError(4000))
 		return
 	}
-	//list, total := business.NewProductBusiness().ProductAuthorAwemes(productId, "", authorId, startTime, endTime, sortStr, orderBy, page, pageSize)
-	list, total := business.NewProductBusiness().NewProductAuthorAwemes(productId, authorId, startTime, endTime, sortStr, orderBy, page, pageSize)
+	list := []entity.DyProductAuthorRelatedAweme{}
+	total := 0
+	if gainType == 1 {
+		list, total = business.NewProductBusiness().ProductAuthorAwemes(productId, "", authorId, startTime, endTime, sortStr, orderBy, page, pageSize)
+	} else {
+		list, total = business.NewProductBusiness().NewProductAuthorAwemes(productId, authorId, startTime, endTime, sortStr, orderBy, page, pageSize)
+	}
 	for k, v := range list {
 		list[k].AwemeCover = dyimg.Fix(v.AwemeCover)
 		list[k].AwemeId = business.IdEncrypt(v.AwemeId)
