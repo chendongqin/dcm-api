@@ -9,6 +9,7 @@ import (
 	"dongchamao/global/utils"
 	"dongchamao/models/dcm"
 	"dongchamao/models/repost/dy"
+	tencent_ad "dongchamao/services/tencentAd"
 	"github.com/astaxie/beego"
 	"github.com/astaxie/beego/logs"
 	"github.com/silenceper/wechat/v2/officialaccount/message"
@@ -254,6 +255,7 @@ func (receiver *WechatController) WechatPhone() {
 			receiver.FailReturn(global.NewError(5000))
 			return
 		}
+		tencent_ad.AddUserActionSets(userModel.Channel)
 		business.NewUserBusiness().SendUserVip(&userModel, 7)
 	}
 	//开始更新用户信息
