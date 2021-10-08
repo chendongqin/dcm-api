@@ -754,9 +754,6 @@ func (receiver *ProductBusiness) NewProductAuthorAwemes(productId, authorId stri
 	if err != nil {
 		return
 	}
-	if total == 0 {
-		return
-	}
 	for _, v := range awemeList {
 		if strings.Index(v.ProductIds, productId) < 0 {
 			continue
@@ -772,6 +769,10 @@ func (receiver *ProductBusiness) NewProductAuthorAwemes(productId, authorId stri
 			AwemeCover:      v.AwemeCover,
 			AwemeCreateTime: v.AwemeCreateTime,
 		})
+	}
+	total = len(list)
+	if total == 0 {
+		return
 	}
 	sort.Slice(list, func(i, j int) bool {
 		switch sortStr {
@@ -795,7 +796,6 @@ func (receiver *ProductBusiness) NewProductAuthorAwemes(productId, authorId stri
 			}
 		}
 	})
-	total = len(list)
 	start := (page - 1) * pageSize
 	end := start + pageSize
 	if total < end {
