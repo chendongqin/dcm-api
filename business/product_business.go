@@ -667,9 +667,6 @@ func (receiver *ProductBusiness) ProductAwemeAuthorAnalysis(productId, keyword, 
 
 func (receiver *ProductBusiness) ProductAuthorAwemes(productId, shopId, authorId string, startTime, endTime time.Time, sortStr, orderBy string, page, pageSize int) (list []entity.DyProductAuthorRelatedAweme, total int) {
 	list = []entity.DyProductAuthorRelatedAweme{}
-	if sortStr == "gmv" {
-		sortStr = "aweme_gmv"
-	}
 	//esProductBusiness := es.NewEsProductBusiness()
 	//allList, _, _ := esProductBusiness.SearchAwemeRangeDateList(productId, shopId, authorId, startTime, endTime, 1, 10000)
 	//for _, v := range allList {
