@@ -402,6 +402,8 @@ func (receiver *ProductController) ProductBase() {
 		CosRatioMoney:       productInfo.CosRatio / 100 * productInfo.Price,
 		TbCouponPrice:       productInfo.TbCouponPrice,
 		TbCouponRemainCount: productInfo.TbCouponRemainCount,
+		ContextNum:          productInfo.ContextNum,
+		DiggInfo:            productInfo.DiggInfo,
 	}
 	if simpleInfo.TbCouponRemainCount == 0 || simpleInfo.TbCouponPrice == 0 {
 		simpleInfo.TbCouponPrice = simpleInfo.Price
@@ -1120,55 +1122,6 @@ func (receiver *ProductController) ProductSpeed() {
 
 	logs.Info("产品加速，爬虫推送结果：", ret)
 	receiver.SuccReturn([]string{})
-	return
-}
-
-//商品热词
-func (receiver *ProductController) ProductWords() {
-	productId := business.IdDecrypt(receiver.Ctx.Input.Param(":product_id"))
-	info, comErr := hbase.GetProductInfo(productId)
-	if comErr != nil {
-		receiver.FailReturn(comErr)
-		return
-	}
-	if len(info.Word) == 0 {
-		info.Word = []entity.DyAuthorWord{}
-	}
-	receiver.SuccReturn(map[string]interface{}{
-		"hot_words":  info.Word,
-		"use_id_num": info.ContextNum["use_id_num"],
-		"msg_id_num": info.ContextNum["msg_id_num"],
-	})
-	return
-}
-
-func (receiver *ProductController) ProductCommentTop() {
-	productId := business.IdDecrypt(receiver.Ctx.Input.Param(":product_id"))
-	page := receiver.GetPage("page")
-	pageSize := receiver.GetPageSize("page_size", 10, 100)
-	if productId == "" {
-		receiver.FailReturn(global.NewError(4000))
-		return
-	}
-	start := (page - 1) * pageSize
-	end := page * pageSize
-	productComment, total, comErr := hbase.GetProductTopComment(productId, start, end)
-	if comErr != nil {
-		receiver.FailReturn(comErr)
-		return
-	}
-	if total > 1000 {
-		total = 1000
-	}
-	if len(productComment) == 0 {
-		productComment = []entity.DyProductCommentTop{}
-	}
-	receiver.SuccReturn(map[string]interface{}{
-		"total": total,
-		"page":  page,
-		"size":  pageSize,
-		"list":  productComment,
-	})
 	return
 }
 
