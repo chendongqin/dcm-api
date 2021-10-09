@@ -96,7 +96,7 @@ type DyAuthorRoom struct {
 
 type DyAuthorTagArtificialData struct {
 	Tags         string `json:"tags"`
-	TagsLevelTow string `json:"tags_level_tow"`
+	TagsLevelTow string `json:"tags_level_two"`
 }
 
 type DyAuthorAweme struct {
