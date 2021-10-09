@@ -23,9 +23,7 @@ type AccessToken struct {
 }
 
 func (e *AccessToken) Init(authorizationCode string) {
-	e.TAds = ads.Init(&config.SDKConfig{
-		IsDebug: true,
-	})
+	e.TAds = ads.Init(&config.SDKConfig{})
 	e.TAds.UseProduction()
 	e.ClientId, _ = global.Cfg.Int64("tencent_ad_client_id")
 	e.ClientSecret = global.Cfg.String("tencent_ad_secret")

@@ -137,7 +137,7 @@ func (receiver *CommonController) CheckSmsCode() {
 }
 
 func (receiver *CommonController) Test() {
-	tencent_ad.AddUserActionSets("0024")
+	tencent_ad.AddUserActionSets("朋友圈广告")
 	receiver.SuccReturn(nil)
 	return
 }

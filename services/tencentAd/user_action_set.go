@@ -2,7 +2,6 @@ package tencent_ad
 
 import (
 	"dongchamao/global"
-	"dongchamao/global/utils"
 	"encoding/json"
 	"fmt"
 	"github.com/tencentad/marketing-api-go-sdk/pkg/ads"
@@ -19,7 +18,7 @@ type UserActionSets struct {
 }
 
 func (e *UserActionSets) Init(name string) {
-	accountId := utils.ToInt64(global.Cfg.String("tencent_ad_account_id"))
+	accountId, _ := global.Cfg.Int64("tencent_ad_account_id")
 	e.AccessToken = GetAccessToken()
 	e.TAds = ads.Init(&config.SDKConfig{
 		AccessToken: e.AccessToken,
@@ -28,7 +27,7 @@ func (e *UserActionSets) Init(name string) {
 	e.Data = model.UserActionSetsAddRequest{
 		AccountId: &accountId,
 		Name:      &name,
-		Type_:     model.AmUserActionSetType_WEB,
+		Type_:     model.AmUserActionSetType_WECHAT,
 	}
 }
 

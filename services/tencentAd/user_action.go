@@ -2,7 +2,6 @@ package tencent_ad
 
 import (
 	"dongchamao/global"
-	"dongchamao/global/utils"
 	"encoding/json"
 	"fmt"
 	"github.com/tencentad/marketing-api-go-sdk/pkg/ads"
@@ -25,11 +24,10 @@ func (e *UserActions) Init(Channel string) {
 	)
 	CustomAction := "REGISTER"
 	UserActionSetId := int64(0)
-	accountId := utils.ToInt64(global.Cfg.String("tencent_ad_account_id"))
+	accountId, _ := global.Cfg.Int64("tencent_ad_account_id")
 	e.AccessToken = GetAccessToken()
 	e.TAds = ads.Init(&config.SDKConfig{
 		AccessToken: e.AccessToken,
-		IsDebug:     true,
 	})
 	var channelVal model.ActionChannelType
 	channelVal = model.ActionChannelType_NATURAL
