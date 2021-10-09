@@ -6,15 +6,14 @@ import (
 	"encoding/json"
 	"fmt"
 	"github.com/antihax/optional"
-	"github.com/silenceper/wechat/v2/util"
 	"github.com/tencentad/marketing-api-go-sdk/pkg/ads"
 	"github.com/tencentad/marketing-api-go-sdk/pkg/api"
 	"github.com/tencentad/marketing-api-go-sdk/pkg/config"
 	"github.com/tencentad/marketing-api-go-sdk/pkg/errors"
-	"time"
+	"log"
 )
 
-type AccessToken struct {
+type RefreshAccessToken struct {
 	TAds           *ads.SDKClient
 	AccessToken    string
 	ClientId       int64
@@ -23,20 +22,20 @@ type AccessToken struct {
 	OauthTokenOpts *api.OauthTokenOpts
 }
 
-func (e *AccessToken) Init() {
+func (e *RefreshAccessToken) Init(freshToken string) {
 	e.TAds = ads.Init(&config.SDKConfig{
 		IsDebug: true,
 	})
 	e.TAds.UseProduction()
-	e.ClientId, _ = global.Cfg.Int64("tencent_ad_client_id")
+	e.ClientId = int64(0)
 	e.ClientSecret = global.Cfg.String("tencent_ad_secret")
-	e.GrantType = "authorization_code"
+	e.GrantType = "refresh_token"
 	e.OauthTokenOpts = &api.OauthTokenOpts{
-		AuthorizationCode: optional.NewString(GetAuthorizationCode()),
+		RefreshToken: optional.NewString(freshToken),
 	}
 }
 
-func (e *AccessToken) Run() string {
+func (e *RefreshAccessToken) Run() {
 	tads := e.TAds
 	ctx := *tads.Ctx
 	response, _, err := tads.Oauth().Token(ctx, e.ClientId, e.ClientSecret, e.GrantType, e.OauthTokenOpts)
@@ -47,34 +46,23 @@ func (e *AccessToken) Run() string {
 		} else {
 			fmt.Println("Error:", err)
 		}
+	} else {
+		tads.SetAccessToken(*response.AccessToken)
 	}
-	return *response.AccessToken
-}
-
-func GetAuthorizationCode() (code string) {
-	_, _ = util.HTTPGet(fmt.Sprintf("https://developers.e.qq.com/oauth/authorize?client_id=%s&redirect_uri=%s", global.Cfg.String("28072"), global.Cfg.String("tencent_ad_url")))
-	cacheKey := cache.GetCacheKey(cache.TencentAdAuthorizationCode)
-	var flag int
-	for {
-		flag++
-		if flag > 5 {
-			break
-		}
-		code = global.Cache.Get(cacheKey)
-		time.Sleep(1)
-	}
-	return
 }
 
 func GetAccessToken() (token string) {
 	cacheKey := cache.GetCacheKey(cache.TencentAdAccessToken)
 	token = global.Cache.Get(cacheKey)
 	if token == "" {
-		e := &AccessToken{}
-		e.Init()
-		token = e.Run()
+		freshCacheKey := cache.GetCacheKey(cache.TencentAdRefreshToken)
+		freshToken := global.Cache.Get(freshCacheKey)
+		r := &RefreshAccessToken{}
+		r.Init(freshToken)
+		r.Run()
+		token = r.AccessToken
 		if err := global.Cache.Set(cacheKey, token, 86400); err != nil {
-			println("tencent_ad_token_err", err.Error())
+			log.Println("tencent_ad_token_err", err.Error())
 		}
 	}
 	return

@@ -3,10 +3,10 @@ package controllers
 import (
 	"dongchamao/business"
 	"dongchamao/global"
-	"dongchamao/global/cache"
 	"dongchamao/global/utils"
 	"dongchamao/models/dcm"
 	"dongchamao/services/payer"
+	tencent_ad "dongchamao/services/tencentAd"
 	"github.com/astaxie/beego/logs"
 	"github.com/go-pay/gopay/alipay"
 	"net/http"
@@ -140,11 +140,8 @@ func (receiver *CallbackController) AlipayNotify() {
 
 //腾讯广告authCode回调
 func (receiver *CallbackController) TencentAdAuth() {
-	cacheKey := cache.GetCacheKey(cache.TencentAdAuthorizationCode)
-	code := receiver.GetString("authorization_code")
-	if err := global.Cache.Set(cacheKey, code, 300); err != nil {
-		println("tencent_ad_callback", err.Error())
-		return
-	}
+	e := &tencent_ad.AccessToken{}
+	e.Init(receiver.GetString("authorization_code"))
+	e.Run()
 	return
 }
