@@ -1057,6 +1057,7 @@ func (receiver *EsLiveBusiness) ScanLiveProductByAuthor(authorId, keyword, categ
 		SetCache(300).
 		AddMust(esQuery.Condition).
 		SetLimit((page-1)*pageSize, pageSize).
+		SetOrderBy(elasticsearch.NewElasticOrder().Add("shelf_time", "desc").Order).
 		SetMultiQuery().
 		Query()
 	utils.MapToStruct(results, &list)

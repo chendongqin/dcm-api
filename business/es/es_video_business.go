@@ -326,6 +326,7 @@ func (e *EsVideoBusiness) ScanAwemeProductByAuthor(authorId, keyword, category, 
 		SetCache(300).
 		AddMust(esQuery.Condition).
 		SetLimit((page-1)*pageSize, pageSize).
+		SetOrderBy(elasticsearch.NewElasticOrder().Add("aweme_create_time", "desc").Order).
 		SetMultiQuery().
 		Query()
 	utils.MapToStruct(results, &list)
@@ -412,6 +413,43 @@ func (e *EsVideoBusiness) AuthorProductAwemeSumList(authorId, productId, shopId,
 	res := elasticsearch.GetBuckets(results, "awemes")
 	utils.MapToStruct(res, &list)
 	total = elasticsearch.GetBucketsCount(results, "count")
+	return
+}
+
+func (e *EsVideoBusiness) NewAuthorProductAwemeSumList(authorId, sortStr, orderBy string, startTime, endTime time.Time, page, pageSize int) (list []es.DyAweme, total int, comErr global.CommonError) {
+	esTable, connection, err := GetESTableByTime(es.DyVideoTable, startTime, endTime)
+	if err != nil {
+		comErr = global.NewError(4000)
+		return
+	}
+	if orderBy == "" {
+		orderBy = "desc"
+	}
+	if sortStr == "" {
+		sortStr = "aweme_create_time"
+	}
+	esQuery, esMultiQuery := elasticsearch.NewElasticQueryGroup()
+	esQuery.SetRange("aweme_create_time", map[string]interface{}{
+		"gte": startTime.Unix(),
+		"lt":  endTime.AddDate(0, 0, 1).Unix(),
+	})
+	if authorId != "" {
+		esQuery.SetTerm("author_id", authorId)
+	}
+	//if productId != "" {
+	//	esQuery.SetMatchPhrase("product_ids", productId)
+	//}
+	results := esMultiQuery.
+		SetConnection(connection).
+		SetTable(esTable).
+		SetCache(600).
+		AddMust(esQuery.Condition).
+		SetOrderBy(elasticsearch.NewElasticOrder().Add(sortStr, orderBy).Order).
+		SetLimit((page-1)*pageSize, pageSize).
+		SetMultiQuery().
+		Query()
+	utils.MapToStruct(results, &list)
+	total = esMultiQuery.Count
 	return
 }
 

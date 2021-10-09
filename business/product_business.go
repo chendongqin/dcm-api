@@ -676,13 +676,22 @@ func (receiver *ProductBusiness) ProductAuthorAwemes(productId, shopId, authorId
 	//		list = append(list, data.RelatedAwemes...)
 	//	}
 	//}
-	sumList, total, err := es.NewEsVideoBusiness().AuthorProductAwemeSumList(authorId, productId, shopId, sortStr, orderBy, startTime, endTime, page, pageSize)
+	sumList, total, err := es.NewEsVideoBusiness().AuthorProductAwemeSumList(authorId, productId, shopId, sortStr, orderBy, startTime, endTime, 1, 1000)
 	if err != nil {
+		return
+	}
+	if total == 0 {
 		return
 	}
 	awemeIds := []string{}
 	awemeGmvMap := map[string]float64{}
 	awemeSalesMap := map[string]int64{}
+	start := (page - 1) * pageSize
+	end := start + pageSize
+	if total < end {
+		end = total
+	}
+	sumList = sumList[start:end]
 	for _, v := range sumList {
 		awemeIds = append(awemeIds, v.Key)
 		awemeGmvMap[v.Key] = v.TotalGmv.Value
@@ -739,6 +748,66 @@ func (receiver *ProductBusiness) ProductAuthorAwemes(productId, shopId, authorId
 	//	end = total
 	//}
 	//list = list[start:end]
+	return
+}
+
+func (receiver *ProductBusiness) NewProductAuthorAwemes(productId, authorId string, startTime, endTime time.Time, sortStr, orderBy string, page, pageSize int) (list []entity.DyProductAuthorRelatedAweme, total int) {
+	list = []entity.DyProductAuthorRelatedAweme{}
+	if sortStr == "gmv" {
+		sortStr = "aweme_gmv"
+	}
+	awemeList, _, err := es.NewEsVideoBusiness().NewAuthorProductAwemeSumList(authorId, "", "", startTime, endTime, 1, 10000)
+	if err != nil {
+		return
+	}
+	for _, v := range awemeList {
+		if strings.Index(v.ProductIds, productId) < 0 {
+			continue
+		}
+		list = append(list, entity.DyProductAuthorRelatedAweme{
+			CommentCount:    v.CommentCount,
+			AwemeTitle:      v.AwemeTitle,
+			AwemeId:         v.AwemeId,
+			Sales:           v.Sales,
+			AwemeGmv:        v.AwemeGmv,
+			DiggCount:       v.DiggCount,
+			ForwardCount:    v.ShareCount,
+			AwemeCover:      v.AwemeCover,
+			AwemeCreateTime: v.AwemeCreateTime,
+		})
+	}
+	total = len(list)
+	if total == 0 {
+		return
+	}
+	sort.Slice(list, func(i, j int) bool {
+		switch sortStr {
+		case "sales":
+			if orderBy == "desc" {
+				return list[i].Sales > list[j].Sales
+			} else {
+				return list[j].Sales > list[i].Sales
+			}
+		case "aweme_gmv":
+			if orderBy == "desc" {
+				return list[i].AwemeGmv > list[j].AwemeGmv
+			} else {
+				return list[j].AwemeGmv > list[i].AwemeGmv
+			}
+		default:
+			if orderBy == "desc" {
+				return list[i].AwemeCreateTime > list[j].AwemeCreateTime
+			} else {
+				return list[j].AwemeCreateTime > list[i].AwemeCreateTime
+			}
+		}
+	})
+	start := (page - 1) * pageSize
+	end := start + pageSize
+	if total < end {
+		end = total
+	}
+	list = list[start:end]
 	return
 }
 

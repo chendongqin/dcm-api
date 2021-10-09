@@ -24,6 +24,8 @@ const (
 	//用户Platform的唯一token
 	UserPlatformUniqueToken KeyName = "dcm:user:unique:token:%d:%d" //userId, platformId
 	UserActionLockKey       KeyName = "dcm:user:action:lock:%d"     //userId
+	//达人
+	AuthorLiveMap KeyName = "dcm:author:map:%s"
 	//直播间商品分类数据缓存
 	LiveRoomProductCount     KeyName = "dcm:live:room:product:count:%s"
 	ProductAuthorCount       KeyName = "dcm:product:author:%s:%s:%s"
