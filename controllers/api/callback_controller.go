@@ -141,7 +141,9 @@ func (receiver *CallbackController) AlipayNotify() {
 //腾讯广告authCode回调
 func (receiver *CallbackController) TencentAdAuth() {
 	e := &tencent_ad.AccessToken{}
-	e.Init(receiver.GetString("authorization_code"))
+	authorizationCode := receiver.GetString("authorization_code")
+	business.NewMonitorBusiness().SendErr("腾讯广告归因回调authorizationCode:", authorizationCode)
+	e.Init(authorizationCode)
 	e.Run()
 	return
 }

@@ -1,9 +1,11 @@
 package tencent_ad
 
 import (
+	"dongchamao/business"
 	"dongchamao/global"
 	"dongchamao/global/cache"
 	"encoding/json"
+	"fmt"
 	"github.com/antihax/optional"
 	"github.com/tencentad/marketing-api-go-sdk/pkg/ads"
 	"github.com/tencentad/marketing-api-go-sdk/pkg/api"
@@ -30,6 +32,7 @@ func (e *AccessToken) Init(authorizationCode string) {
 	e.ClientId, _ = global.Cfg.Int64("tencent_ad_client_id")
 	e.ClientSecret = global.Cfg.String("tencent_ad_secret")
 	e.GrantType = "authorization_code"
+	business.NewMonitorBusiness().SendErr("腾讯广告归因回调AccessToken:", fmt.Sprintf("ClientId:%v\n,ClientSecret:%v\n,tencent_ad_url:%v\n,", e.ClientId, e.ClientSecret, global.Cfg.String("tencent_ad_url")))
 	e.OauthTokenOpts = &api.OauthTokenOpts{
 		AuthorizationCode: optional.NewString(authorizationCode),
 		RedirectUri:       optional.NewString(global.Cfg.String("tencent_ad_url")),
@@ -48,6 +51,8 @@ func (e *AccessToken) Run() {
 			log.Println("Error:", err)
 		}
 	}
+	jsonStr, _ := json.Marshal(response)
+	business.NewMonitorBusiness().SendErr("腾讯广告归因回调response:", string(jsonStr))
 	freshCacheKey := cache.GetCacheKey(cache.TencentAdRefreshToken)
 	cacheKey := cache.GetCacheKey(cache.TencentAdAccessToken)
 	if err := global.Cache.Set(cacheKey, *response.AccessToken, time.Duration(*response.AccessTokenExpiresIn)*time.Second); err != nil {
