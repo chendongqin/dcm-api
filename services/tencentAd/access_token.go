@@ -5,14 +5,12 @@ import (
 	"dongchamao/global"
 	"dongchamao/global/cache"
 	"encoding/json"
-	"fmt"
 	"github.com/antihax/optional"
 	"github.com/tencentad/marketing-api-go-sdk/pkg/ads"
 	"github.com/tencentad/marketing-api-go-sdk/pkg/api"
 	"github.com/tencentad/marketing-api-go-sdk/pkg/config"
 	"github.com/tencentad/marketing-api-go-sdk/pkg/errors"
 	"log"
-	"time"
 )
 
 type AccessToken struct {
@@ -32,7 +30,6 @@ func (e *AccessToken) Init(authorizationCode string) {
 	e.ClientId, _ = global.Cfg.Int64("tencent_ad_client_id")
 	e.ClientSecret = global.Cfg.String("tencent_ad_secret")
 	e.GrantType = "authorization_code"
-	business.NewMonitorBusiness().SendErr("腾讯广告归因回调AccessToken:", fmt.Sprintf("ClientId:%v\n,ClientSecret:%v\n,tencent_ad_url:%v\n,", e.ClientId, e.ClientSecret, global.Cfg.String("tencent_ad_url")))
 	e.OauthTokenOpts = &api.OauthTokenOpts{
 		AuthorizationCode: optional.NewString(authorizationCode),
 		RedirectUri:       optional.NewString(global.Cfg.String("tencent_ad_url")),
@@ -51,15 +48,13 @@ func (e *AccessToken) Run() {
 			log.Println("Error:", err)
 		}
 	}
-	jsonStr, _ := json.Marshal(response)
-	business.NewMonitorBusiness().SendErr("腾讯广告归因回调response:", string(jsonStr))
 	freshCacheKey := cache.GetCacheKey(cache.TencentAdRefreshToken)
 	cacheKey := cache.GetCacheKey(cache.TencentAdAccessToken)
-	if err := global.Cache.Set(cacheKey, *response.AccessToken, time.Duration(*response.AccessTokenExpiresIn)*time.Second); err != nil {
-		log.Println("tencent_ad_fresh_token_err", err.Error())
+	if err := global.Cache.Set(cacheKey, *response.AccessToken, 86400); err != nil {
+		business.NewMonitorBusiness().SendErr("tencent_ad_fresh_token_err:", err.Error())
 	}
-	if err := global.Cache.Set(freshCacheKey, *response.RefreshToken, time.Duration(*response.RefreshTokenExpiresIn)*time.Second); err != nil {
-		log.Println("tencent_ad_token_err", err.Error())
+	if err := global.Cache.Set(freshCacheKey, *response.RefreshToken, 999999999); err != nil {
+		business.NewMonitorBusiness().SendErr("tencent_ad_token_err:", err.Error())
 	}
 	return
 }
