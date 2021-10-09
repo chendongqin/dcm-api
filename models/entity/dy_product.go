@@ -40,13 +40,14 @@ var DyProductMap = HbaseEntity{
 	"price_trends":           {AJson, "price_trends"},
 	"other_manmade_category": {Json, "manmade_category"},
 	//粉丝分析数据
-	"gender":           {AJson, "gender"},
-	"province":         {AJson, "province"},
-	"city":             {AJson, "city"},
-	"word":             {AJson, "word"},
-	"context_num":      {Json, "context_num"},
-	"ageDistrinbution": {AJson, "age_distrinbution"},
-	"ai_category":      {Json, "ai_category"},
+	"gender":            {AJson, "gender"},
+	"province":          {AJson, "province"},
+	"city":              {AJson, "city"},
+	"word":              {AJson, "word"},
+	"context_num":       {AJson, "context_num"},
+	"digg_info":         {AJson, "digg_info"},
+	"age_distrinbution": {AJson, "age_distrinbution"},
+	"ai_category":       {Json, "ai_category"},
 	//"tb_small_images":        {AJson, "tb_small_images"},
 }
 
@@ -112,9 +113,15 @@ type DyProduct struct {
 	City             []DyAuthorFansCity     `json:"city"`
 	AgeDistrinbution []DyAuthorFansAge      `json:"age_distrinbution"`
 	//弹幕热词
-	Word       []DyAuthorWord   `json:"word"`
-	ContextNum map[string]int64 `json:"context_num"`
+	Word       []DyAuthorWord `json:"word"`
+	ContextNum []ContextNum   `json:"context_num"`
+	DiggInfo   []DiggInfo     `json:"digg_info"`
 	//TbSmallImages       []interface{} `json:"tb_small_images"`
+}
+
+type ContextNum struct {
+	UseIdNum string `json:"use_id_num"`
+	MsgIdNum string `json:"msg_id_num"`
 }
 
 type DyAuthorWord struct {
@@ -130,4 +137,13 @@ type DyProductManmadeCategory struct {
 	FirstCname  string `json:"first_cname"`
 	SecondCname string `json:"second_cname"`
 	ThirdCname  string `json:"third_cname"`
+}
+
+type DiggInfo struct {
+	DiggCount  string `json:"digg_count"`
+	Cid        string `json:"cid"`
+	Text       string `json:"text"`
+	CreateTime string `json:"create_time"`
+	AwemeCover string `json:"aweme_cover"`
+	TagName    string `json:"tag_name"`
 }
