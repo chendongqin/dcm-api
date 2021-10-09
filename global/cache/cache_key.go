@@ -62,6 +62,6 @@ const (
 	AmountExpireWechatNotice KeyName = "dcm:cmd:account:expire:notice:%d" //天数
 
 	//腾讯广告
-	TencentAdAuthorizationCode KeyName = "dcm:tencent:ad:code"
-	TencentAdAccessToken       KeyName = "dcm:tencent:ad:token"
+	TencentAdAccessToken  KeyName = "dcm:tencent:ad:token"
+	TencentAdRefreshToken KeyName = "dcm:tencent:ad:fresh"
 )
