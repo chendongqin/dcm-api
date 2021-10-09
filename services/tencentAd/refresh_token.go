@@ -23,9 +23,7 @@ type RefreshAccessToken struct {
 }
 
 func (e *RefreshAccessToken) Init(freshToken string) {
-	e.TAds = ads.Init(&config.SDKConfig{
-		IsDebug: true,
-	})
+	e.TAds = ads.Init(&config.SDKConfig{})
 	e.TAds.UseProduction()
 	e.ClientId = int64(0)
 	e.ClientSecret = global.Cfg.String("tencent_ad_secret")
