@@ -4,12 +4,15 @@ import (
 	"dongchamao/business"
 	"dongchamao/controllers/api"
 	"dongchamao/global"
+	"dongchamao/global/logger"
 	"dongchamao/global/utils"
 	"dongchamao/models/dcm"
 	"dongchamao/models/repost"
 	"dongchamao/models/repost/dy"
 	"dongchamao/services/payer"
+	"encoding/json"
 	"fmt"
+	"github.com/astaxie/beego/logs"
 	jsoniter "github.com/json-iterator/go"
 	"math"
 	"net/url"
@@ -92,6 +95,8 @@ func (receiver *PayController) CreateDyOrder() {
 	}
 	InputData := receiver.InputFormat()
 	orderType := InputData.GetInt("order_type", 0)
+	iosPayProductId := InputData.GetString("ios_pay_product_id", "")
+	iosPayProductNum := InputData.GetInt("ios_pay_product_num", 0)
 	referrer := InputData.GetString("referrer", "")
 	groupPeople := InputData.GetInt("group_people", 0)
 	buyDays := InputData.GetInt("days", 0)
@@ -172,7 +177,9 @@ func (receiver *PayController) CreateDyOrder() {
 	title := fmt.Sprintf("专业版%d天", buyDays)
 	var amount float64 = 0
 	orderInfo := repost.VipOrderInfo{
-		SurplusValue: surplusValue,
+		SurplusValue:     surplusValue,
+		IosPayProductId:  iosPayProductId,
+		IosPayProductNum: iosPayProductNum,
 	}
 	if utils.InArrayInt(orderType, []int{2, 3, 4}) {
 		//先续费再购买
@@ -459,6 +466,94 @@ func (receiver *PayController) AliPay() {
 	receiver.SuccReturn(map[string]interface{}{
 		"pay_param": payParam,
 	})
+	return
+}
+
+//苹果内购
+func (receiver *PayController) IosPay() {
+	receipt := receiver.InputFormat().GetString("receipt", "")
+	orderId := receiver.InputFormat().GetInt("order_id", 0)
+	if orderId == 0 {
+		receiver.FailReturn(global.NewError(4000))
+		return
+	}
+	vipOrder := dcm.DcVipOrder{}
+	exist, _ := dcm.Get(orderId, &vipOrder)
+	if !exist {
+		receiver.FailReturn(global.NewError(4000))
+		return
+	}
+	if vipOrder.PayStatus == 1 || vipOrder.PayStatus == 2 {
+		receiver.FailReturn(global.NewError(4000))
+		return
+	}
+	appleVerifyUrlProd := "https://buy.itunes.apple.com/verifyReceipt"
+	appleVerifyUrlTest := "https://sandbox.itunes.apple.com/verifyReceipt"
+
+	params := map[string]string{"receipt-data": receipt}
+	paramStr, _ := json.Marshal(params)
+
+	jsonObj, err := utils.Curl(appleVerifyUrlProd, "POST", string(paramStr), "application/json")
+	if err != nil {
+		business.NewMonitorBusiness().SendErr("苹果支付错误:prod", err.Error())
+		logger.Error("苹果支付错误", err)
+		receiver.FailReturn(global.NewError(5000))
+		return
+	}
+	status, _ := jsonObj.Get("status").Int()
+	productNum, _ := jsonObj.Get("quantity").String()
+	productId, _ := jsonObj.Get("product_id").String()
+	if status == 21007 {
+		jsonObj, err = utils.Curl(appleVerifyUrlTest, "POST", string(paramStr), "application/json")
+		if err != nil {
+			business.NewMonitorBusiness().SendErr("苹果支付错误:dev", err.Error())
+			logger.Error("苹果支付错误", err)
+			receiver.FailReturn(global.NewError(5000))
+			return
+		}
+		status, _ = jsonObj.Get("status").Int()
+	}
+	if status != 0 {
+		receiver.FailReturn(global.NewError(4000))
+		return
+	}
+	orderIfo := repost.VipOrderInfo{}
+	_ = jsoniter.Unmarshal([]byte(vipOrder.GoodsInfo), &orderIfo)
+	if orderIfo.IosPayProductNum != utils.ToInt(productNum) || orderIfo.IosPayProductId != productId {
+		business.NewMonitorBusiness().SendErr("苹果支付错误", fmt.Sprintf("%v", jsonObj))
+		logger.Error("苹果支付错误", jsonObj)
+		receiver.FailReturn(global.NewError(4000))
+		return
+	}
+	payTimestampString, _ := jsonObj.Get("purchase_date_ms").String()
+	payTimestamp := utils.ToInt64(payTimestampString) / 1000
+	payTime := time.Unix(payTimestamp, 0)
+	if payTimestamp <= 0 {
+		payTime = time.Now()
+	}
+	updateData := map[string]interface{}{
+		"pay_status":     1,
+		"status":         1,
+		"pay_type":       "ios_pay",
+		"inter_trade_no": "",
+		"pay_time":       payTime.Format("2006-01-02 15:04:05"),
+	}
+	affect, err2 := dcm.UpdateInfo(nil, vipOrder.Id, updateData, new(dcm.DcVipOrder))
+	if affect == 0 || err2 != nil {
+		logs.Error("微信支付更新失败：", vipOrder.Id, updateData, err2)
+		receiver.FailReturn(global.NewError(5000))
+		return
+	}
+	payBusiness := business.NewPayBusiness()
+	if vipOrder.Platform == "douyin" {
+		doRes := payBusiness.DoPayDyCallback(vipOrder)
+		if !doRes {
+			logs.Error("会员数据更新失败：", vipOrder.Id)
+			receiver.FailReturn(global.NewError(5000))
+			return
+		}
+	}
+	receiver.SuccReturn(nil)
 	return
 }
 
