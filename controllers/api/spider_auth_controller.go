@@ -3,7 +3,8 @@ package controllers
 import (
 	"dongchamao/business"
 	"dongchamao/global"
-	"fmt"
+	"dongchamao/models/dcm"
+	"time"
 )
 
 type SpiderAuthController struct {
@@ -37,6 +38,9 @@ func (this *SpiderAuthController) GetQrCodeMcn() {
 //扫完码  用token获取用户信息
 func (this *SpiderAuthController) CheckQrConnectMcn() {
 	InputDatas := this.InputFormat()
+	dbSession := dcm.GetDbSession()
+	dySpiderAuthScan := business.NewDySpiderAuthScan()
+	defer dbSession.Close()
 	token := InputDatas.GetString("token", "")
 	csrfToken := InputDatas.GetString("csrf_token", "")
 	codeIP := InputDatas.GetString("code_ip", "")
@@ -47,21 +51,22 @@ func (this *SpiderAuthController) CheckQrConnectMcn() {
 		return
 	}
 
-	userInfo, _ := business.NewDySpiderAuthScan().SetCookie(cookies).GetUserInfo()
-	fmt.Println(userInfo)
-	//
-	//auth := douyinmodelsV2.NewSvDySpiderOauth()
-	//auth.DyUid = userInfo.Uid
-	//auth.NickName = userInfo.Nickname
-	//auth.AvatarUrl = userInfo.AvatarThumb
-	//auth.ShortId = userInfo.ShortId
-	//auth.NickName = userInfo.Nickname
-	//auth.Cookies = douyinmodelsV2.NewSvDyCreatorOauthModel().CookieToString(cookies)
-	//auth.SessionId = douyinmodelsV2.NewSvDySpiderOauth().GetSessionId(cookies)
-	//exist := auth.AddOrUpdate()
-	//if exist {
-	//	this.FailReturn(global.NewMsgError("用户已绑定过"))
-	//}
+	userInfo, _ := dySpiderAuthScan.SetCookie(cookies).GetUserInfo()
 
-	this.SuccReturn(userInfo)
+	auth := &dcm.DySpiderAuth{}
+	auth.Uid = userInfo.Uid
+	auth.Nickname = userInfo.Nickname
+	auth.Cookies = dySpiderAuthScan.CookieToString(cookies)
+	auth.Sessionid = dySpiderAuthScan.GetSessionId(cookies)
+	exist, _ := dbSession.Table(auth).Where("uid = ?", auth.Uid).Exist()
+	if exist == false {
+		auth.CreateTime = time.Now()
+		_, _ = dbSession.Insert(auth)
+	} else {
+		auth.UpdateTime = time.Now()
+		_, _ = dbSession.Where("uid = ?", auth.Uid).Update(auth)
+		this.FailReturn(global.NewMsgError("用户已绑定过"))
+	}
+	this.SuccReturn("ok")
+
 }
