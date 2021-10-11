@@ -23,6 +23,7 @@ type DyShopProductAnalysis struct {
 	CommissionRate float64 `json:"commission_rate"`
 	Gmv            float64 `json:"gmv"`
 	Sales          int64   `json:"sales"`
+	ProductStatus  int `json:"product_status"`
 	MonthPvCount   int64   `json:"month_pv_count"`
 	MonthCvr       float64 `json:"month_cvr"`
 	FirstCname     string  `json:"first_cname"`
