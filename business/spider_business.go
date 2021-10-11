@@ -81,15 +81,21 @@ func (this *DySpiderAuthScan) SetCookie(cookies []*http.Cookie) *DySpiderAuthSca
 	return this
 }
 
-//func (this *DySpiderScan) SetCookieById(dyUid string) *DySpiderScan {
-//	this.cookies, this.cookieStr = douyinmodelsV2.NewSvDyCreatorOauthModel().GetCookies(dyUid)
-//	return this
-//}
-//
-//func (this *DySpiderScan) SetCookieByOauthId(oauthId string) *DySpiderScan {
-//	this.cookies = douyinmodelsV2.NewSvDyCreatorOauthModel().GetCookiesWithOauthId(oauthId)
-//	return this
-//}
+func (this *DySpiderAuthScan) CookieToString(cookies []*http.Cookie) (cookieStr string) {
+	for _, c := range cookies {
+		cookieStr += c.String() + ";"
+	}
+	return
+}
+
+func (this *DySpiderAuthScan) GetSessionId(cookies []*http.Cookie) string {
+	for _, c := range cookies {
+		if c.Name == "sessionid" {
+			return c.Value
+		}
+	}
+	return ""
+}
 
 func GetH5UserAgent() string {
 	rand.Seed(time.Now().Unix())
