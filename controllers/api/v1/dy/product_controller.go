@@ -293,7 +293,7 @@ func (receiver *ProductController) ProductBaseAnalysis() {
 	sort.Slice(orderList, func(i, j int) bool {
 		return orderList[i].Date > orderList[j].Date
 	})
-	if len(orderList) > 0 {
+	if gpmNum > 0 {
 		countData.Gpm = utils.FriendlyFloat64(countData.Gpm / gpmNum)
 	}
 	receiver.SuccReturn(map[string]interface{}{
