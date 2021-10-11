@@ -11,6 +11,7 @@ import (
 	"dongchamao/services/dyimg"
 	"fmt"
 	"log"
+	"math"
 	"strconv"
 	"strings"
 	"time"
@@ -54,8 +55,9 @@ func (receiver *CollectBusiness) GetDyCollect(tagId, collectType int, keywords, 
 	switch collectType {
 	case 1:
 		data := make([]repost.CollectAuthorRet, len(collects))
-		startTime := time.Now().AddDate(0, 0, -31)
-		yesterday := time.Now().AddDate(0, 0, -1)
+		todayTime, _ := time.ParseInLocation("20060102", time.Now().Format("20060102"), time.Local)
+		startTime := todayTime.AddDate(0, 0, -31)
+		yesterday := todayTime.AddDate(0, 0, -1)
 		for k, v := range collects {
 			data[k].DcUserDyCollect = v
 			data[k].DcUserDyCollect.CollectId = IdEncrypt(v.CollectId)
@@ -67,17 +69,15 @@ func (receiver *CollectBusiness) GetDyCollect(tagId, collectType int, keywords, 
 			data[k].Avatar = dyimg.Avatar(dyAuthor.Data.Avatar)
 		}
 		liveSumData := es.NewEsLiveBusiness().SumDataByAuthors(collectIds, startTime, yesterday)
+		videoSumData := es.NewEsVideoBusiness().SumDiggByAuthors(collectIds, startTime, yesterday)
 		for k, v := range collects {
-			authorBase, comErr := NewAuthorBusiness().HbaseGetAuthor(v.CollectId)
 			if comErr != nil {
 				return nil, 0, comErr
 			}
 			//近30日场均销售额
 			data[k].Predict7Gmv = utils.FriendlyFloat64(liveSumData[v.CollectId].TotalGmv.Avg)
 			//近30日视频平均点赞
-			if authorBase.AwemeCount != 0 {
-				data[k].Predict7Digg = float64(authorBase.DiggCount) / float64(authorBase.AwemeCount)
-			}
+			data[k].Predict7Digg = math.Floor(videoSumData[v.CollectId])
 		}
 		return data, total, nil
 	case 2:

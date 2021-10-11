@@ -29,6 +29,11 @@ type DyLiveSumCount struct {
 	TotalGmv   EsSumStats `json:"total_gmv"`
 }
 
+type DyAwemeDiggCount struct {
+	Key       string     `json:"key"`
+	TotalDigg EsSumStats `json:"total_digg"`
+}
+
 type EsSumStats struct {
 	Count int     `json:"count"`
 	Min   float64 `json:"min"`

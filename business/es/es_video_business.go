@@ -195,6 +195,57 @@ func (e *EsVideoBusiness) SumDataByAuthor(authorId string, startTime, endTime ti
 	return
 }
 
+//统计销售额
+func (e *EsVideoBusiness) SumDiggByAuthors(authorIds []string, startTime, endTime time.Time) (countData map[string]float64) {
+	esQuery, esMultiQuery := elasticsearch.NewElasticQueryGroup()
+	esQuery.SetRange("aweme_create_time", map[string]interface{}{
+		"gte": startTime.Unix(),
+		"lt":  endTime.AddDate(0, 0, 1).Unix(),
+	})
+	esQuery.SetTerms("author_id", authorIds)
+	esQuery.SetTerm("exist", 1)
+	esTable, connection, err := GetESTableByTime(es.DyVideoTable, startTime, endTime)
+	if err != nil {
+		return
+	}
+	countResult := esMultiQuery.
+		SetCache(300).
+		SetConnection(connection).
+		SetTable(esTable).
+		SetMust(esQuery.Condition).
+		RawQuery(map[string]interface{}{
+			"query": map[string]interface{}{
+				"bool": map[string]interface{}{
+					"must": esQuery.Condition,
+				},
+			},
+			"size": 0,
+			"aggs": map[string]interface{}{
+				"videos": map[string]interface{}{
+					"terms": map[string]interface{}{
+						"field": "author_id.keyword",
+						"size":  100000,
+					},
+					"aggs": map[string]interface{}{
+						"total_digg": map[string]interface{}{
+							"stats": map[string]interface{}{
+								"field": "digg_count",
+							},
+						},
+					},
+				},
+			},
+		})
+	res := elasticsearch.GetBuckets(countResult, "videos")
+	var dataMap []es.DyAwemeDiggCount
+	countData = make(map[string]float64)
+	utils.MapToStruct(res, &dataMap)
+	for _, v := range dataMap {
+		countData[v.Key] = v.TotalDigg.Avg
+	}
+	return
+}
+
 //查询带货视频数
 func (e *EsVideoBusiness) CountAwemeByAuthor(authorId string, hasProduct int, startTime, endTime time.Time) (int64, error) {
 	esQuery, esMultiQuery := elasticsearch.NewElasticQueryGroup()
