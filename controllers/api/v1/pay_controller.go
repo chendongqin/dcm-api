@@ -13,6 +13,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"github.com/astaxie/beego/logs"
+	"github.com/bitly/go-simplejson"
 	jsoniter "github.com/json-iterator/go"
 	"math"
 	"net/url"
@@ -204,7 +205,29 @@ func (receiver *PayController) CreateDyOrder() {
 		orderInfo.Title = "会员购买"
 		remark = price.ActiveComment
 		if iosPayProductId != "" {
-			//iosPayConfig := business.GetConfig("")
+			iosPayConfig := business.GetConfig("ios")
+			confMap := map[string]interface{}{}
+			_ = jsoniter.Unmarshal([]byte(iosPayConfig), &confMap)
+			buyday := 0
+			for k, v := range confMap {
+				if utils.ToString(v) == iosPayProductId {
+					switch k {
+					case "month":
+						buyday = 30
+					case "first_m":
+						buyday = 30
+					case "halfyear":
+						buyday = 180
+					case "year":
+						buyday = 365
+					}
+				}
+			}
+			buyday = buyday * iosPayProductNum
+			if buyday != buyDays {
+				receiver.FailReturn(global.NewError(4000))
+				return
+			}
 			orderInfo.IosPayProductId = iosPayProductId
 			orderInfo.IosPayProductNum = iosPayProductNum
 		}
@@ -309,10 +332,25 @@ func (receiver *PayController) CreateDyMonitorOrder() {
 	}
 	title := fmt.Sprintf("购买直播监控%d次", number)
 	orderInfo := repost.VipOrderInfo{
-		Title:            title,
-		MonitorNum:       number,
-		IosPayProductId:  iosPayProductId,
-		IosPayProductNum: iosPayProductNum,
+		Title:      title,
+		MonitorNum: number,
+	}
+	if iosPayProductId != "" {
+		iosPayConfig := business.GetConfig("ios")
+		confMap := map[string]interface{}{}
+		_ = jsoniter.Unmarshal([]byte(iosPayConfig), &confMap)
+		buyKey := ""
+		for k, v := range confMap {
+			if utils.ToString(v) == iosPayProductId {
+				buyKey = k
+			}
+		}
+		if buyKey != fmt.Sprintf("monitor_%d", number) {
+			receiver.FailReturn(global.NewError(4000))
+			return
+		}
+		orderInfo.IosPayProductId = iosPayProductId
+		orderInfo.IosPayProductNum = iosPayProductNum
 	}
 	uniqueID, _ := utils.Snow.GetSnowflakeId()
 	tradeNo := fmt.Sprintf("%s%d", time.Now().Format("060102"), uniqueID)
@@ -508,8 +546,6 @@ func (receiver *PayController) IosPay() {
 		return
 	}
 	status, _ := jsonObj.Get("status").Int()
-	productNum, _ := jsonObj.Get("quantity").Int()
-	productId, _ := jsonObj.Get("product_id").String()
 	if global.IsDev() {
 		if status == 21007 {
 			jsonObj, err = utils.Curl(appleVerifyUrlTest, "POST", string(paramStr), "application/json")
@@ -526,15 +562,44 @@ func (receiver *PayController) IosPay() {
 		receiver.FailReturn(global.NewError(4000))
 		return
 	}
+	bundleList := []string{
+		"com.weituo.dongcham",
+	}
+	bundleId, _ := jsonObj.Get("receipt").Get("bundle_id").String()
+	if !utils.InArray(bundleId, bundleList) {
+		receiver.FailReturn(global.NewError(4000))
+		return
+	}
+	inApp, _ := jsonObj.Get("receipt").Get("in_app").Array()
+	productCount := len(inApp)
+	if productCount == 0 {
+		receiver.FailReturn(global.NewError(4000))
+		return
+	}
+	var productObj *simplejson.Json
+	var maxDateMs int64 = 0
+	//获取最近一个订单
+	for i := 0; i < productCount; i++ {
+		pObj := jsonObj.Get("receipt").Get("in_app").GetIndex(i)
+		dateMsStr, _ := pObj.Get("purchase_date_ms").String()
+		dateMs := utils.ParseInt64String(dateMsStr)
+		if dateMs > maxDateMs {
+			maxDateMs = dateMs
+			productObj = pObj
+		}
+	}
+	productNum, _ := productObj.Get("quantity").String()
+	productId, _ := productObj.Get("product_id").String()
+	transactionId, _ := productObj.Get("transaction_id").String()
 	orderIfo := repost.VipOrderInfo{}
 	_ = jsoniter.Unmarshal([]byte(vipOrder.GoodsInfo), &orderIfo)
-	if orderIfo.IosPayProductNum != productNum || orderIfo.IosPayProductId != productId {
+	if orderIfo.IosPayProductNum != utils.ToInt(productNum) || orderIfo.IosPayProductId != productId {
 		business.NewMonitorBusiness().SendErr("苹果支付错误", fmt.Sprintf("%v", jsonObj))
 		logger.Error("苹果支付错误", jsonObj)
 		receiver.FailReturn(global.NewError(4000))
 		return
 	}
-	payTimestampString, _ := jsonObj.Get("purchase_date_ms").String()
+	payTimestampString, _ := productObj.Get("purchase_date_ms").String()
 	payTimestamp := utils.ToInt64(payTimestampString) / 1000
 	payTime := time.Unix(payTimestamp, 0)
 	if payTimestamp <= 0 {
@@ -544,7 +609,7 @@ func (receiver *PayController) IosPay() {
 		"pay_status":     1,
 		"status":         1,
 		"pay_type":       "ios_pay",
-		"inter_trade_no": "",
+		"inter_trade_no": transactionId,
 		"ios_receipt":    receipt,
 		"pay_time":       payTime.Format("2006-01-02 15:04:05"),
 	}
