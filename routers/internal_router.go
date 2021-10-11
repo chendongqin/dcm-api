@@ -37,6 +37,10 @@ func init() {
 			beego.NSRouter("/id/:id", &controllers.InternalController{}, "get:IdEncryptDecrypt"),
 			beego.NSRouter("/json", &controllers.InternalController{}, "post:JsonDecrypt"),
 		),
+		beego.NSNamespace("/log",
+			beego.NSRouter("/url", &controllers.InternalController{}, "get:CommonUrlLog"),
+			beego.NSRouter("/speed/:days", &controllers.InternalController{}, "get:SpeedUp"),
+		),
 	)
 	// 注册路由组
 	beego.AddNamespace(ns)
