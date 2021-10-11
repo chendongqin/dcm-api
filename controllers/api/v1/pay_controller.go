@@ -283,6 +283,8 @@ func (receiver *PayController) CreateDyMonitorOrder() {
 	}
 	InputData := receiver.InputFormat()
 	number := InputData.GetInt("number", 0)
+	iosPayProductId := InputData.GetString("ios_pay_product_id", "")
+	iosPayProductNum := InputData.GetInt("ios_pay_product_num", 0)
 	if !utils.InArrayInt(number, []int{10, 100, 500}) {
 		receiver.FailReturn(global.NewError(4000))
 		return
@@ -304,8 +306,10 @@ func (receiver *PayController) CreateDyMonitorOrder() {
 	}
 	title := fmt.Sprintf("购买直播监控%d次", number)
 	orderInfo := repost.VipOrderInfo{
-		Title:      title,
-		MonitorNum: number,
+		Title:            title,
+		MonitorNum:       number,
+		IosPayProductId:  iosPayProductId,
+		IosPayProductNum: iosPayProductNum,
 	}
 	uniqueID, _ := utils.Snow.GetSnowflakeId()
 	tradeNo := fmt.Sprintf("%s%d", time.Now().Format("060102"), uniqueID)
