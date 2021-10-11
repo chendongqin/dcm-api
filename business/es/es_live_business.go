@@ -713,7 +713,7 @@ func (receiver *EsLiveBusiness) SearchProductRooms(productId, keyword, sortStr, 
 	if orderBy == "" {
 		orderBy = "desc"
 	}
-	if !utils.InArrayString(sortStr, []string{"shelf_time", "predict_gmv", "predict_sales", "gpm"}) {
+	if !utils.InArrayString(sortStr, []string{"shelf_time", "live_create_time", "predict_gmv", "predict_sales", "gpm"}) {
 		comErr = global.NewError(4000)
 		return
 	}
