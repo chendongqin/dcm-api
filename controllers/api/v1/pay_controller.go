@@ -205,7 +205,7 @@ func (receiver *PayController) CreateDyOrder() {
 		orderInfo.Title = "会员购买"
 		remark = price.ActiveComment
 		if iosPayProductId != "" {
-			iosPayConfig := business.GetConfig("ios")
+			iosPayConfig := business.GetConfig("ios_pay")
 			confMap := map[string]interface{}{}
 			_ = jsoniter.Unmarshal([]byte(iosPayConfig), &confMap)
 			buyday := 0
@@ -336,7 +336,7 @@ func (receiver *PayController) CreateDyMonitorOrder() {
 		MonitorNum: number,
 	}
 	if iosPayProductId != "" {
-		iosPayConfig := business.GetConfig("ios")
+		iosPayConfig := business.GetConfig("ios_pay")
 		confMap := map[string]interface{}{}
 		_ = jsoniter.Unmarshal([]byte(iosPayConfig), &confMap)
 		buyKey := ""
