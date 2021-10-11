@@ -196,6 +196,7 @@ func (receiver *ProductController) ProductBaseAnalysis() {
 	if stopTime.Format("20060102") == time.Now().Format("20060102") {
 		stopTime = stopTime.AddDate(0, 0, -1)
 	}
+	var gpmNum float64 = 0
 	for {
 		if beginTime.After(endTime) {
 			break
@@ -255,6 +256,7 @@ func (receiver *ProductController) ProductBaseAnalysis() {
 		if pv > 0 {
 			gpm = float64(order) * price / float64(pv) * 1000
 			countData.Gpm += gpm
+			gpmNum += 1
 		}
 		hotAuthorChart = append(hotAuthorChart, authorNum)
 		liveAuthorChart = append(liveAuthorChart, liveAuthorNum)
@@ -291,8 +293,8 @@ func (receiver *ProductController) ProductBaseAnalysis() {
 	sort.Slice(orderList, func(i, j int) bool {
 		return orderList[i].Date > orderList[j].Date
 	})
-	if len(orderList) > 0 {
-		countData.Gpm = utils.FriendlyFloat64(countData.Gpm / float64(len(orderList)))
+	if gpmNum > 0 {
+		countData.Gpm = utils.FriendlyFloat64(countData.Gpm / gpmNum)
 	}
 	receiver.SuccReturn(map[string]interface{}{
 		"author_chart": dy2.ProductAuthorChart{
