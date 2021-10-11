@@ -1,7 +1,6 @@
 package tencent_ad
 
 import (
-	"dongchamao/business"
 	"dongchamao/global"
 	"dongchamao/global/cache"
 	"encoding/json"
@@ -48,12 +47,11 @@ func (e *AccessToken) Run() {
 	}
 	freshCacheKey := cache.GetCacheKey(cache.TencentAdRefreshToken)
 	cacheKey := cache.GetCacheKey(cache.TencentAdAccessToken)
-	business.NewMonitorBusiness().SendErr("AccessToken:", *response.AccessToken+"==="+*response.RefreshToken)
 	if err := global.Cache.Set(cacheKey, *response.AccessToken, 86400); err != nil {
-		business.NewMonitorBusiness().SendErr("tencent_ad_fresh_token_err:", err.Error())
+		log.Println("tencent_ad_token_err:", err.Error())
 	}
 	if err := global.Cache.Set(freshCacheKey, *response.RefreshToken, 999999999); err != nil {
-		business.NewMonitorBusiness().SendErr("tencent_ad_token_err:", err.Error())
+		log.Println("tencent_ad_fresh_token_err:", err.Error())
 	}
 	return
 }
