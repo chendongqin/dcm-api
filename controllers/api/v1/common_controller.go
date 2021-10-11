@@ -188,10 +188,8 @@ func (receiver *CommonController) GetConfigList() {
 		if receiver.checkIosPay() {
 			iosPayOpen = 0
 		}
-		ret["ios_pay"] = map[string]interface{}{
-			"ios_pay": iosPayOpen,
-			"open":    1,
-		}
+		ret["ios_pay"].(map[string]interface{})["ios_pay"] = iosPayOpen
+		ret["ios_pay"].(map[string]interface{})["open"] = 1
 		receiver.SuccReturn(ret)
 		return
 	}
