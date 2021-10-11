@@ -177,9 +177,7 @@ func (receiver *PayController) CreateDyOrder() {
 	title := fmt.Sprintf("专业版%d天", buyDays)
 	var amount float64 = 0
 	orderInfo := repost.VipOrderInfo{
-		SurplusValue:     surplusValue,
-		IosPayProductId:  iosPayProductId,
-		IosPayProductNum: iosPayProductNum,
+		SurplusValue: surplusValue,
 	}
 	if utils.InArrayInt(orderType, []int{2, 3, 4}) {
 		//先续费再购买
@@ -205,6 +203,11 @@ func (receiver *PayController) CreateDyOrder() {
 		orderInfo.People = 1
 		orderInfo.Title = "会员购买"
 		remark = price.ActiveComment
+		if iosPayProductId != "" {
+			//iosPayConfig := business.GetConfig("")
+			orderInfo.IosPayProductId = iosPayProductId
+			orderInfo.IosPayProductNum = iosPayProductNum
+		}
 	} else if orderType == 2 { //购买协同账号
 		title = fmt.Sprintf("购买协同账号%d人", groupPeople)
 		amount += surplusValue * float64(groupPeople)
@@ -487,7 +490,7 @@ func (receiver *PayController) IosPay() {
 		receiver.FailReturn(global.NewError(4000))
 		return
 	}
-	if vipOrder.PayStatus == 1 || vipOrder.PayStatus == 2 {
+	if vipOrder.UserId != receiver.UserId || vipOrder.PayStatus == 1 || vipOrder.PayStatus == 2 {
 		receiver.FailReturn(global.NewError(4000))
 		return
 	}
@@ -505,17 +508,19 @@ func (receiver *PayController) IosPay() {
 		return
 	}
 	status, _ := jsonObj.Get("status").Int()
-	productNum, _ := jsonObj.Get("quantity").String()
+	productNum, _ := jsonObj.Get("quantity").Int()
 	productId, _ := jsonObj.Get("product_id").String()
-	if status == 21007 {
-		jsonObj, err = utils.Curl(appleVerifyUrlTest, "POST", string(paramStr), "application/json")
-		if err != nil {
-			business.NewMonitorBusiness().SendErr("苹果支付错误:dev", err.Error())
-			logger.Error("苹果支付错误", err)
-			receiver.FailReturn(global.NewError(5000))
-			return
+	if global.IsDev() {
+		if status == 21007 {
+			jsonObj, err = utils.Curl(appleVerifyUrlTest, "POST", string(paramStr), "application/json")
+			if err != nil {
+				business.NewMonitorBusiness().SendErr("苹果支付错误:dev", err.Error())
+				logger.Error("苹果支付错误", err)
+				receiver.FailReturn(global.NewError(5000))
+				return
+			}
+			status, _ = jsonObj.Get("status").Int()
 		}
-		status, _ = jsonObj.Get("status").Int()
 	}
 	if status != 0 {
 		receiver.FailReturn(global.NewError(4000))
@@ -523,7 +528,7 @@ func (receiver *PayController) IosPay() {
 	}
 	orderIfo := repost.VipOrderInfo{}
 	_ = jsoniter.Unmarshal([]byte(vipOrder.GoodsInfo), &orderIfo)
-	if orderIfo.IosPayProductNum != utils.ToInt(productNum) || orderIfo.IosPayProductId != productId {
+	if orderIfo.IosPayProductNum != productNum || orderIfo.IosPayProductId != productId {
 		business.NewMonitorBusiness().SendErr("苹果支付错误", fmt.Sprintf("%v", jsonObj))
 		logger.Error("苹果支付错误", jsonObj)
 		receiver.FailReturn(global.NewError(4000))
@@ -540,11 +545,12 @@ func (receiver *PayController) IosPay() {
 		"status":         1,
 		"pay_type":       "ios_pay",
 		"inter_trade_no": "",
+		"ios_receipt":    receipt,
 		"pay_time":       payTime.Format("2006-01-02 15:04:05"),
 	}
 	affect, err2 := dcm.UpdateInfo(nil, vipOrder.Id, updateData, new(dcm.DcVipOrder))
 	if affect == 0 || err2 != nil {
-		logs.Error("微信支付更新失败：", vipOrder.Id, updateData, err2)
+		logs.Error("苹果内购更新失败：", vipOrder.Id, updateData, err2)
 		receiver.FailReturn(global.NewError(5000))
 		return
 	}
@@ -552,7 +558,7 @@ func (receiver *PayController) IosPay() {
 	if vipOrder.Platform == "douyin" {
 		doRes := payBusiness.DoPayDyCallback(vipOrder)
 		if !doRes {
-			logs.Error("会员数据更新失败：", vipOrder.Id)
+			logs.Error("苹果内购更新失败：", vipOrder.Id)
 			receiver.FailReturn(global.NewError(5000))
 			return
 		}
