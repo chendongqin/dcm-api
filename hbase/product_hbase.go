@@ -38,6 +38,10 @@ func GetProductByIds(productIds []string) (map[string]entity.DyProduct, error) {
 		} else if data.AiCategory.FirstCname != "" {
 			data.Label = data.AiCategory.FirstCname
 		}
+		//佣金比例处理
+		if data.CosRatio == 0 {
+			data.CosRatio = data.SecCosRatio
+		}
 	}
 	return infoMap, nil
 }
@@ -71,6 +75,10 @@ func GetProductInfo(productId string) (data entity.DyProduct, comErr global.Comm
 	}
 	if len(data.DiggInfo) == 0 {
 		data.DiggInfo = []entity.DiggInfo{}
+	}
+	//佣金比例处理
+	if data.CosRatio == 0 {
+		data.CosRatio = data.SecCosRatio
 	}
 	return
 }
