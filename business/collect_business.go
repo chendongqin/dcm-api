@@ -151,8 +151,8 @@ func (receiver *CollectBusiness) GetDyCollect(tagId, collectType int, keywords, 
 		return data, total, nil
 	case 4:
 		data := make([]repost.CollectShopRet, len(collects))
-		var shopInfo map[string]es2.DyShop
 		search := es.NewEsShopBusiness().IdsSearch(collectIds)
+		var shopInfo = make(map[string]es2.DyShop, len(search))
 		for _, v := range search {
 			shopInfo[v.ShopId] = v
 		}
