@@ -52,7 +52,6 @@ func (this *SpiderAuthController) CheckQrConnectMcn() {
 	}
 
 	userInfo, _ := dySpiderAuthScan.SetCookie(cookies).GetUserInfo()
-
 	auth := &dcm.DySpiderAuth{}
 	auth.Uid = userInfo.Uid
 	auth.Nickname = userInfo.Nickname
