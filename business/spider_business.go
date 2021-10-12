@@ -7,6 +7,7 @@ import (
 	"errors"
 	"fmt"
 	"github.com/astaxie/beego/logs"
+	"github.com/bitly/go-simplejson"
 	jsoniter "github.com/json-iterator/go"
 	"github.com/tidwall/gjson"
 	"github.com/valyala/fasthttp"
@@ -55,6 +56,45 @@ var H5UserAgents = []string{
 	"Mozilla/5.0 (iPad; CPU OS 11_0 like Mac OS X) AppleWebKit/604.1.34 (KHTML, like Gecko) Version/11.0 Mobile/15A5341f Safari/604.1",
 	"Mozilla/5.0 (Linux; Android 6.0.1; Nexus 10 Build/MOB31T) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.106 Safari/537.36",
 	"Mozilla/5.0 (Linux; U; Android 4.3; en-us; SM-N900T Build/JSS15J) AppleWebKit/534.30 (KHTML, like Gecko) Version/4.0 Mobile Safari/534.30",
+}
+
+type DySpiderAuthScan struct {
+	cookies   []*http.Cookie
+	cookieStr string
+}
+
+type SpiderAuthData struct {
+	Qrcode         string `json:"qrcode"`
+	QrcodeIndexUrl string `json:"qrcode_index_url"`
+	Token          string `json:"token"`
+	CsrfToken      string `json:"csrf_token"`
+	CodeIP         string `json:"code_ip"`
+}
+
+func NewDySpiderAuthScan() *DySpiderAuthScan {
+	account := new(DySpiderAuthScan)
+	return account
+}
+
+func (this *DySpiderAuthScan) SetCookie(cookies []*http.Cookie) *DySpiderAuthScan {
+	this.cookies = cookies
+	return this
+}
+
+func (this *DySpiderAuthScan) CookieToString(cookies []*http.Cookie) (cookieStr string) {
+	for _, c := range cookies {
+		cookieStr += c.String() + ";"
+	}
+	return
+}
+
+func (this *DySpiderAuthScan) GetSessionId(cookies []*http.Cookie) string {
+	for _, c := range cookies {
+		if c.Name == "sessionid" {
+			return c.Value
+		}
+	}
+	return ""
 }
 
 func GetH5UserAgent() string {
@@ -501,6 +541,10 @@ const ProxyJson = `
         {
           "id": 350600,
           "name": "福建省漳州市"
+        },
+		{
+          "id": 350200,
+          "name": "福建省厦门市"
         },
         {
           "id": 350400,
@@ -1018,14 +1062,23 @@ func (s *SpiderBusiness) NewProxyIPWithRequestIP(requestIP string) (
 
 	province := "福建"
 	provinceCode = 350000
+	cityCode := 350200
 
 	data := utils.SimpleCurl("http://api.shike.ddashi.com/ipLocation?ip="+requestIP, "GET", "", "")
 	province = jsoniter.Get([]byte(data), "data", "province").ToString()
+	city := jsoniter.Get([]byte(data), "data", "city").ToString()
 
 	for _, p := range proxyDataList {
 		if strings.Contains(p.Name, province) == true {
 			province = p.Name
 			provinceCode = p.ID
+			for _, c := range p.Date {
+				if strings.Contains(c.Name, city) == true {
+					city = c.Name
+					cityCode = c.ID
+					break
+				}
+			}
 			break
 		}
 	}
@@ -1033,7 +1086,7 @@ func (s *SpiderBusiness) NewProxyIPWithRequestIP(requestIP string) (
 	client := http.Client{
 		Timeout: 5 * time.Second,
 	}
-	api := ZHIMASpiderUrl + "get_city_ip?proxy_type=0&city=" + utils.ToString(provinceCode) + "&size=2"
+	api := ZHIMASpiderUrl + "get_city_ip?proxy_type=0&city=" + utils.ToString(cityCode) + "&size=2"
 	req, err := http.NewRequest("GET", api, nil)
 	if err != nil {
 		return
@@ -1070,5 +1123,141 @@ func (s *SpiderBusiness) NewProxyIPWithRequestIP(requestIP string) (
 	expiredTime, _ := time.ParseInLocation(time.RFC3339, item.Data[0].Expire, time.Local)
 	proxyIP = item.Data[0].Host
 	expTime = expiredTime.Unix()
+	return
+}
+
+//获取二维码 mcn
+func (this *DySpiderAuthScan) GetQrCodeMcn(requestIP string) (*simplejson.Json, string, string) {
+	dyUrl := "https://effect.douyin.com/passport/web/get_qrcode/?aid=1347&next=https%3A%2F%2Fwww.douyin.com&extraKey=6bq6fq6fq68q30q6fq39q3eq3bq6dq31q31q30q31q6aq3cq3eq38q3eq3aq3bq3aq31q3eq68q30q39q3dq31q31q39q3c"
+	method := "GET"
+
+	client := &http.Client{}
+	req, err := http.NewRequest(method, dyUrl, nil)
+	if err != nil {
+		fmt.Println(err)
+	}
+	//req.Header.Add("Host", "sso.douyin.com")
+	req.Header.Add("Referer", "https://effect.douyin.com/site/hlogin?action=login")
+	req.Header.Add("User-Agent", "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/93.0.4577.82 Safari/537.36")
+
+	//设置代理
+	tr := &http.Transport{
+		TLSClientConfig: &tls.Config{InsecureSkipVerify: true},
+	}
+
+	newIp, _, _, err := NewSpiderBusiness().NewProxyIPWithRequestIP(requestIP)
+	if err != nil {
+		return nil, "", ""
+	}
+	proxy := func(_ *http.Request) (*url.URL, error) {
+		return url.Parse("//" + newIp)
+	}
+	tr.Proxy = proxy
+	client.Transport = tr
+
+	res, err := client.Do(req)
+	defer res.Body.Close()
+	body, err := ioutil.ReadAll(res.Body)
+
+	jsonObj, _ := simplejson.NewJson(body)
+
+	csrfToken := ""
+	cookie := res.Cookies()
+	for _, c := range cookie {
+		if c.Name == "passport_csrf_token" {
+			csrfToken = c.Value
+		}
+	}
+
+	return jsonObj, csrfToken, newIp
+}
+
+//扫完码 获取cookie mcn
+func (this *DySpiderAuthScan) CheckQrConnectMcn(token string, csrfToken, codeIP string) (bool, []*http.Cookie) {
+	//dyUrl := "https://sso.douyin.com/check_qrconnect/?aid=10006&service=https%3A%2F%2Fwww.douyin.com%2Fmcn%2F&account_sdk_source=sso&token=" + token + "&web_timestamp=" + utils.ToString(time.Now().Unix()*1000)
+	//dyUrl := "https://e.douyin.com/passport/web/check_qrconnect/?next=https%3A%2F%2Fwww.douyin.com&token=" + token + "&aid=1347"
+	dyUrl := "https://effect.douyin.com/passport/web/check_qrconnect/?aid=1347&token=" + token + "&next=https%3A%2F%2Fwww.douyin.com&extraKey=6bq6fq6fq68q30q6fq39q3eq3bq6dq31q31q30q31q6aq3cq3eq38q3eq3aq3bq3aq31q3eq68q30q39q3dq31q31q39q3c"
+
+	method := "GET"
+	client := &http.Client{}
+
+	//设置代理
+	tr := &http.Transport{
+		TLSClientConfig: &tls.Config{InsecureSkipVerify: true},
+	}
+	newIp := codeIP
+	proxy := func(_ *http.Request) (*url.URL, error) {
+		return url.Parse("//" + newIp)
+	}
+	tr.Proxy = proxy
+	client.Transport = tr
+
+	req, _ := http.NewRequest(method, dyUrl, nil)
+	req.Header.Add("Cookie", "passport_csrf_token="+csrfToken)
+	req.Header.Add("Referer", "https://effect.douyin.com/site/hlogin?action=login")
+	req.Header.Add("User-Agent", "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/93.0.4577.82 Safari/537.36")
+	res, _ := client.Do(req)
+	defer res.Body.Close()
+	body, _ := ioutil.ReadAll(res.Body)
+	jsonObj, _ := simplejson.NewJson(body)
+	status, _ := jsonObj.Get("data").Get("status").String()
+	if status != "confirmed" {
+		return false, nil
+	}
+	cookies := res.Cookies()
+	return true, cookies
+}
+
+//============ 抓取抖音号详情 ============================================================
+
+type DyCreatorUserInfo struct {
+	Uid            string `json:"uid"`
+	Nickname       string `json:"nickname"`
+	Signature      string `json:"signature"`
+	AvatarMedium   string `json:"avatar_medium"`
+	AvatarThumb    string `json:"avatar_thumb"`
+	AwemeCount     int    `json:"aweme_count"`
+	FollowerCount  int    `json:"follower_count"`
+	TotalFavorited int    `json:"total_favorited"`
+	UniqueId       string `json:"unique_id"`
+	ShortId        string `json:"short_id"`
+}
+
+//获取用户详情
+func (this *DySpiderAuthScan) GetUserInfo() (userInfo *DyCreatorUserInfo, err error) {
+	userInfo = new(DyCreatorUserInfo)
+
+	dyUrl := "https://creator.douyin.com/web/api/media/user/info/?cookie_enabled=true&screen_width=1920&screen_height=1080&browser_language=zh-CN&browser_platform=MacIntel&browser_name=Mozilla&browser_version=5.0+(Macintosh%3B+Intel+Mac+OS+X+10_15_5)+AppleWebKit%2F537.36+(KHTML,+like+Gecko)+Chrome%2F83.0.4103.106+Safari%2F537.36+Edg%2F83.0.478.54&browser_online=true&timezone_name=Asia%2FHong_Kong"
+
+	req, _ := http.NewRequest("GET", dyUrl, nil)
+	for _, cookie := range this.cookies {
+		req.AddCookie(cookie)
+	}
+	req.Header.Add("user-agent", "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_2) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/69.0.3497.81 Safari/537.36 QQBrowser/4.5.123.400")
+	req.Header.Add("Origin", "https://creator.douyin.com")
+	req.Header.Add("Referer", "https://creator.douyin.com/")
+
+	client := &http.Client{}
+	resp, _ := client.Do(req)
+	defer resp.Body.Close()
+
+	var body []byte
+	body, err = ioutil.ReadAll(resp.Body)
+	if err != nil {
+		return
+	}
+	jsonObj, _ := simplejson.NewJson(body)
+	userInfo.Uid, _ = jsonObj.Get("user").Get("uid").String()
+	userInfo.Nickname, _ = jsonObj.Get("user").Get("nickname").String()
+	userInfo.Signature, _ = jsonObj.Get("user").Get("signature").String()
+	userInfo.AvatarMedium, _ = jsonObj.Get("user").Get("avatar_medium").Get("url_list").GetIndex(0).String()
+	userInfo.AvatarThumb, _ = jsonObj.Get("user").Get("avatar_thumb").Get("url_list").GetIndex(0).String()
+	userInfo.AwemeCount, _ = jsonObj.Get("user").Get("aweme_count").Int()
+	userInfo.FollowerCount, _ = jsonObj.Get("user").Get("follower_count").Int()
+	userInfo.UniqueId, _ = jsonObj.Get("user").Get("unique_id").String()
+	userInfo.ShortId, _ = jsonObj.Get("user").Get("short_id").String()
+	tf, _ := jsonObj.Get("user").Get("total_favorited").String()
+	userInfo.TotalFavorited = utils.ToInt(tf)
+
 	return
 }
