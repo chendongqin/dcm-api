@@ -51,7 +51,9 @@ func (receiver *CollectBusiness) GetDyCollect(tagId, collectType int, keywords, 
 		return nil, total, comErr
 	}
 	var collectIds []string
-	_ = dbCollect.Table(dcm.DcUserDyCollect{}).Where(query).Limit(pageSize, (page-1)*pageSize).Select("collect_id").Find(&collectIds)
+	for _, v := range collects {
+		collectIds = append(collectIds, v.CollectId)
+	}
 	switch collectType {
 	case 1:
 		data := make([]repost.CollectAuthorRet, len(collects))

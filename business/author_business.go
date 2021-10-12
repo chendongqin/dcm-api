@@ -559,6 +559,9 @@ func (a *AuthorBusiness) CountLiveRoomAnalyse(authorId string, startTime, endTim
 		Date:       dateChart,
 		CountValue: amountChart,
 	}
+	data.UserData.AvgIncFansRate = utils.RateMin(data.UserData.AvgIncFansRate)
+	data.UserData.AvgInteractRate = utils.RateMin(data.UserData.AvgInteractRate)
+	data.SaleData.SaleRate = utils.RateMin(data.SaleData.SaleRate)
 	return
 }
 

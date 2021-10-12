@@ -172,6 +172,8 @@ func (receiver *AuthorController) BaseSearch() {
 			authorData, _ := hbase.GetAuthor(v.AuthorId)
 			list[k].RoomId = business.IdEncrypt(authorData.RoomId)
 		}
+		list[k].DiggFollowerRate = utils.RateMin(list[k].DiggFollowerRate)
+		list[k].InteractionRate = utils.RateMin(list[k].InteractionRate)
 	}
 	totalPage := math.Ceil(float64(total) / float64(pageSize))
 	maxPage := math.Ceil(float64(receiver.MaxTotal) / float64(pageSize))

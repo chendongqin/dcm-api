@@ -107,6 +107,7 @@ func (receiver *ProductController) Search() {
 	}
 	var productIds []string
 	for k, v := range list {
+		list[k].Cvr = utils.RateMin(list[k].Cvr)
 		list[k].Image = dyimg.Fix(v.Image)
 		productIds = append(productIds, v.ProductId)
 		list[k].ProductId = business.IdEncrypt(v.ProductId)
@@ -634,7 +635,7 @@ func (receiver *ProductController) ProductLiveRoomList() {
 			if pv, ok := pvMap[v.RoomID]; ok {
 				v.Pv = pv
 				if pv > 0 {
-					v.BuyRate = v.PredictSales / float64(pv)
+					v.BuyRate = utils.RateMin(v.PredictSales / float64(pv))
 				}
 			}
 			item := dy2.LiveRoomProductCount{

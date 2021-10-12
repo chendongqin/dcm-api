@@ -397,6 +397,7 @@ func (receiver *RankController) ProductSalesTopDayRank() {
 	for k, v := range list {
 		list[k].ProductId = business.IdEncrypt(v.ProductId)
 		list[k].Images = dyimg.Fix(v.Images)
+		list[k].ConversionRate = utils.RateMin(list[k].ConversionRate)
 	}
 	if total > receiver.MaxTotal {
 		total = receiver.MaxTotal
