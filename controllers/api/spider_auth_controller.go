@@ -61,6 +61,8 @@ func (this *SpiderAuthController) CheckQrConnectMcn() {
 	auth.Nickname = userInfo.Nickname
 	auth.Cookies = dySpiderAuthScan.CookieToString(cookies)
 	auth.Sessionid = dySpiderAuthScan.GetSessionId(cookies)
+	auth.ShortId = userInfo.ShortId
+	auth.UniqueId = userInfo.UniqueId
 	exist, _ := dbSession.Table(auth).Where("uid = ?", auth.Uid).Exist()
 	if exist == false {
 		auth.CreateTime = time.Now()
