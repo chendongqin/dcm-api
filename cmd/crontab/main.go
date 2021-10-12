@@ -1,6 +1,7 @@
 package main
 
 import (
+	"dongchamao/business"
 	"dongchamao/command"
 	"dongchamao/global"
 	"github.com/json-iterator/go/extra"
@@ -68,6 +69,10 @@ func runCMD(ctx *cli.Context) {
 	case "check_rank_goods":
 		//监控-每隔小时的10分监控（目前只有商品榜）
 		command.CheckGoodsRank()
+	case "ali_log_ana":
+		//阿里云日志分析
+		safe := business.NewSafeBusiness()
+		safe.CommonAnalyseLogs()
 	default:
 		panic("undefined ac")
 	}
