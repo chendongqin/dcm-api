@@ -12,4 +12,6 @@ type DySpiderAuth struct {
 	Sessionid  string    `xorm:"not null default '' VARCHAR(32)"`
 	CreateTime time.Time `xorm:"TIMESTAMP"`
 	UpdateTime time.Time `xorm:"TIMESTAMP"`
+	ShortId    string    `xorm:"default '' VARCHAR(50)"`
+	UniqueId   string    `xorm:"default '' VARCHAR(50)"`
 }
