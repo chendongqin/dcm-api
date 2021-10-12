@@ -8,8 +8,6 @@ import (
 	"dongchamao/services/hbaseService"
 	"dongchamao/services/hbaseService/hbase"
 	"dongchamao/services/hbaseService/hbasehelper"
-	"encoding/json"
-	"sort"
 	"strings"
 	"time"
 )
@@ -40,6 +38,10 @@ func GetProductByIds(productIds []string) (map[string]entity.DyProduct, error) {
 		} else if data.AiCategory.FirstCname != "" {
 			data.Label = data.AiCategory.FirstCname
 		}
+		//佣金比例处理
+		if data.CosRatio == 0 {
+			data.CosRatio = data.SecCosRatio
+		}
 	}
 	return infoMap, nil
 }
@@ -66,6 +68,17 @@ func GetProductInfo(productId string) (data entity.DyProduct, comErr global.Comm
 		data.Label = data.ManmadeCategory.FirstCname
 	} else if data.AiCategory.FirstCname != "" {
 		data.Label = data.AiCategory.FirstCname
+	}
+	//null数据初始化
+	if len(data.ContextNum) == 0 {
+		data.ContextNum = []entity.ContextNum{}
+	}
+	if len(data.DiggInfo) == 0 {
+		data.DiggInfo = []entity.DiggInfo{}
+	}
+	//佣金比例处理
+	if data.CosRatio == 0 {
+		data.CosRatio = data.SecCosRatio
 	}
 	return
 }
@@ -239,6 +252,10 @@ func GetProductAwemeAuthorAnalysis(rowKey string) (data entity.DyProductAwemeAut
 	}
 	detailMap := hbaseService.HbaseFormat(result, entity.DyProductAwemeAuthorAnalysisMap)
 	utils.MapToStruct(detailMap, &data)
+	rowArr := strings.Split(rowKey, "_")
+	if len(rowArr) == 3 {
+		data.CreateSdf = rowArr[1]
+	}
 	return
 }
 
@@ -257,6 +274,11 @@ func GetProductAwemeAuthorAnalysisRange(startRowKey, stopRowKey string) (data []
 		dataMap := hbaseService.HbaseFormat(v, entity.DyProductAwemeAuthorAnalysisMap)
 		hData := entity.DyProductAwemeAuthorAnalysis{}
 		utils.MapToStruct(dataMap, &hData)
+		rowKey := string(v.GetRow())
+		rowArr := strings.Split(rowKey, "_")
+		if len(rowArr) == 3 {
+			hData.CreateSdf = rowArr[1]
+		}
 		data = append(data, hData)
 	}
 	return
@@ -375,38 +397,6 @@ func GetDyProductGpmRangeDate(productId string, startTime, endTime time.Time) (d
 		}
 		date := rowKeyArr[1]
 		data[date] = hData
-	}
-	return
-}
-
-//获取商品评论列表
-func GetProductTopComment(productId string, start, end int) (data []entity.DyProductCommentTop, total int, comErr global.CommonError) {
-	data = make([]entity.DyProductCommentTop, 0)
-	query := hbasehelper.NewQuery()
-	result, err := query.
-		SetTable(hbaseService.HbaseDyProductTopComment).
-		GetByRowKey([]byte(productId))
-	if err != nil {
-		comErr = global.NewMsgError(err.Error())
-		return
-	}
-	dataMap := hbaseService.HbaseFormat(result, entity.DyProductCommentTopMap)
-	var commentStruct entity.DyProductCommentTopStruct
-	utils.MapToStruct(dataMap, &commentStruct)
-	if commentStruct.DiggInfo != "" {
-		commentStruct.DiggInfo = "[" + strings.Replace(commentStruct.DiggInfo, "=----=", ",", -1) + "]"
-		_ = json.Unmarshal([]byte(commentStruct.DiggInfo), &data)
-		sort.Slice(data, func(i, j int) bool {
-			return utils.ToInt(data[j].DiggCount) < utils.ToInt(data[i].DiggCount)
-		})
-		total = len(data)
-		if start > total {
-			start = total
-		}
-		if end > total {
-			end = total
-		}
-		data = data[start:end]
 	}
 	return
 }

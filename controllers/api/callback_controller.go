@@ -6,6 +6,7 @@ import (
 	"dongchamao/global/utils"
 	"dongchamao/models/dcm"
 	"dongchamao/services/payer"
+	tencent_ad "dongchamao/services/tencentAd"
 	"github.com/astaxie/beego/logs"
 	"github.com/go-pay/gopay/alipay"
 	"net/http"
@@ -134,5 +135,14 @@ func (receiver *CallbackController) AlipayNotify() {
 		}
 	}
 	_, _ = w.Write([]byte("success"))
+	return
+}
+
+//腾讯广告authCode回调
+func (receiver *CallbackController) TencentAdAuth() {
+	e := &tencent_ad.AccessToken{}
+	authorizationCode := receiver.GetString("authorization_code")
+	e.Init(authorizationCode)
+	e.Run()
 	return
 }

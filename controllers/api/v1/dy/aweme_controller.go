@@ -201,11 +201,13 @@ func (receiver *AwemeController) AwemeCommentTop() {
 		receiver.FailReturn(comErr)
 		return
 	}
-	if total > 1000 {
-		total = 1000
+	max := total
+	if max > 1000 {
+		max = 1000
 	}
 	receiver.SuccReturn(map[string]interface{}{
 		"total": total,
+		"max":   max,
 		"page":  page,
 		"size":  pageSize,
 		"list":  awemeComment,

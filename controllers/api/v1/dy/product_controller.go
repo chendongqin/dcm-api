@@ -1084,6 +1084,22 @@ func (receiver *ProductController) ProductFanAnalyse() {
 			provinceChart[k].DistributionPer = float64(v.DistributionValue) / float64(provinceTotal)
 		}
 	}
+	var contextNum entity.ContextNum
+	if len(info.ContextNum) > 0 {
+		contextNum = info.ContextNum[0]
+	}
+	sort.Slice(info.Word, func(i, j int) bool {
+		return utils.ToInt(info.Word[i].WordNum) > utils.ToInt(info.Word[j].WordNum)
+	})
+	if len(info.Word) > 150 {
+		info.Word = info.Word[:150]
+	}
+	for k := range info.DiggInfo {
+		info.DiggInfo[k].AwemeCover = dyimg.Fix(info.DiggInfo[k].AwemeCover)
+	}
+	sort.Slice(info.DiggInfo, func(i, j int) bool {
+		return utils.ToInt(info.DiggInfo[i].DiggCount) > utils.ToInt(info.DiggInfo[j].DiggCount)
+	})
 	receiver.SuccReturn(map[string]interface{}{
 		"age_people":      ageTotal,
 		"age_chart":       ageChart,
@@ -1093,6 +1109,9 @@ func (receiver *ProductController) ProductFanAnalyse() {
 		"city_total":      cityTotal,
 		"province_chart":  provinceChart,
 		"province_people": provinceTotal,
+		"word":            info.Word,
+		"context_num":     contextNum,
+		"digg_info":       info.DiggInfo,
 	})
 	return
 }
@@ -1128,55 +1147,6 @@ func (receiver *ProductController) ProductSpeed() {
 
 	logs.Info("产品加速，爬虫推送结果：", ret)
 	receiver.SuccReturn([]string{})
-	return
-}
-
-//商品热词
-func (receiver *ProductController) ProductWords() {
-	productId := business.IdDecrypt(receiver.Ctx.Input.Param(":product_id"))
-	info, comErr := hbase.GetProductInfo(productId)
-	if comErr != nil {
-		receiver.FailReturn(comErr)
-		return
-	}
-	if len(info.Word) == 0 {
-		info.Word = []entity.DyAuthorWord{}
-	}
-	receiver.SuccReturn(map[string]interface{}{
-		"hot_words":  info.Word,
-		"use_id_num": info.ContextNum["use_id_num"],
-		"msg_id_num": info.ContextNum["msg_id_num"],
-	})
-	return
-}
-
-func (receiver *ProductController) ProductCommentTop() {
-	productId := business.IdDecrypt(receiver.Ctx.Input.Param(":product_id"))
-	page := receiver.GetPage("page")
-	pageSize := receiver.GetPageSize("page_size", 10, 100)
-	if productId == "" {
-		receiver.FailReturn(global.NewError(4000))
-		return
-	}
-	start := (page - 1) * pageSize
-	end := page * pageSize
-	productComment, total, comErr := hbase.GetProductTopComment(productId, start, end)
-	if comErr != nil {
-		receiver.FailReturn(comErr)
-		return
-	}
-	if total > 1000 {
-		total = 1000
-	}
-	if len(productComment) == 0 {
-		productComment = []entity.DyProductCommentTop{}
-	}
-	receiver.SuccReturn(map[string]interface{}{
-		"total": total,
-		"page":  page,
-		"size":  pageSize,
-		"list":  productComment,
-	})
 	return
 }
 
