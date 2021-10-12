@@ -37,6 +37,7 @@ var DyProductMap = HbaseEntity{
 	"tb_zk_final_price":      {Double, "tb_zk_final_price"},
 	"min_price":              {Double, "min_price"},
 	"cos_ratio":              {Double, "cos_ratio"},
+	"sec_cos_ratio":          {Double, "sec_cos_ratio"},
 	"price_trends":           {AJson, "price_trends"},
 	"other_manmade_category": {Json, "manmade_category"},
 	//粉丝分析数据
@@ -104,6 +105,7 @@ type DyProduct struct {
 	TbZkFinalPrice      float64                  `json:"tb_zk_final_price"`
 	MinPrice            float64                  `json:"min_price"`
 	CosRatio            float64                  `json:"cos_ratio"`
+	SecCosRatio         float64                  `json:"sec_cos_ratio"`
 	PriceTrends         []DyProductPriceTrend    `json:"price_trends"`
 	ManmadeCategory     DyProductManmadeCategory `json:"manmade_category"`
 	AiCategory          DyProductAiCategory      `json:"ai_category"`
