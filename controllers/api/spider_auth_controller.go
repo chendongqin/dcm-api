@@ -47,12 +47,11 @@ func (this *SpiderAuthController) CheckQrConnectMcn() {
 
 	success, cookies := business.NewDySpiderAuthScan().CheckQrConnectMcn(token, csrfToken, codeIP)
 	if success == false {
-		this.FailReturn(global.NewMsgError("绑定失败"))
+		this.FailReturn(global.NewError(6102))
 		return
 	}
 
 	userInfo, _ := dySpiderAuthScan.SetCookie(cookies).GetUserInfo()
-
 	auth := &dcm.DySpiderAuth{}
 	auth.Uid = userInfo.Uid
 	auth.Nickname = userInfo.Nickname
@@ -65,7 +64,7 @@ func (this *SpiderAuthController) CheckQrConnectMcn() {
 	} else {
 		auth.UpdateTime = time.Now()
 		_, _ = dbSession.Where("uid = ?", auth.Uid).Update(auth)
-		this.FailReturn(global.NewMsgError("用户已绑定过"))
+		this.FailReturn(global.NewError(6101))
 	}
 	this.SuccReturn("ok")
 

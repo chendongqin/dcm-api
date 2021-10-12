@@ -1085,7 +1085,7 @@ func (s *SpiderBusiness) GetProxyList() (data []ProxyData) {
 	return data
 }
 
-//NewProxyIPWithRequestIP 通过请求的ip获取对应的代理ip
+//NewProxyIPWithRequestIP 通过请求的ip获取对应的代理ip  通过省份绑定ip
 func (s *SpiderBusiness) NewProxyIPWithRequestIP(requestIP string) (
 	proxyIP string, expTime int64, provinceCode int, err error,
 ) {
@@ -1093,23 +1093,23 @@ func (s *SpiderBusiness) NewProxyIPWithRequestIP(requestIP string) (
 
 	province := "福建"
 	provinceCode = 350000
-	cityCode := 350200
+	//cityCode := 350200
 
 	data := utils.SimpleCurl("http://api.shike.ddashi.com/ipLocation?ip="+requestIP, "GET", "", "")
 	province = jsoniter.Get([]byte(data), "data", "province").ToString()
-	city := jsoniter.Get([]byte(data), "data", "city").ToString()
+	//city := jsoniter.Get([]byte(data), "data", "city").ToString()
 
 	for _, p := range proxyDataList {
 		if strings.Contains(p.Name, province) == true {
 			province = p.Name
 			provinceCode = p.ID
-			for _, c := range p.Date {
-				if strings.Contains(c.Name, city) == true {
-					city = c.Name
-					cityCode = c.ID
-					break
-				}
-			}
+			//for _, c := range p.Date {
+			//	if strings.Contains(c.Name, city) == true {
+			//		city = c.Name
+			//		cityCode = c.ID
+			//		break
+			//	}
+			//}
 			break
 		}
 	}
@@ -1117,7 +1117,7 @@ func (s *SpiderBusiness) NewProxyIPWithRequestIP(requestIP string) (
 	client := http.Client{
 		Timeout: 5 * time.Second,
 	}
-	api := ZHIMASpiderUrl + "get_city_ip?proxy_type=0&city=" + utils.ToString(cityCode) + "&size=2"
+	api := ZHIMASpiderUrl + "get_city_ip?proxy_type=0&city=" + utils.ToString(provinceCode) + "&size=2"
 	req, err := http.NewRequest("GET", api, nil)
 	if err != nil {
 		return
