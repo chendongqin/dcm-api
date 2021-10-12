@@ -365,7 +365,7 @@ func (a *AuthorBusiness) CountLiveRoomAnalyse(authorId string, startTime, endTim
 		LiveStartHourChart: []dy.NameValueChart{},
 	}
 	roomsMap, _ := hbase.GetAuthorRoomsRangDate(authorId, startTime, endTime)
-	liveDataList := make([]dy.DyLiveRoomAnalyse, 0)
+	liveDataList := make([]*dy.DyLiveRoomAnalyse, 0)
 	roomNum := 0
 	productRoomNum := 0
 	for _, rooms := range roomsMap {
@@ -374,24 +374,24 @@ func (a *AuthorBusiness) CountLiveRoomAnalyse(authorId string, startTime, endTim
 	if roomNum == 0 {
 		return
 	}
-	wg := sync.WaitGroup{}
-	wg.Add(roomNum)
+	//wg := sync.WaitGroup{}
+	//wg.Add(roomNum)
 	//hbaseDataChan := make(chan dy.DyLiveRoomAnalyse, roomNum)
+	liveBusiness := NewLiveBusiness()
 	for _, rooms := range roomsMap {
 		for _, room := range rooms {
-			go func(roomId string) {
-				defer global.RecoverPanic()
-				defer wg.Done()
-				liveBusiness := NewLiveBusiness()
-				roomAnalyse, comErr := liveBusiness.LiveRoomAnalyse(roomId)
-				if comErr == nil {
-					//hbaseDataChan <- roomAnalyse
-					liveDataList = append(liveDataList, roomAnalyse)
-				}
-			}(room.RoomID)
+			//go func(room *entity.DyAuthorLiveRoom) {
+			//	defer global.RecoverPanic()
+			//	defer wg.Done()
+			roomAnalyse, comErr := liveBusiness.LiveRoomAnalyse(room.RoomID)
+			if comErr == nil {
+				//hbaseDataChan <- roomAnalyse
+				liveDataList = append(liveDataList, roomAnalyse)
+			}
+			//}(&room)
 		}
 	}
-	wg.Wait()
+	//wg.Wait()
 	//for i := 0; i < roomNum; i++ {
 	//	roomAnalyse, ok := <-hbaseDataChan
 	//	if !ok {
@@ -466,7 +466,7 @@ func (a *AuthorBusiness) CountLiveRoomAnalyse(authorId string, startTime, endTim
 			}
 			sumData[date] = d
 		} else {
-			sumData[date] = v
+			sumData[date] = *v
 		}
 	}
 	keys := make([]string, 0)
