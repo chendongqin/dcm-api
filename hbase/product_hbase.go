@@ -38,6 +38,10 @@ func GetProductByIds(productIds []string) (map[string]entity.DyProduct, error) {
 		} else if data.AiCategory.FirstCname != "" {
 			data.Label = data.AiCategory.FirstCname
 		}
+		//佣金比例处理
+		if data.CosRatio == 0 {
+			data.CosRatio = data.SecCosRatio
+		}
 	}
 	return infoMap, nil
 }
@@ -71,6 +75,10 @@ func GetProductInfo(productId string) (data entity.DyProduct, comErr global.Comm
 	}
 	if len(data.DiggInfo) == 0 {
 		data.DiggInfo = []entity.DiggInfo{}
+	}
+	//佣金比例处理
+	if data.CosRatio == 0 {
+		data.CosRatio = data.SecCosRatio
 	}
 	return
 }
@@ -244,6 +252,10 @@ func GetProductAwemeAuthorAnalysis(rowKey string) (data entity.DyProductAwemeAut
 	}
 	detailMap := hbaseService.HbaseFormat(result, entity.DyProductAwemeAuthorAnalysisMap)
 	utils.MapToStruct(detailMap, &data)
+	rowArr := strings.Split(rowKey, "_")
+	if len(rowArr) == 3 {
+		data.CreateSdf = rowArr[1]
+	}
 	return
 }
 
@@ -262,6 +274,11 @@ func GetProductAwemeAuthorAnalysisRange(startRowKey, stopRowKey string) (data []
 		dataMap := hbaseService.HbaseFormat(v, entity.DyProductAwemeAuthorAnalysisMap)
 		hData := entity.DyProductAwemeAuthorAnalysis{}
 		utils.MapToStruct(dataMap, &hData)
+		rowKey := string(v.GetRow())
+		rowArr := strings.Split(rowKey, "_")
+		if len(rowArr) == 3 {
+			hData.CreateSdf = rowArr[1]
+		}
 		data = append(data, hData)
 	}
 	return

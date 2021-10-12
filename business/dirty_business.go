@@ -31,7 +31,7 @@ func (receiver *DirtyBusiness) ChangeAuthorCate(authorId, tags, tagsTow string) 
 	hbaseBusiness := NewHbaseBusiness()
 	artificialData := map[string]interface{}{
 		"tags":           tags,
-		"tags_level_tow": tagsTow,
+		"tags_level_two": tagsTow,
 	}
 	jsonByte, _ := jsoniter.Marshal(artificialData)
 	columnL := hbaseBusiness.BuildColumnValue("other", "artificial_data", string(jsonByte), entity.String)
