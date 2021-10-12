@@ -51,7 +51,11 @@ func (this *SpiderAuthController) CheckQrConnectMcn() {
 		return
 	}
 
-	userInfo, _ := dySpiderAuthScan.SetCookie(cookies).GetUserInfo()
+	userInfo, err := dySpiderAuthScan.SetCookie(cookies).GetUserInfo()
+	if err != nil {
+		this.FailReturn(global.NewError(6102))
+		return
+	}
 	auth := &dcm.DySpiderAuth{}
 	auth.Uid = userInfo.Uid
 	auth.Nickname = userInfo.Nickname
