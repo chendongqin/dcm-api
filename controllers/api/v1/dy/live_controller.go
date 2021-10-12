@@ -190,7 +190,7 @@ func (receiver *LiveController) LiveInfoData() {
 		incFansRate = float64(liveInfo.FollowCount) / float64(liveInfo.TotalUser)
 		interactRate = float64(liveInfo.BarrageUserCount) / float64(liveInfo.TotalUser)
 		liveSale.Uv = (gmv + float64(liveInfo.RoomTicketCount)/10) / float64(liveInfo.TotalUser)
-		liveSale.SaleRate = sales / float64(liveInfo.TotalUser)
+		liveSale.SaleRate = utils.RateMin(sales / float64(liveInfo.TotalUser))
 	}
 	avgOnlineTime := liveBusiness.CountAvgOnlineTime(liveInfo.OnlineTrends, liveInfo.CreateTime, liveInfo.TotalUser)
 	returnLiveInfo := dy2.DyLiveInfo{

@@ -249,6 +249,7 @@ func (receiver *ProductController) ProductBaseAnalysis() {
 				rate = float64(d.ProductOrderAccount) / float64(d.Pv)
 			}
 		}
+		rate = utils.RateMin(rate)
 		if p, ok := priceMap[dateKey]; ok {
 			price = p
 		}
@@ -364,7 +365,7 @@ func (receiver *ProductController) ProductBase() {
 	awemeNum = len(awemeMap)
 	var rate30 float64 = 0
 	if monthData.PvCount > 0 {
-		rate30 = float64(monthData.OrderCount) / float64(monthData.PvCount)
+		rate30 = utils.RateMin(float64(monthData.OrderCount) / float64(monthData.PvCount))
 	}
 	if productInfo.MinPrice == 0 {
 		productInfo.MinPrice = productInfo.Price
