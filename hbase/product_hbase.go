@@ -252,6 +252,10 @@ func GetProductAwemeAuthorAnalysis(rowKey string) (data entity.DyProductAwemeAut
 	}
 	detailMap := hbaseService.HbaseFormat(result, entity.DyProductAwemeAuthorAnalysisMap)
 	utils.MapToStruct(detailMap, &data)
+	rowArr := strings.Split(rowKey, "_")
+	if len(rowArr) == 3 {
+		data.CreateSdf = rowArr[1]
+	}
 	return
 }
 
@@ -270,6 +274,11 @@ func GetProductAwemeAuthorAnalysisRange(startRowKey, stopRowKey string) (data []
 		dataMap := hbaseService.HbaseFormat(v, entity.DyProductAwemeAuthorAnalysisMap)
 		hData := entity.DyProductAwemeAuthorAnalysis{}
 		utils.MapToStruct(dataMap, &hData)
+		rowKey := string(v.GetRow())
+		rowArr := strings.Split(rowKey, "_")
+		if len(rowArr) == 3 {
+			hData.CreateSdf = rowArr[1]
+		}
 		data = append(data, hData)
 	}
 	return
