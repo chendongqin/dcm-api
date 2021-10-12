@@ -376,7 +376,7 @@ func (a *AuthorBusiness) CountLiveRoomAnalyse(authorId string, startTime, endTim
 	}
 	wg := sync.WaitGroup{}
 	wg.Add(roomNum)
-	hbaseDataChan := make(chan dy.DyLiveRoomAnalyse, roomNum)
+	//hbaseDataChan := make(chan dy.DyLiveRoomAnalyse, roomNum)
 	for _, rooms := range roomsMap {
 		for _, room := range rooms {
 			go func(roomId string) {
@@ -385,19 +385,20 @@ func (a *AuthorBusiness) CountLiveRoomAnalyse(authorId string, startTime, endTim
 				liveBusiness := NewLiveBusiness()
 				roomAnalyse, comErr := liveBusiness.LiveRoomAnalyse(roomId)
 				if comErr == nil {
-					hbaseDataChan <- roomAnalyse
+					//hbaseDataChan <- roomAnalyse
+					liveDataList = append(liveDataList, roomAnalyse)
 				}
 			}(room.RoomID)
 		}
 	}
 	wg.Wait()
-	for i := 0; i < roomNum; i++ {
-		roomAnalyse, ok := <-hbaseDataChan
-		if !ok {
-			break
-		}
-		liveDataList = append(liveDataList, roomAnalyse)
-	}
+	//for i := 0; i < roomNum; i++ {
+	//	roomAnalyse, ok := <-hbaseDataChan
+	//	if !ok {
+	//		break
+	//	}
+	//	liveDataList = append(liveDataList, roomAnalyse)
+	//}
 	sumData := map[string]dy.DyLiveRoomAnalyse{}
 	sumLongTime := map[string]int{}
 	sumHourTime := map[string]int{}
