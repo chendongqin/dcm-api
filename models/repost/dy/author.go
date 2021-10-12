@@ -144,3 +144,20 @@ type DyAuthorStoreSimple struct {
 	ShopId   string `json:"shop_id"`
 	ShopName string `json:"shop_name"`
 }
+
+type DyAuthorRawData struct {
+	Avatar           string `json:"avatar"`
+	Birthday         string `json:"birthday"`
+	Commerce         int    `json:"commerce"`
+	FollowerCount    int    `json:"follower_count"`
+	Gender           int    `json:"gender"`
+	Id               string `json:"id"`
+	Nickname         string `json:"nickname"`
+	SchoolName       string `json:"school_name"`
+	SecUid           string `json:"sec_uid"`
+	ShortId          string `json:"short_id"`
+	Signature        string `json:"signature"`
+	UniqueId         string `json:"unique_id"`
+	VerificationType int    `json:"verification_type"`
+	VerifyName       string `json:"verify_name"`
+}

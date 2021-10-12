@@ -993,65 +993,78 @@ func (receiver *AuthorController) AuthorIncomeSearch() {
 	var authorId string
 	var authorIncome = &dy2.DyAuthorIncome{}
 	keyword := receiver.GetString("keyword", "")
+	isCtnSearch, _ := receiver.GetInt("isCtnSearch", 0)
 	if keyword == "" {
 		receiver.FailReturn(global.NewError(4000))
 		return
 	}
 	spiderBusiness := business.NewSpiderBusiness()
-	if utils.CheckType(keyword, "url") { // 抓换链接
-		shortUrl, _ := business.ParseDyShortUrl(keyword)
-		if shortUrl == "" {
-			receiver.FailReturn(global.NewError(4000))
-			return
-		}
-		authorId = utils.ParseDyAuthorUrl(shortUrl) // 获取authorId
-		author, err := hbase.GetAuthor(authorId)
-		if err == nil {
-			authorIncome = &dy2.DyAuthorIncome{
-				AuthorId:     author.AuthorID,
-				Avatar:       author.Data.Avatar,
-				Nickname:     author.Data.Nickname,
-				UniqueId:     author.Data.UniqueID,
-				IsCollection: 0,
-			}
-		} else {
-			authorIncome = spiderBusiness.GetAuthorBaseInfo(authorId)
-		}
-		authorIncome.AuthorId = business.IdEncrypt(authorIncome.AuthorId)
-		authorIncome.Avatar = dyimg.Fix(authorIncome.Avatar)
-		receiver.SuccReturn(authorIncome)
-		return
-	} else {
-		// 如果是keyword形式的，先查es，es没有数据就请求爬虫数据接口
-		list, total, _ := es.NewEsAuthorBusiness().SimpleSearch(
-			"", "", keyword, "", "", 0, 0,
-			1, 1)
-		if total == 0 {
-			authorIncome, err1 := spiderBusiness.GetAuthorByKeyword(keyword)
-			if err1 != nil {
-				receiver.FailReturn(global.NewMsgError(err1.Error()))
+	authorIncomeList := make([]dy2.DyAuthorIncome, 0)
+	var err1 error
+	if isCtnSearch == 0 {
+		if utils.CheckType(keyword, "url") { // 抓换链接
+			shortUrl, _ := business.ParseDyShortUrl(keyword)
+			if shortUrl == "" {
+				receiver.FailReturn(global.NewError(4000))
 				return
+			}
+			authorId = utils.ParseDyAuthorUrl(shortUrl) // 获取authorId
+			author, err := hbase.GetAuthor(authorId)
+			if err == nil {
+				authorIncome = &dy2.DyAuthorIncome{
+					AuthorId:     author.AuthorID,
+					Avatar:       author.Data.Avatar,
+					Nickname:     author.Data.Nickname,
+					UniqueId:     author.Data.UniqueID,
+					IsCollection: 0,
+				}
+			} else {
+				authorIncome = spiderBusiness.GetAuthorBaseInfo(authorId)
 			}
 			authorIncome.AuthorId = business.IdEncrypt(authorIncome.AuthorId)
 			authorIncome.Avatar = dyimg.Fix(authorIncome.Avatar)
-			receiver.SuccReturn(authorIncome)
-			return
+			authorIncomeList = append(authorIncomeList, *authorIncome)
 		} else {
-			for _, author := range list {
-				authorIncome := dy2.DyAuthorIncome{
-					AuthorId:     author.AuthorId,
-					Avatar:       author.Avatar,
-					Nickname:     author.Nickname,
-					UniqueId:     author.UniqueId,
-					IsCollection: 1,
+			// 如果是keyword形式的，先查es，es没有数据就请求爬虫数据接口
+			list, total, _ := es.NewEsAuthorBusiness().SimpleSearch(
+				"", "", keyword, "", "", 0, 0,
+				1, 1)
+			if total == 0 {
+				authorIncomeList, err1 = spiderBusiness.GetAuthorByKeyword(keyword)
+				if err1 != nil {
+					receiver.FailReturn(global.NewMsgError(err1.Error()))
+					return
 				}
-				authorIncome.AuthorId = business.IdEncrypt(authorIncome.AuthorId)
-				authorIncome.Avatar = dyimg.Fix(authorIncome.Avatar)
-				receiver.SuccReturn(authorIncome)
-				return
+				//authorIncome.AuthorId = business.IdEncrypt(authorIncome.AuthorId)
+				//authorIncome.Avatar = dyimg.Fix(authorIncome.Avatar)
+			} else {
+				for _, author := range list {
+					authorIncome := dy2.DyAuthorIncome{
+						AuthorId:     author.AuthorId,
+						Avatar:       author.Avatar,
+						Nickname:     author.Nickname,
+						UniqueId:     author.UniqueId,
+						IsCollection: 1,
+					}
+					authorIncome.AuthorId = business.IdEncrypt(authorIncome.AuthorId)
+					authorIncome.Avatar = dyimg.Fix(authorIncome.Avatar)
+					authorIncomeList = append(authorIncomeList, authorIncome)
+				}
 			}
 		}
+	} else { //继续搜索
+		authorIncomeList, err1 = spiderBusiness.GetAuthorByKeyword(keyword)
+		if err1 != nil {
+			receiver.FailReturn(global.NewMsgError(err1.Error()))
+			return
+		}
 	}
+	listTotal := len(authorIncomeList)
+	receiver.SuccReturn(map[string]interface{}{
+		"list":  authorIncomeList,
+		"total": listTotal,
+	})
+	return
 }
 
 //达人收录 确认收入
