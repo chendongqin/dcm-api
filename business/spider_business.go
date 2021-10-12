@@ -1131,7 +1131,9 @@ func (this *DySpiderAuthScan) GetQrCodeMcn(requestIP string) (*simplejson.Json, 
 	dyUrl := "https://effect.douyin.com/passport/web/get_qrcode/?aid=1347&next=https%3A%2F%2Fwww.douyin.com&extraKey=6bq6fq6fq68q30q6fq39q3eq3bq6dq31q31q30q31q6aq3cq3eq38q3eq3aq3bq3aq31q3eq68q30q39q3dq31q31q39q3c"
 	method := "GET"
 
-	client := &http.Client{}
+	client := &http.Client{
+		Timeout: 15 * time.Second,
+	}
 	req, err := http.NewRequest(method, dyUrl, nil)
 	if err != nil {
 		fmt.Println(err)
@@ -1156,9 +1158,13 @@ func (this *DySpiderAuthScan) GetQrCodeMcn(requestIP string) (*simplejson.Json, 
 	client.Transport = tr
 
 	res, err := client.Do(req)
-	defer res.Body.Close()
+	if err != nil {
+		return nil, "", ""
+	}
+	if res != nil {
+		defer res.Body.Close()
+	}
 	body, err := ioutil.ReadAll(res.Body)
-
 	jsonObj, _ := simplejson.NewJson(body)
 
 	csrfToken := ""
@@ -1179,7 +1185,9 @@ func (this *DySpiderAuthScan) CheckQrConnectMcn(token string, csrfToken, codeIP 
 	dyUrl := "https://effect.douyin.com/passport/web/check_qrconnect/?aid=1347&token=" + token + "&next=https%3A%2F%2Fwww.douyin.com&extraKey=6bq6fq6fq68q30q6fq39q3eq3bq6dq31q31q30q31q6aq3cq3eq38q3eq3aq3bq3aq31q3eq68q30q39q3dq31q31q39q3c"
 
 	method := "GET"
-	client := &http.Client{}
+	client := &http.Client{
+		Timeout: 15 * time.Second,
+	}
 
 	//设置代理
 	tr := &http.Transport{
@@ -1196,8 +1204,13 @@ func (this *DySpiderAuthScan) CheckQrConnectMcn(token string, csrfToken, codeIP 
 	req.Header.Add("Cookie", "passport_csrf_token="+csrfToken)
 	req.Header.Add("Referer", "https://effect.douyin.com/site/hlogin?action=login")
 	req.Header.Add("User-Agent", "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/93.0.4577.82 Safari/537.36")
-	res, _ := client.Do(req)
-	defer res.Body.Close()
+	res, err := client.Do(req)
+	if err != nil {
+		return false, nil
+	}
+	if res != nil {
+		defer res.Body.Close()
+	}
 	body, _ := ioutil.ReadAll(res.Body)
 	jsonObj, _ := simplejson.NewJson(body)
 	status, _ := jsonObj.Get("data").Get("status").String()
