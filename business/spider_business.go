@@ -1143,26 +1143,28 @@ func (this *DySpiderAuthScan) GetQrCodeMcn(requestIP string) (*simplejson.Json, 
 	req.Header.Add("User-Agent", "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/93.0.4577.82 Safari/537.36")
 
 	//设置代理
-	tr := &http.Transport{
-		TLSClientConfig: &tls.Config{InsecureSkipVerify: true},
-	}
-
+	urli := url.URL{}
 	newIp, _, _, err := NewSpiderBusiness().NewProxyIPWithRequestIP(requestIP)
 	if err != nil {
 		return nil, "", ""
 	}
-	proxy := func(_ *http.Request) (*url.URL, error) {
-		return url.Parse("//" + newIp)
-	}
-	tr.Proxy = proxy
-	client.Transport = tr
-
-	res, err := client.Do(req)
+	urlproxy, err := urli.Parse("http://" + newIp)
 	if err != nil {
+		logs.Error("扫码授权账号代理设置异常")
 		return nil, "", ""
 	}
+	//设置代理
+	tr := &http.Transport{
+		TLSClientConfig: &tls.Config{InsecureSkipVerify: true},
+		Proxy:           http.ProxyURL(urlproxy),
+	}
+	client.Transport = tr
+	res, err := client.Do(req)
 	if res != nil {
 		defer res.Body.Close()
+	}
+	if err != nil {
+		return nil, "", ""
 	}
 	body, err := ioutil.ReadAll(res.Body)
 	jsonObj, _ := simplejson.NewJson(body)
@@ -1188,16 +1190,22 @@ func (this *DySpiderAuthScan) CheckQrConnectMcn(token string, csrfToken, codeIP 
 	client := &http.Client{
 		Timeout: 15 * time.Second,
 	}
-
+	urli := url.URL{}
+	newIp := codeIP
+	if len(newIp) == 0 {
+		logs.Error("芝麻代理错误")
+		return false, nil
+	}
+	urlproxy, err := urli.Parse("http://" + codeIP)
+	if err != nil {
+		logs.Error("扫码授权账号代理设置异常")
+		return false, nil
+	}
 	//设置代理
 	tr := &http.Transport{
 		TLSClientConfig: &tls.Config{InsecureSkipVerify: true},
+		Proxy:           http.ProxyURL(urlproxy),
 	}
-	newIp := codeIP
-	proxy := func(_ *http.Request) (*url.URL, error) {
-		return url.Parse("//" + newIp)
-	}
-	tr.Proxy = proxy
 	client.Transport = tr
 
 	req, _ := http.NewRequest(method, dyUrl, nil)
@@ -1205,11 +1213,11 @@ func (this *DySpiderAuthScan) CheckQrConnectMcn(token string, csrfToken, codeIP 
 	req.Header.Add("Referer", "https://effect.douyin.com/site/hlogin?action=login")
 	req.Header.Add("User-Agent", "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/93.0.4577.82 Safari/537.36")
 	res, err := client.Do(req)
-	if err != nil {
-		return false, nil
-	}
 	if res != nil {
 		defer res.Body.Close()
+	}
+	if err != nil {
+		return false, nil
 	}
 	body, _ := ioutil.ReadAll(res.Body)
 	jsonObj, _ := simplejson.NewJson(body)
