@@ -2,6 +2,7 @@ package command
 
 import (
 	"dongchamao/business"
+	"dongchamao/global"
 	"dongchamao/global/utils"
 	"fmt"
 	"strconv"
@@ -69,7 +70,7 @@ func checkTime(currentTime time.Time, hour, minute int) bool {
 func getRoute(key string) (pathInfo PathDesc) {
 	toDate := time.Now().Format("2006-01-02")
 	yesDate := time.Now().AddDate(0, 0, -1).Format("2006-01-02")
-	BeforeYesDate := time.Now().AddDate(0, 0, -1).Format("2006-01-02")
+	//BeforeYesDate := time.Now().AddDate(0, 0, -1).Format("2006-01-02")
 	weekDate := time.Now().AddDate(0, 0, -7).Format("2006-01-02")
 
 	hour := time.Now().Hour()
@@ -89,26 +90,31 @@ func getRoute(key string) (pathInfo PathDesc) {
 		/*********达人*********/
 		"author_follower_inc": {fmt.Sprintf("/v1/dy/rank/author/follower/inc/%s?tags=&province=&page=1&is_delivery=0&page_size=50&order_by=desc&sort=inc_follower_count", yesDate), "达人涨粉榜"},
 		"author_goods":        {fmt.Sprintf("/v1/dy/rank/author/goods/%s?date_type=1&tags=&verified=0&page=1&page_size=50&sort=sum_gmv&order_by=desc", yesDate), "达人带货榜"},
-		"video_share":         {fmt.Sprintf("/v1/dy/rank/video/share/%s", BeforeYesDate), "电商视频达人分享榜"},
-		"live_share":          {fmt.Sprintf("/v1/dy/rank/live/share/%s/%s", weekDate, yesDate), "电商直播达人分享榜"},
-		"author_aweme_rank":   {"/v1/dy/rank/author/aweme?rank_type=达人指数榜&category=全部", "抖音短视频达人热榜"},
-		"author_aweme_live":   {"/v1/dy/rank/author/live?rank_type=达人指数榜", "抖音直播主播热榜"},
+		//"video_share":         {fmt.Sprintf("/v1/dy/rank/video/share/%s", BeforeYesDate), "电商视频达人分享榜"},
+		"live_share":        {fmt.Sprintf("/v1/dy/rank/live/share/%s/%s", weekDate, yesDate), "电商直播达人分享榜"},
+		"author_aweme_rank": {"/v1/dy/rank/author/aweme?rank_type=达人指数榜&category=全部", "抖音短视频达人热榜"},
+		"author_aweme_live": {"/v1/dy/rank/author/live?rank_type=达人指数榜", "抖音直播主播热榜"},
 	}
 	pathInfo = routeMap[key]
 	return
 }
 
 func getRow(hour string) (taskList []string) {
-	hourGroup := map[string][]string{
-		"every": {"live_hour", "live_top"},
-		"10":    {"product_live_sale", "product_live_sale_week"},
-		"10:30": {"product_sale", "live_top", "author_follower_inc", "author_goods"},
-		"12:30": {"live_share"},
-		"15":    {"product_week", "author_aweme_live"},
-		"15:30": {"product", "product_week", "author_aweme_live"},
-		"16:30": {"video_share", "author_aweme_rank"},
-	}
+	hourGroup := getHourGroup()
 	taskList = hourGroup[hour]
+	return
+}
+func getHourGroup() (hourGroup map[string][]string) {
+	hourGroup = map[string][]string{
+		"every": {"live_hour", "live_top"},
+		"10":    {"product_live_sale", "product_live_sale_week", "product_sale", "product_share"},
+		"10:30": {"author_follower_inc", "author_goods"},
+		"12:30": {"live_share"},
+		"15":    {"product_week", "product"},
+		"15:30": {"author_aweme_live"},
+		//"16:30": {"video_share", "author_aweme_rank"},
+		"16:30": {"author_aweme_rank"},
+	}
 	return
 }
 
@@ -131,6 +137,124 @@ func checkLiveHotRank(pathInfo PathDesc) {
 	}
 	if !checkRes {
 		business.NewMonitorBusiness().SendTemplateMessage("S", pathInfo.Desc, fmt.Sprintf("%s挂了，请求地址：%s", pathInfo.Desc, pathInfo.Path))
+	}
+	return
+}
+
+// SwitchTopDateTime 根据key返回对应榜单需要展示的日期时间
+func SwitchTopDateTime(key string) (res map[string][]string, comErr global.CommonError) {
+	if key == "author_aweme_rank" || key == "author_aweme_live" {
+		comErr = global.NewMsgError("传入参数错误，不存在的key")
+		return
+	}
+	desc := getRoute(key).Desc
+	if desc == "" {
+		comErr = global.NewMsgError("传入参数错误，不存在的key")
+		return
+	}
+	switch key {
+	case "live_hour":
+		res = dateTimeLiveHour()
+	case "live_top":
+		res = dateTimeLiveHour()
+	case "product_sale":
+		res = getCheckDateList(key)
+	case "product_share":
+		res = getCheckDateList(key)
+	case "product_live_sale":
+		res = getCheckDateList(key)
+	case "product_live_sale_week":
+		res = weekList()
+	case "product":
+		res = getCheckDateList(key)
+	case "product_week":
+		res = weekList()
+	case "author_follower_inc":
+		res = getCheckDateList(key)
+	case "author_goods":
+		res = getCheckDateList(key)
+	case "live_share":
+		res = getCheckDateList(key)
+	}
+	res["desc"] = []string{fmt.Sprintf("%s的日期时间", desc)}
+	return
+}
+
+//直播小时榜的日期和时间/直播全天热榜，目前这两个榜单日期时间一样
+func dateTimeLiveHour() (res map[string][]string) {
+	res = map[string][]string{"date": {}, "hour": {}}
+	now := time.Now()
+	dateList := getDateList(7, now)
+	var hourList []string
+	currentHour := now.Hour()
+	for i := 0; i <= currentHour; i++ {
+		hourString := fmt.Sprintf("%02d:00", currentHour-i)
+		hourList = append(hourList, hourString)
+	}
+	res["date"] = dateList
+	res["hour"] = hourList
+	return
+}
+
+//根据监控时间判断获取日期列表获取
+func getCheckDateList(key string) (res map[string][]string) {
+	res = map[string][]string{"date": {}, "hour": {}}
+	now := time.Now()
+	isBefore := checkIsBefore(key)
+	beforeInt := -2
+	if isBefore {
+		beforeInt = -1
+	}
+	startSate := now.AddDate(0, 0, beforeInt)
+	res["date"] = getDateList(30, startSate)
+	return
+}
+
+//周榜日期列表获取
+func weekList() (res map[string][]string) {
+	//这里仿照前段，只给三个切片
+	res = map[string][]string{"date": {}, "hour": {}}
+	num := 3
+	startDateTime := time.Now().AddDate(0, 0, -2)
+	var dateSelectList []string
+	for i := 0; i < num; i++ {
+		rightDate := startDateTime.AddDate(0, 0, -i*6)
+		leftDate := startDateTime.AddDate(0, 0, -(i+1)*6)
+		dateString := fmt.Sprintf("%s-%s", leftDate.Format("01/02"), rightDate.Format("01/02"))
+		dateSelectList = append(dateSelectList, dateString)
+		startDateTime = startDateTime.AddDate(0, 0, -1)
+	}
+	res["date"] = dateSelectList
+	return
+}
+
+//检测当前是否已经超过了监控时间
+func checkIsBefore(key string) (isBefore bool) {
+	hourGroup := getHourGroup()
+	groupKey := ""
+	for k, v := range hourGroup {
+		if utils.InArrayString(key, v) {
+			groupKey = k
+		}
+	}
+	isInclude := strings.Contains(groupKey, ":30")
+	if !isInclude {
+		groupKey = fmt.Sprintf("%s:00:00", groupKey)
+	} else {
+		groupKey = fmt.Sprintf("%s:00", groupKey)
+	}
+	dateTime := fmt.Sprintf("%s %s", time.Now().Format("2006-01-02"), groupKey)
+	dateTimeStampObj, _ := time.ParseInLocation("2006-01-02 15:04:05", dateTime, time.Local)
+	isBefore = dateTimeStampObj.Before(time.Now())
+	return
+
+}
+
+//获取日期列表
+func getDateList(daysCount int, startTime time.Time) (list []string) {
+	for i := 0; i < daysCount; i++ {
+		date := startTime.AddDate(0, 0, -i).Format("2006-01-02")
+		list = append(list, date)
 	}
 	return
 }
