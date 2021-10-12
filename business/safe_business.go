@@ -243,7 +243,8 @@ func (s *SafeBusiness) commonUrlCondition(k string, row AnaListStruct) (sqlStrin
 	if whereNotString != "" {
 		whereNotString = fmt.Sprintf("where uri not in (%s)", whereNotString)
 	}
-	runmode := global.Cfg.String("runmode")
+	//runmode := global.Cfg.String("runmode")
+	runmode := "prod"
 	andString := fmt.Sprintf("env:%s and log_type:\"Format\" ", runmode)
 	if k != "min_url_60" {
 		sqlString = fmt.Sprintf("%s  | select uid,COUNT(*) as pv %s group by uid HAVING pv>=%d order by pv desc", andString, whereNotString, row.Point)
