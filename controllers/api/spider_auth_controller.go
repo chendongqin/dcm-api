@@ -21,7 +21,7 @@ func (this *SpiderAuthController) GetQrCodeMcn() {
 	s := business.NewDySpiderAuthScan()
 	res, csrfToken, codeIP := s.GetQrCodeMcn(this.Ip)
 	if res == nil {
-		this.FailReturn(global.NewMsgError("获取二维码失败"))
+		this.FailReturn(global.NewMsgError("获取二维码失败,请重新刷新页面"))
 		return
 	}
 
