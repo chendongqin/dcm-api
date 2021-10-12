@@ -2,8 +2,10 @@ package business
 
 import (
 	"crypto/tls"
+	"dongchamao/global"
 	"dongchamao/global/utils"
 	dy2 "dongchamao/models/repost/dy"
+	"dongchamao/services/dyimg"
 	"errors"
 	"fmt"
 	"github.com/astaxie/beego/logs"
@@ -29,6 +31,7 @@ const (
 	AddLiveTopHighLevelStar  = 64  //这不用管
 	AddLiveTopSuperLevelStar = 128 //这不用管
 	BaseSpiderUrl            = "http://api.spider.dongchamao.cn/"
+	TestBaseSpiderUrl        = "http://api-test.spider.dongchamao.cn/"
 	LiveSpiderUrl            = "http://dy-live.spider.dongchamao.cn/"
 	ZHIMASpiderUrl           = "http://zhima-proxy.spider.dongchamao.cn/"
 	AuthorInfoUrl            = "https://webcast-hl.amemv.com/webcast/room/reflow/info/?room_id=70&user_id=%s&live_id=1&app_id=1128"
@@ -113,31 +116,59 @@ func (s *SpiderBusiness) AddLive(authorId string, followerCount int64, top int, 
 
 //抖音号搜索
 //搜索抖音号 即时接口 先根据抖音号在es中查找，查找不到在调用该方法，调用爬虫实时接口
-func (s *SpiderBusiness) GetAuthorByKeyword(keyword string) (*dy2.DyAuthorIncome, error) {
+func (s *SpiderBusiness) GetAuthorByKeyword(keyword string) ([]dy2.DyAuthorIncome, error) {
 	retData := ""
 	keyword = url.QueryEscape(keyword)
-	pushUrl := BaseSpiderUrl + "searchAuthor?" + "keyword=" + keyword
-	for i := 0; i < 5; i++ {
-		retData = utils.SimpleCurl(pushUrl, "GET", "", "")
-		jd := gjson.Parse(retData)
-		if jd.Get("data.nickname").Exists() == false {
-			logs.Error("[搜索达人] keyword:[%s] 失败", keyword)
-		} else {
-			uniqueId := jd.Get("data.unique_id").String()
-			if uniqueId == "0" || uniqueId == "" {
-				uniqueId = jd.Get("data.short_id").String()
-			}
-			authorIncome := &dy2.DyAuthorIncome{
-				AuthorId:     jd.Get("data.author_id").String(),
-				Avatar:       jd.Get("data.avatar").String(),
-				Nickname:     jd.Get("data.nickname").String(),
-				UniqueId:     uniqueId,
-				IsCollection: 0,
-			}
-			return authorIncome, nil
-		}
+	pushUrl := ""
+	if global.IsDev() {
+		pushUrl = TestBaseSpiderUrl + "searchAuthor?" + "keyword=" + keyword
+	} else {
+		pushUrl = BaseSpiderUrl + "searchAuthor?" + "keyword=" + keyword
 	}
-	return nil, errors.New("系统出了小差，请稍后重试")
+	dyAuthorIncomeList := make([]dy2.DyAuthorIncome, 0)
+	retData = utils.SimpleCurl(pushUrl, "GET", "", "")
+	jd := gjson.Parse(retData)
+	rawData := jd.Get("data").String()
+	list := make([]dy2.DyAuthorRawData, 0)
+	_ = jsoniter.UnmarshalFromString(rawData, &list)
+	for _, v := range list {
+		var tempAuthor dy2.DyAuthorIncome
+		tempAuthor.UniqueId = v.UniqueId
+		if tempAuthor.UniqueId == "0" || tempAuthor.UniqueId == "" {
+			tempAuthor.UniqueId = v.ShortId
+		}
+		tempAuthor.AuthorId = IdEncrypt(v.Id)
+		tempAuthor.Avatar = dyimg.Fix(v.Avatar)
+		tempAuthor.Nickname = v.Nickname
+		tempAuthor.IsCollection = 0
+		dyAuthorIncomeList = append(dyAuthorIncomeList, tempAuthor)
+	}
+	//if jd.Get("data.nickname").Exists() == false {
+	//	logs.Error("[搜索达人] keyword:[%s] 失败", keyword)
+	//} else {
+	//	uniqueId := jd.Get("data.unique_id").String()
+	//	if uniqueId == "0" || uniqueId == "" {
+	//		uniqueId = jd.Get("data.short_id").String()
+	//	}
+	//	authorIncome := &dy2.DyAuthorIncome{
+	//		AuthorId:     jd.Get("data.author_id").String(),
+	//		Avatar:       jd.Get("data.avatar").String(),
+	//		Nickname:     jd.Get("data.nickname").String(),
+	//		UniqueId:     uniqueId,
+	//		IsCollection: 0,
+	//	}
+	//	return authorIncome, nil
+	//}
+	if len(dyAuthorIncomeList) == 0 {
+		logs.Error("[搜索达人] keyword:[%s] 失败", keyword)
+		//return nil, errors.New("系统出了小差，请稍后重试")
+	}
+	end := 10
+	if len(dyAuthorIncomeList) < end {
+		end = len(dyAuthorIncomeList)
+	}
+	return dyAuthorIncomeList[0:end], nil
+
 }
 
 // 获取正在直播的达人商品列表
