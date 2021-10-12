@@ -1244,9 +1244,12 @@ func (this *DySpiderAuthScan) GetUserInfo() (userInfo *DyCreatorUserInfo, err er
 	var body []byte
 	body, err = ioutil.ReadAll(resp.Body)
 	if err != nil {
-		return
+		return nil, err
 	}
 	jsonObj, _ := simplejson.NewJson(body)
+	if jsonObj == nil {
+		return nil, errors.New("授权失败")
+	}
 	userInfo.Uid, _ = jsonObj.Get("user").Get("uid").String()
 	userInfo.Nickname, _ = jsonObj.Get("user").Get("nickname").String()
 	userInfo.Signature, _ = jsonObj.Get("user").Get("signature").String()
