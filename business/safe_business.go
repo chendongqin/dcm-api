@@ -136,13 +136,15 @@ func (s *SafeBusiness) InitSpeedConfig(days int) {
 }
 
 // CommonAnalyseLogs 通用url日志分析
-func (s *SafeBusiness) CommonAnalyseLogs() (logList [][]LogField) {
+func (s *SafeBusiness) CommonAnalyseLogs() (logList map[string][]LogField) {
 	s.InitCommonUrlConfig()
 	timeEnd := utils.Time() - 120
 	commonUrlMapList := s.commonMap(timeEnd)
-	for _, v := range commonUrlMapList {
+	logList = make(map[string][]LogField)
+	for k, v := range commonUrlMapList {
 		logListRes, _ := s.reqestAliLog(timeEnd, v)
-		logList = append(logList, logListRes)
+		//logList = append(logList, logListRes)
+		logList[k] = logListRes
 	}
 	return
 }
@@ -207,8 +209,7 @@ func (s *SafeBusiness) combineSpeedMap(days int) (mapList map[string]AnaListStru
 //组装加速的sql字符串
 func (s *SafeBusiness) combineSpeedSqlString(uri string, row AnaListStruct) (sqlString string) {
 	runmode := "prod"
-	sqlString = fmt.Sprintf("env:%s and log_type:\"Format\" and uri:\"%s\"  | select url,COUNT(*) as pv  group by url HAVING pv>=%d order by pv desc", runmode, uri, row.Point)
-	//sqlString = "select uri,url,COUNT(*) as pv  group by url HAVING pv>=0 order by pv desc"
+	sqlString = fmt.Sprintf("env:%s and log_type:\"Format\" and uri:\"%s\"  | select url,COUNT(*) as pv where uid <> 0  group by url HAVING pv>=%d order by pv desc", runmode, uri, row.Point)
 	return
 }
 
