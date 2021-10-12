@@ -375,17 +375,22 @@ func (a *AuthorBusiness) CountLiveRoomAnalyse(authorId string, startTime, endTim
 		return
 	}
 	roomChan := make(chan string, roomNum)
+	hbaseDataChan := make(chan *dy.DyLiveRoomAnalyse, roomNum)
 	liveBusiness := NewLiveBusiness()
 	for _, rooms := range roomsMap {
 		for _, room := range rooms {
 			roomChan <- room.RoomID
 			select {
-			case <-roomChan:
-				roomAnalyse, comErr := liveBusiness.LiveRoomAnalyse(room.RoomID)
-				if comErr == nil {
-					//hbaseDataChan <- roomAnalyse
-					liveDataList = append(liveDataList, roomAnalyse)
-				}
+			case roomAnalyse := <-hbaseDataChan:
+				liveDataList = append(liveDataList, roomAnalyse)
+			case roomId := <-roomChan:
+				go func() {
+					roomAnalyse, comErr := liveBusiness.LiveRoomAnalyse(roomId)
+					if comErr == nil {
+						hbaseDataChan <- roomAnalyse
+						//liveDataList = append(liveDataList, roomAnalyse)
+					}
+				}()
 			default:
 				break
 			}
