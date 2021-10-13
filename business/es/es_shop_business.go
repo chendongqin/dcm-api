@@ -176,7 +176,6 @@ func (receiver *EsShopBusiness) IdsSearch(shopIds []string) (list []es.DyShop) {
 	esQuery, esMultiQuery := elasticsearch.NewElasticQueryGroup()
 	esQuery.SetTerms("shop_id", shopIds)
 	var cacheTime time.Duration = 180
-	esQuery.SetTerms("shop_id", shopIds)
 	results := esMultiQuery.
 		SetConnection(connection).
 		SetTable(esTable).
