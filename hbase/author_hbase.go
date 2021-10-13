@@ -3,6 +3,7 @@ package hbase
 import (
 	"context"
 	"dongchamao/global"
+	"dongchamao/global/logger"
 	"dongchamao/global/utils"
 	"dongchamao/models/entity"
 	"dongchamao/models/repost/dy"
@@ -58,7 +59,8 @@ func GetAuthor(authorId string) (data entity.DyAuthor, comErr global.CommonError
 	query := hbasehelper.NewQuery()
 	result, err := query.SetTable(hbaseService.HbaseDyAuthor).GetByRowKey([]byte(authorId))
 	if err != nil {
-		comErr = global.NewMsgError(err.Error())
+		comErr = global.NewError(5000)
+		logger.Error(err)
 		return
 	}
 	if result.Row == nil {
@@ -98,7 +100,8 @@ func GetAuthorBasic(authorId, date string) (data entity.DyAuthorBasic, comErr gl
 	}
 	result, err := query.SetTable(hbaseService.HbaseDyAuthorBasic).GetByRowKey([]byte(rowKey))
 	if err != nil {
-		comErr = global.NewMsgError(err.Error())
+		comErr = global.NewError(5000)
+		logger.Error(err)
 		return
 	}
 	if result.Row == nil {
@@ -116,7 +119,8 @@ func GetFansByDate(authorId, date string) (data entity.DyAuthorFans, comErr glob
 	rowKey := authorId + "_" + date
 	result, err := query.SetTable(hbaseService.HbaseDyAuthorFans).GetByRowKey([]byte(rowKey))
 	if err != nil {
-		comErr = global.NewMsgError(err.Error())
+		comErr = global.NewError(5000)
+		logger.Error(err)
 		return
 	}
 	if result.Row == nil {
@@ -192,7 +196,8 @@ func GetAuthorFansClub(authorId string) (data entity.DyLiveFansClub, comErr glob
 	query := hbasehelper.NewQuery()
 	result, err := query.SetTable(hbaseService.HbaseDyLiveFansClub).GetByRowKey([]byte(authorId))
 	if err != nil {
-		comErr = global.NewMsgError(err.Error())
+		comErr = global.NewError(5000)
+		logger.Error(err)
 		return
 	}
 	if result.Row == nil {
@@ -209,7 +214,8 @@ func GetAuthorStore(authorId string) (data entity.DyAuthorStore, comErr global.C
 	query := hbasehelper.NewQuery()
 	result, err := query.SetTable(hbaseService.HbaseDyAuthorStore).GetByRowKey([]byte(authorId))
 	if err != nil {
-		comErr = global.NewMsgError(err.Error())
+		comErr = global.NewError(5000)
+		logger.Error(err)
 		return
 	}
 	if result.Row == nil {
@@ -226,7 +232,8 @@ func GetAuthorReputation(authorId string) (data entity.DyReputation, comErr glob
 	query := hbasehelper.NewQuery()
 	result, err := query.SetTable(hbaseService.HbaseDyReputation).GetByRowKey([]byte(authorId))
 	if err != nil {
-		comErr = global.NewMsgError(err.Error())
+		comErr = global.NewError(5000)
+		logger.Error(err)
 		return
 	}
 	if result.Row == nil {
@@ -244,7 +251,8 @@ func GetXtAuthorDetail(authorId string) (data entity.XtAuthorDetail, comErr glob
 	query := hbasehelper.NewQuery()
 	result, err := query.SetTable(hbaseService.HbaseXtAuthorDetail).GetByRowKey([]byte(authorId))
 	if err != nil {
-		comErr = global.NewMsgError(err.Error())
+		comErr = global.NewError(5000)
+		logger.Error(err)
 		return
 	}
 	if result.Row == nil {
@@ -295,7 +303,8 @@ func GetAuthorRoomsByDate(authorId, date string) (data []entity.DyAuthorLiveRoom
 	rowKey := authorId + "_" + date
 	result, err := query.SetTable(hbaseService.HbaseDyAuthorRoomMapping).GetByRowKey([]byte(rowKey))
 	if err != nil {
-		comErr = global.NewMsgError(err.Error())
+		comErr = global.NewError(5000)
+		logger.Error(err)
 		return
 	}
 	if result.Row == nil {
@@ -313,7 +322,8 @@ func GetAuthorProductAnalysis(rowKey string) (data entity.DyAuthorProductAnalysi
 	query := hbasehelper.NewQuery()
 	result, err := query.SetTable(hbaseService.HbaseDyAuthorProductAnalysis).GetByRowKey([]byte(rowKey))
 	if err != nil {
-		comErr = global.NewMsgError(err.Error())
+		comErr = global.NewError(5000)
+		logger.Error(err)
 		return
 	}
 	if result.Row == nil {
@@ -370,7 +380,8 @@ func GetAuthorDateProduct(rowKey string) (data entity.DyAuthorDateProductData, c
 	query := hbasehelper.NewQuery()
 	result, err := query.SetTable(hbaseService.HbaseDyAuthorProductDateMapping).GetByRowKey([]byte(rowKey))
 	if err != nil {
-		comErr = global.NewMsgError(err.Error())
+		comErr = global.NewError(5000)
+		logger.Error(err)
 		return
 	}
 	if result.Row == nil {
@@ -408,7 +419,8 @@ func GetAuthorLiveFansClubUser(authorId string) (data entity.DyLiveFansClubUser,
 	query := hbasehelper.NewQuery()
 	result, err := query.SetTable(hbaseService.HbaseDyAuthorLiveFansClubUser).GetByRowKey([]byte(authorId))
 	if err != nil {
-		comErr = global.NewMsgError(err.Error())
+		comErr = global.NewError(5000)
+		logger.Error(err)
 		return
 	}
 	if result.Row == nil {

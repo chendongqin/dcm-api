@@ -3,6 +3,7 @@ package hbase
 import (
 	"context"
 	"dongchamao/global"
+	"dongchamao/global/logger"
 	"dongchamao/global/utils"
 	"dongchamao/models/entity"
 	"dongchamao/services/dyimg"
@@ -18,7 +19,8 @@ func GetLiveCurProduct(roomId string) (data entity.DyLiveCurProduct, comErr glob
 	query := hbasehelper.NewQuery()
 	result, err := query.SetTable(hbaseService.HbaseDyLiveCurProduct).GetByRowKey([]byte(roomId))
 	if err != nil {
-		comErr = global.NewMsgError(err.Error())
+		comErr = global.NewError(5000)
+		logger.Error(err)
 		return
 	}
 	if result.Row == nil {
@@ -35,7 +37,8 @@ func GetRoomProductInfo(rowKey string) (data entity.DyRoomProduct, comErr global
 	query := hbasehelper.NewQuery()
 	result, err := query.SetTable(hbaseService.HbaseDyRoomProduct).GetByRowKey([]byte(rowKey))
 	if err != nil {
-		comErr = global.NewMsgError(err.Error())
+		comErr = global.NewError(5000)
+		logger.Error(err)
 		return
 	}
 	if result.Row == nil {
@@ -52,7 +55,8 @@ func GetRoomProductTrend(rowKey string) (data entity.DyRoomProductTrendInfo, com
 	query := hbasehelper.NewQuery()
 	result, err := query.SetTable(hbaseService.HbaseDyRoomProductTrend).GetByRowKey([]byte(rowKey))
 	if err != nil {
-		comErr = global.NewMsgError(err.Error())
+		comErr = global.NewError(5000)
+		logger.Error(err)
 		return
 	}
 	if result.Row == nil {
@@ -68,7 +72,8 @@ func GetRoomCurProduct(rowKey string) (data entity.DyRoomCurProduct, comErr glob
 	query := hbasehelper.NewQuery()
 	result, err := query.SetTable(hbaseService.HbaseDyRoomCurProduct).GetByRowKey([]byte(rowKey))
 	if err != nil {
-		comErr = global.NewMsgError(err.Error())
+		comErr = global.NewError(5000)
+		logger.Error(err)
 		return
 	}
 	if result.Row == nil {
@@ -112,7 +117,8 @@ func GetDyLiveRoomUserInfo(roomId string) (data entity.DyLiveRoomUserInfo, comEr
 	query := hbasehelper.NewQuery()
 	result, err := query.SetTable(hbaseService.HbaseDyLiveRoomUserInfo).GetByRowKey([]byte(roomId))
 	if err != nil {
-		comErr = global.NewMsgError(err.Error())
+		comErr = global.NewError(5000)
+		logger.Error(err)
 		return
 	}
 	if result.Row == nil {
@@ -160,7 +166,8 @@ func GetLiveInfo(roomId string) (data entity.DyLiveInfo, comErr global.CommonErr
 	query := hbasehelper.NewQuery()
 	result, err := query.SetTable(hbaseService.HbaseDyLiveInfo).GetByRowKey([]byte(roomId))
 	if err != nil {
-		comErr = global.NewMsgError(err.Error())
+		comErr = global.NewError(5000)
+		logger.Error(err)
 		return
 	}
 	if result.Row == nil {
@@ -187,7 +194,8 @@ func GetLiveReputation(roomId string) (data entity.DyLiveReputation, comErr glob
 	query := hbasehelper.NewQuery()
 	result, err := query.SetTable(hbaseService.HbaseDyLiveReputation).GetByRowKey([]byte(roomId))
 	if err != nil {
-		comErr = global.NewMsgError(err.Error())
+		comErr = global.NewError(5000)
+		logger.Error(err)
 		return
 	}
 	if result.Row == nil {
@@ -205,7 +213,8 @@ func GetLiveSalesData(roomId string) (data entity.DyAuthorLiveSalesData, comErr 
 	query := hbasehelper.NewQuery()
 	result, err := query.SetTable(hbaseService.HbaseDyAuthorLiveSalesData).GetByRowKey([]byte(roomId))
 	if err != nil {
-		comErr = global.NewMsgError(err.Error())
+		comErr = global.NewError(5000)
+		logger.Error(err)
 		return
 	}
 	if result.Row == nil {
@@ -223,7 +232,8 @@ func GetLivePmt(roomId string) (data entity.DyLivePmt, comErr global.CommonError
 	query := hbasehelper.NewQuery()
 	result, err := query.SetTable(hbaseService.HbaseDyLivePmt).GetByRowKey([]byte(roomId))
 	if err != nil {
-		comErr = global.NewMsgError(err.Error())
+		comErr = global.NewError(5000)
+		logger.Error(err)
 		return
 	}
 	if result.Row == nil {
@@ -240,7 +250,8 @@ func GetRankTrends(roomId string) (data entity.DyLiveRankTrends, comErr global.C
 	query := hbasehelper.NewQuery()
 	result, err := query.SetTable(hbaseService.HbaseDyLiveRankTrend).GetByRowKey([]byte(roomId))
 	if err != nil {
-		comErr = global.NewMsgError(err.Error())
+		comErr = global.NewError(5000)
+		logger.Error(err)
 		return
 	}
 	if result.Row == nil {
@@ -257,7 +268,8 @@ func GetLiveChatMessage(roomId string) (data entity.DyLiveChatMessage, comErr gl
 	query := hbasehelper.NewQuery()
 	result, err := query.SetTable(hbaseService.HbaseDyLiveChatMessage).GetByRowKey([]byte(roomId))
 	if err != nil {
-		comErr = global.NewMsgError(err.Error())
+		comErr = global.NewError(5000)
+		logger.Error(err)
 		return
 	}
 	if result.Row == nil {

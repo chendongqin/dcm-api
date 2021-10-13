@@ -3,6 +3,7 @@ package hbase
 import (
 	"context"
 	"dongchamao/global"
+	"dongchamao/global/logger"
 	"dongchamao/global/utils"
 	"dongchamao/models/entity"
 	"dongchamao/services/dyimg"
@@ -48,7 +49,8 @@ func GetVideo(awemeId string) (data entity.DyAweme, comErr global.CommonError) {
 	query := hbasehelper.NewQuery()
 	result, err := query.SetTable(hbaseService.HbaseDyAweme).GetByRowKey([]byte(awemeId))
 	if err != nil {
-		comErr = global.NewMsgError(err.Error())
+		comErr = global.NewError(5000)
+		logger.Error(err)
 		return
 	}
 	if result.Row == nil {
@@ -77,7 +79,8 @@ func GetVideoCountDataRangeDate(awemeId string, startTime, endTime time.Time) (d
 		SetStopRow([]byte(endRow)).
 		Scan(1000)
 	if err != nil {
-		comErr = global.NewMsgError(err.Error())
+		comErr = global.NewError(5000)
+		logger.Error(err)
 		return
 	}
 	data = map[string]entity.DyAwemeDiggCommentForwardCount{}
@@ -100,7 +103,8 @@ func GetVideoCountData(awemeId, date string) (data entity.DyAwemeDiggCommentForw
 		SetTable(hbaseService.HbaseDyAwemeDiggCommentForwardCount).
 		GetByRowKey([]byte(startRow))
 	if err != nil {
-		comErr = global.NewMsgError(err.Error())
+		comErr = global.NewError(5000)
+		logger.Error(err)
 		return
 	}
 	dataMap := hbaseService.HbaseFormat(result, entity.DyAwemeDiggCommentForwardCountMap)
@@ -135,7 +139,8 @@ func GetAuthorVideoCountDataRangeDate(awemeId, startDate, endDate string) (data 
 		SetStopRow([]byte(endRow)).
 		Scan(1000)
 	if err != nil {
-		comErr = global.NewMsgError(err.Error())
+		comErr = global.NewError(5000)
+		logger.Error(err)
 		return
 	}
 	data = map[string]entity.DyAwemeDiggCommentForwardCount{}
@@ -158,7 +163,8 @@ func GetAuthorVideoCountData(awemeId, date string) (data entity.DyAwemeDiggComme
 		SetTable(hbaseService.HbaseDyAwemeDiggCommentForwardCount).
 		GetByRowKey([]byte(startRow))
 	if err != nil {
-		comErr = global.NewMsgError(err.Error())
+		comErr = global.NewError(5000)
+		logger.Error(err)
 		return
 	}
 	dataMap := hbaseService.HbaseFormat(result, entity.DyAwemeDiggCommentForwardCountMap)
@@ -174,7 +180,8 @@ func GetAwemeTopComment(awemeId string, start, end int) (data []entity.DyAwemeCo
 		SetTable(hbaseService.HbaseDyAwemeTopComment).
 		GetByRowKey([]byte(awemeId))
 	if err != nil {
-		comErr = global.NewMsgError(err.Error())
+		comErr = global.NewError(5000)
+		logger.Error(err)
 		return
 	}
 	dataMap := hbaseService.HbaseFormat(result, entity.DyAwemeCommentTopMap)
