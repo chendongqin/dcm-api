@@ -8,9 +8,15 @@ import (
 	"github.com/astaxie/beego/logs"
 )
 
+var secretString = `-----BEGIN PRIVATE KEY-----
+MIGTAgEAMBMGByqGSM49AgEGCCqGSM49AwEHBHkwdwIBAQQgLGo1mDA959OvZ2Vn
+3fPYiaC2vFCCMf9Y0fWTCWS5IeigCgYIKoZIzj0DAQehRANCAATXjPxyw8Ijq2at
+Tqc/jfJ07dgEJY3D4OWcL8r93iYlbLIKaS1LSdPI0S+ep23BQi9hLl9tAcIEjlr5
+9tGI4r+k
+-----END PRIVATE KEY-----`
+
 func GetUniqueId(token string) (unique string, err error) {
 	// Generate the client secret used to authenticate with Apple's validation servers
-	secretString := global.Cfg.String("apple_secret")
 	teamID := global.Cfg.String("apple_team_id")
 	clientID := global.Cfg.String("apple_client_id")
 	keyID := global.Cfg.String("apple_key_id")
