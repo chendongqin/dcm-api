@@ -98,7 +98,7 @@ func (receiver *EsLiveBusiness) CountRoomProductByAuthorId(authorId string, star
 	}
 	esQuery, esMultiQuery := elasticsearch.NewElasticQueryGroup()
 	esQuery.SetTerm("author_id", authorId)
-	esQuery.SetRange("start_time", map[string]interface{}{
+	esQuery.SetRange("live_create_time", map[string]interface{}{
 		"gte": startTime.Unix(),
 		"lt":  endTime.AddDate(0, 0, 1).Unix(),
 	})
@@ -168,7 +168,7 @@ func (receiver *EsLiveBusiness) CountRoomByDayByAuthorId(authorId string, hasPro
 }
 
 //直播间筛选
-func (receiver *EsLiveBusiness) RoomProductByRoomId(roomInfo entity.DyLiveInfo, keyword, sortStr, orderBy, firstLabel, secondLabel, thirdLabel string, page, pageSize int) (list []es.EsAuthorLiveProduct, productCount dy.LiveProductCount, total int, comErr global.CommonError) {
+func (receiver *EsLiveBusiness) RoomProductByRoomId(roomInfo entity.DyLiveInfo, keyword, productId, sortStr, orderBy, firstLabel, secondLabel, thirdLabel string, page, pageSize int) (list []es.EsAuthorLiveProduct, productCount dy.LiveProductCount, total int, comErr global.CommonError) {
 	if sortStr == "" {
 		sortStr = "shelf_time"
 	}
@@ -215,6 +215,9 @@ func (receiver *EsLiveBusiness) RoomProductByRoomId(roomInfo entity.DyLiveInfo, 
 		} else {
 			esQuery.SetMatchPhrase("dcm_level_first", firstLabel)
 		}
+	}
+	if productId != "" {
+		esQuery.SetTerm("product_id", productId)
 	}
 	if secondLabel != "" {
 		esQuery.SetMatchPhrase("first_cname", secondLabel)
