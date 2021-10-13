@@ -190,7 +190,7 @@ func (receiver *LiveController) LiveInfoData() {
 		incFansRate = float64(liveInfo.FollowCount) / float64(liveInfo.TotalUser)
 		interactRate = float64(liveInfo.BarrageUserCount) / float64(liveInfo.TotalUser)
 		liveSale.Uv = (gmv + float64(liveInfo.RoomTicketCount)/10) / float64(liveInfo.TotalUser)
-		liveSale.SaleRate = sales / float64(liveInfo.TotalUser)
+		liveSale.SaleRate = utils.RateMin(sales / float64(liveInfo.TotalUser))
 	}
 	avgOnlineTime := liveBusiness.CountAvgOnlineTime(liveInfo.OnlineTrends, liveInfo.CreateTime, liveInfo.TotalUser)
 	returnLiveInfo := dy2.DyLiveInfo{
@@ -206,8 +206,8 @@ func (receiver *LiveController) LiveInfoData() {
 		UserCount:           liveInfo.UserCount,
 		TrendsCrawlTime:     liveInfo.TrendsCrawlTime,
 		IncFans:             liveInfo.FollowCount,
-		IncFansRate:         incFansRate,
-		InteractRate:        interactRate,
+		IncFansRate:         utils.RateMin(incFansRate),
+		InteractRate:        utils.RateMin(interactRate),
 		AvgUserCount:        avgUserCount,
 		MaxWatchOnlineTrend: maxOnlineTrends,
 		OnlineTrends:        incOnlineTrends,
@@ -428,6 +428,7 @@ func (receiver *LiveController) LiveProductList() {
 	}
 	InputData := receiver.InputFormat()
 	keyword := InputData.GetString("keyword", "")
+	productId := business.IdDecrypt(InputData.GetString("product_id", ""))
 	sortStr := InputData.GetString("sort", "shelf_time")
 	orderBy := InputData.GetString("order_by", "desc")
 	page := InputData.GetInt("page", 1)
@@ -437,7 +438,7 @@ func (receiver *LiveController) LiveProductList() {
 	thirdLabel := InputData.GetString("third_label", "")
 	roomInfo, _ := hbase.GetLiveInfo(roomId)
 	esLiveBusiness := es.NewEsLiveBusiness()
-	list, productCount, total, err := esLiveBusiness.RoomProductByRoomId(roomInfo, keyword, sortStr, orderBy, firstLabel, secondLabel, thirdLabel, page, pageSize)
+	list, productCount, total, err := esLiveBusiness.RoomProductByRoomId(roomInfo, keyword, productId, sortStr, orderBy, firstLabel, secondLabel, thirdLabel, page, pageSize)
 	if err != nil {
 		receiver.FailReturn(err)
 		return
@@ -451,7 +452,7 @@ func (receiver *LiveController) LiveProductList() {
 			curCount, pmtStatus, pv, err1 := liveBusiness.RoomCurAndPmtProductById(roomId, v.ProductID)
 			v.Pv = pv
 			if pv > 0 {
-				v.BuyRate = v.PredictSales / float64(pv)
+				v.BuyRate = utils.RateMin(v.PredictSales / float64(pv))
 			}
 			item := dy2.LiveRoomProductCount{
 				ProductInfo: v,
@@ -984,8 +985,8 @@ func (receiver *LiveController) LivingSaleData() {
 		livingInfo.LiveTime = time.Now().Unix() - liveInfo.CreateTime
 	}
 	if liveInfo.TotalUser > 0 {
-		livingInfo.Uv = (gmv + float64(liveInfo.RoomTicketCount)/10) / float64(liveInfo.TotalUser)
-		livingInfo.BarrageRate = float64(liveInfo.BarrageUserCount) / float64(liveInfo.TotalUser)
+		livingInfo.Uv = utils.RateMin((gmv + float64(liveInfo.RoomTicketCount)/10) / float64(liveInfo.TotalUser))
+		livingInfo.BarrageRate = utils.RateMin(float64(liveInfo.BarrageUserCount) / float64(liveInfo.TotalUser))
 	}
 	livingInfo.AvgOnlineTime = business.NewLiveBusiness().CountAvgOnlineTime(liveInfo.OnlineTrends, liveInfo.CreateTime, liveInfo.TotalUser)
 	receiver.SuccReturn(livingInfo)
@@ -1040,7 +1041,7 @@ func (receiver *LiveController) LivingProduct() {
 		if err == nil {
 			v.Pv = pv
 			if v.Pv > 0 {
-				list[k].BuyRate = v.PredictSales / float64(v.Pv)
+				list[k].BuyRate = utils.RateMin(v.PredictSales / float64(v.Pv))
 			}
 			list[k].CurSecond = curCount.CurSecond
 			pmtStatusLen := len(pmtStatus)

@@ -143,19 +143,37 @@ func (receiver *AuthorController) BaseSearch() {
 			list[k].IsCollect = collect[v.AuthorId]
 		}
 	}
-	authorMap, _ := hbase.GetAuthorByIds(authorIds)
+	authorLiveMap := map[string]string{}
+	cacheKey := cache.GetCacheKey(cache.AuthorLiveMap, utils.Md5_encode(strings.Join(authorIds, ",")))
+	cacheStr := global.Cache.Get(cacheKey)
+	if cacheStr != "" {
+		cacheStr = utils.DeserializeData(cacheStr)
+		_ = jsoniter.Unmarshal([]byte(cacheStr), &authorLiveMap)
+	} else {
+		authorMap, _ := hbase.GetAuthorByIds(authorIds)
+		for k, v := range authorMap {
+			if v.RoomStatus == 2 {
+				authorLiveMap[k] = v.RoomId
+			} else {
+				authorLiveMap[k] = ""
+			}
+		}
+		_ = global.Cache.Set(cacheKey, utils.SerializeData(authorLiveMap), 180)
+	}
 	for k, v := range list {
 		list[k].Avatar = dyimg.Fix(v.Avatar)
 		if v.UniqueId == "" || v.UniqueId == "0" {
 			list[k].UniqueId = v.ShortId
 		}
 		list[k].AuthorId = business.IdEncrypt(v.AuthorId)
-		if a, ok := authorMap[v.AuthorId]; ok {
-			list[k].RoomId = a.RoomId
+		if a, ok := authorLiveMap[v.AuthorId]; ok {
+			list[k].RoomId = business.IdEncrypt(a)
 		} else {
 			authorData, _ := hbase.GetAuthor(v.AuthorId)
 			list[k].RoomId = business.IdEncrypt(authorData.RoomId)
 		}
+		list[k].DiggFollowerRate = utils.RateMin(list[k].DiggFollowerRate)
+		list[k].InteractionRate = utils.RateMin(list[k].InteractionRate)
 	}
 	totalPage := math.Ceil(float64(total) / float64(pageSize))
 	maxPage := math.Ceil(float64(receiver.MaxTotal) / float64(pageSize))
@@ -944,6 +962,32 @@ func (receiver *AuthorController) AuthorProductAnalyse() {
 		"brand_list":     brandList,
 		"analysis_count": analysisCount,
 		"total":          total,
+	})
+	return
+}
+
+//达人合作小店
+func (receiver *AuthorController) AuthorShopAnalyse() {
+	authorId := business.IdDecrypt(receiver.GetString(":author_id"))
+	startTime, endTime, comErr := receiver.GetRangeDate()
+	if comErr != nil {
+		receiver.FailReturn(comErr)
+		return
+	}
+	keyword := receiver.GetString("keyword", "")
+	sortStr := receiver.GetString("sort", "")
+	orderBy := receiver.GetString("order_by", "")
+	page := receiver.GetPage("page")
+	pageSize := receiver.GetPageSize("page_size", 10, 50)
+	authorBusiness := business.NewAuthorBusiness()
+	list, total, comErr := authorBusiness.GetAuthorShopAnalyse(authorId, keyword, sortStr, orderBy, startTime, endTime, page, pageSize, receiver.UserId)
+	if comErr != nil {
+		receiver.FailReturn(comErr)
+		return
+	}
+	receiver.SuccReturn(map[string]interface{}{
+		"list":  list,
+		"total": total,
 	})
 	return
 }

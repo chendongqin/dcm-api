@@ -365,7 +365,7 @@ func (a *AuthorBusiness) CountLiveRoomAnalyse(authorId string, startTime, endTim
 		LiveStartHourChart: []dy.NameValueChart{},
 	}
 	roomsMap, _ := hbase.GetAuthorRoomsRangDate(authorId, startTime, endTime)
-	liveDataList := make([]dy.DyLiveRoomAnalyse, 0)
+	liveDataList := make([]*dy.DyLiveRoomAnalyse, 0)
 	roomNum := 0
 	productRoomNum := 0
 	for _, rooms := range roomsMap {
@@ -374,23 +374,19 @@ func (a *AuthorBusiness) CountLiveRoomAnalyse(authorId string, startTime, endTim
 	if roomNum == 0 {
 		return
 	}
-	wg := sync.WaitGroup{}
-	wg.Add(roomNum)
-	hbaseDataChan := make(chan dy.DyLiveRoomAnalyse, roomNum)
+	hbaseDataChan := make(chan *dy.DyLiveRoomAnalyse, roomNum)
+	liveBusiness := NewLiveBusiness()
 	for _, rooms := range roomsMap {
 		for _, room := range rooms {
 			go func(roomId string) {
-				defer global.RecoverPanic()
-				defer wg.Done()
-				liveBusiness := NewLiveBusiness()
 				roomAnalyse, comErr := liveBusiness.LiveRoomAnalyse(roomId)
 				if comErr == nil {
 					hbaseDataChan <- roomAnalyse
+					//liveDataList = append(liveDataList, roomAnalyse)
 				}
 			}(room.RoomID)
 		}
 	}
-	wg.Wait()
 	for i := 0; i < roomNum; i++ {
 		roomAnalyse, ok := <-hbaseDataChan
 		if !ok {
@@ -402,6 +398,21 @@ func (a *AuthorBusiness) CountLiveRoomAnalyse(authorId string, startTime, endTim
 	sumLongTime := map[string]int{}
 	sumHourTime := map[string]int{}
 	dateRoomMap := map[string][]dy.DyLiveRoomChart{}
+	var totalUv float64 = 0
+	var totalAvgOnlineTime float64 = 0
+	var totalAmount float64 = 0
+	var totalSales int64 = 0
+	var totalInteractRate float64 = 0
+	var totalIncFans int64 = 0
+	var totalAvgUserCount int64 = 0
+	var totalUser int64 = 0
+	var totalSaleRate float64 = 0
+	var totalIncFansRate float64 = 0
+	var totalPerPrice float64 = 0
+	var liveMap = map[string]int{}
+	var liveProductMap = map[string]int{}
+	var uvMap = map[string]float64{}
+	var avgOnlineTimeMap = map[string]float64{}
 	for _, v := range liveDataList {
 		date := time.Unix(v.DiscoverTime, 0).Format("01/02")
 		longStr := ""
@@ -431,6 +442,17 @@ func (a *AuthorBusiness) CountLiveRoomAnalyse(authorId string, startTime, endTim
 			dateRoomMap[date] = []dy.DyLiveRoomChart{}
 		}
 		if v.PromotionNum {
+			totalUv += v.Uv
+			if _, ok := uvMap[date]; !ok {
+				uvMap[date] = v.Uv
+			} else {
+				uvMap[date] += v.Uv
+			}
+			if _, ok := liveProductMap[date]; !ok {
+				liveProductMap[date] = 1
+			} else {
+				liveProductMap[date] += 1
+			}
 			productRoomNum++
 		}
 		dateRoomMap[date] = append(dateRoomMap[date], dy.DyLiveRoomChart{
@@ -438,34 +460,40 @@ func (a *AuthorBusiness) CountLiveRoomAnalyse(authorId string, startTime, endTim
 			Title:     v.Title,
 			UserTotal: v.TotalUserCount,
 		})
+		totalSaleRate += v.SaleRate
+		totalPerPrice += v.PerPrice
+		totalAmount += v.Amount
+		totalSales += v.Volume
+		totalAvgOnlineTime += v.AvgOnlineTime
+		totalInteractRate += v.InteractRate
+		totalIncFans += v.IncFans
+		totalIncFansRate += v.IncFansRate
+		totalAvgUserCount += v.AvgUserCount
+		totalUser += v.TotalUserCount
+		if _, ok := liveMap[date]; !ok {
+			liveMap[date] = 1
+		} else {
+			liveMap[date] += 1
+		}
+		if _, ok := avgOnlineTimeMap[date]; !ok {
+			avgOnlineTimeMap[date] = v.AvgOnlineTime
+		} else {
+			avgOnlineTimeMap[date] += v.AvgOnlineTime
+		}
 		if d, ex := sumData[date]; ex {
 			d.TotalUserCount += v.TotalUserCount
 			d.IncFans += v.IncFans
-			if d.TotalUserCount > 0 {
-				d.IncFansRate = float64(d.IncFans) / float64(d.TotalUserCount)
-				d.InteractRate = float64(d.BarrageCount) / float64(d.TotalUserCount)
-			}
 			d.BarrageCount += v.BarrageCount
-			avgUserCount := (d.AvgUserCount + v.AvgUserCount) / 2
-			d.AvgUserCount = avgUserCount
 			d.Volume += v.Volume
 			d.Amount += v.Amount
-			uv := (d.Uv + v.Uv) / 2
-			d.Uv = uv
-			saleRate := (d.SaleRate + v.SaleRate) / 2
-			d.SaleRate = saleRate
-			perPrice := (d.PerPrice + v.PerPrice) / 2
-			d.PerPrice = perPrice
 			d.LiveLongTime += v.LiveLongTime
 			d.LiveStartTime = v.LiveStartTime
-			avgOnlineTime := (d.AvgOnlineTime + v.AvgOnlineTime) / 2
-			d.AvgOnlineTime = avgOnlineTime
 			if !d.PromotionNum {
 				d.PromotionNum = v.PromotionNum
 			}
 			sumData[date] = d
 		} else {
-			sumData[date] = v
+			sumData[date] = *v
 		}
 	}
 	keys := make([]string, 0)
@@ -495,16 +523,21 @@ func (a *AuthorBusiness) CountLiveRoomAnalyse(authorId string, startTime, endTim
 	amountChart := make([]float64, 0)
 	for _, date := range keys {
 		v := sumData[date]
+		dateRoomNum := 0
+		dateProductRoomNum := 0
+		if n, exist := liveMap[date]; exist {
+			dateRoomNum = n
+		}
+		if n, exist := liveProductMap[date]; exist {
+			dateProductRoomNum = n
+		}
+		if n, exist := avgOnlineTimeMap[date]; exist && dateRoomNum > 0 {
+			v.AvgOnlineTime = n / float64(dateRoomNum)
+		}
+		if n, exist := uvMap[date]; exist && dateProductRoomNum > 0 {
+			v.Uv = n / float64(dateProductRoomNum)
+		}
 		data.UserData.LiveNum += 1
-		data.UserData.AvgUserTotal += v.TotalUserCount
-		data.UserData.AvgUserCount += v.AvgUserCount
-		data.UserData.AvgInteractRate += v.InteractRate
-		data.UserData.IncFans += v.IncFans
-		data.UserData.AvgIncFansRate += v.IncFansRate
-		data.SaleData.AvgVolume += v.Volume
-		data.SaleData.AvgAmount += v.Amount
-		data.SaleData.AvgUv += v.Uv
-		data.SaleData.AvgPerPrice += v.PerPrice
 		dateChart = append(dateChart, date)
 		userTotalChart = append(userTotalChart, v.TotalUserCount)
 		onlineUserChart = append(onlineUserChart, v.AvgOnlineTime)
@@ -520,12 +553,12 @@ func (a *AuthorBusiness) CountLiveRoomAnalyse(authorId string, startTime, endTim
 		}
 	}
 	data.SaleData.PromotionNum = es.NewEsLiveBusiness().CountRoomProductByAuthorId(authorId, startTime, endTime)
-	if data.UserData.LiveNum > 0 {
-		data.UserData.AvgUserTotal /= int64(data.UserData.LiveNum)
-		data.UserData.AvgUserCount /= int64(data.UserData.LiveNum)
-		data.UserData.AvgInteractRate /= float64(data.UserData.LiveNum)
-		data.UserData.AvgIncFansRate /= float64(data.UserData.LiveNum)
-	}
+	data.UserData.IncFans = totalIncFans
+	//data.UserData.AvgIncFansRate += v.IncFansRate
+	//data.SaleData.AvgVolume += v.Volume
+	//data.SaleData.AvgAmount += v.Amount
+	//data.SaleData.AvgUv += v.Uv
+	//data.SaleData.AvgPerPrice += v.PerPrice
 	//todo 数据同源处理
 	liveSumData, _ := es.NewEsLiveBusiness().SumDataByAuthor(authorId, startTime, endTime)
 	if data.UserData.PromotionLiveNum > 0 {
@@ -533,14 +566,20 @@ func (a *AuthorBusiness) CountLiveRoomAnalyse(authorId string, startTime, endTim
 		//data.SaleData.AvgAmount /= float64(data.UserData.PromotionLiveNum)
 		data.SaleData.AvgVolume = int64(math.Floor(liveSumData.TotalSales.Sum / float64(data.UserData.PromotionLiveNum)))
 		data.SaleData.AvgAmount = utils.FriendlyFloat64(liveSumData.TotalGmv.Sum / float64(data.UserData.PromotionLiveNum))
-		data.SaleData.AvgUv /= float64(data.UserData.PromotionLiveNum)
-		data.SaleData.AvgPerPrice /= float64(data.UserData.PromotionLiveNum)
-	}
-	if data.UserData.AvgUserTotal > 0 {
-		data.SaleData.SaleRate = float64(data.SaleData.AvgVolume) / float64(data.UserData.AvgUserTotal)
 	}
 	data.UserData.PromotionLiveNum = productRoomNum
 	data.UserData.LiveNum = len(liveDataList)
+	if data.UserData.LiveNum > 0 {
+		data.UserData.AvgUserTotal = totalUser / int64(data.UserData.LiveNum)
+		data.UserData.AvgUserCount = totalAvgUserCount / int64(data.UserData.LiveNum)
+		data.UserData.AvgInteractRate = totalInteractRate / float64(data.UserData.LiveNum)
+		data.UserData.AvgIncFansRate = totalIncFansRate / float64(data.UserData.LiveNum)
+	}
+	if data.UserData.PromotionLiveNum > 0 {
+		data.SaleData.AvgPerPrice = totalPerPrice / float64(data.UserData.PromotionLiveNum)
+		data.SaleData.SaleRate = totalSaleRate / float64(data.UserData.PromotionLiveNum)
+		data.SaleData.AvgUv = totalUv / float64(data.UserData.LiveNum)
+	}
 	data.UserTotalChart = dy.DyUserTotalChart{
 		Date:       dateChart,
 		CountValue: userTotalChart,
@@ -558,6 +597,9 @@ func (a *AuthorBusiness) CountLiveRoomAnalyse(authorId string, startTime, endTim
 		Date:       dateChart,
 		CountValue: amountChart,
 	}
+	data.UserData.AvgIncFansRate = utils.RateMin(data.UserData.AvgIncFansRate)
+	data.UserData.AvgInteractRate = utils.RateMin(data.UserData.AvgInteractRate)
+	data.SaleData.SaleRate = utils.RateMin(data.SaleData.SaleRate)
 	return
 }
 
@@ -1106,6 +1148,133 @@ func (a *AuthorBusiness) NewGetAuthorProductAnalyse(authorId, keyword, firstCate
 	analysisCount.Sales = sumSale
 	analysisCount.HasShop = hasShop
 	analysisCount.IsRecommend = isRecommend
+	return
+}
+
+//合作小店
+func (a *AuthorBusiness) GetAuthorShopAnalyse(authorId, keyword, sortStr, orderBy string, startTime, endTime time.Time, page, pageSize, userId int) (list []dy.DyAuthorShopAnalysis, total int, comErr global.CommonError) {
+	if orderBy == "" {
+		orderBy = "desc"
+	}
+	if sortStr == "" {
+		sortStr = "product_num"
+	}
+	if !utils.InArrayString(sortStr, []string{"product_num", "gmv", "sales"}) {
+		comErr = global.NewError(4000)
+		return
+	}
+	if !utils.InArrayString(orderBy, []string{"desc", "asc"}) {
+		comErr = global.NewError(4000)
+		return
+	}
+	list = []dy.DyAuthorShopAnalysis{}
+	shopLiveIdMap := map[string]map[string]string{}
+	shopProductMap := map[string]map[string]string{}
+	shopMapList := map[string]dy.DyAuthorShopAnalysis{}
+	//判断自卖和推荐
+	liveList, _, _ := es.NewEsLiveBusiness().ScanLiveShopByAuthor(authorId, keyword, startTime, endTime, 1, 10000)
+	awemeList, _, _ := es.NewEsVideoBusiness().ScanAwemeShopByAuthor(authorId, keyword, startTime, endTime, 1, 10000)
+	for _, v := range liveList {
+		if _, exist := shopLiveIdMap[v.ShopId]; !exist {
+			shopLiveIdMap[v.ShopId] = map[string]string{}
+		}
+		shopLiveIdMap[v.ShopId][v.RoomID] = v.RoomID
+		if _, exist := shopProductMap[v.ShopId]; !exist {
+			shopProductMap[v.ShopId] = map[string]string{}
+		}
+		shopProductMap[v.ShopId][v.ProductID] = v.ProductID
+		//数据累加
+		if p, ok := shopMapList[v.ShopId]; ok {
+			p.Gmv += v.PredictGmv
+			p.Sales += utils.ToInt64(math.Floor(v.PredictSales))
+			shopMapList[v.ShopId] = p
+		} else {
+			shopMapList[v.ShopId] = dy.DyAuthorShopAnalysis{
+				ShopId:   v.ShopId,
+				ShopName: v.ShopName,
+				ShopIcon: v.ShopIcon,
+				Gmv:      v.PredictGmv,
+				Sales:    utils.ToInt64(math.Floor(v.PredictSales)),
+			}
+		}
+	}
+	for _, v := range awemeList {
+		if _, exist := shopProductMap[v.ShopId]; !exist {
+			shopProductMap[v.ShopId] = map[string]string{}
+		}
+		shopProductMap[v.ShopId][v.ProductId] = v.ProductId
+		//数据累加
+		if p, ok := shopMapList[v.ShopId]; ok {
+			p.Gmv += v.Gmv
+			p.Sales += v.Sales
+			shopMapList[v.ShopId] = p
+		} else {
+			shopMapList[v.ShopId] = dy.DyAuthorShopAnalysis{
+				ShopId:   v.ShopId,
+				ShopName: v.ShopName,
+				ShopIcon: v.ShopIcon,
+				Gmv:      v.Gmv,
+				Sales:    v.Sales,
+			}
+		}
+	}
+	newList := []dy.DyAuthorShopAnalysis{}
+	for _, v := range shopMapList {
+		if m, exist := shopLiveIdMap[v.ShopId]; exist {
+			v.RoomNum = len(m)
+		}
+		if m, exist := shopProductMap[v.ShopId]; exist {
+			v.ProductNum = len(m)
+		}
+		newList = append(newList, v)
+	}
+	total = len(shopMapList)
+	//排序
+	if sortStr != "" {
+		sort.Slice(newList, func(i, j int) bool {
+			var left, right float64
+			switch sortStr {
+			case "product_num":
+				left = utils.ToFloat64(newList[i].ProductNum)
+				right = utils.ToFloat64(newList[j].ProductNum)
+			case "gmv":
+				left = newList[i].Gmv
+				right = newList[j].Gmv
+			case "sales":
+				left = utils.ToFloat64(newList[i].Sales)
+				right = utils.ToFloat64(newList[j].Sales)
+			}
+			if orderBy == "desc" {
+				return left > right
+			}
+			return right > left
+		})
+	}
+	start := (page - 1) * pageSize
+	end := start + pageSize
+	listLen := len(newList)
+	if listLen < end {
+		end = listLen
+	}
+	list = newList[start:end]
+	shopIds := []string{}
+	for k, v := range list {
+		shopIds = append(shopIds, v.ShopId)
+		list[k].ShopIcon = dyimg.Fix(v.ShopIcon)
+	}
+	//todo 小店分类
+	//shops, _ := hbase.GetShopByIds(shopIds)
+	collectMap := map[string]int{}
+	if userId > 0 {
+		collectBusiness := NewCollectBusiness()
+		collectMap, _ = collectBusiness.DyListCollect(4, userId, shopIds)
+	}
+	for k, v := range list {
+		if e, exist := collectMap[v.ShopId]; exist {
+			list[k].IsCollect = e
+		}
+		list[k].ShopId = IdEncrypt(v.ShopId)
+	}
 	return
 }
 

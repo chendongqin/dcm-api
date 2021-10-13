@@ -397,6 +397,7 @@ func (receiver *RankController) ProductSalesTopDayRank() {
 	for k, v := range list {
 		list[k].ProductId = business.IdEncrypt(v.ProductId)
 		list[k].Images = dyimg.Fix(v.Images)
+		list[k].ConversionRate = utils.RateMin(list[k].ConversionRate)
 	}
 	if total > receiver.MaxTotal {
 		total = receiver.MaxTotal
@@ -835,7 +836,7 @@ func (receiver *RankController) VideoProductRank() {
 		break
 	case 3: //月榜
 		month := dateTime.Format("200601")
-		key := month + "_" + fCate
+		key := month + "_" + fCate + "_" + sortStr
 		rowKey = utils.Md5_encode(key)
 		break
 	}
@@ -851,67 +852,67 @@ func (receiver *RankController) VideoProductRank() {
 	total := 0
 	finished := false
 	list := make([]entity.ShortVideoProduct, 0)
-	if dataType != 3 {
-		if orderBy == "asc" {
-			for i := 0; i < 5; i++ {
-				tempData, _ := hbase.GetVideoProductRank(rowKey, i)
-				lenNum := len(tempData)
-				tmpTotal := total
-				total += lenNum
-				if finished {
-					continue
-				}
-				if total > start {
-					if end <= total {
-						list = append(list, tempData[start-tmpTotal:end-tmpTotal]...)
-						finished = true
-					} else {
-						list = append(list, tempData[start-tmpTotal:]...)
-						start = total
-					}
-				}
+	//if dataType != 3 {
+	if orderBy == "asc" {
+		for i := 0; i < 5; i++ {
+			tempData, _ := hbase.GetVideoProductRank(rowKey, i)
+			lenNum := len(tempData)
+			tmpTotal := total
+			total += lenNum
+			if finished {
+				continue
 			}
-		} else {
-			for i := 4; i >= 0; i-- {
-				tempData, _ := hbase.GetVideoProductRank(rowKey, i)
-				lenNum := len(tempData)
-				for j := 0; j < lenNum/2; j++ { //倒序
-					temp := tempData[lenNum-1-j]
-					tempData[lenNum-1-j] = tempData[j]
-					tempData[j] = temp
-				}
-				tmpTotal := total
-				total += lenNum
-				if finished {
-					continue
-				}
-				if total > start {
-					if end <= total {
-						list = append(list, tempData[start-tmpTotal:end-tmpTotal]...)
-						finished = true
-					} else {
-						list = append(list, tempData[start-tmpTotal:]...)
-						start = total
-					}
+			if total > start {
+				if end <= total {
+					list = append(list, tempData[start-tmpTotal:end-tmpTotal]...)
+					finished = true
+				} else {
+					list = append(list, tempData[start-tmpTotal:]...)
+					start = total
 				}
 			}
 		}
 	} else {
-		list, _ = hbase.GetVideoProductRank(rowKey, -1)
-		sort.Slice(list, func(i, j int) bool {
-			switch sortStr {
-			case "saleroom":
-				return list[i].Saleroom > list[j].Saleroom
-			case "sales":
-				return list[i].Sales > list[j].Sales
-			case "price":
-				return list[i].Price > list[j].Price
-			default:
-				return list[i].Sales > list[j].Sales
+		for i := 4; i >= 0; i-- {
+			tempData, _ := hbase.GetVideoProductRank(rowKey, i)
+			lenNum := len(tempData)
+			for j := 0; j < lenNum/2; j++ { //倒序
+				temp := tempData[lenNum-1-j]
+				tempData[lenNum-1-j] = tempData[j]
+				tempData[j] = temp
 			}
-		})
-		total = len(list)
+			tmpTotal := total
+			total += lenNum
+			if finished {
+				continue
+			}
+			if total > start {
+				if end <= total {
+					list = append(list, tempData[start-tmpTotal:end-tmpTotal]...)
+					finished = true
+				} else {
+					list = append(list, tempData[start-tmpTotal:]...)
+					start = total
+				}
+			}
+		}
 	}
+	//} else {
+	//	list, _ = hbase.GetVideoProductRank(rowKey, -1)
+	//	sort.Slice(list, func(i, j int) bool {
+	//		switch sortStr {
+	//		case "saleroom":
+	//			return list[i].Saleroom > list[j].Saleroom
+	//		case "sales":
+	//			return list[i].Sales > list[j].Sales
+	//		case "price":
+	//			return list[i].Price > list[j].Price
+	//		default:
+	//			return list[i].Sales > list[j].Sales
+	//		}
+	//	})
+	//	total = len(list)
+	//}
 	if !receiver.HasAuth && total > receiver.MaxTotal {
 		total = receiver.MaxTotal
 	}

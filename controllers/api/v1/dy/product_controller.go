@@ -107,6 +107,7 @@ func (receiver *ProductController) Search() {
 	}
 	var productIds []string
 	for k, v := range list {
+		list[k].Cvr = utils.RateMin(list[k].Cvr)
 		list[k].Image = dyimg.Fix(v.Image)
 		productIds = append(productIds, v.ProductId)
 		list[k].ProductId = business.IdEncrypt(v.ProductId)
@@ -196,6 +197,7 @@ func (receiver *ProductController) ProductBaseAnalysis() {
 	if stopTime.Format("20060102") == time.Now().Format("20060102") {
 		stopTime = stopTime.AddDate(0, 0, -1)
 	}
+	var gpmNum float64 = 0
 	for {
 		if beginTime.After(endTime) {
 			break
@@ -249,12 +251,14 @@ func (receiver *ProductController) ProductBaseAnalysis() {
 				rate = float64(d.ProductOrderAccount) / float64(d.Pv)
 			}
 		}
+		rate = utils.RateMin(rate)
 		if p, ok := priceMap[dateKey]; ok {
 			price = p
 		}
 		if pv > 0 {
 			gpm = float64(order) * price / float64(pv) * 1000
 			countData.Gpm += gpm
+			gpmNum += 1
 		}
 		hotAuthorChart = append(hotAuthorChart, authorNum)
 		liveAuthorChart = append(liveAuthorChart, liveAuthorNum)
@@ -291,8 +295,8 @@ func (receiver *ProductController) ProductBaseAnalysis() {
 	sort.Slice(orderList, func(i, j int) bool {
 		return orderList[i].Date > orderList[j].Date
 	})
-	if len(orderList) > 0 {
-		countData.Gpm = utils.FriendlyFloat64(countData.Gpm / float64(len(orderList)))
+	if gpmNum > 0 {
+		countData.Gpm = utils.FriendlyFloat64(countData.Gpm / gpmNum)
 	}
 	receiver.SuccReturn(map[string]interface{}{
 		"author_chart": dy2.ProductAuthorChart{
@@ -364,7 +368,7 @@ func (receiver *ProductController) ProductBase() {
 	awemeNum = len(awemeMap)
 	var rate30 float64 = 0
 	if monthData.PvCount > 0 {
-		rate30 = float64(monthData.OrderCount) / float64(monthData.PvCount)
+		rate30 = utils.RateMin(float64(monthData.OrderCount) / float64(monthData.PvCount))
 	}
 	if productInfo.MinPrice == 0 {
 		productInfo.MinPrice = productInfo.Price
@@ -564,24 +568,22 @@ func (receiver *ProductController) ProductLiveRoomList() {
 		pvChan := make(chan map[string]int64, 0)
 		authorMap := map[string]entity.DyAuthorData{}
 		for _, v := range list {
-			go func(curCh chan map[string]dy2.LiveCurProductCount, pmtCh chan map[string][]dy2.LiveRoomProductSaleStatus, authorCh chan map[string]entity.DyAuthorData, pvChan chan map[string]int64, roomId, productId, authorId string) {
-				curCount, pmtStatus, pv, err1 := liveBusiness.RoomCurAndPmtProductById(roomId, productId)
+			go func(roomId, productId, authorId string) {
+				curCount, pmtStatus, pv, _ := liveBusiness.RoomCurAndPmtProductById(roomId, productId)
 				authorData, _ := authorBusiness.HbaseGetAuthor(authorId)
 				authorMapTmp := map[string]entity.DyAuthorData{}
 				pvMapTmp := map[string]int64{}
 				roomProductCurMap := map[string]dy2.LiveCurProductCount{}
 				roomProductPmtMap := map[string][]dy2.LiveRoomProductSaleStatus{}
-				if err1 == nil {
-					pvMapTmp[roomId] = pv
-					roomProductCurMap[roomId] = curCount
-					roomProductPmtMap[roomId] = pmtStatus
-				}
+				pvMapTmp[roomId] = pv
+				roomProductCurMap[roomId] = curCount
+				roomProductPmtMap[roomId] = pmtStatus
 				authorMapTmp[authorId] = authorData.Data
-				curCh <- roomProductCurMap
-				pmtCh <- roomProductPmtMap
+				curChan <- roomProductCurMap
+				pmtChan <- roomProductPmtMap
 				authorChan <- authorMapTmp
 				pvChan <- pvMapTmp
-			}(curChan, pmtChan, authorChan, pvChan, v.RoomID, v.ProductID, v.AuthorID)
+			}(v.RoomID, v.ProductID, v.AuthorID)
 		}
 		for i := 0; i < len(list); i++ {
 			cur, ok := <-curChan
@@ -631,7 +633,7 @@ func (receiver *ProductController) ProductLiveRoomList() {
 			if pv, ok := pvMap[v.RoomID]; ok {
 				v.Pv = pv
 				if pv > 0 {
-					v.BuyRate = v.PredictSales / float64(pv)
+					v.BuyRate = utils.RateMin(v.PredictSales / float64(pv))
 				}
 			}
 			item := dy2.LiveRoomProductCount{
@@ -866,19 +868,25 @@ func (receiver *ProductController) ProductAuthorAwemes() {
 		receiver.FailReturn(comErr)
 		return
 	}
+	gainType, _ := receiver.GetInt("type", 0)
 	page := receiver.GetPage("page")
 	pageSize := receiver.GetPageSize("page_size", 5, 10)
-	sortStr := receiver.GetString("sort", "gmv")
+	sortStr := receiver.GetString("sort", "aweme_create_time")
 	orderBy := receiver.GetString("order_by", "desc")
 	if sortStr == "aweme_gmv" {
 		sortStr = "gmv"
 	}
-	if !utils.InArrayString(sortStr, []string{"gmv", "sales"}) {
+	if !utils.InArrayString(sortStr, []string{"gmv", "sales", "aweme_create_time"}) {
 		receiver.FailReturn(global.NewError(4000))
 		return
 	}
-	//list, total := business.NewProductBusiness().ProductAuthorAwemes(productId, "", authorId, startTime, endTime, sortStr, orderBy, page, pageSize)
-	list, total := business.NewProductBusiness().NewProductAuthorAwemes(productId, authorId, startTime, endTime, sortStr, orderBy, page, pageSize)
+	list := []entity.DyProductAuthorRelatedAweme{}
+	total := 0
+	if gainType == 1 {
+		list, total = business.NewProductBusiness().ProductAuthorAwemes(productId, "", authorId, startTime, endTime, sortStr, orderBy, page, pageSize)
+	} else {
+		list, total = business.NewProductBusiness().NewProductAuthorAwemes(productId, authorId, startTime, endTime, sortStr, orderBy, page, pageSize)
+	}
 	for k, v := range list {
 		list[k].AwemeCover = dyimg.Fix(v.AwemeCover)
 		list[k].AwemeId = business.IdEncrypt(v.AwemeId)
@@ -1076,6 +1084,22 @@ func (receiver *ProductController) ProductFanAnalyse() {
 			provinceChart[k].DistributionPer = float64(v.DistributionValue) / float64(provinceTotal)
 		}
 	}
+	var contextNum entity.ContextNum
+	if len(info.ContextNum) > 0 {
+		contextNum = info.ContextNum[0]
+	}
+	sort.Slice(info.Word, func(i, j int) bool {
+		return utils.ToInt(info.Word[i].WordNum) > utils.ToInt(info.Word[j].WordNum)
+	})
+	if len(info.Word) > 150 {
+		info.Word = info.Word[:150]
+	}
+	for k := range info.DiggInfo {
+		info.DiggInfo[k].AwemeCover = dyimg.Fix(info.DiggInfo[k].AwemeCover)
+	}
+	sort.Slice(info.DiggInfo, func(i, j int) bool {
+		return utils.ToInt(info.DiggInfo[i].DiggCount) > utils.ToInt(info.DiggInfo[j].DiggCount)
+	})
 	receiver.SuccReturn(map[string]interface{}{
 		"age_people":      ageTotal,
 		"age_chart":       ageChart,
@@ -1085,6 +1109,9 @@ func (receiver *ProductController) ProductFanAnalyse() {
 		"city_total":      cityTotal,
 		"province_chart":  provinceChart,
 		"province_people": provinceTotal,
+		"word":            info.Word,
+		"context_num":     contextNum,
+		"digg_info":       info.DiggInfo,
 	})
 	return
 }
@@ -1120,55 +1147,6 @@ func (receiver *ProductController) ProductSpeed() {
 
 	logs.Info("产品加速，爬虫推送结果：", ret)
 	receiver.SuccReturn([]string{})
-	return
-}
-
-//商品热词
-func (receiver *ProductController) ProductWords() {
-	productId := business.IdDecrypt(receiver.Ctx.Input.Param(":product_id"))
-	info, comErr := hbase.GetProductInfo(productId)
-	if comErr != nil {
-		receiver.FailReturn(comErr)
-		return
-	}
-	if len(info.Word) == 0 {
-		info.Word = []entity.DyAuthorWord{}
-	}
-	receiver.SuccReturn(map[string]interface{}{
-		"hot_words":  info.Word,
-		"use_id_num": info.ContextNum["use_id_num"],
-		"msg_id_num": info.ContextNum["msg_id_num"],
-	})
-	return
-}
-
-func (receiver *ProductController) ProductCommentTop() {
-	productId := business.IdDecrypt(receiver.Ctx.Input.Param(":product_id"))
-	page := receiver.GetPage("page")
-	pageSize := receiver.GetPageSize("page_size", 10, 100)
-	if productId == "" {
-		receiver.FailReturn(global.NewError(4000))
-		return
-	}
-	start := (page - 1) * pageSize
-	end := page * pageSize
-	productComment, total, comErr := hbase.GetProductTopComment(productId, start, end)
-	if comErr != nil {
-		receiver.FailReturn(comErr)
-		return
-	}
-	if total > 1000 {
-		total = 1000
-	}
-	if len(productComment) == 0 {
-		productComment = []entity.DyProductCommentTop{}
-	}
-	receiver.SuccReturn(map[string]interface{}{
-		"total": total,
-		"page":  page,
-		"size":  pageSize,
-		"list":  productComment,
-	})
 	return
 }
 

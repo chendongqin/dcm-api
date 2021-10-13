@@ -64,7 +64,7 @@ func (receiver *ShopBusiness) ShopProductAnalysis(shopId, keyword, category, sor
 			p.Sales += v.Sales
 			if p.Date < v.Date {
 				p.MonthPvCount = v.MonthPvCount
-				p.MonthCvr = v.MonthCvr
+				p.MonthCvr = utils.RateMin(v.MonthCvr)
 			}
 		} else {
 			productMap[v.ProductId] = v
@@ -113,7 +113,15 @@ func (receiver *ShopBusiness) ShopProductAnalysis(shopId, keyword, category, sor
 		end = total
 	}
 	list = list[start:end]
+	productIds := []string{}
+	for _, v := range list {
+		productIds = append(productIds, v.ProductId)
+	}
+	productInfoMap, _ := hbase.GetProductByIds(productIds)
 	for k, v := range list {
+		if productInfo, exist := productInfoMap[v.ProductId]; exist {
+			list[k].ProductStatus = productInfo.Status
+		}
 		list[k].Image = dyimg.Product(v.Image)
 		list[k].ProductId = IdEncrypt(v.ProductId)
 	}

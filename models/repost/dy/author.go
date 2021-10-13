@@ -144,3 +144,15 @@ type DyAuthorStoreSimple struct {
 	ShopId   string `json:"shop_id"`
 	ShopName string `json:"shop_name"`
 }
+
+type DyAuthorShopAnalysis struct {
+	ShopId     string  `json:"shop_id"`
+	Category   string  `json:"category"`
+	ShopName   string  `json:"shop_name"`
+	ShopIcon   string  `json:"shop_icon"`
+	ProductNum int     `json:"product_num"`
+	Gmv        float64 `json:"gmv"`
+	Sales      int64   `json:"sales"`
+	RoomNum    int     `json:"room_num"`
+	IsCollect  int     `json:"is_collect"`
+}

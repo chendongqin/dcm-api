@@ -98,7 +98,7 @@ func (receiver *EsLiveBusiness) CountRoomProductByAuthorId(authorId string, star
 	}
 	esQuery, esMultiQuery := elasticsearch.NewElasticQueryGroup()
 	esQuery.SetTerm("author_id", authorId)
-	esQuery.SetRange("start_time", map[string]interface{}{
+	esQuery.SetRange("live_create_time", map[string]interface{}{
 		"gte": startTime.Unix(),
 		"lt":  endTime.AddDate(0, 0, 1).Unix(),
 	})
@@ -168,7 +168,7 @@ func (receiver *EsLiveBusiness) CountRoomByDayByAuthorId(authorId string, hasPro
 }
 
 //直播间筛选
-func (receiver *EsLiveBusiness) RoomProductByRoomId(roomInfo entity.DyLiveInfo, keyword, sortStr, orderBy, firstLabel, secondLabel, thirdLabel string, page, pageSize int) (list []es.EsAuthorLiveProduct, productCount dy.LiveProductCount, total int, comErr global.CommonError) {
+func (receiver *EsLiveBusiness) RoomProductByRoomId(roomInfo entity.DyLiveInfo, keyword, productId, sortStr, orderBy, firstLabel, secondLabel, thirdLabel string, page, pageSize int) (list []es.EsAuthorLiveProduct, productCount dy.LiveProductCount, total int, comErr global.CommonError) {
 	if sortStr == "" {
 		sortStr = "shelf_time"
 	}
@@ -215,6 +215,9 @@ func (receiver *EsLiveBusiness) RoomProductByRoomId(roomInfo entity.DyLiveInfo, 
 		} else {
 			esQuery.SetMatchPhrase("dcm_level_first", firstLabel)
 		}
+	}
+	if productId != "" {
+		esQuery.SetTerm("product_id", productId)
 	}
 	if secondLabel != "" {
 		esQuery.SetMatchPhrase("first_cname", secondLabel)
@@ -713,7 +716,7 @@ func (receiver *EsLiveBusiness) SearchProductRooms(productId, keyword, sortStr, 
 	if orderBy == "" {
 		orderBy = "desc"
 	}
-	if !utils.InArrayString(sortStr, []string{"shelf_time", "predict_gmv", "predict_sales", "gpm"}) {
+	if !utils.InArrayString(sortStr, []string{"shelf_time", "live_create_time", "predict_gmv", "predict_sales", "gpm"}) {
 		comErr = global.NewError(4000)
 		return
 	}
@@ -1057,6 +1060,46 @@ func (receiver *EsLiveBusiness) ScanLiveProductByAuthor(authorId, keyword, categ
 		SetCache(300).
 		AddMust(esQuery.Condition).
 		SetLimit((page-1)*pageSize, pageSize).
+		SetOrderBy(elasticsearch.NewElasticOrder().Add("shelf_time", "desc").Order).
+		SetMultiQuery().
+		Query()
+	utils.MapToStruct(results, &list)
+	total = esMultiQuery.Count
+	return
+}
+
+//达人直播合作小店数据
+func (receiver *EsLiveBusiness) ScanLiveShopByAuthor(authorId, keyword string, startTime, endTime time.Time, page, pageSize int) (list []es.EsAuthorLiveProduct, total int, comErr global.CommonError) {
+	esTable, connection, err := GetESTableByTime(es.DyRoomProductRecordsTable, startTime, endTime)
+	if err != nil {
+		comErr = global.NewError(4000)
+		return
+	}
+	esQuery, esMultiQuery := elasticsearch.NewElasticQueryGroup()
+	esQuery.SetRange("shelf_time", map[string]interface{}{
+		"gte": startTime.Unix(),
+		"lt":  endTime.AddDate(0, 0, 1).Unix(),
+	})
+	esQuery.SetTerm("author_id", authorId)
+	if keyword != "" {
+		esQuery.SetMatchPhrase("shop_name", keyword)
+	}
+	esQuery.AddCondition(map[string]interface{}{
+		"bool": map[string]interface{}{
+			"must_not": map[string]interface{}{
+				"term": map[string]interface{}{
+					"shop_id": "",
+				},
+			},
+		},
+	})
+	results := esMultiQuery.
+		SetConnection(connection).
+		SetTable(esTable).
+		SetCache(300).
+		AddMust(esQuery.Condition).
+		SetLimit((page-1)*pageSize, pageSize).
+		SetOrderBy(elasticsearch.NewElasticOrder().Add("shelf_time", "desc").Order).
 		SetMultiQuery().
 		Query()
 	utils.MapToStruct(results, &list)

@@ -131,7 +131,7 @@ func (receiver *LiveCountController) LiveCompositeByCategory() {
 		}
 		var value float64 = 0
 		if totalSum > 0 {
-			value = v.Value / totalSum
+			value = utils.RateMin(v.Value / totalSum)
 		}
 		newRateData = append(newRateData, dy.NameValueFloat64Chart{
 			Name:  v.Name,
@@ -226,7 +226,7 @@ func (receiver *LiveCountController) LiveSumByCategory() {
 		WatchCnt:  utils.ToInt64(data.TotalWatchCnt.Value),
 		UserCount: utils.ToInt64(data.TotalUserCount.Value),
 		Gmv:       data.TotalGmv.Value,
-		BuyRate:   buyRate,
+		BuyRate:   utils.RateMin(buyRate),
 		Uv:        uv,
 	}
 	if living == 0 {
