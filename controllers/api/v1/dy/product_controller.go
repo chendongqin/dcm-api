@@ -874,7 +874,7 @@ func (receiver *ProductController) ProductAuthorAwemes() {
 	if sortStr == "aweme_gmv" {
 		sortStr = "gmv"
 	}
-	if !utils.InArrayString(sortStr, []string{"gmv", "sales"}) {
+	if !utils.InArrayString(sortStr, []string{"gmv", "sales", "aweme_create_time"}) {
 		receiver.FailReturn(global.NewError(4000))
 		return
 	}
