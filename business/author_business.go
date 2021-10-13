@@ -1151,6 +1151,133 @@ func (a *AuthorBusiness) NewGetAuthorProductAnalyse(authorId, keyword, firstCate
 	return
 }
 
+//合作小店
+func (a *AuthorBusiness) GetAuthorShopAnalyse(authorId, keyword, sortStr, orderBy string, startTime, endTime time.Time, page, pageSize, userId int) (list []dy.DyAuthorShopAnalysis, total int, comErr global.CommonError) {
+	if orderBy == "" {
+		orderBy = "desc"
+	}
+	if sortStr == "" {
+		sortStr = "product_num"
+	}
+	if !utils.InArrayString(sortStr, []string{"product_num", "gmv", "sales"}) {
+		comErr = global.NewError(4000)
+		return
+	}
+	if !utils.InArrayString(orderBy, []string{"desc", "asc"}) {
+		comErr = global.NewError(4000)
+		return
+	}
+	list = []dy.DyAuthorShopAnalysis{}
+	shopLiveIdMap := map[string]map[string]string{}
+	shopProductMap := map[string]map[string]string{}
+	shopMapList := map[string]dy.DyAuthorShopAnalysis{}
+	//判断自卖和推荐
+	liveList, _, _ := es.NewEsLiveBusiness().ScanLiveShopByAuthor(authorId, keyword, startTime, endTime, 1, 10000)
+	awemeList, _, _ := es.NewEsVideoBusiness().ScanAwemeShopByAuthor(authorId, keyword, startTime, endTime, 1, 10000)
+	for _, v := range liveList {
+		if _, exist := shopLiveIdMap[v.ShopId]; !exist {
+			shopLiveIdMap[v.ShopId] = map[string]string{}
+		}
+		shopLiveIdMap[v.ShopId][v.RoomID] = v.RoomID
+		if _, exist := shopProductMap[v.ShopId]; !exist {
+			shopProductMap[v.ShopId] = map[string]string{}
+		}
+		shopProductMap[v.ShopId][v.ProductID] = v.ProductID
+		//数据累加
+		if p, ok := shopMapList[v.ShopId]; ok {
+			p.Gmv += v.PredictGmv
+			p.Sales += utils.ToInt64(math.Floor(v.PredictSales))
+			shopMapList[v.ShopId] = p
+		} else {
+			shopMapList[v.ShopId] = dy.DyAuthorShopAnalysis{
+				ShopId:   v.ShopId,
+				ShopName: v.ShopName,
+				ShopIcon: v.ShopIcon,
+				Gmv:      v.PredictGmv,
+				Sales:    utils.ToInt64(math.Floor(v.PredictSales)),
+			}
+		}
+	}
+	for _, v := range awemeList {
+		if _, exist := shopProductMap[v.ShopId]; !exist {
+			shopProductMap[v.ShopId] = map[string]string{}
+		}
+		shopProductMap[v.ShopId][v.ProductId] = v.ProductId
+		//数据累加
+		if p, ok := shopMapList[v.ShopId]; ok {
+			p.Gmv += v.Gmv
+			p.Sales += v.Sales
+			shopMapList[v.ShopId] = p
+		} else {
+			shopMapList[v.ShopId] = dy.DyAuthorShopAnalysis{
+				ShopId:   v.ShopId,
+				ShopName: v.ShopName,
+				ShopIcon: v.ShopIcon,
+				Gmv:      v.Gmv,
+				Sales:    v.Sales,
+			}
+		}
+	}
+	newList := []dy.DyAuthorShopAnalysis{}
+	for _, v := range shopMapList {
+		if m, exist := shopLiveIdMap[v.ShopId]; exist {
+			v.RoomNum = len(m)
+		}
+		if m, exist := shopProductMap[v.ShopId]; exist {
+			v.ProductNum = len(m)
+		}
+		newList = append(newList, v)
+	}
+	total = len(shopMapList)
+	//排序
+	if sortStr != "" {
+		sort.Slice(newList, func(i, j int) bool {
+			var left, right float64
+			switch sortStr {
+			case "product_num":
+				left = utils.ToFloat64(newList[i].ProductNum)
+				right = utils.ToFloat64(newList[j].ProductNum)
+			case "gmv":
+				left = newList[i].Gmv
+				right = newList[j].Gmv
+			case "sales":
+				left = utils.ToFloat64(newList[i].Sales)
+				right = utils.ToFloat64(newList[j].Sales)
+			}
+			if orderBy == "desc" {
+				return left > right
+			}
+			return right > left
+		})
+	}
+	start := (page - 1) * pageSize
+	end := start + pageSize
+	listLen := len(newList)
+	if listLen < end {
+		end = listLen
+	}
+	list = newList[start:end]
+	shopIds := []string{}
+	for k, v := range list {
+		shopIds = append(shopIds, v.ShopId)
+		list[k].ShopIcon = dyimg.Fix(v.ShopIcon)
+	}
+	//todo 小店分类
+	//shops, _ := hbase.GetShopByIds(shopIds)
+	collectMap := map[string]int{}
+	if userId > 0 {
+		collectBusiness := NewCollectBusiness()
+		collectMap, _ = collectBusiness.DyListCollect(4, userId, shopIds)
+	}
+	for k, v := range list {
+		if e, exist := collectMap[v.ShopId]; exist {
+			list[k].IsCollect = e
+		}
+		list[k].ShopId = IdEncrypt(v.ShopId)
+	}
+	return
+}
+
 //获取达人电商分析数据
 func (a *AuthorBusiness) GetAuthorProductHbaseList(authorId, keyword string, startTime, endTime time.Time) (hbaseDataList []entity.DyAuthorProductAnalysis, comErr global.CommonError) {
 	hbaseDataList = make([]entity.DyAuthorProductAnalysis, 0)

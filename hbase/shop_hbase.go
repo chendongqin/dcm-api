@@ -1,15 +1,39 @@
 package hbase
 
 import (
+	"context"
 	"dongchamao/global"
 	"dongchamao/global/utils"
 	"dongchamao/models/entity"
 	"dongchamao/services/dyimg"
 	"dongchamao/services/hbaseService"
+	"dongchamao/services/hbaseService/hbase"
 	"dongchamao/services/hbaseService/hbasehelper"
 	"strings"
 	"time"
 )
+
+func GetShopByIds(shopIds []string) (map[string]entity.DyShop, error) {
+	rowKeys := make([]*hbase.TGet, 0)
+	for _, id := range shopIds {
+		rowKeys = append(rowKeys, &hbase.TGet{Row: []byte(id)})
+	}
+	client := global.HbasePools.Get("default")
+	defer client.Close()
+	results, err := client.GetMultiple(context.Background(), []byte(hbaseService.HbaseDyShop), rowKeys)
+	if err != nil {
+		return nil, err
+	}
+	infoMap := map[string]entity.DyShop{}
+	for _, v := range results {
+		data := entity.DyShop{}
+		detailMap := hbaseService.HbaseFormat(v, entity.DyProductMap)
+		utils.MapToStruct(detailMap, &data)
+		data.ShopId = string(v.Row)
+		data.Logo = dyimg.Fix(data.Logo)
+	}
+	return infoMap, nil
+}
 
 //小店数据
 func GetShop(shopId string) (data entity.DyShop, comErr global.CommonError) {

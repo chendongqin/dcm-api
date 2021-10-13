@@ -1065,6 +1065,45 @@ func (receiver *EsLiveBusiness) ScanLiveProductByAuthor(authorId, keyword, categ
 	return
 }
 
+//达人直播合作小店数据
+func (receiver *EsLiveBusiness) ScanLiveShopByAuthor(authorId, keyword string, startTime, endTime time.Time, page, pageSize int) (list []es.EsAuthorLiveProduct, total int, comErr global.CommonError) {
+	esTable, connection, err := GetESTableByTime(es.DyRoomProductRecordsTable, startTime, endTime)
+	if err != nil {
+		comErr = global.NewError(4000)
+		return
+	}
+	esQuery, esMultiQuery := elasticsearch.NewElasticQueryGroup()
+	esQuery.SetRange("shelf_time", map[string]interface{}{
+		"gte": startTime.Unix(),
+		"lt":  endTime.AddDate(0, 0, 1).Unix(),
+	})
+	esQuery.SetTerm("author_id", authorId)
+	if keyword != "" {
+		esQuery.SetMatchPhrase("shop_name", keyword)
+	}
+	esQuery.AddCondition(map[string]interface{}{
+		"bool": map[string]interface{}{
+			"must_not": map[string]interface{}{
+				"term": map[string]interface{}{
+					"shop_id": "",
+				},
+			},
+		},
+	})
+	results := esMultiQuery.
+		SetConnection(connection).
+		SetTable(esTable).
+		SetCache(300).
+		AddMust(esQuery.Condition).
+		SetLimit((page-1)*pageSize, pageSize).
+		SetOrderBy(elasticsearch.NewElasticOrder().Add("shelf_time", "desc").Order).
+		SetMultiQuery().
+		Query()
+	utils.MapToStruct(results, &list)
+	total = esMultiQuery.Count
+	return
+}
+
 //达人直播间统计
 func (receiver *EsLiveBusiness) SumDataByAuthors(authorIds []string, startTime, endTime time.Time) (data map[string]es.DyLiveSumCount) {
 	esTable, connection, err := GetESTableByTime(es.DyLiveInfoBaseTable, startTime, endTime)

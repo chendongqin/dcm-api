@@ -966,6 +966,32 @@ func (receiver *AuthorController) AuthorProductAnalyse() {
 	return
 }
 
+//达人合作小店
+func (receiver *AuthorController) AuthorShopAnalyse() {
+	authorId := business.IdDecrypt(receiver.GetString(":author_id"))
+	startTime, endTime, comErr := receiver.GetRangeDate()
+	if comErr != nil {
+		receiver.FailReturn(comErr)
+		return
+	}
+	keyword := receiver.GetString("keyword", "")
+	sortStr := receiver.GetString("sort", "")
+	orderBy := receiver.GetString("order_by", "")
+	page := receiver.GetPage("page")
+	pageSize := receiver.GetPageSize("page_size", 10, 50)
+	authorBusiness := business.NewAuthorBusiness()
+	list, total, comErr := authorBusiness.GetAuthorShopAnalyse(authorId, keyword, sortStr, orderBy, startTime, endTime, page, pageSize, receiver.UserId)
+	if comErr != nil {
+		receiver.FailReturn(comErr)
+		return
+	}
+	receiver.SuccReturn(map[string]interface{}{
+		"list":  list,
+		"total": total,
+	})
+	return
+}
+
 //达人商品直播间
 func (receiver *AuthorController) AuthorProductRooms() {
 	authorId := business.IdDecrypt(receiver.GetString(":author_id", ""))
