@@ -1021,6 +1021,27 @@ func (receiver *AuthorController) AuthorProductRooms() {
 	return
 }
 
+//达人商品直播间统计
+func (receiver *AuthorController) SumAuthorProductOfRooms() {
+	authorId := business.IdDecrypt(receiver.GetString(":author_id", ""))
+	productId := business.IdDecrypt(receiver.GetString(":product_id", ""))
+	startTime, endTime, comErr := receiver.GetRangeDate()
+	if comErr != nil {
+		receiver.FailReturn(comErr)
+		return
+	}
+	totalGmv, totalSales, comErr := es.NewEsLiveBusiness().SumAuthorProductOfRoom(authorId, productId, startTime, endTime)
+	if comErr != nil {
+		receiver.FailReturn(comErr)
+		return
+	}
+	receiver.SuccReturn(map[string]interface{}{
+		"gmv":   totalGmv,
+		"sales": totalSales,
+	})
+	return
+}
+
 //达人收录 搜索
 func (receiver *AuthorController) AuthorIncomeSearch() {
 	var authorId string
