@@ -57,6 +57,8 @@ func (i *EsProductBusiness) BaseSearch(productId, keyword, category, secondCateg
 	}
 	if platform != "" {
 		esQuery.SetTerm("platform_label.keyword", platform)
+	} else {
+		esQuery.SetTerm("platform_label.keyword", "小店")
 	}
 	if isStar == 1 {
 		esQuery.SetTerm("is_star", 1)
