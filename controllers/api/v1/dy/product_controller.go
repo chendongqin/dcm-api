@@ -869,7 +869,7 @@ func (receiver *ProductController) ProductAuthorAwemes() {
 	gainType, _ := receiver.GetInt("type", 0)
 	page := receiver.GetPage("page")
 	pageSize := receiver.GetPageSize("page_size", 5, 10)
-	sortStr := receiver.GetString("sort", "gmv")
+	sortStr := receiver.GetString("sort", "aweme_create_time")
 	orderBy := receiver.GetString("order_by", "desc")
 	if sortStr == "aweme_gmv" {
 		sortStr = "gmv"
