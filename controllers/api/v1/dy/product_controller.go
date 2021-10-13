@@ -568,24 +568,22 @@ func (receiver *ProductController) ProductLiveRoomList() {
 		pvChan := make(chan map[string]int64, 0)
 		authorMap := map[string]entity.DyAuthorData{}
 		for _, v := range list {
-			go func(curCh chan map[string]dy2.LiveCurProductCount, pmtCh chan map[string][]dy2.LiveRoomProductSaleStatus, authorCh chan map[string]entity.DyAuthorData, pvChan chan map[string]int64, roomId, productId, authorId string) {
-				curCount, pmtStatus, pv, err1 := liveBusiness.RoomCurAndPmtProductById(roomId, productId)
+			go func(roomId, productId, authorId string) {
+				curCount, pmtStatus, pv, _ := liveBusiness.RoomCurAndPmtProductById(roomId, productId)
 				authorData, _ := authorBusiness.HbaseGetAuthor(authorId)
 				authorMapTmp := map[string]entity.DyAuthorData{}
 				pvMapTmp := map[string]int64{}
 				roomProductCurMap := map[string]dy2.LiveCurProductCount{}
 				roomProductPmtMap := map[string][]dy2.LiveRoomProductSaleStatus{}
-				if err1 == nil {
-					pvMapTmp[roomId] = pv
-					roomProductCurMap[roomId] = curCount
-					roomProductPmtMap[roomId] = pmtStatus
-				}
+				pvMapTmp[roomId] = pv
+				roomProductCurMap[roomId] = curCount
+				roomProductPmtMap[roomId] = pmtStatus
 				authorMapTmp[authorId] = authorData.Data
-				curCh <- roomProductCurMap
-				pmtCh <- roomProductPmtMap
+				curChan <- roomProductCurMap
+				pmtChan <- roomProductPmtMap
 				authorChan <- authorMapTmp
 				pvChan <- pvMapTmp
-			}(curChan, pmtChan, authorChan, pvChan, v.RoomID, v.ProductID, v.AuthorID)
+			}(v.RoomID, v.ProductID, v.AuthorID)
 		}
 		for i := 0; i < len(list); i++ {
 			cur, ok := <-curChan
