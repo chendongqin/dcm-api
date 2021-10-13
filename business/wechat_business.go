@@ -2,7 +2,9 @@ package business
 
 import (
 	"dongchamao/global"
+	"dongchamao/global/utils"
 	"dongchamao/models/dcm"
+	"encoding/json"
 	"fmt"
 	jsoniter "github.com/json-iterator/go"
 	"github.com/pkg/errors"
@@ -11,6 +13,7 @@ import (
 	"github.com/silenceper/wechat/v2/officialaccount/menu"
 	"github.com/silenceper/wechat/v2/officialaccount/message"
 	"github.com/silenceper/wechat/v2/officialaccount/user"
+	"github.com/silenceper/wechat/v2/util"
 	"time"
 )
 
@@ -318,4 +321,39 @@ func (receiver *WechatBusiness) AmountExpireWechatNotice(user *dcm.UserVipJpinCo
 		return
 	}
 	return
+}
+
+func (receiver *WechatBusiness) AddAndroidUserAction(imei string) {
+	accessToken, _ := global.WxOfficial.GetAccessToken()
+	accessToken = "49_QoFPrPyZuKiUb5DY6UfFDzlia8_zLfK92GjPL7a9_Xf5VQ8caygCqIcFNWniZ7VITS_mbXPzanKVC1JbF2cWj97DlN1_HjnVRjMlP9XVnMSG9GGhEozMrssr36Q0rU-feuOEjR2pkMnCmDzjLUWhAEAXGI"
+	url := "https://api.weixin.qq.com/marketing/user_actions/add?version=v1.0&access_token=" + accessToken
+	data := map[string]interface{}{
+		"user_action_set_id": global.AndroidActionSet,
+		"actions": []map[string]interface{}{
+			{
+				"action_time": time.Now().Unix(),
+				"action_type": "REGISTER",
+				"user_id": map[string]interface{}{
+					"hash_imei": utils.Md5_encode(imei),
+				},
+			},
+		},
+	}
+	ret, err := util.PostJSON(url, data)
+	fmt.Printf("%+v\n", ret)
+	fmt.Printf("%+v\n", err.Error())
+}
+
+func (receiver *WechatBusiness) AddIOSUserAction(idfa string) {
+	accessToken, _ := global.WxOfficial.GetAccessToken()
+	accessToken = "49_3Hbc7fyQQDzgzZF2qOEKfTwKRwfPHUTS0cKUZSfKPvJm-KD3wRiXyp_9l_jjmu1bkpyoG1VxuMsWdbYggo5hvTDf7SHUYumx0U9msFvDAIKTx4oXufyh1hxSoYZmX7gx5coGmbOopJBLEiLrBGEfAIAQVT"
+	url := "https://api.weixin.qq.com/marketing/user_actions/add?version=v1.0&access_token=" + accessToken
+	data := map[string]interface{}{
+		"user_action_set_id": global.IOSActionSet,
+		"action_time":        time.Now().Unix(),
+		"action_type":        "REGISTER",
+		"hash_idfa":          utils.Md5_encode(idfa),
+	}
+	dataStr, _ := json.Marshal(data)
+	util.HTTPPost(url, string(dataStr))
 }
