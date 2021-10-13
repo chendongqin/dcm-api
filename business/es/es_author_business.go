@@ -220,10 +220,11 @@ func (receiver *EsAuthorBusiness) BaseSearch(
 	if fanCity != "" {
 		esQuery.SetMatchPhrase("fans_city", fanCity)
 	}
+	var cacheTime time.Duration = 180
 	results := esMultiQuery.
 		SetConnection(connection).
 		SetTable(esTable).
-		SetCache(180).
+		SetCache(cacheTime).
 		AddMust(esQuery.Condition).
 		SetLimit((page-1)*pageSize, pageSize).
 		SetOrderBy(elasticsearch.NewElasticOrder().Add(sortStr, orderBy).Order).
@@ -339,10 +340,11 @@ func (receiver *EsAuthorBusiness) KeywordSearch(keyword string) (list []es.DyAut
 		esQuery.
 			SetMultiMatch([]string{"author_id", "nickname", "unique_id", "short_id"}, keyword)
 	}
+	var cacheTime time.Duration = 60
 	results := esMultiQuery.
 		SetConnection(connection).
 		SetTable(esTable).
-		SetCache(60).
+		SetCache(cacheTime).
 		AddMust(esQuery.Condition).
 		SetLimit(0, 4).
 		SetOrderBy(elasticsearch.NewElasticOrder().Add("follower_count", "desc").Order).

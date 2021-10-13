@@ -112,10 +112,11 @@ func (receiver *EsShopBusiness) BaseSearch(
 	if isLive != 1 && isVideo == 1 {
 		esQuery.SetTerms("commerce_type", []int{DY_SHOP_AWEME, DY_SHOP_LIVE_BUT_AWEME, DY_SHOP_AWEME_BUT_LIVE, DY_SHOP_EQUALS})
 	}
+	var cacheTime time.Duration = 180
 	results := esMultiQuery.
 		SetConnection(connection).
 		SetTable(esTable).
-		SetCache(180).
+		SetCache(cacheTime).
 		AddMust(esQuery.Condition).
 		SetLimit((page-1)*pageSize, pageSize).
 		SetOrderBy(elasticsearch.NewElasticOrder().Add(sortStr, orderBy).Order).
@@ -153,10 +154,11 @@ func (receiver *EsShopBusiness) SimpleSearch(keyword, category, secondCategory, 
 	if thirdCategory != "" {
 		esQuery.SetMultiMatch([]string{"second_cname", "second_cname_2", "second_cname_3"}, thirdCategory)
 	}
+	var cacheTime time.Duration = 180
 	results := esMultiQuery.
 		SetConnection(connection).
 		SetTable(esTable).
-		SetCache(180).
+		SetCache(cacheTime).
 		AddMust(esQuery.Condition).
 		SetLimit((page-1)*pageSize, pageSize).
 		SetOrderBy(elasticsearch.NewElasticOrder().Add(sortStr, orderBy).Order).
@@ -173,10 +175,11 @@ func (receiver *EsShopBusiness) IdsSearch(shopIds []string) (list []es.DyShop) {
 	esTable, connection := GetESTable(es.DyShopTable)
 	esQuery, esMultiQuery := elasticsearch.NewElasticQueryGroup()
 	esQuery.SetTerms("shopId", shopIds)
+	var cacheTime time.Duration = 180
 	results := esMultiQuery.
 		SetConnection(connection).
 		SetTable(esTable).
-		SetCache(180).
+		SetCache(cacheTime).
 		AddMust(esQuery.Condition).
 		SetMultiQuery().
 		Query()
@@ -214,8 +217,9 @@ func (receiver *EsShopBusiness) GetShopLiveAuthorRowKeys(shopId, authorId, keywo
 		"gte": startTime.Format("20060102"),
 		"lte": endTime.Format("20060102"),
 	})
+	var cacheTime time.Duration = 300
 	results := esMultiQuery.
-		SetCache(300).
+		SetCache(cacheTime).
 		SetConnection(connection).
 		SetTable(esTable).
 		AddMust(esQuery.Condition).
@@ -276,8 +280,9 @@ func (receiver *EsShopBusiness) GetShopVideoAuthorRowKeys(shopId, authorId, keyw
 		"gte": startTime.Format("20060102"),
 		"lte": endTime.Format("20060102"),
 	})
+	var cacheTime time.Duration = 300
 	results := esMultiQuery.
-		SetCache(300).
+		SetCache(cacheTime).
 		SetConnection(connection).
 		SetTable(esTable).
 		AddMust(esQuery.Condition).
