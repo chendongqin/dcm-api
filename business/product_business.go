@@ -676,7 +676,11 @@ func (receiver *ProductBusiness) ProductAuthorAwemes(productId, shopId, authorId
 	//		list = append(list, data.RelatedAwemes...)
 	//	}
 	//}
-	sumList, total, err := es.NewEsVideoBusiness().AuthorProductAwemeSumList(authorId, productId, shopId, sortStr, orderBy, startTime, endTime, 1, 1000)
+	tmpSortStr := sortStr
+	if !utils.InArrayString(tmpSortStr, []string{"gmv", "sales"}) {
+		tmpSortStr = "gmv"
+	}
+	sumList, total, err := es.NewEsVideoBusiness().AuthorProductAwemeSumList(authorId, productId, shopId, tmpSortStr, orderBy, startTime, endTime, 1, 1000)
 	if err != nil {
 		return
 	}
