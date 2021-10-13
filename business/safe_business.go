@@ -45,7 +45,7 @@ type SaleBusinessConfigStruct struct {
 	CommonUrlPoint       map[string]int64         `json:"common_url_point"`        //普通url白天点击量监控pv限制量
 	CommonUrlNightPoints map[string]int64         `json:"common_url_night_points"` //普通url夜间1-6点点击量监控pv限制量
 	ExtraUrls            []ExtraUrl               `json:"extra_url"`               //轮询url
-	whiteLists           []int64                  `json:"white_list"`              //白名单列表
+	WhiteLists           []int64                  `json:"white_list"`              //白名单列表
 }
 
 //加速请求结构体
@@ -88,7 +88,7 @@ func (s *SafeBusiness) InitCommonUrlConfig() {
 			{"/v1/dy/living/message", 0},
 			{"/v1/wechat/check", 0},
 		},
-		whiteLists: []int64{1},
+		WhiteLists: []int64{1},
 	}
 }
 
@@ -267,7 +267,7 @@ func (s *SafeBusiness) reqestAliLog(timeEnd int64, row AnaListStruct) (logList [
 		uid := int64(0)
 		if u, ok := v["uid"]; ok {
 			uid = utils.ParseInt64String(u)
-			if utils.InArrayInt64(uid, SaleBusinessConfig.whiteLists) {
+			if utils.InArrayInt64(uid, SaleBusinessConfig.WhiteLists) {
 				continue
 			}
 		}
