@@ -2,6 +2,7 @@ package hbase
 
 import (
 	"dongchamao/global"
+	"dongchamao/global/logger"
 	"dongchamao/global/utils"
 	"dongchamao/models/entity"
 	"dongchamao/services/dyimg"
@@ -16,7 +17,8 @@ func GetShop(shopId string) (data entity.DyShop, comErr global.CommonError) {
 	query := hbasehelper.NewQuery()
 	result, err := query.SetTable(hbaseService.HbaseDyShop).GetByRowKey([]byte(shopId))
 	if err != nil {
-		comErr = global.NewMsgError(err.Error())
+		comErr = global.NewError(5000)
+		logger.Error(err)
 		return
 	}
 	if result.Row == nil {
@@ -36,7 +38,8 @@ func GetShopDetailByDate(shopId, date string) (data entity.DyShopDetail, comErr 
 	rowKey := shopId + "_" + date
 	result, err := query.SetTable(hbaseService.HbaseDyShopDetail).GetByRowKey([]byte(rowKey))
 	if err != nil {
-		comErr = global.NewMsgError(err.Error())
+		comErr = global.NewError(5000)
+		logger.Error(err)
 		return
 	}
 	if result.Row == nil {
@@ -84,7 +87,8 @@ func GetShopProductAnalysisByDate(shopId, productId, date string) (data entity.D
 	rowKey := shopId + "_" + date + "_" + productId
 	result, err := query.SetTable(hbaseService.HbaseDyShopProductAnalysis).GetByRowKey([]byte(rowKey))
 	if err != nil {
-		comErr = global.NewMsgError(err.Error())
+		comErr = global.NewError(5000)
+		logger.Error(err)
 		return
 	}
 	if result.Row == nil {
