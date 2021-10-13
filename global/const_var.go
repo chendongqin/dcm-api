@@ -9,4 +9,4 @@ const (
 )
 
 const AndroidActionSet = 1200157074
-const IOSActionSet = 1
+const IOSActionSet = 1200160984

@@ -67,7 +67,10 @@ func (receiver *LoginController) Login() {
 	if isNew == 1 {
 		userBusiness.SendUserVip(&user, 7)
 		updateData["channel"] = receiver.Channel
-		updateData["channel_words"] = receiver.ChannelWords
+		if receiver.Channel == "0024" {
+			business.NewWechatBusiness().AddAndroidUserAction(global.AndroidActionSet, InputData.GetString("imei", ""))
+			business.NewWechatBusiness().AddAndroidUserAction(global.IOSActionSet, InputData.GetString("idfa", ""))
+		}
 	}
 	//登录成功通知
 	//business.NewWechatBusiness().LoginWechatMsg(&user)

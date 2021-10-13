@@ -323,6 +323,9 @@ func (receiver *WechatBusiness) AmountExpireWechatNotice(user *dcm.UserVipJpinCo
 }
 
 func (receiver *WechatBusiness) AddAndroidUserAction(OS int, userId string) {
+	if userId == "" {
+		return
+	}
 	accessToken, _ := global.WxOfficial.GetAccessToken()
 	url := "https://api.weixin.qq.com/marketing/user_actions/add?version=v1.0&access_token=" + accessToken
 	var userIdMap = map[int]string{
