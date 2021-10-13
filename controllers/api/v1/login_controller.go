@@ -8,6 +8,7 @@ import (
 	"dongchamao/global/utils"
 	"dongchamao/models/dcm"
 	"dongchamao/models/repost/dy"
+	"dongchamao/services/signinapple"
 	"strings"
 )
 
@@ -39,16 +40,20 @@ func (receiver *LoginController) Login() {
 	} else if grantType == "sms" {
 		username := InputData.GetString("username", "")
 		code := InputData.GetString("code", "")
-		abstractId := business.IdDecrypt(InputData.GetString("unionid", ""))
+		unionid := business.IdDecrypt(InputData.GetString("unionid", ""))
+		appleId := InputData.GetString("apple_id", "")
 		password := InputData.GetString("pwd", "")
 		password = utils.Base64Decode(password)
-		user, authToken, expTime, isNew, comErr = userBusiness.SmsLogin(username, code, password, abstractId, appId)
+		user, authToken, expTime, isNew, comErr = userBusiness.SmsLogin(username, code, password, unionid, appleId, appId)
 		if isNew == 0 && user.SetPassword == 0 {
 			setPassword = 1
 		}
 	} else if grantType == "wechat" || grantType == "wechat_app" { //微信登录
 		unionid := business.IdDecrypt(InputData.GetString("unionid", ""))
 		user, authToken, expTime, comErr = userBusiness.WechatLogin(unionid, grantType, appId)
+	} else if grantType == "apple" { //苹果登录
+		appleId := InputData.GetString("apple_id", "")
+		user, authToken, expTime, comErr = userBusiness.AppleLogin(appleId, appId)
 	} else {
 		comErr = global.NewError(4000)
 	}
@@ -67,7 +72,10 @@ func (receiver *LoginController) Login() {
 	if isNew == 1 {
 		userBusiness.SendUserVip(&user, 7)
 		updateData["channel"] = receiver.Channel
-		updateData["channel_words"] = receiver.ChannelWords
+		if receiver.Channel == "0024" {
+			business.NewWechatBusiness().AddAndroidUserAction(global.AndroidActionSet, InputData.GetString("imei", ""))
+			business.NewWechatBusiness().AddAndroidUserAction(global.IOSActionSet, InputData.GetString("idfa", ""))
+		}
 	}
 	//登录成功通知
 	//business.NewWechatBusiness().LoginWechatMsg(&user)
@@ -138,5 +146,17 @@ func (receiver *LoginController) FindPwd() {
 	}
 	_ = global.Cache.Delete(codeKey)
 	receiver.SuccReturn(nil)
+	return
+}
+
+func (receiver *LoginController) GetAppleId() {
+	id, err := signinapple.GetUniqueId(receiver.GetString("code"))
+	if err != nil {
+		receiver.FailReturn(global.NewError(5000))
+		return
+	}
+	receiver.SuccReturn(map[string]interface{}{
+		"apple_id": id,
+	})
 	return
 }
