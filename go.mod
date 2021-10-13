@@ -5,6 +5,7 @@ go 1.16
 require (
 	github.com/360EntSecGroup-Skylar/excelize v1.4.1
 	github.com/Shopify/sarama v1.19.0
+	github.com/Timothylock/go-signin-with-apple v0.0.0-20210924040446-1aece0ab1da7
 	github.com/alibabacloud-go/afs-20180112 v0.1.0
 	github.com/alibabacloud-go/tea-rpc v1.1.9
 	github.com/aliyun/alibaba-cloud-sdk-go v1.61.1162
@@ -23,6 +24,7 @@ require (
 	github.com/go-sql-driver/mysql v1.6.0
 	github.com/go-xorm/xorm v0.7.9
 	github.com/gogo/protobuf v1.3.1
+	github.com/golang-jwt/jwt v3.2.2+incompatible // indirect
 	github.com/gomodule/redigo v2.0.0+incompatible
 	github.com/json-iterator/go v1.1.11
 	github.com/mailru/easyjson v0.7.7 // indirect
@@ -33,6 +35,8 @@ require (
 	github.com/silenceper/wechat/v2 v2.0.6
 	github.com/stretchr/testify v1.7.0
 	github.com/tencentad/marketing-api-go-sdk v1.7.10
+	github.com/tideland/golib v4.24.2+incompatible // indirect
+	github.com/tideland/gorest v2.15.5+incompatible // indirect
 	github.com/tidwall/gjson v1.8.1
 	github.com/urfave/cli v1.22.5
 	github.com/valyala/fasthttp v1.29.0
