@@ -25,7 +25,7 @@ type RefreshAccessToken struct {
 func (e *RefreshAccessToken) Init(freshToken string) {
 	e.TAds = ads.Init(&config.SDKConfig{})
 	e.TAds.UseProduction()
-	e.ClientId = int64(0)
+	e.ClientId, _ = global.Cfg.Int64("tencent_ad_client_id")
 	e.ClientSecret = global.Cfg.String("tencent_ad_secret")
 	e.GrantType = "refresh_token"
 	e.OauthTokenOpts = &api.OauthTokenOpts{
@@ -46,6 +46,10 @@ func (e *RefreshAccessToken) Run() {
 		}
 	} else {
 		tads.SetAccessToken(*response.AccessToken)
+		cacheKey := cache.GetCacheKey(cache.TencentAdAccessToken)
+		if err := global.Cache.Set(cacheKey, *response.AccessToken, 86400); err != nil {
+			log.Println("tencent_ad_fresh_token_err:", err.Error())
+		}
 	}
 }
 

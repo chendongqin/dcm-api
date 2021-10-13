@@ -2,6 +2,7 @@ package v1
 
 import (
 	"dongchamao/business"
+	"dongchamao/command"
 	"dongchamao/controllers/api"
 	"dongchamao/global"
 	"dongchamao/global/cache"
@@ -658,4 +659,15 @@ func (receiver *AccountController) Cancel() {
 		"msg": "注销申请成功，将在3-7日内删除！",
 	})
 	return
+}
+
+//获取各个榜单对应的日期时间筛选
+func (receiver *AccountController) TopDateTime() {
+	key := receiver.Ctx.Input.Param(":key")
+	res, err := command.SwitchTopDateTime(key)
+	if err != nil {
+		receiver.FailReturn(err)
+	}
+	receiver.SuccReturn(res)
+
 }

@@ -339,3 +339,32 @@ func (receiver *InternalController) SpiderLiveSpeedUp() {
 	receiver.SuccReturn(nil)
 	return
 }
+
+//通用的url日志处理
+func (receiver *InternalController) CommonUrlLog() {
+	safe := business.NewSafeBusiness()
+	res := safe.CommonAnalyseLogs()
+	receiver.SuccReturn(map[string]interface{}{
+		"list": res,
+	})
+	return
+}
+
+/**根据日志筛选每小时需要加速的达人，直播，商品*/
+func (receiver *InternalController) SpeedUp() {
+	days := receiver.Ctx.Input.Param(":days")
+	daysInt := utils2.ToInt(days)
+	if !utils2.InArrayInt(daysInt, []int{0, 7}) {
+		receiver.FailReturn(global.NewError(4000))
+		return
+	}
+	safe := business.NewSafeBusiness()
+	var data map[string][]string
+	data = make(map[string][]string)
+	keys := []string{"speed_author", "speed_live", "speed_product"}
+	for _, v := range keys {
+		data[v] = safe.SpeedFilterLog(v, daysInt)
+	}
+	receiver.SuccReturn(data)
+	//safe.SpeedFilterLog("speed_live",daysInt)
+}

@@ -107,6 +107,7 @@ func (receiver *ProductController) Search() {
 	}
 	var productIds []string
 	for k, v := range list {
+		list[k].Cvr = utils.RateMin(list[k].Cvr)
 		list[k].Image = dyimg.Fix(v.Image)
 		productIds = append(productIds, v.ProductId)
 		list[k].ProductId = business.IdEncrypt(v.ProductId)
@@ -250,6 +251,7 @@ func (receiver *ProductController) ProductBaseAnalysis() {
 				rate = float64(d.ProductOrderAccount) / float64(d.Pv)
 			}
 		}
+		rate = utils.RateMin(rate)
 		if p, ok := priceMap[dateKey]; ok {
 			price = p
 		}
@@ -366,7 +368,7 @@ func (receiver *ProductController) ProductBase() {
 	awemeNum = len(awemeMap)
 	var rate30 float64 = 0
 	if monthData.PvCount > 0 {
-		rate30 = float64(monthData.OrderCount) / float64(monthData.PvCount)
+		rate30 = utils.RateMin(float64(monthData.OrderCount) / float64(monthData.PvCount))
 	}
 	if productInfo.MinPrice == 0 {
 		productInfo.MinPrice = productInfo.Price
@@ -631,7 +633,7 @@ func (receiver *ProductController) ProductLiveRoomList() {
 			if pv, ok := pvMap[v.RoomID]; ok {
 				v.Pv = pv
 				if pv > 0 {
-					v.BuyRate = v.PredictSales / float64(pv)
+					v.BuyRate = utils.RateMin(v.PredictSales / float64(pv))
 				}
 			}
 			item := dy2.LiveRoomProductCount{

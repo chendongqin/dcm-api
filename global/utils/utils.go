@@ -1909,3 +1909,10 @@ func ReverseFloat64Arr(a []float64) []float64 {
 	}
 	return a
 }
+
+func RateMin(r float64) float64 {
+	if r < 0.0001 && r != 0 {
+		r = 0.0001
+	}
+	return r
+}

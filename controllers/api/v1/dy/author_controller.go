@@ -172,6 +172,8 @@ func (receiver *AuthorController) BaseSearch() {
 			authorData, _ := hbase.GetAuthor(v.AuthorId)
 			list[k].RoomId = business.IdEncrypt(authorData.RoomId)
 		}
+		list[k].DiggFollowerRate = utils.RateMin(list[k].DiggFollowerRate)
+		list[k].InteractionRate = utils.RateMin(list[k].InteractionRate)
 	}
 	totalPage := math.Ceil(float64(total) / float64(pageSize))
 	maxPage := math.Ceil(float64(receiver.MaxTotal) / float64(pageSize))
@@ -960,6 +962,32 @@ func (receiver *AuthorController) AuthorProductAnalyse() {
 		"brand_list":     brandList,
 		"analysis_count": analysisCount,
 		"total":          total,
+	})
+	return
+}
+
+//达人合作小店
+func (receiver *AuthorController) AuthorShopAnalyse() {
+	authorId := business.IdDecrypt(receiver.GetString(":author_id"))
+	startTime, endTime, comErr := receiver.GetRangeDate()
+	if comErr != nil {
+		receiver.FailReturn(comErr)
+		return
+	}
+	keyword := receiver.GetString("keyword", "")
+	sortStr := receiver.GetString("sort", "")
+	orderBy := receiver.GetString("order_by", "")
+	page := receiver.GetPage("page")
+	pageSize := receiver.GetPageSize("page_size", 10, 50)
+	authorBusiness := business.NewAuthorBusiness()
+	list, total, comErr := authorBusiness.GetAuthorShopAnalyse(authorId, keyword, sortStr, orderBy, startTime, endTime, page, pageSize, receiver.UserId)
+	if comErr != nil {
+		receiver.FailReturn(comErr)
+		return
+	}
+	receiver.SuccReturn(map[string]interface{}{
+		"list":  list,
+		"total": total,
 	})
 	return
 }
