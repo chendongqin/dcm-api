@@ -62,10 +62,11 @@ func (e *EsVideoBusiness) SearchAwemeByProduct(productId, keyword, sortStr, orde
 			},
 		})
 	}
+	var cacheTime time.Duration = 180
 	result := esMultiQuery.
 		SetConnection(connection).
 		SetTable(esTable).
-		SetCache(180).
+		SetCache(cacheTime).
 		AddMust(esQuery.Condition).
 		SetOrderBy(elasticsearch.NewElasticOrder().Add(sortStr, orderBy).Order).
 		SetLimit((page-1)*pageSize, pageSize).
@@ -111,10 +112,11 @@ func (e *EsVideoBusiness) SearchByAuthor(authorId, keyword, sortStr, orderBy str
 	if hasProduct == 1 {
 		esQuery.SetExist("field", "product_ids")
 	}
+	var cacheTime time.Duration = 180
 	result := esMultiQuery.
 		SetConnection(connection).
 		SetTable(esTable).
-		SetCache(180).
+		SetCache(cacheTime).
 		AddMust(esQuery.Condition).
 		SetOrderBy(elasticsearch.NewElasticOrder().Add(sortStr, orderBy).Order).
 		SetLimit((page-1)*pageSize, pageSize).
@@ -138,8 +140,9 @@ func (e *EsVideoBusiness) SumDataByAuthor(authorId string, startTime, endTime ti
 	if err != nil {
 		return
 	}
+	var cacheTime time.Duration = 300
 	countResult := esMultiQuery.
-		SetCache(300).
+		SetCache(cacheTime).
 		SetConnection(connection).
 		SetTable(esTable).
 		SetMust(esQuery.Condition).
@@ -261,9 +264,10 @@ func (e *EsVideoBusiness) CountAwemeByAuthor(authorId string, hasProduct int, st
 	if err != nil {
 		return 0, err
 	}
+	var cacheTime time.Duration = 300
 	return esMultiQuery.
 		SetConnection(connection).
-		SetCache(300).
+		SetCache(cacheTime).
 		SetMust(esQuery.Condition).
 		SetTable(esTable).FindCount()
 }
@@ -311,10 +315,11 @@ func (e *EsVideoBusiness) SearchByProductId(productId, awemeId, keyword, sortStr
 	if keyword != "" {
 		esQuery.SetMatchPhrase("aweme_title", keyword)
 	}
+	var cacheTime time.Duration = 180
 	result := esMultiQuery.
 		SetConnection(connection).
 		SetTable(esTable).
-		SetCache(180).
+		SetCache(cacheTime).
 		AddMust(esQuery.Condition).
 		SetOrderBy(elasticsearch.NewElasticOrder().Add(sortStr, orderBy).Order).
 		SetLimit((page-1)*pageSize, pageSize).
@@ -371,10 +376,11 @@ func (e *EsVideoBusiness) ScanAwemeProductByAuthor(authorId, keyword, category, 
 			})
 		}
 	}
+	var cacheTime time.Duration = 300
 	results := esMultiQuery.
 		SetConnection(connection).
 		SetTable(esTable).
-		SetCache(300).
+		SetCache(cacheTime).
 		AddMust(esQuery.Condition).
 		SetLimit((page-1)*pageSize, pageSize).
 		SetOrderBy(elasticsearch.NewElasticOrder().Add("aweme_create_time", "desc").Order).
@@ -446,10 +452,11 @@ func (e *EsVideoBusiness) AuthorProductAwemeSumList(authorId, productId, shopId,
 		esQuery.SetTerm("shop_id", shopId)
 
 	}
+	var cacheTime time.Duration = 600
 	results := esMultiQuery.
 		SetConnection(connection).
 		SetTable(esTable).
-		SetCache(600).
+		SetCache(cacheTime).
 		AddMust(esQuery.Condition).
 		RawQuery(map[string]interface{}{
 			"query": map[string]interface{}{
@@ -529,10 +536,11 @@ func (e *EsVideoBusiness) NewAuthorProductAwemeSumList(authorId, sortStr, orderB
 	//if productId != "" {
 	//	esQuery.SetMatchPhrase("product_ids", productId)
 	//}
+	var cacheTime time.Duration = 600
 	results := esMultiQuery.
 		SetConnection(connection).
 		SetTable(esTable).
-		SetCache(600).
+		SetCache(cacheTime).
 		AddMust(esQuery.Condition).
 		SetOrderBy(elasticsearch.NewElasticOrder().Add(sortStr, orderBy).Order).
 		SetLimit((page-1)*pageSize, pageSize).
@@ -549,10 +557,11 @@ func (e *EsVideoBusiness) GetByAwemeId(awemeId, date string) (info es.DyAweme, c
 	esQuery, esMultiQuery := elasticsearch.NewElasticQueryGroup()
 	esQuery.SetMatchPhrase("aweme_id", awemeId)
 	esQuery.SetTerm("exist", 1)
+	var cacheTime time.Duration = 180
 	result := esMultiQuery.
 		SetConnection(connection).
 		SetTable(esTable).
-		SetCache(180).
+		SetCache(cacheTime).
 		AddMust(esQuery.Condition).
 		SetMultiQuery().
 		QueryOne()

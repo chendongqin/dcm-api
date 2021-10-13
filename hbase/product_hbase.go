@@ -3,6 +3,7 @@ package hbase
 import (
 	"context"
 	"dongchamao/global"
+	"dongchamao/global/logger"
 	"dongchamao/global/utils"
 	"dongchamao/models/entity"
 	"dongchamao/services/hbaseService"
@@ -51,7 +52,8 @@ func GetProductInfo(productId string) (data entity.DyProduct, comErr global.Comm
 	query := hbasehelper.NewQuery()
 	result, err := query.SetTable(hbaseService.HbaseDyProduct).GetByRowKey([]byte(productId))
 	if err != nil {
-		comErr = global.NewMsgError(err.Error())
+		comErr = global.NewError(5000)
+		logger.Error(err)
 		return
 	}
 	if result.Row == nil {
@@ -88,7 +90,8 @@ func GetDyProductBrand(productId string) (data entity.DyProductBrand, comErr glo
 	query := hbasehelper.NewQuery()
 	result, err := query.SetTable(hbaseService.HbaseDyProductBrand).GetByRowKey([]byte(productId))
 	if err != nil {
-		comErr = global.NewMsgError(err.Error())
+		comErr = global.NewError(5000)
+		logger.Error(err)
 		return
 	}
 	if result.Row == nil {
@@ -108,7 +111,8 @@ func GetPromotionMonth(productId string) (data entity.DyLivePromotionMonth, comE
 	query := hbasehelper.NewQuery()
 	result, err := query.SetTable(hbaseService.HbaseDyLivePromotionMonth).GetByRowKey([]byte(productId))
 	if err != nil {
-		comErr = global.NewMsgError(err.Error())
+		comErr = global.NewError(5000)
+		logger.Error(err)
 		return
 	}
 	if result.Row == nil {
@@ -132,7 +136,8 @@ func GetProductDailyRangDate(productId string, startTime, endTime time.Time) (da
 		SetStopRow([]byte(endRow)).
 		Scan(1000)
 	if err != nil {
-		comErr = global.NewMsgError(err.Error())
+		comErr = global.NewError(5000)
+		logger.Error(err)
 		return
 	}
 	for _, v := range results {
@@ -163,7 +168,8 @@ func GetProductLiveSalesRangDate(productId string, startTime, endTime time.Time)
 		SetStopRow([]byte(endRow)).
 		Scan(1000)
 	if err != nil {
-		comErr = global.NewMsgError(err.Error())
+		comErr = global.NewError(5000)
+		logger.Error(err)
 		return
 	}
 	for _, v := range results {
@@ -186,7 +192,8 @@ func GetProductAuthorAnalysis(rowKey string) (data entity.DyProductAuthorAnalysi
 	query := hbasehelper.NewQuery()
 	result, err := query.SetTable(hbaseService.HbaseDyProductAuthorAnalysis).GetByRowKey([]byte(rowKey))
 	if err != nil {
-		comErr = global.NewMsgError(err.Error())
+		comErr = global.NewError(5000)
+		logger.Error(err)
 		return
 	}
 	if result.Row == nil {
@@ -202,7 +209,8 @@ func GetProductAuthorAwemes(rowKey string) (data entity.DyProductAuthorAnalysis,
 	query := hbasehelper.NewQuery()
 	result, err := query.SetTable(hbaseService.HbaseDyProductAuthorAnalysis).GetByRowKey([]byte(rowKey))
 	if err != nil {
-		comErr = global.NewMsgError(err.Error())
+		comErr = global.NewError(5000)
+		logger.Error(err)
 		return
 	}
 	if result.Row == nil {
@@ -222,7 +230,8 @@ func GetProductAuthorAnalysisRange(startRowKey, stopRowKey string) (data []entit
 		SetStopRow([]byte(stopRowKey)).
 		Scan(50000)
 	if err != nil {
-		comErr = global.NewMsgError(err.Error())
+		comErr = global.NewError(5000)
+		logger.Error(err)
 		return
 	}
 	for _, v := range results {
@@ -243,7 +252,8 @@ func GetProductAwemeAuthorAnalysis(rowKey string) (data entity.DyProductAwemeAut
 	query := hbasehelper.NewQuery()
 	result, err := query.SetTable(hbaseService.HbaseDyProductAwemeAuthorAnalysis).GetByRowKey([]byte(rowKey))
 	if err != nil {
-		comErr = global.NewMsgError(err.Error())
+		comErr = global.NewError(5000)
+		logger.Error(err)
 		return
 	}
 	if result.Row == nil {
@@ -267,7 +277,8 @@ func GetProductAwemeAuthorAnalysisRange(startRowKey, stopRowKey string) (data []
 		SetStopRow([]byte(stopRowKey)).
 		Scan(50000)
 	if err != nil {
-		comErr = global.NewMsgError(err.Error())
+		comErr = global.NewError(5000)
+		logger.Error(err)
 		return
 	}
 	for _, v := range results {
@@ -295,7 +306,8 @@ func GetDyProductAwemeSalesTrendRangeDate(productId string, startTime, endTime t
 		SetStopRow([]byte(endRow)).
 		Scan(1000)
 	if err != nil {
-		comErr = global.NewMsgError(err.Error())
+		comErr = global.NewError(5000)
+		logger.Error(err)
 		return
 	}
 	data = map[string]entity.DyProductAwemeSalesTrend{}
@@ -323,7 +335,8 @@ func GetDyProductAwemeSalesTrend(productId, date string) (data entity.DyProductA
 		SetTable(hbaseService.HbaseDyProductAwemeSalesTrend).
 		GetByRowKey([]byte(startRow))
 	if err != nil {
-		comErr = global.NewMsgError(err.Error())
+		comErr = global.NewError(5000)
+		logger.Error(err)
 		return
 	}
 	dataMap := hbaseService.HbaseFormat(result, entity.DyProductAwemeSalesTrendMap)
@@ -342,7 +355,8 @@ func GetDyProductAwemeDailyDistributeRange(awemeId, beginDate, endDate string) (
 		SetStopRow([]byte(stopRowKey)).
 		Scan(1000)
 	if err != nil {
-		comErr = global.NewMsgError(err.Error())
+		comErr = global.NewError(5000)
+		logger.Error(err)
 		return
 	}
 	for _, v := range results {
@@ -362,7 +376,8 @@ func GetDyProductGpmDate(productId, date string) (data entity.AdsDyProductGpmDi,
 		SetTable(hbaseService.HbaseAdsDyProductGpmDi).
 		GetByRowKey([]byte(startRow))
 	if err != nil {
-		comErr = global.NewMsgError(err.Error())
+		comErr = global.NewError(5000)
+		logger.Error(err)
 		return
 	}
 	dataMap := hbaseService.HbaseFormat(result, entity.AdsDyProductGpmDiMap)
@@ -381,7 +396,8 @@ func GetDyProductGpmRangeDate(productId string, startTime, endTime time.Time) (d
 		SetStopRow([]byte(endRow)).
 		Scan(1000)
 	if err != nil {
-		comErr = global.NewMsgError(err.Error())
+		comErr = global.NewError(5000)
+		logger.Error(err)
 		return
 	}
 	data = map[string]entity.AdsDyProductGpmDi{}
