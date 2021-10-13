@@ -136,7 +136,7 @@ func (receiver *CommonController) CheckSmsCode() {
 }
 
 func (receiver *CommonController) Test() {
-	business.NewWechatBusiness().AddAndroidUserAction("862148051168619")
+	business.NewWechatBusiness().AddAndroidUserAction(global.AndroidActionSet, "862148051168619")
 	receiver.SuccReturn(nil)
 	return
 }
