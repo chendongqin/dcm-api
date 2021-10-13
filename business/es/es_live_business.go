@@ -102,9 +102,10 @@ func (receiver *EsLiveBusiness) CountRoomProductByAuthorId(authorId string, star
 		"gte": startTime.Unix(),
 		"lt":  endTime.AddDate(0, 0, 1).Unix(),
 	})
+	var cacheTime time.Duration = 180
 	countResult := esMultiQuery.
 		SetConnection(connection).
-		SetCache(180).
+		SetCache(cacheTime).
 		SetTable(esTable).
 		RawQuery(map[string]interface{}{
 			"query": map[string]interface{}{
@@ -143,9 +144,10 @@ func (receiver *EsLiveBusiness) CountRoomByDayByAuthorId(authorId string, hasPro
 			"gt": 0,
 		})
 	}
+	var cacheTime time.Duration = 300
 	countResult := esMultiQuery.
 		SetConnection(connection).
-		SetCache(300).
+		SetCache(cacheTime).
 		SetTable(esTable).
 		RawQuery(map[string]interface{}{
 			"query": map[string]interface{}{
@@ -638,9 +640,10 @@ func (receiver *EsLiveBusiness) GetAuthorProductSearchRoomSumList(authorId, prod
 	if orderBy == "" {
 		orderBy = "desc"
 	}
+	var cacheTime time.Duration = 60
 	results := esMultiQuery.
 		SetConnection(connection).
-		SetCache(60).
+		SetCache(cacheTime).
 		SetTable(esTable).
 		AddMust(esQuery.Condition).
 		RawQuery(map[string]interface{}{
@@ -727,9 +730,10 @@ func (receiver *EsLiveBusiness) SumAuthorProductOfRoom(authorId, productId strin
 			"lt":  stopTime.AddDate(0, 0, 1).Unix(),
 		})
 	}
+	var cacheTime time.Duration = 60
 	results := esMultiQuery.
 		SetConnection(connection).
-		SetCache(60).
+		SetCache(cacheTime).
 		SetTable(esTable).
 		AddMust(esQuery.Condition).
 		RawQuery(map[string]interface{}{
@@ -962,10 +966,11 @@ func (receiver *EsLiveBusiness) KeywordSearch(keyword string) (list []es.EsDyLiv
 		"gte": startTime.Unix(),
 		"lt":  time.Now().Unix(),
 	})
+	var cacheTime time.Duration = 60
 	results := esMultiQuery.
 		SetConnection(connection).
 		SetTable(esTable).
-		SetCache(60).
+		SetCache(cacheTime).
 		AddMust(esQuery.Condition).
 		SetOrderBy(elasticsearch.NewElasticOrder().Add("max_user_count", "desc").Order).
 		SetLimit(0, 5).
@@ -987,10 +992,11 @@ func (receiver *EsLiveBusiness) GetRoomsByAuthorIds(authorIds []string, date str
 		sortStr = "predict_gmv"
 		pageSize = livingTop
 	}
+	var cacheTime time.Duration = 300
 	results := esMultiQuery.
 		SetConnection(connection).
 		SetTable(esTable).
-		SetCache(300).
+		SetCache(cacheTime).
 		AddMust(esQuery.Condition).
 		SetOrderBy(elasticsearch.NewElasticOrder().Add(sortStr, "desc").Order).
 		SetLimit(0, pageSize).
@@ -1013,9 +1019,10 @@ func (receiver *EsLiveBusiness) SumDataByAuthor(authorId string, startTime, endT
 		"lt":  endTime.AddDate(0, 0, 1).Unix(),
 	})
 	esQuery.SetTerm("author_id", authorId)
+	var cacheTime time.Duration = 300
 	countResult := esMultiQuery.
 		SetConnection(connection).
-		SetCache(300).
+		SetCache(cacheTime).
 		SetTable(esTable).
 		SetMust(esQuery.Condition).
 		RawQuery(map[string]interface{}{
@@ -1062,9 +1069,10 @@ func (receiver *EsLiveBusiness) CountDataByAuthor(authorId string, startTime, en
 		"lt":  endTime.AddDate(0, 0, 1).Unix(),
 	})
 	esQuery.SetTerm("author_id", authorId)
+	var cacheTime time.Duration = 300
 	total, _ := esMultiQuery.
 		SetConnection(connection).
-		SetCache(300).
+		SetCache(cacheTime).
 		SetTable(esTable).
 		SetMust(esQuery.Condition).
 		FindCount()
@@ -1114,10 +1122,11 @@ func (receiver *EsLiveBusiness) ScanLiveProductByAuthor(authorId, keyword, categ
 			})
 		}
 	}
+	var cacheTime time.Duration = 300
 	results := esMultiQuery.
 		SetConnection(connection).
 		SetTable(esTable).
-		SetCache(300).
+		SetCache(cacheTime).
 		AddMust(esQuery.Condition).
 		SetLimit((page-1)*pageSize, pageSize).
 		SetOrderBy(elasticsearch.NewElasticOrder().Add("shelf_time", "desc").Order).
@@ -1140,9 +1149,10 @@ func (receiver *EsLiveBusiness) SumDataByAuthors(authorIds []string, startTime, 
 		"lt":  endTime.AddDate(0, 0, 1).Unix(),
 	})
 	esQuery.SetTerms("author_id", authorIds)
+	var cacheTime time.Duration = 300
 	countResult := esMultiQuery.
 		SetConnection(connection).
-		SetCache(300).
+		SetCache(cacheTime).
 		SetTable(esTable).
 		SetMust(esQuery.Condition).
 		RawQuery(map[string]interface{}{

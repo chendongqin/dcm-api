@@ -103,9 +103,11 @@ func (i *EsProductBusiness) BaseSearch(productId, keyword, category, secondCateg
 	if utils.InArrayString(sortStr, []string{"order_account", "pv", "cvr"}) {
 		sortOrder = elasticsearch.NewElasticOrder().Add("is_yesterday", "desc").Add(sortStr, orderBy).Order
 	}
+	var cacheTime time.Duration = 120
 	results := esMultiQuery.
 		SetConnection(connection).
 		SetTable(esTable).
+		SetCache(cacheTime).
 		AddMust(esQuery.Condition).
 		SetLimit((page-1)*pageSize, pageSize).
 		SetOrderBy(sortOrder).
@@ -337,10 +339,11 @@ func (i *EsProductBusiness) KeywordSearch(keyword string) (list []es.DyProduct) 
 	esQuery, esMultiQuery := elasticsearch.NewElasticQueryGroup()
 	esTable, connection := GetESTable(es.DyProductTable)
 	esQuery.SetMatchPhrase("title", keyword)
+	var cacheTime time.Duration = 60
 	results := esMultiQuery.
 		SetConnection(connection).
 		SetTable(esTable).
-		SetCache(60).
+		SetCache(cacheTime).
 		AddShould(esQuery.Condition).
 		SetLimit(0, 3).
 		SetOrderBy(elasticsearch.NewElasticOrder().Add("order_account", "desc").Order).
@@ -379,10 +382,11 @@ func (i *EsProductBusiness) ProductSalesTopDayRank(day, fCate, sCate, tCate, sor
 	if sortStr != "order_count" {
 		esOrder.Add("order_count", "desc")
 	}
+	var cacheTime time.Duration = 600
 	results := esMultiQuery.
 		SetConnection(connection).
 		SetTable(esTable).
-		SetCache(600).
+		SetCache(cacheTime).
 		AddShould(esQuery.Condition).
 		SetLimit((page-1)*pageSize, pageSize).
 		SetOrderBy(esOrder.Order).
@@ -423,10 +427,11 @@ func (i *EsProductBusiness) ProductShareTopDayRank(day, fCate, sCate, tCate, sor
 	if sortStr != "share_count" {
 		esOrder.Add("share_count", "desc")
 	}
+	var cacheTime time.Duration = 300
 	results := esMultiQuery.
 		SetConnection(connection).
 		SetTable(esTable).
-		SetCache(600).
+		SetCache(cacheTime).
 		AddShould(esQuery.Condition).
 		SetLimit((page-1)*pageSize, pageSize).
 		SetOrderBy(esOrder.Order).
@@ -466,10 +471,11 @@ func (i *EsProductBusiness) LiveProductSalesTopDayRank(day, fCate, sCate, tCate,
 	if sortStr != "gmv" {
 		esOrder.Add("gmv", "desc")
 	}
+	var cacheTime time.Duration = 600
 	results := esMultiQuery.
 		SetConnection(connection).
 		SetTable(esTable).
-		SetCache(600).
+		SetCache(cacheTime).
 		AddShould(esQuery.Condition).
 		SetLimit((page-1)*pageSize, pageSize).
 		SetOrderBy(esOrder.Order).
@@ -488,11 +494,12 @@ func (i *EsProductBusiness) SearchProducts(productIds []string) (list []es.DyPro
 	esTable, connection := GetESTable(es.DyProductTable)
 	esQuery, esMultiQuery := elasticsearch.NewElasticQueryGroup()
 	esQuery.SetTerms("product_id", productIds)
+	var cacheTime time.Duration = 300
 	results := esMultiQuery.
 		SetConnection(connection).
 		SetTable(esTable).
 		AddMust(esQuery.Condition).
-		SetCache(300).
+		SetCache(cacheTime).
 		SetLimit(0, len(productIds)).
 		SetOrderBy(elasticsearch.NewElasticOrder().Order).
 		SetMultiQuery().
