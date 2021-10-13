@@ -161,9 +161,16 @@ func (receiver *ProductController) ProductBaseAnalysis() {
 	info, _ := hbase.GetProductDailyRangDate(productId, startTime, endTime)
 	monthData, _ := hbase.GetPromotionMonth(productId)
 	dailyMapData := map[string]entity.DyLiveProductDaily{}
-	for _, v := range monthData.DailyList {
+	dailyList := monthData.DailyList
+	sort.Slice(dailyList, func(i, j int) bool {
+		return dailyList[i].StatisticsTime > dailyList[j].StatisticsTime
+	})
+	for _, v := range dailyList {
 		t, _ := time.ParseInLocation("2006/01/02", v.StatisticsTime, time.Local)
-		if t.Before(startTime) || t.After(endTime) {
+		if t.Unix() < startTime.Unix() {
+			break
+		}
+		if t.Unix() > endTime.Unix() {
 			continue
 		}
 		dailyMapData[t.Format("20060102")] = v
@@ -235,13 +242,6 @@ func (receiver *ProductController) ProductBaseAnalysis() {
 			authorNum = len(authors)
 			awemeNum = len(v.AwemeList)
 			roomNum = len(v.LiveList)
-		}
-		if d, ok := dailyMapData[dateKey]; ok {
-			order = d.ProductOrderAccount
-			pv = d.Pv
-			if d.Pv > 0 {
-				rate = float64(d.ProductOrderAccount) / float64(d.Pv)
-			}
 		}
 		if d, ok := dailyMapData[dateKey]; ok {
 			order = d.ProductOrderAccount
@@ -340,7 +340,7 @@ func (receiver *ProductController) ProductBase() {
 	brandInfo, _ := hbase.GetDyProductBrand(productId)
 	yesterdayDate := time.Now().AddDate(0, 0, -1).Format("20060102")
 	yesterdayTime, _ := time.ParseInLocation("20060102", yesterdayDate, time.Local)
-	startTime := yesterdayTime.AddDate(0, 0, -30)
+	startTime := yesterdayTime.AddDate(0, 0, -29)
 	monthData, _ := hbase.GetPromotionMonth(productId)
 	relatedInfo, _ := hbase.GetProductDailyRangDate(productId, startTime, yesterdayTime)
 	var roomNum int
@@ -364,6 +364,25 @@ func (receiver *ProductController) ProductBase() {
 	}
 	roomNum = len(roomMap)
 	awemeNum = len(awemeMap)
+	dailyList := monthData.DailyList
+	sort.Slice(dailyList, func(i, j int) bool {
+		return dailyList[i].StatisticsTime > dailyList[j].StatisticsTime
+	})
+	var orderCount30 int64 = 0
+	var pvCount30 int64 = 0
+	for _, v := range dailyList {
+		t, _ := time.ParseInLocation("2006/01/02", v.StatisticsTime, time.Local)
+		if t.Unix() < startTime.Unix() {
+			break
+		}
+		if t.Unix() > yesterdayTime.Unix() {
+			continue
+		}
+		orderCount30 += v.ProductOrderAccount
+		pvCount30 += v.Pv
+	}
+	monthData.OrderCount = orderCount30
+	monthData.PvCount = pvCount30
 	var rate30 float64 = 0
 	if monthData.PvCount > 0 {
 		rate30 = float64(monthData.OrderCount) / float64(monthData.PvCount)
