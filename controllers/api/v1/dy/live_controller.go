@@ -428,6 +428,7 @@ func (receiver *LiveController) LiveProductList() {
 	}
 	InputData := receiver.InputFormat()
 	keyword := InputData.GetString("keyword", "")
+	productId := business.IdDecrypt(InputData.GetString("product_id", ""))
 	sortStr := InputData.GetString("sort", "shelf_time")
 	orderBy := InputData.GetString("order_by", "desc")
 	page := InputData.GetInt("page", 1)
@@ -437,7 +438,7 @@ func (receiver *LiveController) LiveProductList() {
 	thirdLabel := InputData.GetString("third_label", "")
 	roomInfo, _ := hbase.GetLiveInfo(roomId)
 	esLiveBusiness := es.NewEsLiveBusiness()
-	list, productCount, total, err := esLiveBusiness.RoomProductByRoomId(roomInfo, keyword, sortStr, orderBy, firstLabel, secondLabel, thirdLabel, page, pageSize)
+	list, productCount, total, err := esLiveBusiness.RoomProductByRoomId(roomInfo, keyword, productId, sortStr, orderBy, firstLabel, secondLabel, thirdLabel, page, pageSize)
 	if err != nil {
 		receiver.FailReturn(err)
 		return
