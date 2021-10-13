@@ -12,6 +12,7 @@ import (
 	"dongchamao/models/repost/dy"
 	"dongchamao/services"
 	"dongchamao/services/dyimg"
+	"fmt"
 	jsoniter "github.com/json-iterator/go"
 	"github.com/wazsmwazsm/mortar"
 	"math"
@@ -188,6 +189,71 @@ func (a *AuthorBusiness) HbaseGetAuthor(authorId string) (data entity.DyAuthor, 
 	if data.Data.UniqueID == "" {
 		data.Data.UniqueID = data.Data.ShortID
 	}
+	return
+}
+
+//达人排名
+func (a *AuthorBusiness) HbaseGetAuthorRank(authorId string) (resRankMap map[string]string) {
+	rankMap := map[string]string{
+		"name":      "",
+		"rank_name": "",
+		"value":     "",
+		"field":     "",
+		"date_type": "",
+	}
+	resRankMap = rankMap
+	data, comErr := hbase.GetAuthorRank(authorId)
+	if comErr != nil {
+		return
+	}
+	//判断是否在筛选范围之内
+	isIn := func(data entity.DyAuthorRank, startDate, endDate time.Time, dateType string) (rankMap map[string]string) {
+		rankMap = make(map[string]string)
+		if data.PredictGmvSumDate != "" {
+			PredictGmvSumDateString := fmt.Sprintf("%s 00:00:01", data.PredictGmvSumDate)
+			PredictGmvSumDate, _ := time.ParseInLocation("2006-01-02 15:04:05", PredictGmvSumDateString, time.Local)
+			if startDate.Before(PredictGmvSumDate) && PredictGmvSumDate.Before(endDate) {
+				rankMap["rank_name"] = "带货榜"
+				rankMap["date_type"] = dateType
+				rankMap["value"] = data.FansIncRn
+				rankMap["field"] = "gmv"
+				return
+			}
+		}
+		if data.FansIncDate != "" {
+			rankIncDateString := fmt.Sprintf("%s 00:00:01", data.FansIncDate)
+			rankIncDate, _ := time.ParseInLocation("2006-01-02 15:04:05", rankIncDateString, time.Local)
+			if startDate.Before(rankIncDate) && rankIncDate.Before(endDate) {
+				rankMap["rank_name"] = "涨粉榜"
+				rankMap["date_type"] = dateType
+				rankMap["value"] = data.FansIncRn
+				rankMap["field"] = "fans_inc"
+				return
+			}
+		}
+		return
+	}
+	//月榜判断
+	now := time.Now()
+	endDate := now
+	startDate := now.AddDate(0, -3, 0)
+	resRankMap = isIn(data, startDate, endDate, "月榜")
+	if resRankMap["rank_name"] != "" {
+		return
+	}
+	//周榜判断
+	startDate = now.AddDate(0, 0, -3*7)
+	resRankMap = isIn(data, startDate, endDate, "周榜")
+	if resRankMap["rank_name"] != "" {
+		return
+	}
+	//日榜判断
+	startDate = now.AddDate(0, 0, -7)
+	resRankMap = isIn(data, startDate, endDate, "日榜")
+	if resRankMap["rank_name"] != "" {
+		return
+	}
+
 	return
 }
 
