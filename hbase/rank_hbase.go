@@ -2,6 +2,7 @@ package hbase
 
 import (
 	"dongchamao/global"
+	"dongchamao/global/logger"
 	"dongchamao/global/utils"
 	"dongchamao/models/entity"
 	"dongchamao/services/hbaseService"
@@ -16,7 +17,8 @@ func GetStartAuthorVideoRank(rankType, category string) (data []entity.XtHotAwem
 	query := hbasehelper.NewQuery()
 	result, err := query.SetTable(hbaseService.HbaseXtHotAwemeAuthorRank).GetByRowKey([]byte(rowKey))
 	if err != nil {
-		comErr = global.NewMsgError(err.Error())
+		comErr = global.NewError(5000)
+		logger.Error(err)
 		return
 	}
 	if result.Row == nil {
@@ -46,7 +48,8 @@ func GetStartAuthorLiveRank(rankType string) (data []entity.XtHotLiveAuthorData,
 	query := hbasehelper.NewQuery()
 	result, err := query.SetTable(hbaseService.HbaseXtHotLiveAuthorRank).GetByRowKey([]byte(rowKey))
 	if err != nil {
-		comErr = global.NewMsgError(err.Error())
+		comErr = global.NewError(5000)
+		logger.Error(err)
 		return
 	}
 	if result.Row == nil {
@@ -75,7 +78,8 @@ func GetDyLiveHourRank(hour string) (data entity.DyLiveHourRanks, comErr global.
 	query := hbasehelper.NewQuery()
 	result, err := query.SetTable(hbaseService.HbaseDyLiveHourRank).GetByRowKey([]byte(rowKey))
 	if err != nil {
-		comErr = global.NewMsgError(err.Error())
+		comErr = global.NewError(5000)
+		logger.Error(err)
 		return
 	}
 	if result.Row == nil {
@@ -92,7 +96,8 @@ func GetDyLiveTopRank(hour string) (data entity.DyLiveTopRanks, comErr global.Co
 	query := hbasehelper.NewQuery()
 	result, err := query.SetTable(hbaseService.HbaseDyLiveTopRank).GetByRowKey([]byte(rowKey))
 	if err != nil {
-		comErr = global.NewMsgError(err.Error())
+		comErr = global.NewError(5000)
+		logger.Error(err)
 		return
 	}
 	data.Ranks = []entity.DyLiveRank{}
@@ -113,7 +118,8 @@ func GetDyLiveHourSellRank(hour string) (data entity.DyLiveHourSellRanks, comErr
 	query := hbasehelper.NewQuery()
 	result, err := query.SetTable(hbaseService.HbaseDyLiveHourRankSell).GetByRowKey([]byte(rowKey))
 	if err != nil {
-		comErr = global.NewMsgError(err.Error())
+		comErr = global.NewError(5000)
+		logger.Error(err)
 		return
 	}
 	if result.Row == nil {
@@ -130,7 +136,8 @@ func GetDyLiveHourPopularityRank(hour string) (data entity.DyLiveHourPopularityR
 	query := hbasehelper.NewQuery()
 	result, err := query.SetTable(hbaseService.HbaseDyLiveHourRankPopularity).GetByRowKey([]byte(rowKey))
 	if err != nil {
-		comErr = global.NewMsgError(err.Error())
+		comErr = global.NewError(5000)
+		logger.Error(err)
 		return
 	}
 	if result.Row == nil {
@@ -146,7 +153,8 @@ func GetLiveShareWeekRank(rowKey string) (data entity.DyLiveShareTops, comErr gl
 	query := hbasehelper.NewQuery()
 	result, err := query.SetTable(hbaseService.HbaseDyLiveShareWeekRank).GetByRowKey([]byte(rowKey))
 	if err != nil {
-		comErr = global.NewMsgError(err.Error())
+		comErr = global.NewError(5000)
+		logger.Error(err)
 		return
 	}
 	if result.Row == nil {
@@ -162,7 +170,8 @@ func GetAwemeShareRank(rowKey string) (data entity.DyAwemeShareTops, comErr glob
 	query := hbasehelper.NewQuery()
 	result, err := query.SetTable(hbaseService.HbaseDyAwemeShareRank).GetByRowKey([]byte(rowKey))
 	if err != nil {
-		comErr = global.NewMsgError(err.Error())
+		comErr = global.NewError(5000)
+		logger.Error(err)
 		return
 	}
 	if result.Row == nil {
@@ -182,7 +191,8 @@ func GetVideoProductRank(rowKey string, hPage int) (data []entity.ShortVideoProd
 	query := hbasehelper.NewQuery()
 	result, err := query.SetTable(hbaseService.HbaseShortVideoProductRank).GetByRowKey([]byte(rowKey))
 	if err != nil {
-		comErr = global.NewMsgError(err.Error())
+		comErr = global.NewError(5000)
+		logger.Error(err)
 		return
 	}
 	dataMap := hbaseService.HbaseFormat(result, entity.ShortVideoCommodityTopNMap)
@@ -200,7 +210,8 @@ func GetLiveProductRank(rowKey string, hPage int) (data []entity.LiveProduct, co
 	query := hbasehelper.NewQuery()
 	result, err := query.SetTable(hbaseService.HbaseLiveProductRank).GetByRowKey([]byte(rowKey))
 	if err != nil {
-		comErr = global.NewMsgError(err.Error())
+		comErr = global.NewError(5000)
+		logger.Error(err)
 		return
 	}
 	dataMap := hbaseService.HbaseFormat(result, entity.LiveCommodityTopNMap)
@@ -220,7 +231,8 @@ func GetSaleAuthorRank(rowKeys [][]byte, dateType int) (data []entity.DyAuthorDa
 		results, err = query.SetTable(hbaseService.HbaseDyAuthorMonthSalesRank).GetByRowKeys(rowKeys) //月榜
 	}
 	if err != nil {
-		comErr = global.NewMsgError(err.Error())
+		comErr = global.NewError(5000)
+		logger.Error(err)
 		return
 	}
 	data = make([]entity.DyAuthorDaySalesRank, 0)
@@ -237,7 +249,8 @@ func GetSaleAuthorRow(rowKey string) (data entity.DyAuthorDaySalesRank, comErr g
 	query := hbasehelper.NewQuery()
 	result, err := query.SetTable(hbaseService.HbaseDyAuthorDaySalesRank).GetByRowKey([]byte(rowKey))
 	if err != nil {
-		comErr = global.NewMsgError(err.Error())
+		comErr = global.NewError(5000)
+		logger.Error(err)
 		return
 	}
 	dataMap := hbaseService.HbaseFormat(result, entity.DyAuthorDaySalesRankMap)
@@ -249,7 +262,8 @@ func GetFansAuthorRank(rowKey [][]byte) (data []entity.DyAuthorDayFansIncrease, 
 	query := hbasehelper.NewQuery()
 	results, err := query.SetTable(hbaseService.HbaseDyAuthorFansIncrRank).GetByRowKeys(rowKey)
 	if err != nil {
-		comErr = global.NewMsgError(err.Error())
+		comErr = global.NewError(5000)
+		logger.Error(err)
 		return
 	}
 	data = make([]entity.DyAuthorDayFansIncrease, 0)
@@ -266,7 +280,8 @@ func GetFansAuthorRow(rowKey string) (data entity.DyAuthorDaySalesRank, comErr g
 	query := hbasehelper.NewQuery()
 	result, err := query.SetTable(hbaseService.HbaseDyAuthorFansIncrRank).GetByRowKey([]byte(rowKey))
 	if err != nil {
-		comErr = global.NewMsgError(err.Error())
+		comErr = global.NewError(5000)
+		logger.Error(err)
 		return
 	}
 	dataMap := hbaseService.HbaseFormat(result, entity.DyAuthorDayFansIncreaseMap)
