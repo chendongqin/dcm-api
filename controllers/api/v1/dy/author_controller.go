@@ -11,6 +11,7 @@ import (
 	"dongchamao/models/entity"
 	dy2 "dongchamao/models/repost/dy"
 	"dongchamao/services/dyimg"
+	"fmt"
 	"github.com/astaxie/beego/logs"
 	jsoniter "github.com/json-iterator/go"
 	"math"
@@ -216,6 +217,9 @@ func (receiver *AuthorController) AuthorBaseData() {
 	yseBasicBefore, _ := hbase.GetAuthorBasic(authorId, time.Now().AddDate(0, 0, -2).Format("20060102"))
 	authorBase.Data.ID = business.IdEncrypt(authorBase.Data.ID)
 	authorBase.Data.RoomID = business.IdEncrypt(authorBase.Data.RoomID)
+	//获取榜单排名
+	mapRank := authorBusiness.HbaseGetAuthorRank(authorId)
+	mapRank["desc"] = fmt.Sprintf("达人%s%s%s名", mapRank["rank_name"], mapRank["date_type"], mapRank["value"])
 	basic := entity.DyAuthorBasic{
 		FollowerCount:        basicBefore.FollowerCount,
 		FollowerCountBefore:  yseBasicBefore.FollowerCount,
@@ -248,6 +252,7 @@ func (receiver *AuthorController) AuthorBaseData() {
 			ShopId:   business.IdEncrypt(authorStore.Id),
 			ShopName: authorStore.ShopName,
 		},
+		"rank_infor": mapRank,
 	}
 	receiver.SuccReturn(returnMap)
 	return

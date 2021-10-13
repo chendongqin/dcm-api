@@ -419,3 +419,21 @@ func GetAuthorLiveFansClubUser(authorId string) (data entity.DyLiveFansClubUser,
 	utils.MapToStruct(detailMap, &data)
 	return
 }
+
+// GetAuthorRank 达人排行数据
+func GetAuthorRank(authorId string) (data entity.DyAuthorRank, comErr global.CommonError) {
+	query := hbasehelper.NewQuery()
+	result, err := query.SetTable(hbaseService.DyAuthorPersonalTag).GetByRowKey([]byte(authorId))
+	if err != nil {
+		comErr = global.NewMsgError(err.Error())
+		return
+	}
+	if result.Row == nil {
+		comErr = global.NewError(4040)
+		return
+	}
+	authorMap := hbaseService.HbaseFormat(result, entity.DyAuthorRankMap)
+	utils.MapToStruct(authorMap, &data)
+
+	return
+}
