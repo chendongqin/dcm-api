@@ -98,7 +98,7 @@ func (receiver *EsLiveBusiness) CountRoomProductByAuthorId(authorId string, star
 	}
 	esQuery, esMultiQuery := elasticsearch.NewElasticQueryGroup()
 	esQuery.SetTerm("author_id", authorId)
-	esQuery.SetRange("start_time", map[string]interface{}{
+	esQuery.SetRange("live_create_time", map[string]interface{}{
 		"gte": startTime.Unix(),
 		"lt":  endTime.AddDate(0, 0, 1).Unix(),
 	})
