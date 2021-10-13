@@ -19,6 +19,7 @@ type DcUser struct {
 	LoginIp          string    `xorm:"not null default '' comment('登陆ip') VARCHAR(50)"`
 	Status           int       `xorm:"not null default 1 comment('状态1正常0禁用') TINYINT(1)"`
 	Openid           string    `xorm:"not null default '' comment('openid') VARCHAR(100)"`
+	AppleId          string    `xorm:"not null default '' comment('苹果用户unique_id') VARCHAR(100)"`
 	Unionid          string    `xorm:"not null default '' comment('unionid') VARCHAR(100)"`
 	OpenidApp        string    `xorm:"not null default '' comment('客户端openid') VARCHAR(100)"`
 	CreateTime       time.Time `xorm:"comment('创建时间') TIMESTAMP"`

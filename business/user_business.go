@@ -144,8 +144,40 @@ func (receiver *UserBusiness) LoginByPwd(username, pwd string, appId int) (user 
 	return
 }
 
+//密码登陆
+func (receiver *UserBusiness) AppleLogin(appleId string, appId int) (user dcm.DcUser, tokenString string, expire int64, comErr global.CommonError) {
+	if appleId == "" {
+		comErr = global.NewError(4208)
+		return
+	}
+	exist, _ := dcm.GetBy("apple_id", appleId, &user)
+	if !exist {
+		return
+	}
+	if user.Status != 1 {
+		if user.Status == 0 {
+			comErr = global.NewError(4212)
+			return
+		}
+		comErr = global.NewError(4217)
+		return
+	}
+	expire = 604800
+	tokenString, expire, err := receiver.CreateToken(appId, user.Id, expire)
+	if err != nil {
+		comErr = global.NewError(5000)
+		return
+	}
+	err = receiver.AddOrUpdateUniqueToken(user.Id, appId, tokenString)
+	if err != nil {
+		comErr = global.NewError(5000)
+		return
+	}
+	return
+}
+
 //验证码登陆
-func (receiver *UserBusiness) SmsLogin(mobile, code, password, unionid string, appId int) (user dcm.DcUser, tokenString string, expire int64, isNew int, comErr global.CommonError) {
+func (receiver *UserBusiness) SmsLogin(mobile, code, password, unionid, appleId string, appId int) (user dcm.DcUser, tokenString string, expire int64, isNew int, comErr global.CommonError) {
 	if mobile == "" || code == "" {
 		comErr = global.NewError(4000)
 		return
@@ -165,6 +197,9 @@ func (receiver *UserBusiness) SmsLogin(mobile, code, password, unionid string, a
 	} else {
 		user.Username = mobile
 		user.Nickname = mobile[:3] + "****" + mobile[7:]
+		if password != "" {
+			user.SetPassword = 1
+		}
 		user.Salt = utils.GetRandomString(4)
 		user.Password = utils.Md5_encode(password + user.Salt)
 		user.Status = 1
@@ -179,6 +214,7 @@ func (receiver *UserBusiness) SmsLogin(mobile, code, password, unionid string, a
 		}
 		isNew = 1
 	}
+	user.AppleId = appleId
 	if unionid != "" {
 		wechatModel := dcm.DcWechat{} //如果有微信信息 头像/昵称 默认用微信
 		if exist, _ := dcm.GetSlaveDbSession().Where("unionid = ?", unionid).Get(&wechatModel); !exist {

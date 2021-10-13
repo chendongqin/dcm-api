@@ -34,6 +34,9 @@ func init() {
 					beego.NSRouter("/tag/del/:id", &v1.AccountController{}, "delete:DelDyCollectTag"),
 				),
 			),
+			beego.NSNamespace("/apple",
+				beego.NSRouter("/apple_id", &v1.LoginController{}, "get:GetAppleId"),
+			),
 		),
 	)
 	// 注册路由组
