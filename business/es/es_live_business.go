@@ -1231,3 +1231,19 @@ func (receiver *EsLiveBusiness) SumDataByAuthors(authorIds []string, startTime, 
 	}
 	return
 }
+
+//根据直播间id获取直播间数据
+func (receiver *EsLiveBusiness) SearchRoomById(roomInfo *entity.DyLiveInfo) (data es.NewEsDyLiveInfo, comErr global.CommonError) {
+	date := time.Unix(roomInfo.DiscoverTime, 0).Format("20060102")
+	esTable, connection := GetESTableByDate(es.DyLiveInfoBaseTable, date)
+	esQuery, esMultiQuery := elasticsearch.NewElasticQueryGroup()
+	esQuery.SetTerm("room_id", roomInfo.RoomID)
+	result := esMultiQuery.
+		SetConnection(connection).
+		SetTable(esTable).
+		AddMust(esQuery.Condition).
+		SetMultiQuery().
+		QueryOne()
+	utils.MapToStruct(result, &data)
+	return
+}

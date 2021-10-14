@@ -14,6 +14,7 @@ import (
 	jsoniter "github.com/json-iterator/go"
 	"math"
 	"sort"
+	"strings"
 	"time"
 )
 
@@ -246,10 +247,21 @@ func (receiver *LiveController) LiveInfoData() {
 	//}
 	//gmvChart = business.DealIncDirtyFloat64Chart(gmvChart)
 	//salesChart = business.DealIncDirtyFloat64Chart(salesChart)
+
+	//处理直播间大盘数据
+	esInfo, _ := es.NewEsLiveBusiness().SearchRoomById(&liveInfo)
+	liveLevel := map[string]interface{}{
+		"date":           time.Unix(liveInfo.DiscoverTime, 0).Format("2006-01-02"),
+		"flow_rates":     esInfo.FlowRates,
+		"avg_stay_index": esInfo.AvgStayIndex,
+		"tags":           esInfo.Tags,
+		"tags_arr":       strings.Split(esInfo.Tags, "_"),
+	}
 	receiver.SuccReturn(map[string]interface{}{
 		"live_info":              returnLiveInfo,
 		"live_sale":              liveSale,
 		"user_count_composition": liveInfo.UserCountComposition,
+		"live_level":             liveLevel,
 		//"sales_chart": map[string]interface{}{
 		//	"time":  dateChart,
 		//	"gmv":   gmvChart,
