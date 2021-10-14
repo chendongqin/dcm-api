@@ -508,7 +508,7 @@ func (receiver *EsLiveDataBusiness) ProductLiveDataCategoryCustomerUnitPriceLeve
 }
 
 //带货行业数据分类分级分布数据
-func (receiver *EsLiveDataBusiness) ProductLiveDataCategoryLevelTwoShow(startTime, endTime time.Time, category string, living int, name string) (total int, data []dy.EsLiveSumDataCategoryLevelTwo) {
+func (receiver *EsLiveDataBusiness) ProductLiveDataCategoryLevelTwoShow(startTime, endTime time.Time, category string, living int, keyword string) (total int, data []dy.EsLiveSumDataCategoryLevelTwo) {
 	data = []dy.EsLiveSumDataCategoryLevelTwo{}
 	esTable, connection, err := GetESTableByTime(es.DyLiveInfoBaseTable, startTime, endTime)
 	if err != nil {
@@ -531,8 +531,8 @@ func (receiver *EsLiveDataBusiness) ProductLiveDataCategoryLevelTwoShow(startTim
 	if living == 1 {
 		esQuery.SetTerm("room_status", 2)
 	}
-	if name != "" {
-		esQuery.SetMultiMatch([]string{"display_id", "nickname"}, name)
+	if keyword != "" {
+		esQuery.SetMultiMatch([]string{"display_id", "short_id", "nickname"}, keyword)
 	}
 	var cacheTime time.Duration = 300
 	today := time.Now().Format("20060102")
