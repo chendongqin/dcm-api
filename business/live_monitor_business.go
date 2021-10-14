@@ -685,9 +685,7 @@ func (receiver *LiveMonitorBusiness) LiveMonitorRoomList(userId int, status int,
 		if roomsInfo, exists := roomsGroup[v.Id]; exists {
 			list[k].RoomId = IdEncrypt(utils.ToString(roomsInfo["room_id"]))
 			list[k].RoomCount = utils.ToInt(roomsInfo["num"])
-			if list[k].RoomCount > 0 {
-				list[k].TotalUser = utils.ToInt64(utils.ToFloat64(roomsInfo["total_user"]) / utils.ToFloat64(list[k].RoomCount))
-			}
+			list[k].TotalUser = utils.ToInt64(utils.ToFloat64(roomsInfo["total_user"]))
 			list[k].Sales = utils.ToInt64(utils.ToFloat64(roomsInfo["sales"]))
 			list[k].Gmv = utils.ToFloat64(roomsInfo["gmv"])
 			if list[k].TotalUser > 0 {
