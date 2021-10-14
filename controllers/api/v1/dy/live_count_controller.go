@@ -467,6 +467,7 @@ func (receiver *LiveCountController) LiveSumByCategoryLevelList() {
 		return
 	}
 	category := receiver.GetString("category", "")
+	keyword := receiver.GetString("keyword", "")
 	if category == "" {
 		receiver.FailReturn(global.NewError(4000))
 		return
@@ -481,7 +482,7 @@ func (receiver *LiveCountController) LiveSumByCategoryLevelList() {
 	page := receiver.GetPage("page")
 	pageSize := receiver.GetPageSize("page_size", 5, 30)
 	esLiveDataBusiness := es.NewEsLiveDataBusiness()
-	total, list, comErr := esLiveDataBusiness.ProductLiveDataCategoryLevelList(startTime, endTime, category, level, stayLevel, living, page, pageSize)
+	total, list, comErr := esLiveDataBusiness.ProductLiveDataCategoryLevelList(startTime, endTime, keyword, category, level, stayLevel, living, page, pageSize)
 	if comErr != nil {
 		receiver.FailReturn(comErr)
 		return
@@ -510,6 +511,7 @@ func (receiver *LiveCountController) LiveSumByCategoryLevelCount() {
 		return
 	}
 	category := receiver.GetString("category", "")
+	keyword := receiver.GetString("keyword", "")
 	if category == "" {
 		receiver.FailReturn(global.NewError(4000))
 		return
@@ -522,7 +524,7 @@ func (receiver *LiveCountController) LiveSumByCategoryLevelCount() {
 		return
 	}
 	esLiveDataBusiness := es.NewEsLiveDataBusiness()
-	total, data, comErr := esLiveDataBusiness.ProductLiveDataCategoryLevelCount(startTime, endTime, category, level, stayLevel, living)
+	total, data, comErr := esLiveDataBusiness.ProductLiveDataCategoryLevelCount(startTime, endTime, keyword, category, level, stayLevel, living)
 	var avgWatch int64 = 0
 	var avgGmv float64 = 0
 	if total > 0 {
