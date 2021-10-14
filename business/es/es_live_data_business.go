@@ -532,7 +532,7 @@ func (receiver *EsLiveDataBusiness) ProductLiveDataCategoryLevelTwoShow(startTim
 		esQuery.SetTerm("room_status", 2)
 	}
 	if keyword != "" {
-		esQuery.SetMultiMatch([]string{"display_id", "short_id", "nickname"}, keyword)
+		esQuery.SetMultiMatch([]string{"display_id", "short_id", "nickname.keyword"}, keyword)
 	}
 	var cacheTime time.Duration = 300
 	today := time.Now().Format("20060102")
@@ -590,7 +590,7 @@ func (receiver *EsLiveDataBusiness) ProductLiveDataCategoryLevelTwoShow(startTim
 }
 
 //等级分布明细列表
-func (receiver *EsLiveDataBusiness) ProductLiveDataCategoryLevelList(startTime, endTime time.Time, category, level string, stayLevel, living, page, pageSize int) (total int, list []es.EsDyLiveDetail, comErr global.CommonError) {
+func (receiver *EsLiveDataBusiness) ProductLiveDataCategoryLevelList(startTime, endTime time.Time, keyword, category, level string, stayLevel, living, page, pageSize int) (total int, list []es.EsDyLiveDetail, comErr global.CommonError) {
 	esTable, connection, err := GetESTableByTime(es.DyLiveInfoBaseTable, startTime, endTime)
 	if err != nil {
 		comErr = global.NewError(4000)
@@ -610,6 +610,9 @@ func (receiver *EsLiveDataBusiness) ProductLiveDataCategoryLevelList(startTime, 
 	}
 	if living == 1 {
 		esQuery.SetTerm("room_status", 2)
+	}
+	if keyword != "" {
+		esQuery.SetMultiMatch([]string{"display_id", "short_id", "nickname.keyword"}, keyword)
 	}
 	esQuery.SetTerm("flow_rates.keyword", level)
 	esQuery.SetTerm("avg_stay_index", stayLevel)
@@ -633,7 +636,7 @@ func (receiver *EsLiveDataBusiness) ProductLiveDataCategoryLevelList(startTime, 
 }
 
 //等级分布明细统计
-func (receiver *EsLiveDataBusiness) ProductLiveDataCategoryLevelCount(startTime, endTime time.Time, category, level string, stayLevel, living int) (total int, data dy.EsLiveSumDataCategoryLevel, comErr global.CommonError) {
+func (receiver *EsLiveDataBusiness) ProductLiveDataCategoryLevelCount(startTime, endTime time.Time, keyword, category, level string, stayLevel, living int) (total int, data dy.EsLiveSumDataCategoryLevel, comErr global.CommonError) {
 	data = dy.EsLiveSumDataCategoryLevel{}
 	esTable, connection, err := GetESTableByTime(es.DyLiveInfoBaseTable, startTime, endTime)
 	if err != nil {
@@ -650,6 +653,9 @@ func (receiver *EsLiveDataBusiness) ProductLiveDataCategoryLevelCount(startTime,
 	}
 	if living == 1 {
 		esQuery.SetTerm("room_status", 2)
+	}
+	if keyword != "" {
+		esQuery.SetMultiMatch([]string{"display_id", "short_id", "nickname.keyword"}, keyword)
 	}
 	esQuery.SetTerm("flow_rates.keyword", level)
 	esQuery.SetTerm("avg_stay_index", stayLevel)
