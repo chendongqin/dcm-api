@@ -9,6 +9,7 @@ import (
 	"dongchamao/global/utils"
 	"dongchamao/hbase"
 	"dongchamao/models/entity"
+	es2 "dongchamao/models/es"
 	dy2 "dongchamao/models/repost/dy"
 	"dongchamao/services/dyimg"
 	"fmt"
@@ -130,6 +131,43 @@ func (receiver *AuthorController) BaseSearch() {
 		receiver.FailReturn(comErr)
 		return
 	}
+	if total == 0 {
+		spiderBusiness := business.NewSpiderBusiness()
+		authorIncomeRawList, err1 := spiderBusiness.GetAuthorListByKeyword(keyword)
+		if err1 != nil {
+			receiver.FailReturn(global.NewMsgError(err1.Error()))
+			return
+		}
+		list := make([]es2.DyAuthor, 0)
+		for _, v := range authorIncomeRawList {
+			var tempAuthor es2.DyAuthor
+			tempAuthor.AuthorId = business.IdEncrypt(v.Id)
+			tempAuthor.UniqueId = v.UniqueId
+			if tempAuthor.UniqueId == "0" || tempAuthor.UniqueId == "" {
+				tempAuthor.UniqueId = v.ShortId
+			}
+			tempAuthor.Avatar = dyimg.Fix(v.Avatar)
+			tempAuthor.FollowerCount = v.FollowerCount
+			tempAuthor.ShortId = v.ShortId
+			tempAuthor.Gender = v.Gender
+			tempAuthor.Nickname = v.Nickname
+			tempAuthor.Birthday = v.Birthday
+			tempAuthor.VerifyName = v.VerifyName
+			tempAuthor.VerificationType = v.VerificationType
+			list = append(list, tempAuthor)
+		}
+		total = len(list)
+		receiver.SuccReturn(map[string]interface{}{
+			"list":       list,
+			"total":      total,
+			"total_page": 1,
+			"max_num":    total,
+			"has_auth":   receiver.HasAuth,
+			"has_login":  receiver.HasLogin,
+			"data_from":  "douyin",
+		})
+		return
+	}
 	authorIds := make([]string, 0)
 	for _, v := range list {
 		authorIds = append(authorIds, v.AuthorId)
@@ -193,6 +231,7 @@ func (receiver *AuthorController) BaseSearch() {
 		"max_num":    maxTotal,
 		"has_auth":   receiver.HasAuth,
 		"has_login":  receiver.HasLogin,
+		"data_from":  "local",
 	})
 	return
 }
@@ -1049,6 +1088,68 @@ func (receiver *AuthorController) AuthorIncomeSearch() {
 	var authorId string
 	var authorIncome = &dy2.DyAuthorIncome{}
 	keyword := receiver.GetString("keyword", "")
+	if keyword == "" {
+		receiver.FailReturn(global.NewError(4000))
+		return
+	}
+	spiderBusiness := business.NewSpiderBusiness()
+	if utils.CheckType(keyword, "url") { // 抓换链接
+		shortUrl, _ := business.ParseDyShortUrl(keyword)
+		if shortUrl == "" {
+			receiver.FailReturn(global.NewError(4000))
+			return
+		}
+		authorId = utils.ParseDyAuthorUrl(shortUrl) // 获取authorId
+		author, err := hbase.GetAuthor(authorId)
+		if err == nil {
+			authorIncome = &dy2.DyAuthorIncome{
+				AuthorId:     author.AuthorID,
+				Avatar:       author.Data.Avatar,
+				Nickname:     author.Data.Nickname,
+				UniqueId:     author.Data.UniqueID,
+				IsCollection: 0,
+			}
+		} else {
+			authorIncome = spiderBusiness.GetAuthorBaseInfo(authorId)
+		}
+		authorIncome.AuthorId = business.IdEncrypt(authorIncome.AuthorId)
+		authorIncome.Avatar = dyimg.Fix(authorIncome.Avatar)
+		receiver.SuccReturn(authorIncome)
+		return
+	} else {
+		// 如果是keyword形式的，先查es，es没有数据就请求爬虫数据接口
+		list, total, _ := es.NewEsAuthorBusiness().SimpleSearch(
+			"", "", keyword, "", "", 0, 0,
+			1, 1)
+		if total == 0 {
+			authorIncome := spiderBusiness.GetAuthorByKeyword(keyword)
+			authorIncome.AuthorId = business.IdEncrypt(authorIncome.AuthorId)
+			authorIncome.Avatar = dyimg.Fix(authorIncome.Avatar)
+			receiver.SuccReturn(authorIncome)
+			return
+		} else {
+			for _, author := range list {
+				authorIncome := dy2.DyAuthorIncome{
+					AuthorId:     author.AuthorId,
+					Avatar:       author.Avatar,
+					Nickname:     author.Nickname,
+					UniqueId:     author.UniqueId,
+					IsCollection: 1,
+				}
+				authorIncome.AuthorId = business.IdEncrypt(authorIncome.AuthorId)
+				authorIncome.Avatar = dyimg.Fix(authorIncome.Avatar)
+				receiver.SuccReturn(authorIncome)
+				return
+			}
+		}
+	}
+}
+
+//达人收录 调用抖音接口获取10条记录
+func (receiver *AuthorController) AuthorListIncomeSearch() {
+	var authorId string
+	var authorIncome = &dy2.DyAuthorIncome{}
+	keyword := receiver.GetString("keyword", "")
 	isCtnSearch, _ := receiver.GetInt("isCtnSearch", 0)
 	if keyword == "" {
 		receiver.FailReturn(global.NewError(4000))
@@ -1056,7 +1157,6 @@ func (receiver *AuthorController) AuthorIncomeSearch() {
 	}
 	spiderBusiness := business.NewSpiderBusiness()
 	authorIncomeList := make([]dy2.DyAuthorIncome, 0)
-	var err1 error
 	if isCtnSearch == 0 {
 		if utils.CheckType(keyword, "url") { // 抓换链接
 			shortUrl, _ := business.ParseDyShortUrl(keyword)
@@ -1086,13 +1186,23 @@ func (receiver *AuthorController) AuthorIncomeSearch() {
 				"", "", keyword, "", "", 0, 0,
 				1, 1)
 			if total == 0 {
-				authorIncomeList, err1 = spiderBusiness.GetAuthorByKeyword(keyword)
+				authorIncomeRawList, err1 := spiderBusiness.GetAuthorListByKeyword(keyword)
+				for _, v := range authorIncomeRawList {
+					var tempAuthor dy2.DyAuthorIncome
+					tempAuthor.UniqueId = v.UniqueId
+					if tempAuthor.UniqueId == "0" || tempAuthor.UniqueId == "" {
+						tempAuthor.UniqueId = v.ShortId
+					}
+					tempAuthor.AuthorId = business.IdEncrypt(v.Id)
+					tempAuthor.Avatar = dyimg.Fix(v.Avatar)
+					tempAuthor.Nickname = v.Nickname
+					tempAuthor.IsCollection = 0
+					authorIncomeList = append(authorIncomeList, tempAuthor)
+				}
 				if err1 != nil {
 					receiver.FailReturn(global.NewMsgError(err1.Error()))
 					return
 				}
-				//authorIncome.AuthorId = business.IdEncrypt(authorIncome.AuthorId)
-				//authorIncome.Avatar = dyimg.Fix(authorIncome.Avatar)
 			} else {
 				for _, author := range list {
 					authorIncome := dy2.DyAuthorIncome{
@@ -1109,15 +1219,33 @@ func (receiver *AuthorController) AuthorIncomeSearch() {
 			}
 		}
 	} else { //继续搜索
-		authorIncomeList, err1 = spiderBusiness.GetAuthorByKeyword(keyword)
+		authorIncomeRawList, err1 := spiderBusiness.GetAuthorListByKeyword(keyword)
+		for _, v := range authorIncomeRawList {
+			var tempAuthor dy2.DyAuthorIncome
+			tempAuthor.UniqueId = v.UniqueId
+			if tempAuthor.UniqueId == "0" || tempAuthor.UniqueId == "" {
+				tempAuthor.UniqueId = v.ShortId
+			}
+			tempAuthor.AuthorId = business.IdEncrypt(v.Id)
+			tempAuthor.Avatar = dyimg.Fix(v.Avatar)
+			tempAuthor.Nickname = v.Nickname
+			tempAuthor.IsCollection = 0
+			authorIncomeList = append(authorIncomeList, tempAuthor)
+		}
 		if err1 != nil {
 			receiver.FailReturn(global.NewMsgError(err1.Error()))
 			return
 		}
 	}
-	listTotal := len(authorIncomeList)
+
+	end := 10
+	if len(authorIncomeList) < end {
+		end = len(authorIncomeList)
+	}
+	resList := authorIncomeList[0:end]
+	listTotal := len(resList)
 	receiver.SuccReturn(map[string]interface{}{
-		"list":  authorIncomeList,
+		"list":  resList,
 		"total": listTotal,
 	})
 	return
