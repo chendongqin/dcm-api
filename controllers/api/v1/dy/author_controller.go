@@ -153,14 +153,20 @@ func (receiver *AuthorController) BaseSearch() {
 			tempAuthor.Birthday = v.Birthday
 			tempAuthor.VerifyName = v.VerifyName
 			tempAuthor.VerificationType = v.VerificationType
+			tempAuthor.IsCollection = 0
 			list = append(list, tempAuthor)
 		}
-		total = len(list)
+		end := 10
+		if len(list) < end {
+			end = len(list)
+		}
+		resList := list[0:end]
+		listTotal := len(resList)
 		receiver.SuccReturn(map[string]interface{}{
-			"list":       list,
-			"total":      total,
+			"list":       resList,
+			"total":      listTotal,
 			"total_page": 1,
-			"max_num":    total,
+			"max_num":    listTotal,
 			"has_auth":   receiver.HasAuth,
 			"has_login":  receiver.HasLogin,
 			"data_from":  "douyin",
@@ -210,6 +216,7 @@ func (receiver *AuthorController) BaseSearch() {
 			authorData, _ := hbase.GetAuthor(v.AuthorId)
 			list[k].RoomId = business.IdEncrypt(authorData.RoomId)
 		}
+		list[k].IsCollection = 1
 	}
 	totalPage := math.Ceil(float64(total) / float64(pageSize))
 	maxPage := math.Ceil(float64(receiver.MaxTotal) / float64(pageSize))
