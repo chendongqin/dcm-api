@@ -37,6 +37,8 @@ require (
 	github.com/tencentad/marketing-api-go-sdk v1.7.10
 	github.com/tideland/golib v4.24.2+incompatible // indirect
 	github.com/tideland/gorest v2.15.5+incompatible // indirect
+	github.com/tencentcloud/tencentcloud-sdk-go/tencentcloud/captcha v1.0.269
+	github.com/tencentcloud/tencentcloud-sdk-go/tencentcloud/common v1.0.269
 	github.com/tidwall/gjson v1.8.1
 	github.com/urfave/cli v1.22.5
 	github.com/valyala/fasthttp v1.29.0

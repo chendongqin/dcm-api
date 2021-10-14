@@ -473,6 +473,10 @@ github.com/tideland/golib v4.24.2+incompatible h1:QYMkA3Sr1G8UWJTDsptrLOUwB6N89E
 github.com/tideland/golib v4.24.2+incompatible/go.mod h1:HPHOmtCdCHUQiGAVZnlOH5eNTAEmM7R9oCFXdgvkB+Y=
 github.com/tideland/gorest v2.15.5+incompatible h1:R19qOZQaCzT0x7ZExRd3avyG39jNLFeq2/HYetctYYo=
 github.com/tideland/gorest v2.15.5+incompatible/go.mod h1:iCPpLOEr3tuQa96whkwiNTyYK4u6PTpWRxf5wGAvYLQ=
+github.com/tencentcloud/tencentcloud-sdk-go/tencentcloud/captcha v1.0.269 h1:T5V7L6LXPSW+Q1Tp6apC3u9q3Vk361CKSxQTPutylAU=
+github.com/tencentcloud/tencentcloud-sdk-go/tencentcloud/captcha v1.0.269/go.mod h1:VcS3xOBzPzHkAYFBxQzB7hWJPJQB6grmwgHfAP2ZZbQ=
+github.com/tencentcloud/tencentcloud-sdk-go/tencentcloud/common v1.0.269 h1:obczNCNz4B3jHjT7aqisRsbNB2YBAcnMk/fhlthiDqo=
+github.com/tencentcloud/tencentcloud-sdk-go/tencentcloud/common v1.0.269/go.mod h1:7sCQWVkxcsR38nffDW057DRGk8mUjK1Ing/EFOK8s8Y=
 github.com/tidwall/gjson v1.8.1 h1:8j5EE9Hrh3l9Od1OIEDAb7IpezNA20UdRngNAj5N0WU=
 github.com/tidwall/gjson v1.8.1/go.mod h1:5/xDoumyyDNerp2U36lyolv46b3uF/9Bu6OfyQ9GImk=
 github.com/tidwall/match v1.0.3 h1:FQUVvBImDutD8wJLN6c5eMzWtjgONK9MwIBCOrUJKeE=
