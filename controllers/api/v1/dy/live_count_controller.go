@@ -386,9 +386,9 @@ func (receiver *LiveCountController) LiveSumByCategoryLevelTwo() {
 		return
 	}
 	living, _ := receiver.GetInt("living", 0)
-	name := receiver.GetString("name", "")
+	keyword := receiver.GetString("keyword", "")
 	esLiveDataBusiness := es.NewEsLiveDataBusiness()
-	_, dataList := esLiveDataBusiness.ProductLiveDataCategoryLevelTwoShow(startTime, endTime, category, living, name)
+	_, dataList := esLiveDataBusiness.ProductLiveDataCategoryLevelTwoShow(startTime, endTime, category, living, keyword)
 	sort.Slice(dataList, func(i, j int) bool {
 		if strings.Index(dataList[j].Key, "S") == 0 && strings.Index(dataList[i].Key, "S") < 0 {
 			return true
