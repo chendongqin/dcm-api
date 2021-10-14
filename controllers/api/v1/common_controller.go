@@ -12,7 +12,7 @@ import (
 	"dongchamao/models/dcm"
 	"dongchamao/models/entity"
 	dy2 "dongchamao/models/repost/dy"
-	aliSms "dongchamao/services/ali_sms"
+	"dongchamao/services/ali_sms"
 	"dongchamao/services/ali_tools"
 	"dongchamao/services/dyimg"
 	tencent_ad "dongchamao/services/tencentAd"
