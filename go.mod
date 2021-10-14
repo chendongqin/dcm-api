@@ -33,6 +33,8 @@ require (
 	github.com/silenceper/wechat/v2 v2.0.6
 	github.com/stretchr/testify v1.7.0
 	github.com/tencentad/marketing-api-go-sdk v1.7.10
+	github.com/tencentcloud/tencentcloud-sdk-go/tencentcloud/captcha v1.0.269
+	github.com/tencentcloud/tencentcloud-sdk-go/tencentcloud/common v1.0.269
 	github.com/tidwall/gjson v1.8.1
 	github.com/urfave/cli v1.22.5
 	github.com/valyala/fasthttp v1.29.0
