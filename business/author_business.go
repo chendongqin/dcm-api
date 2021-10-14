@@ -1310,6 +1310,9 @@ func (a *AuthorBusiness) GetAuthorShopAnalyse(authorId, keyword, sortStr, orderB
 				left = utils.ToFloat64(newList[i].Sales)
 				right = utils.ToFloat64(newList[j].Sales)
 			}
+			if left == right {
+				return newList[i].ShopId > newList[j].ShopId
+			}
 			if orderBy == "desc" {
 				return left > right
 			}

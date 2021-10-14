@@ -142,7 +142,7 @@ func checkLiveHotRank(pathInfo PathDesc) {
 }
 
 // SwitchTopDateTime 根据key返回对应榜单需要展示的日期时间
-func SwitchTopDateTime(key string) (res map[string][]string, comErr global.CommonError) {
+func SwitchTopDateTime(key string) (main map[string][]string,hourList map[string][]string,weekList []map[string]string,monthList []string, comErr global.CommonError) {
 	if key == "author_aweme_rank" || key == "author_aweme_live" {
 		comErr = global.NewMsgError("传入参数错误，不存在的key")
 		return
@@ -152,47 +152,63 @@ func SwitchTopDateTime(key string) (res map[string][]string, comErr global.Commo
 		comErr = global.NewMsgError("传入参数错误，不存在的key")
 		return
 	}
+	hourList 	= map[string][]string{}
+	weekList 	= []map[string]string{}
+	monthList 	= []string{}
+	main = make(map[string][]string)
 	switch key {
 	case "live_hour":
-		res = dateTimeLiveHour()
+		main,hourList = dateTimeLiveHour()
 	case "live_top":
-		res = dateTimeLiveHour()
+		main,hourList = dateTimeLiveHour()
 	case "product_sale":
-		res = getCheckDateList(key)
+		main = getCheckDateList(key)
 	case "product_share":
-		res = getCheckDateList(key)
+		main = getCheckDateList(key)
 	case "product_live_sale":
-		res = getCheckDateList(key)
-	case "product_live_sale_week":
-		res = weekList()
+		main 		= getCheckDateList(key)
+		weekList 	= getWeekList()
+		monthList	= getMonthList()
 	case "product":
-		res = getCheckDateList(key)
-	case "product_week":
-		res = weekList()
+		main 		= getCheckDateList(key)
+		weekList 	= getWeekList()
+		monthList	= getMonthList()
 	case "author_follower_inc":
-		res = getCheckDateList(key)
+		main = getCheckDateList(key)
 	case "author_goods":
-		res = getCheckDateList(key)
+		main = getCheckDateList(key)
 	case "live_share":
-		res = getCheckDateList(key)
+		main = getCheckDateList(key)
 	}
-	res["desc"] = []string{fmt.Sprintf("%s的日期时间", desc)}
+	main["desc"] = []string{fmt.Sprintf("%s的日期时间", desc)}
 	return
 }
 
 //直播小时榜的日期和时间/直播全天热榜，目前这两个榜单日期时间一样
-func dateTimeLiveHour() (res map[string][]string) {
+func dateTimeLiveHour() (res map[string][]string,dateHourList map[string][]string) {
 	res = map[string][]string{"date": {}, "hour": {}}
 	now := time.Now()
 	dateList := getDateList(7, now)
-	var hourList []string
-	currentHour := now.Hour()
-	for i := 0; i <= currentHour; i++ {
-		hourString := fmt.Sprintf("%02d:00", currentHour-i)
-		hourList = append(hourList, hourString)
+	var currentHourList,commonHourList []string
+	getHourList := func (start int)(hourList []string){
+		hourList = make([]string,0)
+		for i := 0; i <= start; i++ {
+			hourString := fmt.Sprintf("%02d:00", start-i)
+			hourList = append(hourList, hourString)
+		}
+		return
 	}
 	res["date"] = dateList
-	res["hour"] = hourList
+	currentHourList = getHourList(now.Hour())
+	commonHourList = getHourList(23)
+	dateHourList = make(map[string][]string)
+	for k,v:= range dateList{
+		if k == 0{
+			dateHourList[v] =  currentHourList
+		}else{
+			dateHourList[v] =  commonHourList
+		}
+	}
 	return
 }
 
@@ -211,20 +227,38 @@ func getCheckDateList(key string) (res map[string][]string) {
 }
 
 //周榜日期列表获取
-func weekList() (res map[string][]string) {
+func getWeekList() (res []map[string]string) {
 	//这里仿照前段，只给三个切片
-	res = map[string][]string{"date": {}, "hour": {}}
+	now := time.Now()
 	num := 3
-	startDateTime := time.Now().AddDate(0, 0, -2)
-	var dateSelectList []string
+	offset := int(time.Monday - now.Weekday())
+	if offset > 0 {
+		offset = -6
+	}
+	startDateTime := time.Now().AddDate(0, 0, (offset-1))
+	var dateSelectList []map[string]string
 	for i := 0; i < num; i++ {
 		rightDate := startDateTime.AddDate(0, 0, -i*6)
 		leftDate := startDateTime.AddDate(0, 0, -(i+1)*6)
 		dateString := fmt.Sprintf("%s-%s", leftDate.Format("01/02"), rightDate.Format("01/02"))
-		dateSelectList = append(dateSelectList, dateString)
+		dateSelectList = append(dateSelectList, map[string]string{"week_string":dateString,"request_date":rightDate.AddDate(0,0,1).Format("2006-01-02")})
 		startDateTime = startDateTime.AddDate(0, 0, -1)
 	}
-	res["date"] = dateSelectList
+	res = dateSelectList
+	return
+}
+//月榜列表获取
+func getMonthList() (res []string) {
+	//这里仿照前段，只给三个切片
+	num := 3
+	startDateTime := time.Now().AddDate(0, -1, 0)
+	var dateSelectList []string
+	for i := 0; i < num; i++ {
+		monthDate := startDateTime.AddDate(0, -i, 0)
+		dateString := monthDate.Format("2006-01")
+		dateSelectList = append(dateSelectList, dateString)
+	}
+	res = dateSelectList
 	return
 }
 

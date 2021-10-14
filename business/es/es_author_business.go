@@ -29,7 +29,8 @@ func (receiver *EsAuthorBusiness) BaseSearch(
 	if orderBy == "" {
 		orderBy = "desc"
 	}
-	if !utils.InArrayString(sortStr, []string{"follower_count", "follower_incre_count", "predict_30_gmv"}) {
+	if !utils.InArrayString(sortStr, []string{"follower_count", "follower_incre_count", "predict_30_gmv",
+		"med_digg", "digg_follower_rate", "med_watch_cnt", "interaction_rate"}) {
 		comErr = global.NewError(4000)
 		return
 	}
