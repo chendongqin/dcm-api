@@ -31,6 +31,7 @@ func init() {
 			beego.NSRouter("/product/rooms/sum/:author_id/:product_id/:start/:end", &v1dy.AuthorController{}, "get:SumAuthorProductOfRooms"),
 			beego.NSRouter("/keyword/search", &v1dy.AuthorController{}, "get:AuthorSearch"),
 			beego.NSRouter("/income/search", &v1dy.AuthorController{}, "get:AuthorIncomeSearch"),
+			beego.NSRouter("/income/list/search", &v1dy.AuthorController{}, "get:AuthorListIncomeSearch"),
 			beego.NSRouter("/income", &v1dy.AuthorController{}, "put:AuthorIncome"),
 			beego.NSRouter("/speed/:author_id", &v1dy.AuthorController{}, "get:SpiderSpeedUp"),
 		),

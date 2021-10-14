@@ -64,4 +64,7 @@ const (
 	//腾讯广告
 	TencentAdAccessToken  KeyName = "dcm:tencent:ad:token"
 	TencentAdRefreshToken KeyName = "dcm:tencent:ad:fresh"
+
+	//爬虫接口达人搜索
+	SpiderAuthorSearchKeyWord KeyName = "dcm:spider:author:search:%s"
 )
