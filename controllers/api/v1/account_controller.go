@@ -659,10 +659,16 @@ func (receiver *AccountController) Cancel() {
 //获取各个榜单对应的日期时间筛选
 func (receiver *AccountController) TopDateTime() {
 	key := receiver.Ctx.Input.Param(":key")
-	res, err := command.SwitchTopDateTime(key)
+	main,hourList,weekList,monthList, err := command.SwitchTopDateTime(key)
 	if err != nil {
 		receiver.FailReturn(err)
 	}
-	receiver.SuccReturn(res)
+	receiver.SuccReturn(map[string]interface{}{
+		"date"		: main["date"],
+		"hour_list"	:hourList,
+		"week_list"	:weekList,
+		"month_list":monthList,
+		"desc"		:main["desc"],
+	})
 
 }
