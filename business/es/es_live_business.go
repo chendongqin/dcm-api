@@ -962,10 +962,9 @@ func (receiver *EsLiveBusiness) SearchLiveRooms(keyword, category, firstName, se
 				if length <= 3 {
 					slop = 2
 				}
-				esMultiQuery.AddMust(elasticsearch.Query().
-					SetMatchPhraseWithParams("nickname", keyword, alias.M{
-						"slop": slop,
-					}).Condition)
+				esQuery.SetMatchPhraseWithParams("nickname", keyword, alias.M{
+					"slop": slop,
+				})
 			} else {
 				esQuery.SetMultiMatch([]string{"display_id", "short_id", "nickname"}, keyword)
 			}

@@ -539,10 +539,9 @@ func (receiver *EsLiveDataBusiness) ProductLiveDataCategoryLevelTwoShow(startTim
 			if length <= 3 {
 				slop = 2
 			}
-			esMultiQuery.AddMust(elasticsearch.Query().
-				SetMatchPhraseWithParams("nickname", keyword, alias.M{
-					"slop": slop,
-				}).Condition)
+			esQuery.SetMatchPhraseWithParams("nickname", keyword, alias.M{
+				"slop": slop,
+			})
 		} else {
 			esQuery.SetMultiMatch([]string{"display_id", "short_id", "nickname"}, keyword)
 		}
@@ -631,10 +630,9 @@ func (receiver *EsLiveDataBusiness) ProductLiveDataCategoryLevelList(startTime, 
 			if length <= 3 {
 				slop = 2
 			}
-			esMultiQuery.AddMust(elasticsearch.Query().
-				SetMatchPhraseWithParams("nickname", keyword, alias.M{
-					"slop": slop,
-				}).Condition)
+			esQuery.SetMatchPhraseWithParams("nickname", keyword, alias.M{
+				"slop": slop,
+			})
 		} else {
 			esQuery.SetMultiMatch([]string{"display_id", "short_id", "nickname"}, keyword)
 		}
@@ -686,10 +684,9 @@ func (receiver *EsLiveDataBusiness) ProductLiveDataCategoryLevelCount(startTime,
 			if length <= 3 {
 				slop = 2
 			}
-			esMultiQuery.AddMust(elasticsearch.Query().
-				SetMatchPhraseWithParams("nickname", keyword, alias.M{
-					"slop": slop,
-				}).Condition)
+			esQuery.SetMatchPhraseWithParams("nickname", keyword, alias.M{
+				"slop": slop,
+			})
 		} else {
 			esQuery.SetMultiMatch([]string{"display_id", "short_id", "nickname"}, keyword)
 		}
