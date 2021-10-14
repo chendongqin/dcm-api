@@ -56,10 +56,9 @@ func (receiver *EsAuthorBusiness) BaseSearch(
 			if length <= 3 {
 				slop = 2
 			}
-			esMultiQuery.AddMust(elasticsearch.Query().
-				SetMatchPhraseWithParams("nickname", keyword, alias.M{
-					"slop": slop,
-				}).Condition)
+			esQuery.SetMatchPhraseWithParams("nickname", keyword, alias.M{
+				"slop": slop,
+			})
 		} else {
 			esQuery.SetMultiMatch([]string{"unique_id", "short_id", "nickname"}, keyword)
 		}
@@ -303,10 +302,9 @@ func (receiver *EsAuthorBusiness) SimpleSearch(
 			if length <= 3 {
 				slop = 2
 			}
-			esMultiQuery.AddMust(elasticsearch.Query().
-				SetMatchPhraseWithParams("nickname", keyword, alias.M{
-					"slop": slop,
-				}).Condition)
+			esQuery.SetMatchPhraseWithParams("nickname", keyword, alias.M{
+				"slop": slop,
+			})
 		} else {
 			esQuery.SetMultiMatch([]string{"unique_id", "short_id", "nickname", "author_id"}, keyword)
 		}
