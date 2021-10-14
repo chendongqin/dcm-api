@@ -3,7 +3,7 @@ package entity
 var DyAuthorRankMap = HbaseEntity{
 	"fans_inc_date":        {String, "fans_inc_date"},
 	"fans_inc_rn":          {String, "fans_inc_rn"},
-	"predict_gmv_sum_date": {String, "fans_inc_date"},
+	"predict_gmv_sum_date": {String, "predict_gmv_sum_date"},
 	"predict_gmv_sum_rn":   {String, "predict_gmv_sum_rn"},
 }
 
