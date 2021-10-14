@@ -2,6 +2,7 @@ package es
 
 import (
 	"dongchamao/global"
+	"dongchamao/global/alias"
 	"dongchamao/global/utils"
 	"dongchamao/models/es"
 	"dongchamao/models/repost/dy"
@@ -532,7 +533,19 @@ func (receiver *EsLiveDataBusiness) ProductLiveDataCategoryLevelTwoShow(startTim
 		esQuery.SetTerm("room_status", 2)
 	}
 	if keyword != "" {
-		esQuery.SetMultiMatch([]string{"display_id", "short_id", "nickname.keyword"}, keyword)
+		if utils.HasChinese(keyword) {
+			slop := 100
+			length := len([]rune(keyword))
+			if length <= 3 {
+				slop = 2
+			}
+			esMultiQuery.AddMust(elasticsearch.Query().
+				SetMatchPhraseWithParams("nickname", keyword, alias.M{
+					"slop": slop,
+				}).Condition)
+		} else {
+			esQuery.SetMultiMatch([]string{"display_id", "short_id", "nickname"}, keyword)
+		}
 	}
 	var cacheTime time.Duration = 300
 	today := time.Now().Format("20060102")
@@ -612,7 +625,19 @@ func (receiver *EsLiveDataBusiness) ProductLiveDataCategoryLevelList(startTime, 
 		esQuery.SetTerm("room_status", 2)
 	}
 	if keyword != "" {
-		esQuery.SetMultiMatch([]string{"display_id", "short_id", "nickname.keyword"}, keyword)
+		if utils.HasChinese(keyword) {
+			slop := 100
+			length := len([]rune(keyword))
+			if length <= 3 {
+				slop = 2
+			}
+			esMultiQuery.AddMust(elasticsearch.Query().
+				SetMatchPhraseWithParams("nickname", keyword, alias.M{
+					"slop": slop,
+				}).Condition)
+		} else {
+			esQuery.SetMultiMatch([]string{"display_id", "short_id", "nickname"}, keyword)
+		}
 	}
 	esQuery.SetTerm("flow_rates.keyword", level)
 	esQuery.SetTerm("avg_stay_index", stayLevel)
@@ -655,7 +680,19 @@ func (receiver *EsLiveDataBusiness) ProductLiveDataCategoryLevelCount(startTime,
 		esQuery.SetTerm("room_status", 2)
 	}
 	if keyword != "" {
-		esQuery.SetMultiMatch([]string{"display_id", "short_id", "nickname.keyword"}, keyword)
+		if utils.HasChinese(keyword) {
+			slop := 100
+			length := len([]rune(keyword))
+			if length <= 3 {
+				slop = 2
+			}
+			esMultiQuery.AddMust(elasticsearch.Query().
+				SetMatchPhraseWithParams("nickname", keyword, alias.M{
+					"slop": slop,
+				}).Condition)
+		} else {
+			esQuery.SetMultiMatch([]string{"display_id", "short_id", "nickname"}, keyword)
+		}
 	}
 	esQuery.SetTerm("flow_rates.keyword", level)
 	esQuery.SetTerm("avg_stay_index", stayLevel)
