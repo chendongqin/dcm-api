@@ -601,11 +601,6 @@ func (receiver *AccountController) BindWeChat() {
 		receiver.FailReturn(global.NewError(5000))
 		return
 	}
-	//开始更新用户信息
-	if userModel.Unionid != "" {
-		receiver.FailReturn(global.NewError(4305))
-		return
-	}
 	userBusiness := business.NewUserBusiness()
 	updateData := map[string]interface{}{
 		"openid_app":  wechatModel.OpenidApp,

@@ -322,23 +322,31 @@ func (receiver *WechatBusiness) AmountExpireWechatNotice(user *dcm.UserVipJpinCo
 	return
 }
 
-func (receiver *WechatBusiness) AddAndroidUserAction(OS int, userId string) {
-	if userId == "" {
+func (receiver *WechatBusiness) AddAndroidUserAction(imei, idfa string) {
+	if imei == "" && idfa == "" {
 		return
+	}
+	var OS int
+	var key string
+	var val string
+	if imei != "" {
+		OS = global.AndroidActionSet
+		key = "hash_imei"
+		val = imei
+	} else if idfa != "" {
+		OS = global.IOSActionSet
+		key = "hash_idfa"
+		val = idfa
 	}
 	accessToken, _ := global.WxOfficial.GetAccessToken()
 	url := "https://api.weixin.qq.com/marketing/user_actions/add?version=v1.0&access_token=" + accessToken
-	var userIdMap = map[int]string{
-		global.AndroidActionSet: "hash_imei",
-		global.IOSActionSet:     "hash_idfa",
-	}
 	data := map[string]interface{}{
-		"user_action_set_id": global.AndroidActionSet,
+		"user_action_set_id": OS,
 		"actions": []map[string]interface{}{
 			{
 				"action_time": time.Now().Unix(),
 				"action_type": "REGISTER",
-				"user_id":     map[string]interface{}{userIdMap[OS]: utils.Md5_encode(userId)},
+				"user_id":     map[string]interface{}{key: utils.Md5_encode(val)},
 			},
 		},
 	}
