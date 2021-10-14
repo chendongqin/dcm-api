@@ -1035,9 +1035,11 @@ func (receiver *AuthorController) SumAuthorProductOfRooms() {
 		receiver.FailReturn(comErr)
 		return
 	}
+	liveNum, _ := es.NewEsLiveBusiness().SumAuthorProductCountRoom(authorId, productId, startTime, endTime)
 	receiver.SuccReturn(map[string]interface{}{
-		"gmv":   totalGmv,
-		"sales": totalSales,
+		"gmv":      totalGmv,
+		"sales":    totalSales,
+		"live_num": liveNum,
 	})
 	return
 }

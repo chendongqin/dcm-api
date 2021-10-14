@@ -771,6 +771,56 @@ func (receiver *EsLiveBusiness) SumAuthorProductOfRoom(authorId, productId strin
 	return
 }
 
+//数据统计直播间数量
+func (receiver *EsLiveBusiness) SumAuthorProductCountRoom(authorId, productId string, startTime, stopTime time.Time) (total int, comErr global.CommonError) {
+	esTable, connection, err := GetESTableByTime(es.DyRoomProductRecordsTable, startTime, stopTime)
+	if err != nil {
+		comErr = global.NewError(4000)
+		return
+	}
+	esQuery, esMultiQuery := elasticsearch.NewElasticQueryGroup()
+	if authorId != "" {
+		esQuery.SetTerm("author_id", authorId)
+	}
+	if productId != "" {
+		esQuery.SetTerm("product_id", productId)
+	}
+	if startTime.Unix() != stopTime.Unix() {
+		esQuery.SetRange("shelf_time", map[string]interface{}{
+			"gte": startTime.Unix(),
+			"lt":  stopTime.AddDate(0, 0, 1).Unix(),
+		})
+	}
+	var cacheTime time.Duration = 60
+	results := esMultiQuery.
+		SetConnection(connection).
+		SetCache(cacheTime).
+		SetTable(esTable).
+		AddMust(esQuery.Condition).
+		RawQuery(map[string]interface{}{
+			"query": map[string]interface{}{
+				"bool": map[string]interface{}{
+					"must": esQuery.Condition,
+				},
+			},
+			"size": 0,
+			"aggs": map[string]interface{}{
+				"rooms": map[string]interface{}{
+					"terms": map[string]interface{}{
+						"field": "room_id.keyword",
+						"size":  10000,
+					},
+				},
+			},
+		})
+	if h, ok := results["hits"]; ok {
+		if t, ok2 := h.(map[string]interface{})["total"]; ok2 {
+			total = utils.ToInt(t.(float64))
+		}
+	}
+	return
+}
+
 //商品直播间搜索
 func (receiver *EsLiveBusiness) SearchProductRooms(productId, keyword, sortStr, orderBy string,
 	page, size int, startTime, endTime time.Time) (list []es.EsAuthorLiveProduct, total int, comErr global.CommonError) {
