@@ -597,6 +597,11 @@ func (receiver *AccountController) BindWeChat() {
 	}
 	//查询手机是否该用户 ...
 	userModel := dcm.DcUser{}
+	if exist, _ := dbSession.Where("unionid = ?", unionid).Get(&userModel); exist {
+		receiver.FailReturn(global.NewError(4306))
+		return
+	}
+	userModel = dcm.DcUser{}
 	if _, err := dbSession.Where("username = ?", receiver.UserInfo.Username).Get(&userModel); err != nil {
 		receiver.FailReturn(global.NewError(5000))
 		return
@@ -659,16 +664,16 @@ func (receiver *AccountController) Cancel() {
 //获取各个榜单对应的日期时间筛选
 func (receiver *AccountController) TopDateTime() {
 	key := receiver.Ctx.Input.Param(":key")
-	main,hourList,weekList,monthList, err := command.SwitchTopDateTime(key)
+	main, hourList, weekList, monthList, err := command.SwitchTopDateTime(key)
 	if err != nil {
 		receiver.FailReturn(err)
 	}
 	receiver.SuccReturn(map[string]interface{}{
-		"date"		: main["date"],
-		"hour_list"	:hourList,
-		"week_list"	:weekList,
-		"month_list":monthList,
-		"desc"		:main["desc"],
+		"date":       main["date"],
+		"hour_list":  hourList,
+		"week_list":  weekList,
+		"month_list": monthList,
+		"desc":       main["desc"],
 	})
 
 }
