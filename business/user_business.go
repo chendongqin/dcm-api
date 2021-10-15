@@ -341,7 +341,8 @@ func (receiver *UserBusiness) UpdateVisitedTimes(userAccount dcm.DcUser) bool {
 	dbSession := dcm.GetDbSession()
 	defer dbSession.Close()
 	updateData := map[string]interface{}{
-		"prev_time": utils.GetNowTimeStamp(),
+		"prev_time":   utils.GetNowTimeStamp(),
+		"successions": 1,
 	}
 	if yesterdayTime.Format("20060102") == prevTimeDate || userAccount.Successions == 0 {
 		successions := userAccount.Successions + 1
