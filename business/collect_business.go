@@ -11,6 +11,7 @@ import (
 	"dongchamao/services/dyimg"
 	"fmt"
 	"log"
+	"math"
 	"strconv"
 	"strings"
 	"time"
@@ -50,12 +51,15 @@ func (receiver *CollectBusiness) GetDyCollect(tagId, collectType int, keywords, 
 		return nil, total, comErr
 	}
 	var collectIds []string
-	_ = dbCollect.Table(dcm.DcUserDyCollect{}).Where(query).Limit(pageSize, (page-1)*pageSize).Select("collect_id").Find(&collectIds)
+	for _, v := range collects {
+		collectIds = append(collectIds, v.CollectId)
+	}
 	switch collectType {
 	case 1:
 		data := make([]repost.CollectAuthorRet, len(collects))
-		startTime := time.Now().AddDate(0, 0, -31)
-		yesterday := time.Now().AddDate(0, 0, -1)
+		todayTime, _ := time.ParseInLocation("20060102", time.Now().Format("20060102"), time.Local)
+		startTime := todayTime.AddDate(0, 0, -31)
+		yesterday := todayTime.AddDate(0, 0, -1)
 		for k, v := range collects {
 			data[k].DcUserDyCollect = v
 			data[k].DcUserDyCollect.CollectId = IdEncrypt(v.CollectId)
@@ -67,17 +71,15 @@ func (receiver *CollectBusiness) GetDyCollect(tagId, collectType int, keywords, 
 			data[k].Avatar = dyimg.Avatar(dyAuthor.Data.Avatar)
 		}
 		liveSumData := es.NewEsLiveBusiness().SumDataByAuthors(collectIds, startTime, yesterday)
+		videoSumData := es.NewEsVideoBusiness().SumDiggByAuthors(collectIds, startTime, yesterday)
 		for k, v := range collects {
-			authorBase, comErr := NewAuthorBusiness().HbaseGetAuthor(v.CollectId)
 			if comErr != nil {
 				return nil, 0, comErr
 			}
 			//近30日场均销售额
 			data[k].Predict7Gmv = utils.FriendlyFloat64(liveSumData[v.CollectId].TotalGmv.Avg)
 			//近30日视频平均点赞
-			if authorBase.AwemeCount != 0 {
-				data[k].Predict7Digg = float64(authorBase.DiggCount) / float64(authorBase.AwemeCount)
-			}
+			data[k].Predict7Digg = math.Floor(videoSumData[v.CollectId])
 		}
 		return data, total, nil
 	case 2:
@@ -151,8 +153,8 @@ func (receiver *CollectBusiness) GetDyCollect(tagId, collectType int, keywords, 
 		return data, total, nil
 	case 4:
 		data := make([]repost.CollectShopRet, len(collects))
-		var shopInfo map[string]es2.DyShop
 		search := es.NewEsShopBusiness().IdsSearch(collectIds)
+		var shopInfo = make(map[string]es2.DyShop, len(search))
 		for _, v := range search {
 			shopInfo[v.ShopId] = v
 		}

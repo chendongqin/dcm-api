@@ -32,6 +32,7 @@ const (
 	HbaseDyAuthorProductAnalysis  = "dy_author_product_analysis" //达人电商分析
 	HbaseXtAuthorDetail           = "xt_author_detail"           //星图达人详情
 	HbaseDyAuthorLiveTags         = "dy_live_hour_rank_sell"     //达人带货行业
+	DyAuthorPersonalTag           = "dy_author_personal_tag"     //达人榜单排行
 
 	HbaseDyProduct                     = "dy_product"
 	HbaseDyProductBrand                = "dy_product_brand"

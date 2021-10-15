@@ -39,6 +39,16 @@ type EsDyLiveInfo struct {
 	WatchCnt        int64    `json:"watch_cnt"`
 }
 
+type NewEsDyLiveInfo struct {
+	EsDyLiveInfo
+	CustomerUnitPrice float64 `json:"customer_unit_price"`
+	UserCount         int     `json:"user_count"`
+	AvgStay           int     `json:"avg_stay"`
+	AvgStayIndex      int     `json:"avg_stay_index"`
+	FlowRatesIndex    string  `json:"flow_rates_index"`
+	FlowRates         string  `json:"flow_rates"`
+}
+
 func (receiver EsDyLiveInfo) GetTagsArr() []string {
 	if receiver.Tags == "null" {
 		receiver.Tags = ""

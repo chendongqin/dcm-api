@@ -2,6 +2,8 @@ package business
 
 import (
 	"crypto/tls"
+	"dongchamao/global"
+	"dongchamao/global/cache"
 	"dongchamao/global/utils"
 	dy2 "dongchamao/models/repost/dy"
 	"errors"
@@ -30,6 +32,7 @@ const (
 	AddLiveTopHighLevelStar  = 64  //这不用管
 	AddLiveTopSuperLevelStar = 128 //这不用管
 	BaseSpiderUrl            = "http://api.spider.dongchamao.cn/"
+	TestBaseSpiderUrl        = "http://api-test.spider.dongchamao.cn/"
 	LiveSpiderUrl            = "http://dy-live.spider.dongchamao.cn/"
 	ZHIMASpiderUrl           = "http://zhima-proxy.spider.dongchamao.cn/"
 	AuthorInfoUrl            = "https://webcast-hl.amemv.com/webcast/room/reflow/info/?room_id=70&user_id=%s&live_id=1&app_id=1128"
@@ -153,7 +156,7 @@ func (s *SpiderBusiness) AddLive(authorId string, followerCount int64, top int, 
 
 //抖音号搜索
 //搜索抖音号 即时接口 先根据抖音号在es中查找，查找不到在调用该方法，调用爬虫实时接口
-func (s *SpiderBusiness) GetAuthorByKeyword(keyword string) (*dy2.DyAuthorIncome, error) {
+func (s *SpiderBusiness) GetAuthorByKeyword(keyword string) *dy2.DyAuthorIncome {
 	retData := ""
 	keyword = url.QueryEscape(keyword)
 	pushUrl := BaseSpiderUrl + "searchAuthor?" + "keyword=" + keyword
@@ -174,10 +177,36 @@ func (s *SpiderBusiness) GetAuthorByKeyword(keyword string) (*dy2.DyAuthorIncome
 				UniqueId:     uniqueId,
 				IsCollection: 0,
 			}
-			return authorIncome, nil
+			return authorIncome
 		}
 	}
-	return nil, errors.New("系统出了小差，请稍后重试")
+	return nil
+}
+
+//抖音号搜索
+//搜索抖音号 即时接口 先根据抖音号在es中查找，查找不到在调用该方法，调用爬虫实时接口获取10条记录
+func (s *SpiderBusiness) GetAuthorListByKeyword(keyword string) ([]dy2.DyAuthorRawData, error) {
+	retData := ""
+	rawData := ""
+	keyword = url.QueryEscape(keyword)
+	pushUrl := BaseSpiderUrl + "searchAuthorV2?" + "keyword=" + keyword
+	cacheKey := cache.GetCacheKey(cache.SpiderAuthorSearchKeyWord, utils.Md5_encode(keyword))
+	cacheData := global.Cache.Get(cacheKey)
+	if cacheData != "" {
+		rawData = utils.DeserializeData(cacheData)
+	} else {
+		retData = utils.SimpleCurl(pushUrl, "GET", "", "")
+		jd := gjson.Parse(retData)
+		rawData = jd.Get("data").String()
+	}
+	list := make([]dy2.DyAuthorRawData, 0)
+	_ = jsoniter.UnmarshalFromString(rawData, &list)
+	if len(list) == 0 {
+		logs.Error("[搜索达人] keyword:[%s] 失败", keyword)
+	} else {
+		_ = global.Cache.Set(cacheKey, utils.SerializeData(rawData), 180)
+	}
+	return list, nil
 }
 
 // 获取正在直播的达人商品列表

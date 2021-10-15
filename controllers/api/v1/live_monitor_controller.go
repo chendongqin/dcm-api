@@ -226,8 +226,10 @@ func (receiver *LiveMonitorController) LiveMonitorRooms() {
 		Limit(pageSize, start).
 		FindAndCount(&list)
 	var roomIds []string
+	var roomsMap = make(map[string]dcm.DcLiveMonitorRoom)
 	for _, v := range list {
 		roomIds = append(roomIds, v.RoomId)
+		roomsMap[v.RoomId] = v
 	}
 	//获取直播间列表
 	rooms, _ := hbase.GetLiveInfoByIds(roomIds)
@@ -248,7 +250,7 @@ func (receiver *LiveMonitorController) LiveMonitorRooms() {
 			RoomID:     business.IdEncrypt(v.RoomID),
 			RoomStatus: v.RoomStatus,
 			Title:      v.Title,
-			TotalUser:  v.TotalUser,
+			TotalUser:  utils.ToInt64(roomsMap[v.RoomID].UserTotal),
 			Gmv:        v.PredictGmv,
 			Sales:      utils.ToInt64(math.Floor(v.PredictSales)),
 		})

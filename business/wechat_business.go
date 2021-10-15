@@ -2,6 +2,7 @@ package business
 
 import (
 	"dongchamao/global"
+	"dongchamao/global/utils"
 	"dongchamao/models/dcm"
 	"fmt"
 	jsoniter "github.com/json-iterator/go"
@@ -11,6 +12,7 @@ import (
 	"github.com/silenceper/wechat/v2/officialaccount/menu"
 	"github.com/silenceper/wechat/v2/officialaccount/message"
 	"github.com/silenceper/wechat/v2/officialaccount/user"
+	"github.com/silenceper/wechat/v2/util"
 	"time"
 )
 
@@ -317,5 +319,37 @@ func (receiver *WechatBusiness) AmountExpireWechatNotice(user *dcm.UserVipJpinCo
 	if err != nil {
 		return
 	}
+	return
+}
+
+func (receiver *WechatBusiness) AddAndroidUserAction(imei, idfa string) {
+	if imei == "" && idfa == "" {
+		return
+	}
+	var OS int
+	var key string
+	var val string
+	if imei != "" {
+		OS = global.AndroidActionSet
+		key = "hash_imei"
+		val = imei
+	} else if idfa != "" {
+		OS = global.IOSActionSet
+		key = "hash_idfa"
+		val = idfa
+	}
+	accessToken, _ := global.WxOfficial.GetAccessToken()
+	url := "https://api.weixin.qq.com/marketing/user_actions/add?version=v1.0&access_token=" + accessToken
+	data := map[string]interface{}{
+		"user_action_set_id": OS,
+		"actions": []map[string]interface{}{
+			{
+				"action_time": time.Now().Unix(),
+				"action_type": "REGISTER",
+				"user_id":     map[string]interface{}{key: utils.Md5_encode(val)},
+			},
+		},
+	}
+	util.PostJSON(url, data)
 	return
 }

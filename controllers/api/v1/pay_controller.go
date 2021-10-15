@@ -4,12 +4,16 @@ import (
 	"dongchamao/business"
 	"dongchamao/controllers/api"
 	"dongchamao/global"
+	"dongchamao/global/logger"
 	"dongchamao/global/utils"
 	"dongchamao/models/dcm"
 	"dongchamao/models/repost"
 	"dongchamao/models/repost/dy"
 	"dongchamao/services/payer"
+	"encoding/json"
 	"fmt"
+	"github.com/astaxie/beego/logs"
+	"github.com/bitly/go-simplejson"
 	jsoniter "github.com/json-iterator/go"
 	"math"
 	"net/url"
@@ -92,6 +96,8 @@ func (receiver *PayController) CreateDyOrder() {
 	}
 	InputData := receiver.InputFormat()
 	orderType := InputData.GetInt("order_type", 0)
+	iosPayProductId := InputData.GetString("ios_pay_product_id", "")
+	iosPayProductNum := InputData.GetInt("ios_pay_product_num", 0)
 	referrer := InputData.GetString("referrer", "")
 	groupPeople := InputData.GetInt("group_people", 0)
 	buyDays := InputData.GetInt("days", 0)
@@ -198,6 +204,33 @@ func (receiver *PayController) CreateDyOrder() {
 		orderInfo.People = 1
 		orderInfo.Title = "会员购买"
 		remark = price.ActiveComment
+		if iosPayProductId != "" {
+			iosPayConfig := business.GetConfig("ios_pay")
+			confMap := map[string]interface{}{}
+			_ = jsoniter.Unmarshal([]byte(iosPayConfig), &confMap)
+			buyday := 0
+			for k, v := range confMap {
+				if utils.ToString(v) == iosPayProductId {
+					switch k {
+					case "month":
+						buyday = 30
+					case "first_m":
+						buyday = 30
+					case "halfyear":
+						buyday = 180
+					case "year":
+						buyday = 365
+					}
+				}
+			}
+			buyday = buyday * iosPayProductNum
+			if buyday != buyDays {
+				receiver.FailReturn(global.NewError(4000))
+				return
+			}
+			orderInfo.IosPayProductId = iosPayProductId
+			orderInfo.IosPayProductNum = iosPayProductNum
+		}
 	} else if orderType == 2 { //购买协同账号
 		title = fmt.Sprintf("购买协同账号%d人", groupPeople)
 		amount += surplusValue * float64(groupPeople)
@@ -276,6 +309,8 @@ func (receiver *PayController) CreateDyMonitorOrder() {
 	}
 	InputData := receiver.InputFormat()
 	number := InputData.GetInt("number", 0)
+	iosPayProductId := InputData.GetString("ios_pay_product_id", "")
+	iosPayProductNum := InputData.GetInt("ios_pay_product_num", 0)
 	if !utils.InArrayInt(number, []int{10, 100, 500}) {
 		receiver.FailReturn(global.NewError(4000))
 		return
@@ -299,6 +334,23 @@ func (receiver *PayController) CreateDyMonitorOrder() {
 	orderInfo := repost.VipOrderInfo{
 		Title:      title,
 		MonitorNum: number,
+	}
+	if iosPayProductId != "" {
+		iosPayConfig := business.GetConfig("ios_pay")
+		confMap := map[string]interface{}{}
+		_ = jsoniter.Unmarshal([]byte(iosPayConfig), &confMap)
+		buyKey := ""
+		for k, v := range confMap {
+			if utils.ToString(v) == iosPayProductId {
+				buyKey = k
+			}
+		}
+		if buyKey != fmt.Sprintf("monitor_%d", number) {
+			receiver.FailReturn(global.NewError(4000))
+			return
+		}
+		orderInfo.IosPayProductId = iosPayProductId
+		orderInfo.IosPayProductNum = iosPayProductNum
 	}
 	uniqueID, _ := utils.Snow.GetSnowflakeId()
 	tradeNo := fmt.Sprintf("%s%d", time.Now().Format("060102"), uniqueID)
@@ -459,6 +511,124 @@ func (receiver *PayController) AliPay() {
 	receiver.SuccReturn(map[string]interface{}{
 		"pay_param": payParam,
 	})
+	return
+}
+
+//苹果内购
+func (receiver *PayController) IosPay() {
+	receipt := receiver.InputFormat().GetString("receipt", "")
+	orderId := receiver.InputFormat().GetInt("order_id", 0)
+	if orderId == 0 {
+		receiver.FailReturn(global.NewError(4000))
+		return
+	}
+	vipOrder := dcm.DcVipOrder{}
+	exist, _ := dcm.Get(orderId, &vipOrder)
+	if !exist {
+		receiver.FailReturn(global.NewError(4000))
+		return
+	}
+	if vipOrder.UserId != receiver.UserId || vipOrder.PayStatus == 1 || vipOrder.PayStatus == 2 {
+		receiver.FailReturn(global.NewError(4000))
+		return
+	}
+	appleVerifyUrlProd := "https://buy.itunes.apple.com/verifyReceipt"
+	appleVerifyUrlTest := "https://sandbox.itunes.apple.com/verifyReceipt"
+
+	params := map[string]string{"receipt-data": receipt}
+	paramStr, _ := json.Marshal(params)
+
+	jsonObj, err := utils.Curl(appleVerifyUrlProd, "POST", string(paramStr), "application/json")
+	if err != nil {
+		business.NewMonitorBusiness().SendErr("苹果支付错误:prod", err.Error())
+		logger.Error("苹果支付错误", err)
+		receiver.FailReturn(global.NewError(5000))
+		return
+	}
+	status, _ := jsonObj.Get("status").Int()
+	if global.IsDev() {
+		if status == 21007 {
+			jsonObj, err = utils.Curl(appleVerifyUrlTest, "POST", string(paramStr), "application/json")
+			if err != nil {
+				business.NewMonitorBusiness().SendErr("苹果支付错误:dev", err.Error())
+				logger.Error("苹果支付错误", err)
+				receiver.FailReturn(global.NewError(5000))
+				return
+			}
+			status, _ = jsonObj.Get("status").Int()
+		}
+	}
+	if status != 0 {
+		receiver.FailReturn(global.NewError(4000))
+		return
+	}
+	bundleList := []string{
+		"com.weituo.dongcham",
+	}
+	bundleId, _ := jsonObj.Get("receipt").Get("bundle_id").String()
+	if !utils.InArray(bundleId, bundleList) {
+		receiver.FailReturn(global.NewError(4000))
+		return
+	}
+	inApp, _ := jsonObj.Get("receipt").Get("in_app").Array()
+	productCount := len(inApp)
+	if productCount == 0 {
+		receiver.FailReturn(global.NewError(4000))
+		return
+	}
+	var productObj *simplejson.Json
+	var maxDateMs int64 = 0
+	//获取最近一个订单
+	for i := 0; i < productCount; i++ {
+		pObj := jsonObj.Get("receipt").Get("in_app").GetIndex(i)
+		dateMsStr, _ := pObj.Get("purchase_date_ms").String()
+		dateMs := utils.ParseInt64String(dateMsStr)
+		if dateMs > maxDateMs {
+			maxDateMs = dateMs
+			productObj = pObj
+		}
+	}
+	productNum, _ := productObj.Get("quantity").String()
+	productId, _ := productObj.Get("product_id").String()
+	transactionId, _ := productObj.Get("transaction_id").String()
+	orderIfo := repost.VipOrderInfo{}
+	_ = jsoniter.Unmarshal([]byte(vipOrder.GoodsInfo), &orderIfo)
+	if orderIfo.IosPayProductNum != utils.ToInt(productNum) || orderIfo.IosPayProductId != productId {
+		business.NewMonitorBusiness().SendErr("苹果支付错误", fmt.Sprintf("%v", jsonObj))
+		logger.Error("苹果支付错误", jsonObj)
+		receiver.FailReturn(global.NewError(4000))
+		return
+	}
+	payTimestampString, _ := productObj.Get("purchase_date_ms").String()
+	payTimestamp := utils.ToInt64(payTimestampString) / 1000
+	payTime := time.Unix(payTimestamp, 0)
+	if payTimestamp <= 0 {
+		payTime = time.Now()
+	}
+	updateData := map[string]interface{}{
+		"pay_status":     1,
+		"status":         1,
+		"pay_type":       "ios_pay",
+		"inter_trade_no": transactionId,
+		"ios_receipt":    receipt,
+		"pay_time":       payTime.Format("2006-01-02 15:04:05"),
+	}
+	affect, err2 := dcm.UpdateInfo(nil, vipOrder.Id, updateData, new(dcm.DcVipOrder))
+	if affect == 0 || err2 != nil {
+		logs.Error("苹果内购更新失败：", vipOrder.Id, updateData, err2)
+		receiver.FailReturn(global.NewError(5000))
+		return
+	}
+	payBusiness := business.NewPayBusiness()
+	if vipOrder.Platform == "douyin" {
+		doRes := payBusiness.DoPayDyCallback(vipOrder)
+		if !doRes {
+			logs.Error("苹果内购更新失败：", vipOrder.Id)
+			receiver.FailReturn(global.NewError(5000))
+			return
+		}
+	}
+	receiver.SuccReturn(nil)
 	return
 }
 

@@ -13,8 +13,8 @@ import (
 	"dongchamao/models/entity"
 	dy2 "dongchamao/models/repost/dy"
 	"dongchamao/services/ali_sms"
-	"dongchamao/services/ali_tools"
 	"dongchamao/services/dyimg"
+	"dongchamao/services/tencent"
 	"encoding/json"
 	"fmt"
 	jsoniter "github.com/json-iterator/go"
@@ -32,9 +32,6 @@ func (receiver *CommonController) Sms() {
 	InputData := receiver.InputFormat()
 	grantType := InputData.GetString("grant_type", "")
 	mobile := InputData.GetString("mobile", "")
-	sig := InputData.GetString("sig", "")
-	sessionId := InputData.GetString("session_id", "")
-	token := InputData.GetString("token", "")
 	if !utils.InArrayString(grantType, []string{"login", "findpwd", "change_mobile", "bind_mobile"}) {
 		receiver.FailReturn(global.NewError(4000))
 		return
@@ -47,18 +44,10 @@ func (receiver *CommonController) Sms() {
 		return
 	}
 	if receiver.AppId == 10000 && global.IsDev() {
-		if sig == "" || sessionId == "" || token == "" {
-			receiver.FailReturn(global.NewError(4000))
-			return
-		}
-		scene := "nc_message"
-		if receiver.AppId != 10000 {
-			scene = "nc_message_h5"
-		}
-		appKey := "FFFF0N0000000000A2FA"
-		err1 := ali_tools.IClientProfile(sig, sessionId, token, receiver.Ip, scene, appKey)
-		if err1 != nil {
-			receiver.FailReturn(global.NewError(4000))
+		ticket := receiver.InputFormat().GetString("ticket", "")
+		randStr := receiver.InputFormat().GetString("randstr", "")
+		if !tencent.TencentCaptcha(ticket, randStr, receiver.Ip) {
+			receiver.FailReturn(global.NewError(8001))
 			return
 		}
 	}
@@ -186,10 +175,8 @@ func (receiver *CommonController) GetConfigList() {
 		if receiver.checkIosPay() {
 			iosPayOpen = 0
 		}
-		ret["ios_pay"] = map[string]interface{}{
-			"ios_pay": iosPayOpen,
-			"open":    1,
-		}
+		ret["ios_pay"].(map[string]interface{})["ios_pay"] = iosPayOpen
+		ret["ios_pay"].(map[string]interface{})["open"] = 1
 		receiver.SuccReturn(ret)
 		return
 	}

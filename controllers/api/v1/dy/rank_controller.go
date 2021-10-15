@@ -91,19 +91,24 @@ func (receiver *RankController) DyLiveHourRank() {
 	}
 	var ret map[string]interface{}
 	data, _ := hbase.GetDyLiveHourRank(dateTime.Format("2006010215"))
+	var ranks []entity.DyLiveHourRank
 	for k, v := range data.Ranks {
-		data.Ranks[k].LiveInfo.User.Id = business.IdEncrypt(v.LiveInfo.User.Id)
-		data.Ranks[k].RoomId = business.IdEncrypt(v.RoomId)
-		data.Ranks[k].LiveInfo.Cover = dyimg.Fix(v.LiveInfo.Cover)
-		data.Ranks[k].LiveInfo.User.Avatar = dyimg.Fix(v.LiveInfo.User.Avatar)
-		if v.LiveInfo.User.DisplayId == "" {
-			data.Ranks[k].LiveInfo.User.DisplayId = v.LiveInfo.User.ShortId
-		}
-		data.Ranks[k].ShareUrl = business.LiveShareUrl + v.RoomId
-		if v.Category == "0" {
-			data.Ranks[k].Category = ""
+		if data.Ranks[k].LiveInfo.TotalUser > 0 {
+			data.Ranks[k].LiveInfo.User.Id = business.IdEncrypt(v.LiveInfo.User.Id)
+			data.Ranks[k].RoomId = business.IdEncrypt(v.RoomId)
+			data.Ranks[k].LiveInfo.Cover = dyimg.Fix(v.LiveInfo.Cover)
+			data.Ranks[k].LiveInfo.User.Avatar = dyimg.Fix(v.LiveInfo.User.Avatar)
+			if v.LiveInfo.User.DisplayId == "" {
+				data.Ranks[k].LiveInfo.User.DisplayId = v.LiveInfo.User.ShortId
+			}
+			data.Ranks[k].ShareUrl = business.LiveShareUrl + v.RoomId
+			if v.Category == "0" {
+				data.Ranks[k].Category = ""
+			}
+			ranks = append(ranks, data.Ranks[k])
 		}
 	}
+	data.Ranks = ranks
 	if data.Ranks == nil {
 		data.Ranks = []entity.DyLiveHourRank{}
 	}
@@ -133,6 +138,7 @@ func (receiver *RankController) DyLiveTopRank() {
 		return
 	}
 	data, _ := hbase.GetDyLiveTopRank(dateTime.Format("2006010215"))
+	var ranks []entity.DyLiveRank
 	for k, v := range data.Ranks {
 		data.Ranks[k].LiveInfo.User.Id = business.IdEncrypt(v.LiveInfo.User.Id)
 		data.Ranks[k].RoomId = business.IdEncrypt(v.RoomId)
@@ -145,12 +151,15 @@ func (receiver *RankController) DyLiveTopRank() {
 		if v.Category == "0" {
 			data.Ranks[k].Category = ""
 		}
+		ranks = append(ranks, data.Ranks[k])
 	}
+	data.Ranks = ranks
 	if !receiver.HasAuth {
 		if len(data.Ranks) > receiver.MaxTotal {
 			data.Ranks = data.Ranks[0:receiver.MaxTotal]
 		}
 	}
+
 	ret := map[string]interface{}{
 		"list":        data.Ranks,
 		"update_time": data.CrawlTime,
@@ -171,29 +180,34 @@ func (receiver *RankController) DyLiveHourSellRank() {
 		return
 	}
 	data, _ := hbase.GetDyLiveHourSellRank(dateTime.Format("2006010215"))
+	var ranks []entity.DyLiveHourSellRank
 	for k, v := range data.Ranks {
-		data.Ranks[k].Rank = k + 1
-		data.Ranks[k].LiveInfo.User.Id = business.IdEncrypt(v.LiveInfo.User.Id)
-		data.Ranks[k].RoomId = business.IdEncrypt(v.RoomId)
-		data.Ranks[k].LiveInfo.Cover = dyimg.Fix(v.LiveInfo.Cover)
-		data.Ranks[k].LiveInfo.User.Avatar = dyimg.Fix(v.LiveInfo.User.Avatar)
-		if v.LiveInfo.User.DisplayId == "" {
-			data.Ranks[k].LiveInfo.User.DisplayId = v.LiveInfo.User.ShortId
-		}
-		shopTags := make([]string, 0)
-		for _, s := range v.ShopTags {
-			if s == "" {
-				continue
+		if data.Ranks[k].LiveInfo.TotalUser > 0 {
+			data.Ranks[k].Rank = k + 1
+			data.Ranks[k].LiveInfo.User.Id = business.IdEncrypt(v.LiveInfo.User.Id)
+			data.Ranks[k].RoomId = business.IdEncrypt(v.RoomId)
+			data.Ranks[k].LiveInfo.Cover = dyimg.Fix(v.LiveInfo.Cover)
+			data.Ranks[k].LiveInfo.User.Avatar = dyimg.Fix(v.LiveInfo.User.Avatar)
+			if v.LiveInfo.User.DisplayId == "" {
+				data.Ranks[k].LiveInfo.User.DisplayId = v.LiveInfo.User.ShortId
 			}
-			shopTags = append(shopTags, s)
+			shopTags := make([]string, 0)
+			for _, s := range v.ShopTags {
+				if s == "" {
+					continue
+				}
+				shopTags = append(shopTags, s)
+			}
+			data.Ranks[k].ShopTags = shopTags
+			data.Ranks[k].ShareUrl = business.LiveShareUrl + v.RoomId
+			//if v.RealGmv > 0 {
+			//	data.Ranks[k].PredictGmv = v.RealGmv
+			//	data.Ranks[k].PredictSales = v.RealSales
+			//}
+			ranks = append(ranks, data.Ranks[k])
 		}
-		data.Ranks[k].ShopTags = shopTags
-		data.Ranks[k].ShareUrl = business.LiveShareUrl + v.RoomId
-		//if v.RealGmv > 0 {
-		//	data.Ranks[k].PredictGmv = v.RealGmv
-		//	data.Ranks[k].PredictSales = v.RealSales
-		//}
 	}
+	data.Ranks = ranks
 	var ret map[string]interface{}
 	if !receiver.HasAuth && len(data.Ranks) > receiver.MaxTotal {
 		data.Ranks = data.Ranks[0:receiver.MaxTotal]
@@ -219,21 +233,27 @@ func (receiver *RankController) DyLiveHourPopularityRank() {
 	}
 
 	data, _ := hbase.GetDyLiveHourPopularityRank(dateTime.Format("2006010215"))
+	var ranks []entity.DyLiveHourPopularityRank
 	for k, v := range data.Ranks {
-		data.Ranks[k].LiveInfo.User.Id = business.IdEncrypt(v.LiveInfo.User.Id)
-		data.Ranks[k].RoomId = business.IdEncrypt(v.RoomId)
-		data.Ranks[k].LiveInfo.Cover = dyimg.Fix(v.LiveInfo.Cover)
-		data.Ranks[k].LiveInfo.User.Avatar = dyimg.Fix(v.LiveInfo.User.Avatar)
-		if v.LiveInfo.User.DisplayId == "" {
-			data.Ranks[k].LiveInfo.User.DisplayId = v.LiveInfo.User.ShortId
+		if data.Ranks[k].LiveInfo.TotalUser > 0 {
+			data.Ranks[k].LiveInfo.User.Id = business.IdEncrypt(v.LiveInfo.User.Id)
+			data.Ranks[k].RoomId = business.IdEncrypt(v.RoomId)
+			data.Ranks[k].LiveInfo.Cover = dyimg.Fix(v.LiveInfo.Cover)
+			data.Ranks[k].LiveInfo.User.Avatar = dyimg.Fix(v.LiveInfo.User.Avatar)
+			if v.LiveInfo.User.DisplayId == "" {
+				data.Ranks[k].LiveInfo.User.DisplayId = v.LiveInfo.User.ShortId
+			}
+			data.Ranks[k].ShareUrl = business.LiveShareUrl + v.RoomId
+			ranks = append(ranks, data.Ranks[k])
 		}
-		data.Ranks[k].ShareUrl = business.LiveShareUrl + v.RoomId
 	}
+	data.Ranks = ranks
 	if !receiver.HasAuth {
 		if len(data.Ranks) > receiver.MaxTotal {
 			data.Ranks = data.Ranks[0:receiver.MaxTotal]
 		}
 	}
+
 	var ret = map[string]interface{}{
 		"list":        data.Ranks,
 		"update_time": data.CrawlTime,
@@ -397,6 +417,7 @@ func (receiver *RankController) ProductSalesTopDayRank() {
 	for k, v := range list {
 		list[k].ProductId = business.IdEncrypt(v.ProductId)
 		list[k].Images = dyimg.Fix(v.Images)
+		list[k].ConversionRate = utils.RateMin(list[k].ConversionRate)
 	}
 	if total > receiver.MaxTotal {
 		total = receiver.MaxTotal
@@ -835,7 +856,7 @@ func (receiver *RankController) VideoProductRank() {
 		break
 	case 3: //月榜
 		month := dateTime.Format("200601")
-		key := month + "_" + fCate
+		key := month + "_" + fCate + "_" + sortStr
 		rowKey = utils.Md5_encode(key)
 		break
 	}
@@ -851,67 +872,67 @@ func (receiver *RankController) VideoProductRank() {
 	total := 0
 	finished := false
 	list := make([]entity.ShortVideoProduct, 0)
-	if dataType != 3 {
-		if orderBy == "asc" {
-			for i := 0; i < 5; i++ {
-				tempData, _ := hbase.GetVideoProductRank(rowKey, i)
-				lenNum := len(tempData)
-				tmpTotal := total
-				total += lenNum
-				if finished {
-					continue
-				}
-				if total > start {
-					if end <= total {
-						list = append(list, tempData[start-tmpTotal:end-tmpTotal]...)
-						finished = true
-					} else {
-						list = append(list, tempData[start-tmpTotal:]...)
-						start = total
-					}
-				}
+	//if dataType != 3 {
+	if orderBy == "asc" {
+		for i := 0; i < 5; i++ {
+			tempData, _ := hbase.GetVideoProductRank(rowKey, i)
+			lenNum := len(tempData)
+			tmpTotal := total
+			total += lenNum
+			if finished {
+				continue
 			}
-		} else {
-			for i := 4; i >= 0; i-- {
-				tempData, _ := hbase.GetVideoProductRank(rowKey, i)
-				lenNum := len(tempData)
-				for j := 0; j < lenNum/2; j++ { //倒序
-					temp := tempData[lenNum-1-j]
-					tempData[lenNum-1-j] = tempData[j]
-					tempData[j] = temp
-				}
-				tmpTotal := total
-				total += lenNum
-				if finished {
-					continue
-				}
-				if total > start {
-					if end <= total {
-						list = append(list, tempData[start-tmpTotal:end-tmpTotal]...)
-						finished = true
-					} else {
-						list = append(list, tempData[start-tmpTotal:]...)
-						start = total
-					}
+			if total > start {
+				if end <= total {
+					list = append(list, tempData[start-tmpTotal:end-tmpTotal]...)
+					finished = true
+				} else {
+					list = append(list, tempData[start-tmpTotal:]...)
+					start = total
 				}
 			}
 		}
 	} else {
-		list, _ = hbase.GetVideoProductRank(rowKey, -1)
-		sort.Slice(list, func(i, j int) bool {
-			switch sortStr {
-			case "saleroom":
-				return list[i].Saleroom > list[j].Saleroom
-			case "sales":
-				return list[i].Sales > list[j].Sales
-			case "price":
-				return list[i].Price > list[j].Price
-			default:
-				return list[i].Sales > list[j].Sales
+		for i := 4; i >= 0; i-- {
+			tempData, _ := hbase.GetVideoProductRank(rowKey, i)
+			lenNum := len(tempData)
+			for j := 0; j < lenNum/2; j++ { //倒序
+				temp := tempData[lenNum-1-j]
+				tempData[lenNum-1-j] = tempData[j]
+				tempData[j] = temp
 			}
-		})
-		total = len(list)
+			tmpTotal := total
+			total += lenNum
+			if finished {
+				continue
+			}
+			if total > start {
+				if end <= total {
+					list = append(list, tempData[start-tmpTotal:end-tmpTotal]...)
+					finished = true
+				} else {
+					list = append(list, tempData[start-tmpTotal:]...)
+					start = total
+				}
+			}
+		}
 	}
+	//} else {
+	//	list, _ = hbase.GetVideoProductRank(rowKey, -1)
+	//	sort.Slice(list, func(i, j int) bool {
+	//		switch sortStr {
+	//		case "saleroom":
+	//			return list[i].Saleroom > list[j].Saleroom
+	//		case "sales":
+	//			return list[i].Sales > list[j].Sales
+	//		case "price":
+	//			return list[i].Price > list[j].Price
+	//		default:
+	//			return list[i].Sales > list[j].Sales
+	//		}
+	//	})
+	//	total = len(list)
+	//}
 	if !receiver.HasAuth && total > receiver.MaxTotal {
 		total = receiver.MaxTotal
 	}

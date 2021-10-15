@@ -14,6 +14,7 @@ func init() {
 			beego.NSRouter("/order/dy", &v1.PayController{}, "put:CreateDyOrder"),
 			beego.NSRouter("/order/dy/monitor", &v1.PayController{}, "put:CreateDyMonitorOrder"),
 			beego.NSRouter("/wechat/:channel/:order_id", &v1.PayController{}, "get:WechatPay"),
+			beego.NSRouter("/ios_pay", &v1.PayController{}, "post:IosPay"),
 			beego.NSRouter("/alipay/:channel/:order_id", &v1.PayController{}, "get:AliPay"),
 			beego.NSRouter("/notify/wechat", &controllers.CallbackController{}, "*:WechatNotify"),
 			beego.NSRouter("/notify/alipay", &controllers.CallbackController{}, "*:AlipayNotify"),

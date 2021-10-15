@@ -144,3 +144,32 @@ type DyAuthorStoreSimple struct {
 	ShopId   string `json:"shop_id"`
 	ShopName string `json:"shop_name"`
 }
+
+type DyAuthorShopAnalysis struct {
+	ShopId     string  `json:"shop_id"`
+	Category   string  `json:"category"`
+	ShopName   string  `json:"shop_name"`
+	ShopIcon   string  `json:"shop_icon"`
+	ProductNum int     `json:"product_num"`
+	Gmv        float64 `json:"gmv"`
+	Sales      int64   `json:"sales"`
+	RoomNum    int     `json:"room_num"`
+	IsCollect  int     `json:"is_collect"`
+}
+
+type DyAuthorRawData struct {
+	Avatar           string `json:"avatar"`
+	Birthday         int    `json:"birthday"`
+	Commerce         int    `json:"commerce"`
+	FollowerCount    int64  `json:"follower_count"`
+	Gender           string `json:"gender"`
+	Id               string `json:"id"`
+	Nickname         string `json:"nickname"`
+	SchoolName       string `json:"school_name"`
+	SecUid           string `json:"sec_uid"`
+	ShortId          string `json:"short_id"`
+	Signature        string `json:"signature"`
+	UniqueId         string `json:"unique_id"`
+	VerificationType string `json:"verification_type"`
+	VerifyName       string `json:"verify_name"`
+}

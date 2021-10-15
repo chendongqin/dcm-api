@@ -14,7 +14,7 @@ type DcVipOrderInvoice struct {
 	Emial      string    `xorm:"not null default '' comment('电子邮箱') VARCHAR(100)"`
 	Phone      string    `xorm:"not null default '' comment('手机号') VARCHAR(100)"`
 	Remark     string    `xorm:"not null default '' comment('发票备注') VARCHAR(100)"`
-	Status     int       `xorm:"not null default 0 comment('1申请中2已通过3已拒绝4已发送') TINYINT(1)"`
+	Status     int       `xorm:"not null default 0 comment('0申请中1已通过2已拒绝3已发送') TINYINT(1)"`
 	Address    string    `xorm:"not null default '' comment('发票地址') VARCHAR(255)"`
 	CreateTime time.Time `xorm:"TIMESTAMP"`
 	UpdateTime time.Time `xorm:"TIMESTAMP"`

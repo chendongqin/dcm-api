@@ -19,6 +19,7 @@ func init() {
 			beego.NSRouter("/dy/search/:type", &v1.AccountController{}, "put:DyUserSearchSave"),
 			beego.NSRouter("/dy/search/:id", &v1.AccountController{}, "delete:DyUserSearchDel"),
 			beego.NSRouter("/dy/search/:type", &v1.AccountController{}, "get:DyUserSearchList"),
+			beego.NSRouter("/top/time/:key", &v1.AccountController{}, "get:TopDateTime"),
 			beego.NSNamespace("/collect",
 				beego.NSRouter("/list", &v1.AccountController{}, "get:GetCollect"),
 				beego.NSRouter("/add", &v1.AccountController{}, "put:AddCollect"),
@@ -33,6 +34,9 @@ func init() {
 					beego.NSRouter("/tag/upd/:id", &v1.AccountController{}, "put:UpdDyCollectTag"),
 					beego.NSRouter("/tag/del/:id", &v1.AccountController{}, "delete:DelDyCollectTag"),
 				),
+			),
+			beego.NSNamespace("/apple",
+				beego.NSRouter("/apple_id", &v1.LoginController{}, "get:GetAppleId"),
 			),
 		),
 	)

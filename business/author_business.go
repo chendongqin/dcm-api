@@ -12,6 +12,7 @@ import (
 	"dongchamao/models/repost/dy"
 	"dongchamao/services"
 	"dongchamao/services/dyimg"
+	"fmt"
 	jsoniter "github.com/json-iterator/go"
 	"github.com/wazsmwazsm/mortar"
 	"math"
@@ -188,6 +189,71 @@ func (a *AuthorBusiness) HbaseGetAuthor(authorId string) (data entity.DyAuthor, 
 	if data.Data.UniqueID == "" {
 		data.Data.UniqueID = data.Data.ShortID
 	}
+	return
+}
+
+//达人排名
+func (a *AuthorBusiness) HbaseGetAuthorRank(authorId string) (resRankMap map[string]string) {
+	rankMap := map[string]string{
+		"name":      "",
+		"rank_name": "",
+		"value":     "",
+		"field":     "",
+		"date_type": "",
+	}
+	resRankMap = rankMap
+	data, comErr := hbase.GetAuthorRank(authorId)
+	if comErr != nil {
+		return
+	}
+	//判断是否在筛选范围之内
+	isIn := func(data entity.DyAuthorRank, startDate, endDate time.Time, dateType string) (rankMap map[string]string) {
+		rankMap = make(map[string]string)
+		if data.PredictGmvSumDate != "" {
+			PredictGmvSumDateString := fmt.Sprintf("%s 00:00:01", data.PredictGmvSumDate)
+			PredictGmvSumDate, _ := time.ParseInLocation("2006-01-02 15:04:05", PredictGmvSumDateString, time.Local)
+			if startDate.Before(PredictGmvSumDate) && PredictGmvSumDate.Before(endDate) {
+				rankMap["rank_name"] = "带货榜"
+				rankMap["date_type"] = dateType
+				rankMap["value"] = data.PredictGmvSumRn
+				rankMap["field"] = "gmv"
+				return
+			}
+		}
+		if data.FansIncDate != "" {
+			rankIncDateString := fmt.Sprintf("%s 00:00:01", data.FansIncDate)
+			rankIncDate, _ := time.ParseInLocation("2006-01-02 15:04:05", rankIncDateString, time.Local)
+			if startDate.Before(rankIncDate) && rankIncDate.Before(endDate) {
+				rankMap["rank_name"] = "涨粉榜"
+				rankMap["date_type"] = dateType
+				rankMap["value"] = data.FansIncRn
+				rankMap["field"] = "fans_inc"
+				return
+			}
+		}
+		return
+	}
+	////月榜判断
+	now := time.Now()
+	endDate := now
+	//startDate := now.AddDate(0, -3, 0)
+	//resRankMap = isIn(data, startDate, endDate, "月榜")
+	//if resRankMap["rank_name"] != "" {
+	//	return
+	//}
+	////周榜判断
+	//startDate = now.AddDate(0, 0, -3*7)
+	//resRankMap = isIn(data, startDate, endDate, "周榜")
+	//if resRankMap["rank_name"] != "" {
+	//	return
+	//}
+	//日榜判断
+	startDate := now.AddDate(0, 0, -7)
+	resRankMap = isIn(data, startDate, endDate, "日榜")
+	if resRankMap["rank_name"] != "" {
+		return
+	}
+
 	return
 }
 
@@ -597,6 +663,9 @@ func (a *AuthorBusiness) CountLiveRoomAnalyse(authorId string, startTime, endTim
 		Date:       dateChart,
 		CountValue: amountChart,
 	}
+	data.UserData.AvgIncFansRate = utils.RateMin(data.UserData.AvgIncFansRate)
+	data.UserData.AvgInteractRate = utils.RateMin(data.UserData.AvgInteractRate)
+	data.SaleData.SaleRate = utils.RateMin(data.SaleData.SaleRate)
 	return
 }
 
@@ -1145,6 +1214,136 @@ func (a *AuthorBusiness) NewGetAuthorProductAnalyse(authorId, keyword, firstCate
 	analysisCount.Sales = sumSale
 	analysisCount.HasShop = hasShop
 	analysisCount.IsRecommend = isRecommend
+	return
+}
+
+//合作小店
+func (a *AuthorBusiness) GetAuthorShopAnalyse(authorId, keyword, sortStr, orderBy string, startTime, endTime time.Time, page, pageSize, userId int) (list []dy.DyAuthorShopAnalysis, total int, comErr global.CommonError) {
+	if orderBy == "" {
+		orderBy = "desc"
+	}
+	if sortStr == "" {
+		sortStr = "product_num"
+	}
+	if !utils.InArrayString(sortStr, []string{"product_num", "gmv", "sales"}) {
+		comErr = global.NewError(4000)
+		return
+	}
+	if !utils.InArrayString(orderBy, []string{"desc", "asc"}) {
+		comErr = global.NewError(4000)
+		return
+	}
+	list = []dy.DyAuthorShopAnalysis{}
+	shopLiveIdMap := map[string]map[string]string{}
+	shopProductMap := map[string]map[string]string{}
+	shopMapList := map[string]dy.DyAuthorShopAnalysis{}
+	//判断自卖和推荐
+	liveList, _, _ := es.NewEsLiveBusiness().ScanLiveShopByAuthor(authorId, keyword, startTime, endTime, 1, 10000)
+	awemeList, _, _ := es.NewEsVideoBusiness().ScanAwemeShopByAuthor(authorId, keyword, startTime, endTime, 1, 10000)
+	for _, v := range liveList {
+		if _, exist := shopLiveIdMap[v.ShopId]; !exist {
+			shopLiveIdMap[v.ShopId] = map[string]string{}
+		}
+		shopLiveIdMap[v.ShopId][v.RoomID] = v.RoomID
+		if _, exist := shopProductMap[v.ShopId]; !exist {
+			shopProductMap[v.ShopId] = map[string]string{}
+		}
+		shopProductMap[v.ShopId][v.ProductID] = v.ProductID
+		//数据累加
+		if p, ok := shopMapList[v.ShopId]; ok {
+			p.Gmv += v.PredictGmv
+			p.Sales += utils.ToInt64(math.Floor(v.PredictSales))
+			shopMapList[v.ShopId] = p
+		} else {
+			shopMapList[v.ShopId] = dy.DyAuthorShopAnalysis{
+				ShopId:   v.ShopId,
+				ShopName: v.ShopName,
+				ShopIcon: v.ShopIcon,
+				Gmv:      v.PredictGmv,
+				Sales:    utils.ToInt64(math.Floor(v.PredictSales)),
+			}
+		}
+	}
+	for _, v := range awemeList {
+		if _, exist := shopProductMap[v.ShopId]; !exist {
+			shopProductMap[v.ShopId] = map[string]string{}
+		}
+		shopProductMap[v.ShopId][v.ProductId] = v.ProductId
+		//数据累加
+		if p, ok := shopMapList[v.ShopId]; ok {
+			p.Gmv += v.Gmv
+			p.Sales += v.Sales
+			shopMapList[v.ShopId] = p
+		} else {
+			shopMapList[v.ShopId] = dy.DyAuthorShopAnalysis{
+				ShopId:   v.ShopId,
+				ShopName: v.ShopName,
+				ShopIcon: v.ShopIcon,
+				Gmv:      v.Gmv,
+				Sales:    v.Sales,
+			}
+		}
+	}
+	newList := []dy.DyAuthorShopAnalysis{}
+	for _, v := range shopMapList {
+		if m, exist := shopLiveIdMap[v.ShopId]; exist {
+			v.RoomNum = len(m)
+		}
+		if m, exist := shopProductMap[v.ShopId]; exist {
+			v.ProductNum = len(m)
+		}
+		newList = append(newList, v)
+	}
+	total = len(shopMapList)
+	//排序
+	if sortStr != "" {
+		sort.Slice(newList, func(i, j int) bool {
+			var left, right float64
+			switch sortStr {
+			case "product_num":
+				left = utils.ToFloat64(newList[i].ProductNum)
+				right = utils.ToFloat64(newList[j].ProductNum)
+			case "gmv":
+				left = newList[i].Gmv
+				right = newList[j].Gmv
+			case "sales":
+				left = utils.ToFloat64(newList[i].Sales)
+				right = utils.ToFloat64(newList[j].Sales)
+			}
+			if left == right {
+				return newList[i].ShopId > newList[j].ShopId
+			}
+			if orderBy == "desc" {
+				return left > right
+			}
+			return right > left
+		})
+	}
+	start := (page - 1) * pageSize
+	end := start + pageSize
+	listLen := len(newList)
+	if listLen < end {
+		end = listLen
+	}
+	list = newList[start:end]
+	shopIds := []string{}
+	for k, v := range list {
+		shopIds = append(shopIds, v.ShopId)
+		list[k].ShopIcon = dyimg.Fix(v.ShopIcon)
+	}
+	//todo 小店分类
+	//shops, _ := hbase.GetShopByIds(shopIds)
+	collectMap := map[string]int{}
+	if userId > 0 {
+		collectBusiness := NewCollectBusiness()
+		collectMap, _ = collectBusiness.DyListCollect(4, userId, shopIds)
+	}
+	for k, v := range list {
+		if e, exist := collectMap[v.ShopId]; exist {
+			list[k].IsCollect = e
+		}
+		list[k].ShopId = IdEncrypt(v.ShopId)
+	}
 	return
 }
 

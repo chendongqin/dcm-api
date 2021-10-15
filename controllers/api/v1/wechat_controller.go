@@ -256,6 +256,9 @@ func (receiver *WechatController) WechatPhone() {
 		}
 		//tencent_ad.AddUserActionSets(userModel.Channel)
 		business.NewUserBusiness().SendUserVip(&userModel, 7)
+		if receiver.Channel == "0024" {
+			business.NewWechatBusiness().AddAndroidUserAction(inputData.GetString("imei", ""), inputData.GetString("idfa", ""))
+		}
 	}
 	//开始更新用户信息
 	if userModel.Unionid != "" {

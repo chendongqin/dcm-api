@@ -29,7 +29,8 @@ func (receiver *EsAuthorBusiness) BaseSearch(
 	if orderBy == "" {
 		orderBy = "desc"
 	}
-	if !utils.InArrayString(sortStr, []string{"follower_count", "follower_incre_count", "predict_30_gmv"}) {
+	if !utils.InArrayString(sortStr, []string{"follower_count", "follower_incre_count", "predict_30_gmv",
+		"med_digg", "digg_follower_rate", "med_watch_cnt", "interaction_rate"}) {
 		comErr = global.NewError(4000)
 		return
 	}
@@ -55,10 +56,9 @@ func (receiver *EsAuthorBusiness) BaseSearch(
 			if length <= 3 {
 				slop = 2
 			}
-			esMultiQuery.AddMust(elasticsearch.Query().
-				SetMatchPhraseWithParams("nickname", keyword, alias.M{
-					"slop": slop,
-				}).Condition)
+			esQuery.SetMatchPhraseWithParams("nickname", keyword, alias.M{
+				"slop": slop,
+			})
 		} else {
 			esQuery.SetMultiMatch([]string{"unique_id", "short_id", "nickname"}, keyword)
 		}
@@ -302,10 +302,9 @@ func (receiver *EsAuthorBusiness) SimpleSearch(
 			if length <= 3 {
 				slop = 2
 			}
-			esMultiQuery.AddMust(elasticsearch.Query().
-				SetMatchPhraseWithParams("nickname", keyword, alias.M{
-					"slop": slop,
-				}).Condition)
+			esQuery.SetMatchPhraseWithParams("nickname", keyword, alias.M{
+				"slop": slop,
+			})
 		} else {
 			esQuery.SetMultiMatch([]string{"unique_id", "short_id", "nickname", "author_id"}, keyword)
 		}
