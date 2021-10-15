@@ -233,22 +233,22 @@ func (a *AuthorBusiness) HbaseGetAuthorRank(authorId string) (resRankMap map[str
 		}
 		return
 	}
-	//月榜判断
+	////月榜判断
 	now := time.Now()
 	endDate := now
-	startDate := now.AddDate(0, -3, 0)
-	resRankMap = isIn(data, startDate, endDate, "月榜")
-	if resRankMap["rank_name"] != "" {
-		return
-	}
-	//周榜判断
-	startDate = now.AddDate(0, 0, -3*7)
-	resRankMap = isIn(data, startDate, endDate, "周榜")
-	if resRankMap["rank_name"] != "" {
-		return
-	}
+	//startDate := now.AddDate(0, -3, 0)
+	//resRankMap = isIn(data, startDate, endDate, "月榜")
+	//if resRankMap["rank_name"] != "" {
+	//	return
+	//}
+	////周榜判断
+	//startDate = now.AddDate(0, 0, -3*7)
+	//resRankMap = isIn(data, startDate, endDate, "周榜")
+	//if resRankMap["rank_name"] != "" {
+	//	return
+	//}
 	//日榜判断
-	startDate = now.AddDate(0, 0, -7)
+	startDate := now.AddDate(0, 0, -7)
 	resRankMap = isIn(data, startDate, endDate, "日榜")
 	if resRankMap["rank_name"] != "" {
 		return
