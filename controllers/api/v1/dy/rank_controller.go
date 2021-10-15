@@ -91,19 +91,24 @@ func (receiver *RankController) DyLiveHourRank() {
 	}
 	var ret map[string]interface{}
 	data, _ := hbase.GetDyLiveHourRank(dateTime.Format("2006010215"))
+	ranks := []entity.DyLiveHourRank{}
 	for k, v := range data.Ranks {
-		data.Ranks[k].LiveInfo.User.Id = business.IdEncrypt(v.LiveInfo.User.Id)
-		data.Ranks[k].RoomId = business.IdEncrypt(v.RoomId)
-		data.Ranks[k].LiveInfo.Cover = dyimg.Fix(v.LiveInfo.Cover)
-		data.Ranks[k].LiveInfo.User.Avatar = dyimg.Fix(v.LiveInfo.User.Avatar)
-		if v.LiveInfo.User.DisplayId == "" {
-			data.Ranks[k].LiveInfo.User.DisplayId = v.LiveInfo.User.ShortId
-		}
-		data.Ranks[k].ShareUrl = business.LiveShareUrl + v.RoomId
-		if v.Category == "0" {
-			data.Ranks[k].Category = ""
+		if data.Ranks[k].LiveInfo.TotalUser > 0 {
+			data.Ranks[k].LiveInfo.User.Id = business.IdEncrypt(v.LiveInfo.User.Id)
+			data.Ranks[k].RoomId = business.IdEncrypt(v.RoomId)
+			data.Ranks[k].LiveInfo.Cover = dyimg.Fix(v.LiveInfo.Cover)
+			data.Ranks[k].LiveInfo.User.Avatar = dyimg.Fix(v.LiveInfo.User.Avatar)
+			if v.LiveInfo.User.DisplayId == "" {
+				data.Ranks[k].LiveInfo.User.DisplayId = v.LiveInfo.User.ShortId
+			}
+			data.Ranks[k].ShareUrl = business.LiveShareUrl + v.RoomId
+			if v.Category == "0" {
+				data.Ranks[k].Category = ""
+			}
+			ranks = append(ranks, data.Ranks[k])
 		}
 	}
+	data.Ranks = ranks
 	if data.Ranks == nil {
 		data.Ranks = []entity.DyLiveHourRank{}
 	}
@@ -133,19 +138,24 @@ func (receiver *RankController) DyLiveTopRank() {
 		return
 	}
 	data, _ := hbase.GetDyLiveTopRank(dateTime.Format("2006010215"))
+	ranks := []entity.DyLiveRank{}
 	for k, v := range data.Ranks {
-		data.Ranks[k].LiveInfo.User.Id = business.IdEncrypt(v.LiveInfo.User.Id)
-		data.Ranks[k].RoomId = business.IdEncrypt(v.RoomId)
-		data.Ranks[k].LiveInfo.Cover = dyimg.Fix(v.LiveInfo.Cover)
-		data.Ranks[k].LiveInfo.User.Avatar = dyimg.Fix(v.LiveInfo.User.Avatar)
-		if v.LiveInfo.User.DisplayId == "" {
-			data.Ranks[k].LiveInfo.User.DisplayId = v.LiveInfo.User.ShortId
-		}
-		data.Ranks[k].ShareUrl = business.LiveShareUrl + v.RoomId
-		if v.Category == "0" {
-			data.Ranks[k].Category = ""
+		if data.Ranks[k].LiveInfo.TotalUser > 0 {
+			data.Ranks[k].LiveInfo.User.Id = business.IdEncrypt(v.LiveInfo.User.Id)
+			data.Ranks[k].RoomId = business.IdEncrypt(v.RoomId)
+			data.Ranks[k].LiveInfo.Cover = dyimg.Fix(v.LiveInfo.Cover)
+			data.Ranks[k].LiveInfo.User.Avatar = dyimg.Fix(v.LiveInfo.User.Avatar)
+			if v.LiveInfo.User.DisplayId == "" {
+				data.Ranks[k].LiveInfo.User.DisplayId = v.LiveInfo.User.ShortId
+			}
+			data.Ranks[k].ShareUrl = business.LiveShareUrl + v.RoomId
+			if v.Category == "0" {
+				data.Ranks[k].Category = ""
+			}
+			ranks = append(ranks, data.Ranks[k])
 		}
 	}
+	data.Ranks = ranks
 	if !receiver.HasAuth {
 		if len(data.Ranks) > receiver.MaxTotal {
 			data.Ranks = data.Ranks[0:receiver.MaxTotal]
