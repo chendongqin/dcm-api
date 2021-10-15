@@ -58,7 +58,9 @@ func (i *EsProductBusiness) BaseSearch(productId, keyword, category, secondCateg
 	if platform != "" {
 		esQuery.SetTerm("platform_label.keyword", platform)
 	} else {
-		esQuery.SetTerm("platform_label.keyword", "小店")
+		if keyword == "" {
+			esQuery.SetTerm("platform_label.keyword", "小店")
+		}
 	}
 	if isStar == 1 {
 		esQuery.SetTerm("is_star", 1)
@@ -100,9 +102,9 @@ func (i *EsProductBusiness) BaseSearch(productId, keyword, category, secondCateg
 		esQuery.SetRange("coupon_price", rangeMap)
 	}
 	sortOrder := elasticsearch.NewElasticOrder().Add(sortStr, orderBy).Order
-	if utils.InArrayString(sortStr, []string{"order_account", "pv", "cvr"}) {
-		sortOrder = elasticsearch.NewElasticOrder().Add("is_yesterday", "desc").Add(sortStr, orderBy).Order
-	}
+	//if utils.InArrayString(sortStr, []string{"order_account", "pv", "cvr"}) {
+	//	sortOrder = elasticsearch.NewElasticOrder().Add("is_yesterday", "desc").Add(sortStr, orderBy).Order
+	//}
 	var cacheTime time.Duration = 120
 	results := esMultiQuery.
 		SetConnection(connection).
