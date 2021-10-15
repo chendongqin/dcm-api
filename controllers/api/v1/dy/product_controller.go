@@ -1018,7 +1018,7 @@ func (receiver *ProductController) ProductAweme() {
 //商品粉丝分析
 func (receiver *ProductController) ProductFanAnalyse() {
 	productId := business.IdDecrypt(receiver.Ctx.Input.Param(":product_id"))
-	info, comErr := hbase.GetProductInfo(productId)
+	info, comErr := hbase.GetProductHXInfo(productId)
 	if comErr != nil {
 		receiver.FailReturn(comErr)
 		return
