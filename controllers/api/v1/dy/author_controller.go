@@ -58,7 +58,7 @@ func (receiver *AuthorController) BaseSearch() {
 	city := receiver.GetString("city", "")
 	fanProvince := receiver.GetString("fan_province", "")
 	fanCity := receiver.GetString("fan_city", "")
-	sortStr := receiver.GetString("sort", "follower_incre_count")
+	sortStr := receiver.GetString("sort", "follower_count")
 	orderBy := receiver.GetString("order_by", "desc")
 	minFollower, _ := receiver.GetInt64("min_follower", 0)
 	maxFollower, _ := receiver.GetInt64("max_follower", 0)
@@ -87,7 +87,7 @@ func (receiver *AuthorController) BaseSearch() {
 		return
 	}
 	if !receiver.HasAuth {
-		if category != "" || secondCategory != "" || sellTags != "" || province != "" || city != "" || fanProvince != "" || fanCity != "" || sortStr != "follower_incre_count" || orderBy != "desc" ||
+		if category != "" || secondCategory != "" || sellTags != "" || province != "" || city != "" || fanProvince != "" || fanCity != "" || sortStr != "follower_count" || orderBy != "desc" ||
 			minFollower > 0 || maxFollower > 0 || minWatch > 0 || maxWatch > 0 || minDigg > 0 || maxDigg > 0 || minGmv > 0 || maxGmv > 0 ||
 			gender > 0 || minAge > 0 || maxAge > 0 || fanAge != "" || verification > 0 || level > 0 || fanGender > 0 ||
 			superSeller == 1 || isDelivery > 0 || isBrand == 1 || page != 1 {
@@ -131,7 +131,7 @@ func (receiver *AuthorController) BaseSearch() {
 		receiver.FailReturn(comErr)
 		return
 	}
-	if !(category != "" || secondCategory != "" || sellTags != "" || province != "" || city != "" || fanProvince != "" || fanCity != "" || sortStr != "follower_incre_count" || orderBy != "desc" ||
+	if !(category != "" || secondCategory != "" || sellTags != "" || province != "" || city != "" || fanProvince != "" || fanCity != "" || sortStr != "follower_count" || orderBy != "desc" ||
 		minFollower > 0 || maxFollower > 0 || minWatch > 0 || maxWatch > 0 || minDigg > 0 || maxDigg > 0 || minGmv > 0 || maxGmv > 0 ||
 		gender > 0 || minAge > 0 || maxAge > 0 || fanAge != "" || verification > 0 || level > 0 || fanGender > 0 ||
 		superSeller == 1 || isDelivery > 0 || isBrand == 1 || page != 1) {
