@@ -130,48 +130,53 @@ func (receiver *AuthorController) BaseSearch() {
 		receiver.FailReturn(comErr)
 		return
 	}
-	if total == 0 {
-		spiderBusiness := business.NewSpiderBusiness()
-		authorIncomeRawList, err1 := spiderBusiness.GetAuthorListByKeyword(keyword)
-		if err1 != nil {
-			receiver.FailReturn(global.NewMsgError(err1.Error()))
+	if !(category != "" || secondCategory != "" || sellTags != "" || province != "" || city != "" || fanProvince != "" || fanCity != "" || sortStr != "follower_incre_count" || orderBy != "desc" ||
+		minFollower > 0 || maxFollower > 0 || minWatch > 0 || maxWatch > 0 || minDigg > 0 || maxDigg > 0 || minGmv > 0 || maxGmv > 0 ||
+		gender > 0 || minAge > 0 || maxAge > 0 || fanAge != "" || verification > 0 || level > 0 || fanGender > 0 ||
+		superSeller == 1 || isDelivery > 0 || isBrand == 1 || page != 1) {
+		if keyword != "" && total == 0 {
+			spiderBusiness := business.NewSpiderBusiness()
+			authorIncomeRawList, err1 := spiderBusiness.GetAuthorListByKeyword(keyword)
+			if err1 != nil {
+				receiver.FailReturn(global.NewMsgError(err1.Error()))
+				return
+			}
+			list := make([]es2.DyAuthor, 0)
+			for _, v := range authorIncomeRawList {
+				var tempAuthor es2.DyAuthor
+				tempAuthor.AuthorId = business.IdEncrypt(v.Id)
+				tempAuthor.UniqueId = v.UniqueId
+				if tempAuthor.UniqueId == "0" || tempAuthor.UniqueId == "" {
+					tempAuthor.UniqueId = v.ShortId
+				}
+				tempAuthor.Avatar = dyimg.Fix(v.Avatar)
+				tempAuthor.FollowerCount = v.FollowerCount
+				tempAuthor.ShortId = v.ShortId
+				tempAuthor.Gender = v.Gender
+				tempAuthor.Nickname = v.Nickname
+				tempAuthor.Birthday = v.Birthday
+				tempAuthor.VerifyName = v.VerifyName
+				tempAuthor.VerificationType = v.VerificationType
+				tempAuthor.IsCollection = 0
+				list = append(list, tempAuthor)
+			}
+			end := 10
+			if len(list) < end {
+				end = len(list)
+			}
+			resList := list[0:end]
+			listTotal := len(resList)
+			receiver.SuccReturn(map[string]interface{}{
+				"list":       resList,
+				"total":      listTotal,
+				"total_page": 1,
+				"max_num":    listTotal,
+				"has_auth":   receiver.HasAuth,
+				"has_login":  receiver.HasLogin,
+				"data_from":  "douyin",
+			})
 			return
 		}
-		list := make([]es2.DyAuthor, 0)
-		for _, v := range authorIncomeRawList {
-			var tempAuthor es2.DyAuthor
-			tempAuthor.AuthorId = business.IdEncrypt(v.Id)
-			tempAuthor.UniqueId = v.UniqueId
-			if tempAuthor.UniqueId == "0" || tempAuthor.UniqueId == "" {
-				tempAuthor.UniqueId = v.ShortId
-			}
-			tempAuthor.Avatar = dyimg.Fix(v.Avatar)
-			tempAuthor.FollowerCount = v.FollowerCount
-			tempAuthor.ShortId = v.ShortId
-			tempAuthor.Gender = v.Gender
-			tempAuthor.Nickname = v.Nickname
-			tempAuthor.Birthday = v.Birthday
-			tempAuthor.VerifyName = v.VerifyName
-			tempAuthor.VerificationType = v.VerificationType
-			tempAuthor.IsCollection = 0
-			list = append(list, tempAuthor)
-		}
-		end := 10
-		if len(list) < end {
-			end = len(list)
-		}
-		resList := list[0:end]
-		listTotal := len(resList)
-		receiver.SuccReturn(map[string]interface{}{
-			"list":       resList,
-			"total":      listTotal,
-			"total_page": 1,
-			"max_num":    listTotal,
-			"has_auth":   receiver.HasAuth,
-			"has_login":  receiver.HasLogin,
-			"data_from":  "douyin",
-		})
-		return
 	}
 	authorIds := make([]string, 0)
 	for _, v := range list {
