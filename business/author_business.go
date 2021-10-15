@@ -215,7 +215,7 @@ func (a *AuthorBusiness) HbaseGetAuthorRank(authorId string) (resRankMap map[str
 			if startDate.Before(PredictGmvSumDate) && PredictGmvSumDate.Before(endDate) {
 				rankMap["rank_name"] = "带货榜"
 				rankMap["date_type"] = dateType
-				rankMap["value"] = data.FansIncRn
+				rankMap["value"] = data.PredictGmvSumRn
 				rankMap["field"] = "gmv"
 				return
 			}
