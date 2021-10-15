@@ -140,20 +140,18 @@ func (receiver *RankController) DyLiveTopRank() {
 	data, _ := hbase.GetDyLiveTopRank(dateTime.Format("2006010215"))
 	ranks := []entity.DyLiveRank{}
 	for k, v := range data.Ranks {
-		if data.Ranks[k].LiveInfo.TotalUser > 0 {
-			data.Ranks[k].LiveInfo.User.Id = business.IdEncrypt(v.LiveInfo.User.Id)
-			data.Ranks[k].RoomId = business.IdEncrypt(v.RoomId)
-			data.Ranks[k].LiveInfo.Cover = dyimg.Fix(v.LiveInfo.Cover)
-			data.Ranks[k].LiveInfo.User.Avatar = dyimg.Fix(v.LiveInfo.User.Avatar)
-			if v.LiveInfo.User.DisplayId == "" {
-				data.Ranks[k].LiveInfo.User.DisplayId = v.LiveInfo.User.ShortId
-			}
-			data.Ranks[k].ShareUrl = business.LiveShareUrl + v.RoomId
-			if v.Category == "0" {
-				data.Ranks[k].Category = ""
-			}
-			ranks = append(ranks, data.Ranks[k])
+		data.Ranks[k].LiveInfo.User.Id = business.IdEncrypt(v.LiveInfo.User.Id)
+		data.Ranks[k].RoomId = business.IdEncrypt(v.RoomId)
+		data.Ranks[k].LiveInfo.Cover = dyimg.Fix(v.LiveInfo.Cover)
+		data.Ranks[k].LiveInfo.User.Avatar = dyimg.Fix(v.LiveInfo.User.Avatar)
+		if v.LiveInfo.User.DisplayId == "" {
+			data.Ranks[k].LiveInfo.User.DisplayId = v.LiveInfo.User.ShortId
 		}
+		data.Ranks[k].ShareUrl = business.LiveShareUrl + v.RoomId
+		if v.Category == "0" {
+			data.Ranks[k].Category = ""
+		}
+		ranks = append(ranks, data.Ranks[k])
 	}
 	data.Ranks = ranks
 	if !receiver.HasAuth {
