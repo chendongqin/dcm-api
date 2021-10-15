@@ -34,7 +34,8 @@ const (
 	HbaseDyAuthorLiveTags         = "dy_live_hour_rank_sell"     //达人带货行业
 	DyAuthorPersonalTag           = "dy_author_personal_tag"     //达人榜单排行
 
-	HbaseDyProduct                     = "dy_product"
+	//HbaseDyProduct                     = "dy_product"
+	HbaseDyProduct                     = "dy_product_hx"
 	HbaseDyProductBrand                = "dy_product_brand"
 	HbaseDyProductDaily                = "dy_product_daily"
 	HbaseDyProductAwemeDailyDistribute = "dy_product_aweme_daily_distribute"
@@ -59,6 +60,7 @@ const (
 	HbaseDyShopDetail          = "dy_shop_detail"           //小店详情
 	HbaseDyShopProductAnalysis = "dy_shop_product_analysis" //小店商品分析
 
+	HbaseProductSellRank        = "dy_commodity_TopN"           //抖音销量榜
 	HbaseShortVideoProductRank  = "shortvideo_commodity_topN"   //视频商品榜
 	HbaseLiveProductRank        = "live_commodity_TopN"         //直播商品榜
 	HbaseDyAuthorDaySalesRank   = "dy_author_day_sales"         //达人带货日榜
