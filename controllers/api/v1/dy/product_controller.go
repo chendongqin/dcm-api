@@ -1018,11 +1018,7 @@ func (receiver *ProductController) ProductAweme() {
 //商品粉丝分析
 func (receiver *ProductController) ProductFanAnalyse() {
 	productId := business.IdDecrypt(receiver.Ctx.Input.Param(":product_id"))
-	info, comErr := hbase.GetProductHXInfo(productId)
-	if comErr != nil {
-		receiver.FailReturn(comErr)
-		return
-	}
+	info, _ := hbase.GetProductHXInfo(productId)
 	var genderTotal int64 = 0
 	var ageTotal int64 = 0
 	var cityTotal int64 = 0
@@ -1112,6 +1108,12 @@ func (receiver *ProductController) ProductFanAnalyse() {
 	})
 	if len(info.Word) > 150 {
 		info.Word = info.Word[:150]
+	}
+	if len(info.Word) == 0 {
+		info.Word = []entity.DyAuthorWord{}
+	}
+	if len(info.DiggInfo) == 0 {
+		info.DiggInfo = []entity.DiggInfo{}
 	}
 	for k := range info.DiggInfo {
 		info.DiggInfo[k].AwemeCover = dyimg.Fix(info.DiggInfo[k].AwemeCover)
