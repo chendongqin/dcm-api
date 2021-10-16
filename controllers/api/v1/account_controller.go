@@ -700,7 +700,7 @@ func (receiver *AccountController) TopDateTime() {
 				"2021-09-14",
 			},
 			"hour_list":  map[string][]string{},
-			"week_list":  map[string][]string{},
+			"week_list":  []map[string]string{},
 			"month_list": []string{},
 			"desc":       "抖音销量榜的日期时间",
 		})
