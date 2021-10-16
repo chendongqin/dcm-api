@@ -47,6 +47,7 @@ func pickCDN(md5 string) string {
 }
 
 func buildURL(prefix, source string) string {
+	return source
 	infoURL, err := url.Parse(source)
 	if err != nil {
 		return source
@@ -83,7 +84,6 @@ func Fix(image string) string {
 	image = strings.Replace(image, ".heic", ".jpeg", 1)
 	image = WebpToJpg(image)
 	image = strings.Replace(image, "-sign", "", 1)
-	return image
 	return Convert("", image)
 }
 
