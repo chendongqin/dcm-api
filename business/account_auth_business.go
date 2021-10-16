@@ -53,6 +53,7 @@ var LoginWitheUri = []string{
 	"/v1/account/collect/dy/tag/list",
 	//小店库
 	"/v1/dy/shop/search",
+	"/v1/account/top/time",
 }
 
 var SignWitheUri = []string{
