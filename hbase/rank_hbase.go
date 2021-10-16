@@ -221,6 +221,25 @@ func GetLiveProductRank(rowKey string, hPage int) (data []entity.LiveProduct, co
 	return
 }
 
+//商品销量排行榜
+func GetProductSellRank(rowKey string, hPage int) (data []entity.DyProductSalesTopRank, comErr global.CommonError) {
+	if hPage >= 0 {
+		rowKey = rowKey + strconv.Itoa(hPage)
+	}
+	query := hbasehelper.NewQuery()
+	result, err := query.SetTable(hbaseService.HbaseProductSellRank).GetByRowKey([]byte(rowKey))
+	if err != nil {
+		comErr = global.NewError(5000)
+		logger.Error(err)
+		return
+	}
+	dataMap := hbaseService.HbaseFormat(result, entity.LiveCommodityTopNMap)
+	hData := entity.DyCommodityTopN{}
+	utils.MapToStruct(dataMap, &hData)
+	data = hData.Ranks
+	return
+}
+
 func GetSaleAuthorRank(rowKeys [][]byte, dateType int) (data []entity.DyAuthorDaySalesRank, comErr global.CommonError) {
 	query := hbasehelper.NewQuery()
 	var results []*hbase.TResult_
