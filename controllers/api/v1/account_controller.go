@@ -664,6 +664,48 @@ func (receiver *AccountController) Cancel() {
 //获取各个榜单对应的日期时间筛选
 func (receiver *AccountController) TopDateTime() {
 	key := receiver.Ctx.Input.Param(":key")
+	//todo product_sale特殊处理
+	if key == "product_sale" {
+		receiver.SuccReturn(map[string]interface{}{
+			"date": []string{
+				"2021-10-13",
+				"2021-10-12",
+				"2021-10-11",
+				"2021-10-10",
+				"2021-10-09",
+				"2021-10-08",
+				"2021-10-07",
+				"2021-10-06",
+				"2021-10-05",
+				"2021-10-04",
+				"2021-10-03",
+				"2021-10-02",
+				"2021-10-01",
+				"2021-09-30",
+				"2021-09-29",
+				"2021-09-28",
+				"2021-09-27",
+				"2021-09-26",
+				"2021-09-25",
+				"2021-09-24",
+				"2021-09-23",
+				"2021-09-22",
+				"2021-09-21",
+				"2021-09-20",
+				"2021-09-19",
+				"2021-09-18",
+				"2021-09-17",
+				"2021-09-16",
+				"2021-09-15",
+				"2021-09-14",
+			},
+			"hour_list":  map[string][]string{},
+			"week_list":  []map[string]string{},
+			"month_list": []string{},
+			"desc":       "抖音销量榜的日期时间",
+		})
+		return
+	}
 	main, hourList, weekList, monthList, err := command.SwitchTopDateTime(key)
 	if err != nil {
 		receiver.FailReturn(err)
