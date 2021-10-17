@@ -140,6 +140,10 @@ func (receiver *RankController) DyLiveTopRank() {
 	data, _ := hbase.GetDyLiveTopRank(dateTime.Format("2006010215"))
 	var ranks []entity.DyLiveRank
 	for k, v := range data.Ranks {
+		//todo 直播已下播，过滤没有直播间的数据
+		if v.RoomId == "" {
+			continue
+		}
 		data.Ranks[k].LiveInfo.User.Id = business.IdEncrypt(v.LiveInfo.User.Id)
 		data.Ranks[k].RoomId = business.IdEncrypt(v.RoomId)
 		data.Ranks[k].LiveInfo.Cover = dyimg.Fix(v.LiveInfo.Cover)
