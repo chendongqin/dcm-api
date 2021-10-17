@@ -141,7 +141,7 @@ func (receiver *RankController) DyLiveTopRank() {
 	var ranks []entity.DyLiveRank
 	for k, v := range data.Ranks {
 		//todo 直播已下播，过滤没有直播间的数据
-		if v.RoomId == "" {
+		if v.RoomId == "" || v.RoomId == "0" {
 			continue
 		}
 		data.Ranks[k].LiveInfo.User.Id = business.IdEncrypt(v.LiveInfo.User.Id)
