@@ -34,7 +34,7 @@ func (receiver *ShopBusiness) ShopProductAnalysis(shopId, keyword, category, sor
 		_ = jsoniter.Unmarshal([]byte(cacheStr), &hbaseList)
 	} else {
 		startKey := ""
-		stopKey := "99999999999999999999"
+		stopKey := "9999999999999999"
 		hbaseList, _ = hbase.GetShopProductAnalysisRangDate(shopId, startKey, stopKey, startTime, stopTime)
 		_ = global.Cache.Set(cacheKey, utils.SerializeData(hbaseList), 300)
 	}
