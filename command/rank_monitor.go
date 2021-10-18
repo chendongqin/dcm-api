@@ -279,17 +279,17 @@ func getWeekListLiveShare() (res []map[string]string) {
 //月榜列表获取
 func getMonthList() (res []string) {
 	//这里仿照前段，只给三个切片
-	num := 3
-	startDateTime := time.Now().AddDate(0, -1, 0)
-	var dateSelectList []string
-	for i := 0; i < num; i++ {
-		monthDate := startDateTime.AddDate(0, -i, 0)
-		stopDate, _ := time.ParseInLocation("2006-01-02 15:04:05", "2021-09-01 00:00:00", time.Local)
-		if stopDate.Before(monthDate) {
-			dateString := monthDate.Format("2006-01")
-			dateSelectList = append(dateSelectList, dateString)
-		}
-	}
+	//num := 3
+	//startDateTime := time.Now().AddDate(0, -1, 0)
+	dateSelectList := []string{}
+	//for i := 0; i < num; i++ {
+	//	monthDate := startDateTime.AddDate(0, -i, 0)
+	//	stopDate, _ := time.ParseInLocation("2006-01-02 15:04:05", "2021-09-01 00:00:00", time.Local)
+	//	if stopDate.Before(monthDate) {
+	//		dateString := monthDate.Format("2006-01")
+	//		dateSelectList = append(dateSelectList, dateString)
+	//	}
+	//}
 	res = dateSelectList
 	return
 }
