@@ -47,6 +47,7 @@ func pickCDN(md5 string) string {
 }
 
 func buildURL(prefix, source string) string {
+	return source
 	infoURL, err := url.Parse(source)
 	if err != nil {
 		return source

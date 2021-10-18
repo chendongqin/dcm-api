@@ -134,7 +134,7 @@ func GetShopProductAnalysisRangDate(shopId, starProductId, endProductId string, 
 		SetTable(hbaseService.HbaseDyShopProductAnalysis).
 		SetStartRow([]byte(startRow)).
 		SetStopRow([]byte(endRow)).
-		Scan(1000)
+		Scan(100000)
 	if err != nil {
 		return
 	}

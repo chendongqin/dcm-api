@@ -140,6 +140,10 @@ func (receiver *RankController) DyLiveTopRank() {
 	data, _ := hbase.GetDyLiveTopRank(dateTime.Format("2006010215"))
 	var ranks []entity.DyLiveRank
 	for k, v := range data.Ranks {
+		//todo 直播已下播，过滤没有直播间的数据
+		if v.RoomId == "" || v.RoomId == "0" {
+			continue
+		}
 		data.Ranks[k].LiveInfo.User.Id = business.IdEncrypt(v.LiveInfo.User.Id)
 		data.Ranks[k].RoomId = business.IdEncrypt(v.RoomId)
 		data.Ranks[k].LiveInfo.Cover = dyimg.Fix(v.LiveInfo.Cover)
@@ -385,6 +389,15 @@ func (receiver *RankController) DyAwemeShareRank() {
 //抖音销量日榜
 func (receiver *RankController) ProductSalesTopDayRank() {
 	date := receiver.Ctx.Input.Param(":date")
+	pslTime := "2006-01-02"
+	var newDate = "2021-10-13"
+	dateTime, err := time.ParseInLocation(pslTime, date, time.Local)
+	//2021-10-14后数据使用hbase
+	newDateTime, err := time.ParseInLocation(pslTime, newDate, time.Local)
+	if dateTime.After(newDateTime) {
+		ProductSalesTopDayRank(receiver)
+		return
+	}
 	fCate := receiver.GetString("first_cate", "")
 	sCate := receiver.GetString("second_cate", "")
 	tCate := receiver.GetString("third_cate", "")
@@ -396,8 +409,6 @@ func (receiver *RankController) ProductSalesTopDayRank() {
 		receiver.FailReturn(global.NewError(4000))
 		return
 	}
-	pslTime := "2006-01-02"
-	dateTime, err := time.ParseInLocation(pslTime, date, time.Local)
 	if err != nil {
 		receiver.FailReturn(global.NewError(4000))
 		return
@@ -428,6 +439,138 @@ func (receiver *RankController) ProductSalesTopDayRank() {
 		"list":      list,
 		"total":     total,
 	})
+	return
+}
+
+func ProductSalesTopDayRank(receiver *RankController) {
+	date := receiver.Ctx.Input.Param(":date")
+	dataType, _ := receiver.GetInt("data_type", 1)
+	fCate := receiver.GetString("first_cate", "all")
+	sortStr := receiver.GetString("sort", "sales")
+	orderBy := receiver.GetString("order_by", "desc")
+	page := receiver.GetPage("page")
+	pageSize := receiver.GetPageSize("page_size", 10, 100)
+	if !receiver.HasAuth {
+		if page != 1 || dataType > 1 {
+			receiver.FailReturn(global.NewError(4004))
+			return
+		}
+		pageSize = receiver.MaxTotal
+	}
+	switch sortStr {
+	case "cos_fee":
+		sortStr = "cosfee"
+		break
+	case "order_count":
+		sortStr = "sales"
+		break
+	}
+	if date == "" {
+		receiver.FailReturn(global.NewError(4000))
+		return
+	}
+	dateTime, err := time.ParseInLocation("2006-01-02", date, time.Local)
+	if err != nil {
+		receiver.FailReturn(global.NewError(4000))
+		return
+	}
+	var key string
+	switch dataType {
+	case 1: //日榜
+		day := dateTime.Format("20060102")
+		key = day + "_" + fCate + "_" + sortStr
+		break
+	case 2: //周榜
+		startTime := dateTime
+		lastWeekStartTime := dateTime.AddDate(0, 0, -7)
+		firstDay := lastWeekStartTime.Format("02")
+		lastWeekEndTime := dateTime.AddDate(0, 0, -1)
+		endDay := lastWeekEndTime.Format("02")
+		if startTime.Weekday() != 1 {
+			receiver.FailReturn(global.NewError(4000))
+			return
+		}
+		weekRange := startTime.Format("20060102") + firstDay + endDay
+		key = weekRange + "_" + fCate + "_" + sortStr
+		break
+	case 3: //月榜
+		month := dateTime.Format("200601")
+		key = month + "_" + fCate
+		break
+	}
+	rowKey := utils.Md5_encode(key)
+	start := (page - 1) * pageSize
+	end := page * pageSize
+	total := 0
+	finished := false
+	list := make([]entity.DyProductSalesTopRank, 0)
+	if dataType != 3 {
+		if orderBy == "asc" {
+			for i := 0; i < 5; i++ {
+				tempData, _ := hbase.GetProductSellRank(rowKey, i)
+				lenNum := len(tempData)
+				tmpTotal := total
+				total += lenNum
+				if finished {
+					continue
+				}
+				if total > start {
+					if end <= total {
+						list = append(list, tempData[start-tmpTotal:end-tmpTotal]...)
+						finished = true
+					} else {
+						list = append(list, tempData[start-tmpTotal:]...)
+						start = total
+					}
+				}
+			}
+		} else {
+			for i := 4; i >= 0; i-- {
+				tempData, _ := hbase.GetProductSellRank(rowKey, i)
+				lenNum := len(tempData)
+				for j := 0; j < lenNum/2; j++ { //倒序
+					temp := tempData[lenNum-1-j]
+					tempData[lenNum-1-j] = tempData[j]
+					tempData[j] = temp
+				}
+				tmpTotal := total
+				total += lenNum
+				if finished {
+					continue
+				}
+				if total > start {
+					if end <= total {
+						list = append(list, tempData[start-tmpTotal:end-tmpTotal]...)
+						finished = true
+					} else {
+						list = append(list, tempData[start-tmpTotal:]...)
+						start = total
+					}
+				}
+			}
+		}
+	} else {
+		list, _ = hbase.GetProductSellRank(rowKey, -1)
+		sort.Slice(list, func(i, j int) bool {
+			switch sortStr {
+			case "cos_fee":
+				return list[i].CosFee > list[j].CosFee
+			default:
+				return list[i].OrderCount > list[j].OrderCount
+			}
+		})
+		total = len(list)
+	}
+	if !receiver.HasAuth && total > receiver.MaxTotal {
+		total = receiver.MaxTotal
+	}
+	ret := map[string]interface{}{
+		"list":      list,
+		"has_login": receiver.HasLogin,
+		"has_auth":  receiver.HasAuth,
+		"total":     total,
+	}
+	receiver.SuccReturn(ret)
 	return
 }
 
