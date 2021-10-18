@@ -1678,7 +1678,7 @@ func GetTimeStamp(t time.Time, layout string) string {
 
 //验证手机号
 func VerifyMobileFormat(mobileNum string) bool {
-	regular := "^((13[0-9])|(19[0-9])|(14[4,5,7])|(15[0-3,5-9])|(17[0,3,5-8])|(18[0-9])|166|(147))\\d{8}$"
+	regular := "^((13[0-9])|(19[0-9])|(14[0-9])|(15[0-9])|(17[0-9])|(18[0-9])|166|(147))\\d{8}$"
 	reg := regexp.MustCompile(regular)
 	return reg.MatchString(mobileNum)
 }
