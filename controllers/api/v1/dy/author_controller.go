@@ -112,12 +112,21 @@ func (receiver *AuthorController) BaseSearch() {
 		keyword = strings.Replace(keyword, "在抖音，记录美好生活！ ", "", 1)
 	}
 	if utils.CheckType(keyword, "url") {
-		shortUrl, _ := business.ParseDyShortUrl(keyword)
+		spiderBusiness := business.SpiderBusiness{}
+		shortUrl, _ := business.ParseDyShortUrlToSecUid(keyword)
 		if shortUrl == "" {
 			receiver.FailReturn(global.NewError(4000))
 			return
 		}
-		authorId = utils.ParseDyAuthorUrl(shortUrl) // 获取authorId
+		//authorId = utils.ParseDyAuthorUrl(shortUrl) // 获取authorId  抖音更改版本 获取不到sec_uid
+		secUid := utils.ParseDyAuthorSecUrl(shortUrl)
+		author := spiderBusiness.GetAuthorBaseInfoV2(secUid)
+		if author != nil {
+			authorId = author.AuthorId
+		} else {
+			receiver.FailReturn(global.NewError(4000))
+			return
+		}
 		keyword = ""
 	} else {
 		keyword = utils.MatchDouyinNewText(keyword)
@@ -1105,8 +1114,7 @@ func (receiver *AuthorController) SumAuthorProductOfRooms() {
 
 //达人收录 搜索
 func (receiver *AuthorController) AuthorIncomeSearch() {
-	var authorId string
-	var authorIncome = &dy2.DyAuthorIncome{}
+	var secUid string
 	keyword := receiver.GetString("keyword", "")
 	if keyword == "" {
 		receiver.FailReturn(global.NewError(4000))
@@ -1114,27 +1122,21 @@ func (receiver *AuthorController) AuthorIncomeSearch() {
 	}
 	spiderBusiness := business.NewSpiderBusiness()
 	if utils.CheckType(keyword, "url") { // 抓换链接
-		shortUrl, _ := business.ParseDyShortUrl(keyword)
+		shortUrl, _ := business.ParseDyShortUrlToSecUid(keyword)
 		if shortUrl == "" {
 			receiver.FailReturn(global.NewError(4000))
 			return
 		}
-		authorId = utils.ParseDyAuthorUrl(shortUrl) // 获取authorId
-		author, err := hbase.GetAuthor(authorId)
-		if err == nil {
-			authorIncome = &dy2.DyAuthorIncome{
-				AuthorId:     author.AuthorID,
-				Avatar:       author.Data.Avatar,
-				Nickname:     author.Data.Nickname,
-				UniqueId:     author.Data.UniqueID,
-				IsCollection: 0,
-			}
+		secUid = utils.ParseDyAuthorSecUrl(shortUrl) // 获取authorId
+		// 请求或去 抖音uid
+		authorIncome := spiderBusiness.GetAuthorBaseInfoV2(secUid)
+		if authorIncome != nil {
+			authorIncome.AuthorId = business.IdEncrypt(authorIncome.AuthorId)
+			authorIncome.Avatar = dyimg.Fix(authorIncome.Avatar)
+			receiver.SuccReturn(authorIncome)
 		} else {
-			authorIncome = spiderBusiness.GetAuthorBaseInfo(authorId)
+			receiver.FailReturn(global.NewError(4000))
 		}
-		authorIncome.AuthorId = business.IdEncrypt(authorIncome.AuthorId)
-		authorIncome.Avatar = dyimg.Fix(authorIncome.Avatar)
-		receiver.SuccReturn(authorIncome)
 		return
 	} else {
 		// 如果是keyword形式的，先查es，es没有数据就请求爬虫数据接口
@@ -1167,7 +1169,6 @@ func (receiver *AuthorController) AuthorIncomeSearch() {
 
 //达人收录 调用抖音接口获取10条记录
 func (receiver *AuthorController) AuthorListIncomeSearch() {
-	var authorId string
 	var authorIncome = &dy2.DyAuthorIncome{}
 	keyword := receiver.GetString("keyword", "")
 	isCtnSearch, _ := receiver.GetInt("isCtnSearch", 0)
@@ -1179,27 +1180,21 @@ func (receiver *AuthorController) AuthorListIncomeSearch() {
 	authorIncomeList := make([]dy2.DyAuthorIncome, 0)
 	if isCtnSearch == 0 {
 		if utils.CheckType(keyword, "url") { // 抓换链接
-			shortUrl, _ := business.ParseDyShortUrl(keyword)
+			shortUrl, _ := business.ParseDyShortUrlToSecUid(keyword)
 			if shortUrl == "" {
 				receiver.FailReturn(global.NewError(4000))
 				return
 			}
-			authorId = utils.ParseDyAuthorUrl(shortUrl) // 获取authorId
-			author, err := hbase.GetAuthor(authorId)
-			if err == nil {
-				authorIncome = &dy2.DyAuthorIncome{
-					AuthorId:     author.AuthorID,
-					Avatar:       author.Data.Avatar,
-					Nickname:     author.Data.Nickname,
-					UniqueId:     author.Data.UniqueID,
-					IsCollection: 0,
-				}
+			secUid := utils.ParseDyAuthorSecUrl(shortUrl) // 获取authorId
+			authorIncome = spiderBusiness.GetAuthorBaseInfoV2(secUid)
+			if authorIncome != nil {
+				authorIncome.AuthorId = business.IdEncrypt(authorIncome.AuthorId)
+				authorIncome.Avatar = dyimg.Fix(authorIncome.Avatar)
+				authorIncomeList = append(authorIncomeList, *authorIncome)
 			} else {
-				authorIncome = spiderBusiness.GetAuthorBaseInfo(authorId)
+				receiver.FailReturn(global.NewError(4000))
+				return
 			}
-			authorIncome.AuthorId = business.IdEncrypt(authorIncome.AuthorId)
-			authorIncome.Avatar = dyimg.Fix(authorIncome.Avatar)
-			authorIncomeList = append(authorIncomeList, *authorIncome)
 		} else {
 			// 如果是keyword形式的，先查es，es没有数据就请求爬虫数据接口
 			list, total, _ := es.NewEsAuthorBusiness().SimpleSearch(
@@ -1300,12 +1295,20 @@ func (receiver *AuthorController) AuthorSearch() {
 		keyword = strings.Replace(keyword, "在抖音，记录美好生活！ ", "", 1)
 	}
 	if utils.CheckType(keyword, "url") {
-		shortUrl, _ := business.ParseDyShortUrl(keyword)
+		spiderBusiness := business.SpiderBusiness{}
+		shortUrl, _ := business.ParseDyShortUrlToSecUid(keyword)
 		if shortUrl == "" {
 			receiver.FailReturn(global.NewError(4000))
 			return
 		}
-		authorId = utils.ParseDyAuthorUrl(shortUrl) // 获取authorId
+		secUid := utils.ParseDyAuthorSecUrl(shortUrl) // 获取authorId 抖音获取不到author_id 只能获取sec_uid
+		author := spiderBusiness.GetAuthorBaseInfoV2(secUid)
+		if author != nil {
+			authorId = author.AuthorId
+		} else {
+			receiver.FailReturn(global.NewError(4000))
+			return
+		}
 		keyword = ""
 	} else {
 		keyword = utils.MatchDouyinNewText(keyword)
