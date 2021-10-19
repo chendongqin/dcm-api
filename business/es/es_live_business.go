@@ -42,6 +42,10 @@ func (receiver *EsLiveBusiness) SearchAuthorRoomsTotal(authorId, keyword, sortSt
 	var newEsMultiQuery *elasticsearch.ElasticMultiQuery
 	var esQuery *elasticsearch.ElasticQuery
 	newEsMultiQuery, esQuery, comErr = receiver.getSearchAuthorRoomsEs(authorId, keyword, sortStr, orderBy, page, size, startDate, endDate)
+	totalSales, totalGmv = receiver.getLiveTotal(newEsMultiQuery, esQuery, "real_sales", "real_gmv")
+	return
+}
+func (receiver *EsLiveBusiness) getLiveTotal(newEsMultiQuery *elasticsearch.ElasticMultiQuery, esQuery *elasticsearch.ElasticQuery, field_sales, field_gmv string) (totalSales int64, totalGmv float64) {
 	countResult := newEsMultiQuery.
 		RawQuery(map[string]interface{}{
 			"query": map[string]interface{}{
@@ -53,12 +57,12 @@ func (receiver *EsLiveBusiness) SearchAuthorRoomsTotal(authorId, keyword, sortSt
 			"aggs": map[string]interface{}{
 				"total_gmv": map[string]interface{}{
 					"sum": map[string]interface{}{
-						"field": "real_gmv",
+						"field": field_gmv,
 					},
 				},
 				"total_sales": map[string]interface{}{
 					"sum": map[string]interface{}{
-						"field": "real_sales",
+						"field": field_sales,
 					},
 				},
 			},
@@ -943,41 +947,7 @@ func (receiver *EsLiveBusiness) SearchProductRoomsTotal(productId, keyword, sort
 	var newEsMultiQuery *elasticsearch.ElasticMultiQuery
 	var esQuery *elasticsearch.ElasticQuery
 	newEsMultiQuery, esQuery, comErr = receiver.getSearchProductRoomsEs(productId, keyword, sortStr, orderBy, page, size, startTime, endTime)
-
-	countResult := newEsMultiQuery.
-		RawQuery(map[string]interface{}{
-			"query": map[string]interface{}{
-				"bool": map[string]interface{}{
-					"must": esQuery.Condition,
-				},
-			},
-			"size": 0,
-			"aggs": map[string]interface{}{
-				"total_gmv": map[string]interface{}{
-					"sum": map[string]interface{}{
-						"field": "predict_gmv",
-					},
-				},
-				"total_sales": map[string]interface{}{
-					"sum": map[string]interface{}{
-						"field": "predict_sales",
-					},
-				},
-			},
-		})
-
-	if h, ok := countResult["aggregations"]; ok {
-		if t, ok2 := h.(map[string]interface{})["total_sales"]; ok2 {
-			if t1, ok3 := t.(map[string]interface{})["value"]; ok3 {
-				totalSales = utils.ToInt64(math.Floor(t1.(float64)))
-			}
-		}
-		if t, ok2 := h.(map[string]interface{})["total_gmv"]; ok2 {
-			if t1, ok3 := t.(map[string]interface{})["value"]; ok3 {
-				totalGmv = t1.(float64)
-			}
-		}
-	}
+	totalSales, totalGmv = receiver.getLiveTotal(newEsMultiQuery, esQuery, "predict_sales", "predict_gmv")
 	return
 }
 
