@@ -159,34 +159,8 @@ func (e *EsVideoBusiness) getSearchAwemeByProductEs(productId, keyword, sortStr,
 }
 
 //获取达人视频列表
-func (e *EsVideoBusiness) SearchByAuthor(authorId, keyword, sortStr, orderBy string, hasProduct, page, pageSize int, startTime, endTime time.Time) (list []es.DyAweme, total int, totalSales int64, totalGmv float64, comErr global.CommonError) {
-	if orderBy == "" {
-		orderBy = "desc"
-	}
-	if sortStr == "" {
-		sortStr = "aweme_create_time"
-	}
-	if !utils.InArrayString(orderBy, []string{"desc", "asc"}) {
-		comErr = global.NewError(4000)
-		return
-	}
-	if !utils.InArrayString(sortStr, []string{"aweme_create_time", "digg_count", "comment_count", "share_count", "aweme_gmv", "sales"}) {
-		comErr = global.NewError(4000)
-		return
-	}
-	esTable, connection, err := GetESTableByTime(es.DyVideoTable, startTime, endTime)
-	if err != nil {
-		comErr = global.NewError(4000)
-		return
-	}
-	esQuery, esMultiQuery := elasticsearch.NewElasticQueryGroup()
-	esQuery.SetTerm("author_id", authorId)
-	esQuery.SetExist("field", "aweme_title")
-	esQuery.SetTerm("exist", 1)
-	esQuery.SetRange("aweme_create_time", map[string]interface{}{
-		"gte": startTime.Unix(),
-		"lt":  endTime.AddDate(0, 0, 1).Unix(),
-	})
+func (e *EsVideoBusiness) SearchByAuthor(authorId, keyword, sortStr, orderBy string, hasProduct, page, pageSize int, startTime, endTime time.Time) (list []es.DyAweme, total int, comErr global.CommonError) {
+
 	tmpPage := page
 	tmpPageSize := pageSize
 	if keyword != "" {
@@ -196,15 +170,8 @@ func (e *EsVideoBusiness) SearchByAuthor(authorId, keyword, sortStr, orderBy str
 	//if keyword != "" {
 	//	esQuery.SetMatchPhrase("aweme_title", keyword)
 	//}
-	if hasProduct == 1 {
-		esQuery.SetExist("field", "product_ids")
-	}
-	var cacheTime time.Duration = 180
-	newEsMultiQuery := esMultiQuery.
-		SetConnection(connection).
-		SetTable(esTable).
-		SetCache(cacheTime).
-		AddMust(esQuery.Condition)
+	var newEsMultiQuery *elasticsearch.ElasticMultiQuery
+	newEsMultiQuery, _, comErr = e.getSearchByAuthorEs(authorId, keyword, sortStr, orderBy, hasProduct, page, pageSize, startTime, endTime)
 	result := newEsMultiQuery.
 		SetOrderBy(elasticsearch.NewElasticOrder().Add(sortStr, orderBy).Order).
 		//SetLimit((page-1)*pageSize, pageSize).
@@ -212,7 +179,7 @@ func (e *EsVideoBusiness) SearchByAuthor(authorId, keyword, sortStr, orderBy str
 		SetMultiQuery().
 		Query()
 	utils.MapToStruct(result, &list)
-	total = esMultiQuery.Count
+	total = newEsMultiQuery.Count
 	if keyword != "" {
 		keyword = strings.ToLower(keyword)
 		newList := []es.DyAweme{}
@@ -234,6 +201,15 @@ func (e *EsVideoBusiness) SearchByAuthor(authorId, keyword, sortStr, orderBy str
 		}
 		list = newList[start:end]
 	}
+
+	return
+}
+
+//获取达人视频列表
+func (e *EsVideoBusiness) SearchByAuthorTotal(authorId, keyword, sortStr, orderBy string, hasProduct, page, pageSize int, startTime, endTime time.Time) (totalSales int64, totalGmv float64, comErr global.CommonError) {
+	var newEsMultiQuery *elasticsearch.ElasticMultiQuery
+	var esQuery *elasticsearch.ElasticQuery
+	newEsMultiQuery, esQuery, comErr = e.getSearchByAuthorEs(authorId, keyword, sortStr, orderBy, hasProduct, page, pageSize, startTime, endTime)
 	//计算汇总数据
 	countResult := newEsMultiQuery.
 		RawQuery(map[string]interface{}{
@@ -268,6 +244,51 @@ func (e *EsVideoBusiness) SearchByAuthor(authorId, keyword, sortStr, orderBy str
 			}
 		}
 	}
+	return
+}
+
+//获取达人视频列表-es句柄
+func (e *EsVideoBusiness) getSearchByAuthorEs(authorId, keyword, sortStr, orderBy string, hasProduct, page, pageSize int, startTime, endTime time.Time) (newEsMultiQuery *elasticsearch.ElasticMultiQuery, eQ *elasticsearch.ElasticQuery, comErr global.CommonError) {
+	if orderBy == "" {
+		orderBy = "desc"
+	}
+	if sortStr == "" {
+		sortStr = "aweme_create_time"
+	}
+	if !utils.InArrayString(orderBy, []string{"desc", "asc"}) {
+		comErr = global.NewError(4000)
+		return
+	}
+	if !utils.InArrayString(sortStr, []string{"aweme_create_time", "digg_count", "comment_count", "share_count", "aweme_gmv", "sales"}) {
+		comErr = global.NewError(4000)
+		return
+	}
+	esTable, connection, err := GetESTableByTime(es.DyVideoTable, startTime, endTime)
+	if err != nil {
+		comErr = global.NewError(4000)
+		return
+	}
+	esQuery, esMultiQuery := elasticsearch.NewElasticQueryGroup()
+	esQuery.SetTerm("author_id", authorId)
+	esQuery.SetExist("field", "aweme_title")
+	esQuery.SetTerm("exist", 1)
+	esQuery.SetRange("aweme_create_time", map[string]interface{}{
+		"gte": startTime.Unix(),
+		"lt":  endTime.AddDate(0, 0, 1).Unix(),
+	})
+	//if keyword != "" {
+	//	esQuery.SetMatchPhrase("aweme_title", keyword)
+	//}
+	if hasProduct == 1 {
+		esQuery.SetExist("field", "product_ids")
+	}
+	var cacheTime time.Duration = 180
+	newEsMultiQuery = esMultiQuery.
+		SetConnection(connection).
+		SetTable(esTable).
+		SetCache(cacheTime).
+		AddMust(esQuery.Condition)
+	eQ = esQuery
 	return
 }
 

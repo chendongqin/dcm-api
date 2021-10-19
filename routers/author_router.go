@@ -21,6 +21,7 @@ func init() {
 			beego.NSRouter("/reputation/:author_id", &v1dy.AuthorController{}, "get:Reputation"),
 			beego.NSRouter("/awemes/:author_id/:start/:end", &v1dy.AuthorController{}, "get:AuthorAwemesByDay"),
 			beego.NSRouter("/aweme/list/:author_id/:start/:end", &v1dy.AuthorController{}, "get:AuthorAwemes"),
+			beego.NSRouter("/aweme/total/:author_id/:start/:end", &v1dy.AuthorController{}, "get:AuthorAwemesTotal"),
 			beego.NSRouter("/basic/chart/:author_id/:start/:end", &v1dy.AuthorController{}, "get:AuthorBasicChart"),
 			beego.NSRouter("/live/analysis/:author_id/:start/:end", &v1dy.AuthorController{}, "get:CountLiveRoomAnalyse"),
 			beego.NSRouter("/live/rooms/:author_id/:start/:end", &v1dy.AuthorController{}, "get:AuthorLiveRooms"),

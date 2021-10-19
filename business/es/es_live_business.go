@@ -24,53 +24,24 @@ func NewEsLiveBusiness() *EsLiveBusiness {
 }
 
 //达人直播间搜索
-func (receiver *EsLiveBusiness) SearchAuthorRooms(authorId, keyword, sortStr, orderBy string, page, size int, startDate, endDate time.Time) (list []es.EsDyLiveInfo, total int, totalSales int64, totalGmv float64, comErr global.CommonError) {
-	if sortStr == "" {
-		sortStr = "create_time"
-	}
-	if orderBy == "" {
-		orderBy = "desc"
-	}
-	if !utils.InArrayString(sortStr, []string{"create_time", "predict_gmv", "predict_sales", "max_user_count"}) {
-		comErr = global.NewError(4000)
-		return
-	}
-	if !utils.InArrayString(orderBy, []string{"desc", "asc"}) {
-		comErr = global.NewError(4000)
-		return
-	}
-	if size > 100 {
-		comErr = global.NewError(4000)
-		return
-	}
-	//兼容数据 2021-06-29
-	esTable, connection, err := GetESTableByTime(es.DyLiveInfoBaseTable, startDate, endDate)
-	if err != nil {
-		comErr = global.NewError(4000)
-		return
-	}
-	esQuery, esMultiQuery := elasticsearch.NewElasticQueryGroup()
-	esQuery.SetTerm("author_id", authorId)
-	esQuery.SetRange("create_time", map[string]interface{}{
-		"gte": startDate.Unix(),
-		"lt":  endDate.AddDate(0, 0, 1).Unix(),
-	})
-	if keyword != "" {
-		esQuery.SetMultiMatch([]string{"title", "product_title"}, keyword)
-	}
-
-	newEsMultiQuery := esMultiQuery.
-		SetConnection(connection).
-		SetTable(esTable).
-		AddMust(esQuery.Condition)
+func (receiver *EsLiveBusiness) SearchAuthorRooms(authorId, keyword, sortStr, orderBy string, page, size int, startDate, endDate time.Time) (list []es.EsDyLiveInfo, total int, comErr global.CommonError) {
+	var newEsMultiQuery *elasticsearch.ElasticMultiQuery
+	newEsMultiQuery, _, comErr = receiver.getSearchAuthorRoomsEs(authorId, keyword, sortStr, orderBy, page, size, startDate, endDate)
 	results := newEsMultiQuery.
 		SetLimit((page-1)*size, size).
 		SetOrderBy(elasticsearch.NewElasticOrder().Add(sortStr, orderBy).Order).
 		SetMultiQuery().
 		Query()
 	utils.MapToStruct(results, &list)
-	total = esMultiQuery.Count
+	total = newEsMultiQuery.Count
+	return
+}
 
+//达人直播间搜索-total
+func (receiver *EsLiveBusiness) SearchAuthorRoomsTotal(authorId, keyword, sortStr, orderBy string, page, size int, startDate, endDate time.Time) (totalSales int64, totalGmv float64, comErr global.CommonError) {
+	var newEsMultiQuery *elasticsearch.ElasticMultiQuery
+	var esQuery *elasticsearch.ElasticQuery
+	newEsMultiQuery, esQuery, comErr = receiver.getSearchAuthorRoomsEs(authorId, keyword, sortStr, orderBy, page, size, startDate, endDate)
 	countResult := newEsMultiQuery.
 		RawQuery(map[string]interface{}{
 			"query": map[string]interface{}{
@@ -105,6 +76,50 @@ func (receiver *EsLiveBusiness) SearchAuthorRooms(authorId, keyword, sortStr, or
 			}
 		}
 	}
+	return
+}
+
+//达人直播间搜索-获取es句柄
+func (receiver *EsLiveBusiness) getSearchAuthorRoomsEs(authorId, keyword, sortStr, orderBy string, page, size int, startDate, endDate time.Time) (newEsMultiQuery *elasticsearch.ElasticMultiQuery, eQ *elasticsearch.ElasticQuery, comErr global.CommonError) {
+	if sortStr == "" {
+		sortStr = "create_time"
+	}
+	if orderBy == "" {
+		orderBy = "desc"
+	}
+	if !utils.InArrayString(sortStr, []string{"create_time", "predict_gmv", "predict_sales", "max_user_count"}) {
+		comErr = global.NewError(4000)
+		return
+	}
+	if !utils.InArrayString(orderBy, []string{"desc", "asc"}) {
+		comErr = global.NewError(4000)
+		return
+	}
+	if size > 100 {
+		comErr = global.NewError(4000)
+		return
+	}
+	//兼容数据 2021-06-29
+	esTable, connection, err := GetESTableByTime(es.DyLiveInfoBaseTable, startDate, endDate)
+	if err != nil {
+		comErr = global.NewError(4000)
+		return
+	}
+	esQuery, esMultiQuery := elasticsearch.NewElasticQueryGroup()
+	esQuery.SetTerm("author_id", authorId)
+	esQuery.SetRange("create_time", map[string]interface{}{
+		"gte": startDate.Unix(),
+		"lt":  endDate.AddDate(0, 0, 1).Unix(),
+	})
+	if keyword != "" {
+		esQuery.SetMultiMatch([]string{"title", "product_title"}, keyword)
+	}
+
+	newEsMultiQuery = esMultiQuery.
+		SetConnection(connection).
+		SetTable(esTable).
+		AddMust(esQuery.Condition)
+	eQ = esQuery
 	return
 }
 

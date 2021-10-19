@@ -21,7 +21,7 @@ func NewAuthorAwemeBusiness() *AuthorAwemeBusiness {
 func (a *AuthorAwemeBusiness) GetVideoAggRangeDate(authorId string, startTime, endTime time.Time) (data dy.AuthorVideoOverview) {
 	var videoNum, productVideo int64
 	esVideoBusiness := es.NewEsVideoBusiness()
-	results, total, _, _, _ := esVideoBusiness.SearchByAuthor(authorId, "", "", "", 0, 1, 10000, startTime, endTime)
+	results, total, _ := esVideoBusiness.SearchByAuthor(authorId, "", "", "", 0, 1, 10000, startTime, endTime)
 	videoNum = int64(total)
 	var diggMax, diggCount, commentMax, commentCount, forwardMax, forwardCount int64
 	var diggMin int64 = -1
