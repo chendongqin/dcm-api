@@ -363,7 +363,7 @@ func checkIsExistHour(key string, currentHour int) (isExist bool) {
 		isExist = requestRank(pathInfo)
 		if isExist {
 			//有数据情况，缓存设置到今天结束
-			dateString := fmt.Sprintf("%s %s:59:59", now.Format("2006-01-02"), now.Hour())
+			dateString := fmt.Sprintf("%s %s:59:59", now.Format("2006-01-02"), strconv.Itoa(now.Hour()))
 			stopTime, _ := time.ParseInLocation("2006-01-02 15:04:05", dateString, time.Local)
 			seconds := stopTime.Unix() - now.Unix()
 			secondsDuration := time.Duration(seconds) * time.Second
