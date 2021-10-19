@@ -3,6 +3,7 @@ package command
 import (
 	"dongchamao/business"
 	"dongchamao/global"
+	"dongchamao/global/cache"
 	"dongchamao/global/utils"
 	"fmt"
 	"strconv"
@@ -123,25 +124,30 @@ func getHourGroup() (hourGroup map[string][]string) {
 	return
 }
 
-//demo
+//监控报警对应的榜单
 func checkLiveHotRank(pathInfo PathDesc) {
-	fmt.Println(pathInfo)
+	checkRes := requestRank(pathInfo)
+	if !checkRes {
+		business.NewMonitorBusiness().SendTemplateMessage("S", pathInfo.Desc, fmt.Sprintf("%s挂了，请求地址：%s", pathInfo.Desc, pathInfo.Path))
+	}
+	return
+}
+
+//请求对应的榜单
+func requestRank(pathInfo PathDesc) (checkRes bool) {
 	interBusiness := business.NewInterBusiness()
 	testApi := interBusiness.BuildURL(pathInfo.Path)
 	res, comErr := interBusiness.HttpGet(testApi)
 	if comErr != nil {
 		return
 	}
-	checkRes := false
+	checkRes = false
 	resMap := map[string]interface{}{}
 	utils.MapToStruct(res, &resMap)
 	if v, exist := resMap["list"]; exist {
 		if len(v.([]interface{})) > 0 {
 			checkRes = true
 		}
-	}
-	if !checkRes {
-		business.NewMonitorBusiness().SendTemplateMessage("S", pathInfo.Desc, fmt.Sprintf("%s挂了，请求地址：%s", pathInfo.Desc, pathInfo.Path))
 	}
 	return
 }
@@ -167,7 +173,7 @@ func SwitchTopDateTime(key string) (main map[string][]string, hourList map[strin
 	case "live_top":
 		main, hourList = dateTimeLiveHour()
 	case "product_sale":
-		main = getCheckDateList(key)
+		main = getProductSaleDateList(key)
 	case "product_share":
 		main = getCheckDateList(key)
 	case "product_live_sale":
@@ -186,6 +192,20 @@ func SwitchTopDateTime(key string) (main map[string][]string, hourList map[strin
 		weekList = getWeekListLiveShare()
 	}
 	main["desc"] = []string{fmt.Sprintf("%s的日期时间", desc)}
+	return
+}
+
+//抖音销量榜特殊-要根据有没有数据展示出来筛选日期，而不是时间
+func getProductSaleDateList(key string) (res map[string][]string) {
+	res = map[string][]string{"date": {}, "hour": {}}
+	now := time.Now()
+	isExist := checkIsExistData(key)
+	beforeInt := -2
+	if isExist {
+		beforeInt = -1
+	}
+	startSate := now.AddDate(0, 0, beforeInt)
+	res["date"] = getDateList(30, startSate)
 	return
 }
 
@@ -312,6 +332,36 @@ func checkIsBefore(key string) (isBefore bool) {
 	dateTime := fmt.Sprintf("%s %s", time.Now().Format("2006-01-02"), groupKey)
 	dateTimeStampObj, _ := time.ParseInLocation("2006-01-02 15:04:05", dateTime, time.Local)
 	isBefore = dateTimeStampObj.Before(time.Now())
+	return
+
+}
+
+//检测该榜单是否已经存在了数据
+func checkIsExistData(key string) (isExist bool) {
+	cachKey := cache.GetCacheKey(cache.DyRankCache, "monitor", key)
+	result := global.Cache.Get(cachKey)
+	if result != "" {
+		if result == "1" {
+			isExist = true
+		} else {
+			isExist = false
+		}
+	} else {
+		isExist = false
+	}
+	if isExist == false {
+		pathInfo := getRoute(key)
+		isExist = requestRank(pathInfo)
+		if isExist {
+			//有数据情况，缓存设置到今天结束
+			now := time.Now()
+			dateString := fmt.Sprintf("%s 23:59:59", now.Format("2006-01-02"))
+			stopTime, _ := time.ParseInLocation("2006-01-02 15:04:05", dateString, time.Local)
+			seconds := stopTime.Unix() - now.Unix()
+			secondsDuration := time.Duration(seconds) * time.Second
+			global.Cache.Set(cachKey, "1", secondsDuration)
+		}
+	}
 	return
 
 }
