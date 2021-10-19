@@ -904,12 +904,13 @@ func ParseDyAuthorUrl(url string) (ret string) {
 func ParseDyAuthorSecUrl(url string) (ret string) {
 	//https://www.iesdouyin.com/share/user/96407975163
 	//https://www.iesdouyin.com/share/user/MS4wLjABAAAAZDHS1HoMuPvbPif5eCq7ksI2IIMAfmcmiQpIoH9vbRE?app=aweme&amp;utm_campaign=client_share&amp;utm_medium=ios&amp;tt_from=copy&amp;utm_source=copy
-	pattern := `\/user\/(\w+)`
+	pattern := `\/user\/(.*)`
 	reg := regexp.MustCompile(pattern)
 	da := reg.FindAllStringSubmatch(url, -1)
 	if len(da) > 0 {
 		if len(da[0]) > 1 {
 			ret = da[0][1]
+			logs.Info("[sec_uid:][%s]", ret)
 		}
 		return
 	}
