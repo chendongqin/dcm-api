@@ -124,13 +124,17 @@ func (receiver *AuthorController) BaseSearch() {
 	}
 	EsAuthorBusiness := es.NewEsAuthorBusiness()
 	//只带keyword去查
-	_, preTotal, comErr := EsAuthorBusiness.BaseSearch(authorId, keyword, "", "", "", "", "", "", "", "",
-		0, 0, 0, 0, 0, 0, 0, 0,
-		0, 0, 0, 0, 0, 0, 0, 0, 0, page, pageSize,
-		sortStr, orderBy)
-	if comErr != nil {
-		receiver.FailReturn(comErr)
-		return
+	preTotal := 0
+	var comErr global.CommonError
+	if page == 1 {
+		_, preTotal, comErr = EsAuthorBusiness.BaseSearch(authorId, keyword, "", "", "", "", "", "", "", "",
+			0, 0, 0, 0, 0, 0, 0, 0,
+			0, 0, 0, 0, 0, 0, 0, 0, 0, page, pageSize,
+			sortStr, orderBy)
+		if comErr != nil {
+			receiver.FailReturn(comErr)
+			return
+		}
 	}
 	list, total, comErr := EsAuthorBusiness.BaseSearch(authorId, keyword, category, secondCategory, sellTags, province, city, fanProvince, fanCity, fanAge,
 		minFollower, maxFollower, minWatch, maxWatch, minDigg, maxDigg, minGmv, maxGmv,
@@ -140,7 +144,7 @@ func (receiver *AuthorController) BaseSearch() {
 		receiver.FailReturn(comErr)
 		return
 	}
-	if keyword != "" && preTotal == 0 {
+	if keyword != "" && preTotal == 0 && page == 1 {
 		spiderBusiness := business.NewSpiderBusiness()
 		authorIncomeRawList, err1 := spiderBusiness.GetAuthorListByKeyword(keyword)
 		if err1 != nil {

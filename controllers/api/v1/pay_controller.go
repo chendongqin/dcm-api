@@ -749,3 +749,98 @@ func (receiver *PayController) OrderList() {
 		"total": total,
 	})
 }
+
+func (receiver *PayController) CreateOrderInvoice() {
+	InputData := receiver.InputFormat()
+	orderIds := InputData.GetArrInt("orderIds")
+	amount := InputData.GetFloat64("amount", 0)           //开票金额
+	head := InputData.GetString("head", "")               //发票抬头
+	invoiceNum := InputData.GetString("invoiceNum", "")   //纳税人识别号
+	email := InputData.GetString("email", "")             //电子邮箱
+	remark := InputData.GetString("remark", "")           //发票备注
+	phone := InputData.GetString("phone", "")             //收件人手机号
+	bankName := InputData.GetString("bankName", "")       //开户银行
+	bankAccount := InputData.GetString("bankAccount", "") //开户行账号
+	regAddress := InputData.GetString("regAddress", "")   //注册地址
+	invoiceType := InputData.GetInt("invoiceType", 0)     //发票类型
+	address := InputData.GetString("address", "")         //收件人地址
+	now := time.Now()
+	if amount == 0 || head == "" || invoiceNum == "" || bankName == "" || bankAccount == "" || regAddress == "" {
+		receiver.FailReturn(global.NewError(4000))
+		return
+	}
+	if invoiceType == 0 { //增值税专用发票
+		if phone == "" || address == "" {
+			receiver.FailReturn(global.NewError(4000))
+			return
+		}
+	} else {
+		if email == "" {
+			receiver.FailReturn(global.NewError(4000))
+			return
+		}
+	}
+	session := dcm.GetDbSession()
+	session.Close()
+	err := session.Begin()
+	if err != nil {
+		receiver.FailReturn(global.NewError(5000))
+		return
+	}
+	orderInvoice := dcm.DcVipOrderInvoice{
+		UserId:      receiver.UserId,
+		Username:    receiver.UserInfo.Username,
+		Amount:      amount,
+		Head:        head,
+		InvoiceNum:  invoiceNum,
+		Email:       email,
+		Phone:       phone,
+		BankName:    bankName,
+		BankAccount: bankAccount,
+		RegAddress:  regAddress,
+		InvoiceType: invoiceType,
+		Address:     regAddress,
+		Remark:      remark,
+		CreateTime:  now,
+		UpdateTime:  now,
+		Status:      0,
+	}
+	if _, err := session.Insert(&orderInvoice); err != nil {
+		err1 := session.Rollback()
+		if err1 != nil {
+			receiver.FailReturn(global.NewError(5000))
+			return
+		}
+		receiver.FailReturn(global.NewError(5000))
+		return
+	}
+	if orderInvoice.Id == 0 {
+		err1 := session.Rollback()
+		if err1 != nil {
+			receiver.FailReturn(global.NewError(5000))
+			return
+		}
+		receiver.FailReturn(global.NewError(5000))
+		return
+	}
+	dcVipOrder := dcm.DcVipOrder{}
+	dcVipOrder.InvoiceId = orderInvoice.Id
+	_, err = session.In("id", orderIds).Cols("invoice_id").Update(&dcVipOrder)
+	if err != nil {
+		err1 := session.Rollback()
+		if err1 != nil {
+			receiver.FailReturn(global.NewError(5000))
+			return
+		}
+		receiver.FailReturn(global.NewError(5000))
+		return
+	}
+	err = session.Commit()
+	if err != nil {
+		receiver.FailReturn(global.NewError(5000))
+		return
+	}
+	receiver.SuccReturn(map[string]interface{}{
+		"orderInvoice_id": orderInvoice.Id,
+	})
+}
