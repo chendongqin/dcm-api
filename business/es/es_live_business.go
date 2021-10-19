@@ -23,7 +23,7 @@ func NewEsLiveBusiness() *EsLiveBusiness {
 }
 
 //达人直播间搜索
-func (receiver *EsLiveBusiness) SearchAuthorRooms(authorId, keyword, sortStr, orderBy string, page, size int, startDate, endDate time.Time) (list []es.EsDyLiveInfo, total int, comErr global.CommonError) {
+func (receiver *EsLiveBusiness) SearchAuthorRooms(authorId, keyword, sortStr, orderBy string, page, size int, startDate, endDate time.Time) (list []es.EsDyLiveInfo, total int, totalSales int64, totalGmv float64, comErr global.CommonError) {
 	if sortStr == "" {
 		sortStr = "create_time"
 	}
@@ -57,16 +57,53 @@ func (receiver *EsLiveBusiness) SearchAuthorRooms(authorId, keyword, sortStr, or
 	if keyword != "" {
 		esQuery.SetMultiMatch([]string{"title", "product_title"}, keyword)
 	}
-	results := esMultiQuery.
+
+	newEsMultiQuery := esMultiQuery.
 		SetConnection(connection).
 		SetTable(esTable).
-		AddMust(esQuery.Condition).
+		AddMust(esQuery.Condition)
+	results := newEsMultiQuery.
 		SetLimit((page-1)*size, size).
 		SetOrderBy(elasticsearch.NewElasticOrder().Add(sortStr, orderBy).Order).
 		SetMultiQuery().
 		Query()
 	utils.MapToStruct(results, &list)
 	total = esMultiQuery.Count
+
+	countResult := newEsMultiQuery.
+		RawQuery(map[string]interface{}{
+			"query": map[string]interface{}{
+				"bool": map[string]interface{}{
+					"must": esQuery.Condition,
+				},
+			},
+			"size": 0,
+			"aggs": map[string]interface{}{
+				"total_gmv": map[string]interface{}{
+					"sum": map[string]interface{}{
+						"field": "real_gmv",
+					},
+				},
+				"total_sales": map[string]interface{}{
+					"sum": map[string]interface{}{
+						"field": "real_sales",
+					},
+				},
+			},
+		})
+
+	if h, ok := countResult["aggregations"]; ok {
+		if t, ok2 := h.(map[string]interface{})["total_sales"]; ok2 {
+			if t1, ok3 := t.(map[string]interface{})["value"]; ok3 {
+				totalSales = utils.ToInt64(math.Floor(t1.(float64)))
+			}
+		}
+		if t, ok2 := h.(map[string]interface{})["total_gmv"]; ok2 {
+			if t1, ok3 := t.(map[string]interface{})["value"]; ok3 {
+				totalGmv = t1.(float64)
+			}
+		}
+	}
 	return
 }
 
