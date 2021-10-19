@@ -569,7 +569,7 @@ func (receiver *ProductController) ProductLiveRoomList() {
 		return
 	}
 	esLiveBusiness := es.NewEsLiveBusiness()
-	list, total, comErr := esLiveBusiness.SearchProductRooms(productId, keyword, sortStr, orderBy, page, size, t1, t2)
+	list, total, totalSales, totalGmv, comErr := esLiveBusiness.SearchProductRooms(productId, keyword, sortStr, orderBy, page, size, t1, t2)
 	if comErr != nil {
 		receiver.FailReturn(comErr)
 		return
@@ -699,6 +699,8 @@ func (receiver *ProductController) ProductLiveRoomList() {
 		"list":           countList,
 		"total":          total,
 		"max_show_total": maxTotal,
+		"total_sales":    totalSales,
+		"total_gmv":      totalGmv,
 	})
 	return
 }
@@ -994,7 +996,7 @@ func (receiver *ProductController) ProductAweme() {
 	orderBy := receiver.GetString("order_by", "")
 	page := receiver.GetPage("page")
 	pageSize := receiver.GetPageSize("page_size", 10, 50)
-	list, total, comErr := es.NewEsVideoBusiness().SearchAwemeByProduct(productId, keyword, sortStr, orderBy, startTime, endTime, page, pageSize)
+	list, total, totalSales, totalGmv, comErr := es.NewEsVideoBusiness().SearchAwemeByProduct(productId, keyword, sortStr, orderBy, startTime, endTime, page, pageSize)
 	for k, v := range list {
 		list[k].ProductId = business.IdEncrypt(v.ProductId)
 		list[k].AuthorId = business.IdEncrypt(v.AuthorId)
@@ -1012,6 +1014,8 @@ func (receiver *ProductController) ProductAweme() {
 		"list":           list,
 		"total":          total,
 		"max_show_total": maxTotal,
+		"total_sales":    totalSales,
+		"total_gmv":      totalGmv,
 	})
 }
 

@@ -18,7 +18,7 @@ func NewEsVideoBusiness() *EsVideoBusiness {
 }
 
 func (e *EsVideoBusiness) SearchAwemeByProduct(productId, keyword, sortStr, orderBy string,
-	startTime, endTime time.Time, page, pageSize int) (list []es.DyProductVideo, total int, comErr global.CommonError) {
+	startTime, endTime time.Time, page, pageSize int) (list []es.DyProductVideo, total int, totalSales int64, totalGmv float64, comErr global.CommonError) {
 	if orderBy == "" {
 		orderBy = "desc"
 	}
@@ -63,17 +63,53 @@ func (e *EsVideoBusiness) SearchAwemeByProduct(productId, keyword, sortStr, orde
 		})
 	}
 	var cacheTime time.Duration = 180
-	result := esMultiQuery.
+	newEsMultiQuery := esMultiQuery.
 		SetConnection(connection).
 		SetTable(esTable).
 		SetCache(cacheTime).
-		AddMust(esQuery.Condition).
+		AddMust(esQuery.Condition)
+	result := newEsMultiQuery.
 		SetOrderBy(elasticsearch.NewElasticOrder().Add(sortStr, orderBy).Order).
 		SetLimit((page-1)*pageSize, pageSize).
 		SetMultiQuery().
 		Query()
 	utils.MapToStruct(result, &list)
 	total = esMultiQuery.Count
+
+	countResult := newEsMultiQuery.
+		RawQuery(map[string]interface{}{
+			"query": map[string]interface{}{
+				"bool": map[string]interface{}{
+					"must": esQuery.Condition,
+				},
+			},
+			"size": 0,
+			"aggs": map[string]interface{}{
+				"total_gmv": map[string]interface{}{
+					"sum": map[string]interface{}{
+						"field": "aweme_gmv",
+					},
+				},
+				"total_sales": map[string]interface{}{
+					"sum": map[string]interface{}{
+						"field": "sales",
+					},
+				},
+			},
+		})
+
+	if h, ok := countResult["aggregations"]; ok {
+		if t, ok2 := h.(map[string]interface{})["total_sales"]; ok2 {
+			if t1, ok3 := t.(map[string]interface{})["value"]; ok3 {
+				totalSales = utils.ToInt64(math.Floor(t1.(float64)))
+			}
+		}
+		if t, ok2 := h.(map[string]interface{})["total_gmv"]; ok2 {
+			if t1, ok3 := t.(map[string]interface{})["value"]; ok3 {
+				totalGmv = t1.(float64)
+			}
+		}
+	}
 	return
 }
 
