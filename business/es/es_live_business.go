@@ -860,7 +860,7 @@ func (receiver *EsLiveBusiness) SumAuthorProductCountRoom(authorId, productId st
 
 //商品直播间搜索
 func (receiver *EsLiveBusiness) SearchProductRooms(productId, keyword, sortStr, orderBy string,
-	page, size int, startTime, endTime time.Time) (list []es.EsAuthorLiveProduct, total int, comErr global.CommonError) {
+	page, size int, startTime, endTime time.Time) (list []es.EsAuthorLiveProduct, total int, totalSales int64, totalGmv float64, comErr global.CommonError) {
 	if sortStr == "" {
 		sortStr = "shelf_time"
 	}
@@ -893,10 +893,11 @@ func (receiver *EsLiveBusiness) SearchProductRooms(productId, keyword, sortStr, 
 	if keyword != "" {
 		esQuery.SetMultiMatch([]string{"room_title", "nickname"}, keyword)
 	}
-	results := esMultiQuery.
+	newEsMultiQuery := esMultiQuery.
 		SetConnection(connection).
 		SetTable(esTable).
-		AddMust(esQuery.Condition).
+		AddMust(esQuery.Condition)
+	results := newEsMultiQuery.
 		SetLimit((page-1)*size, size).
 		SetOrderBy(elasticsearch.NewElasticOrder().Add(sortStr, orderBy).Order).
 		SetMultiQuery().
@@ -923,6 +924,40 @@ func (receiver *EsLiveBusiness) SearchProductRooms(productId, keyword, sortStr, 
 		//}
 	}
 	total = esMultiQuery.Count
+	countResult := newEsMultiQuery.
+		RawQuery(map[string]interface{}{
+			"query": map[string]interface{}{
+				"bool": map[string]interface{}{
+					"must": esQuery.Condition,
+				},
+			},
+			"size": 0,
+			"aggs": map[string]interface{}{
+				"total_gmv": map[string]interface{}{
+					"sum": map[string]interface{}{
+						"field": "predict_gmv",
+					},
+				},
+				"total_sales": map[string]interface{}{
+					"sum": map[string]interface{}{
+						"field": "predict_sales",
+					},
+				},
+			},
+		})
+
+	if h, ok := countResult["aggregations"]; ok {
+		if t, ok2 := h.(map[string]interface{})["total_sales"]; ok2 {
+			if t1, ok3 := t.(map[string]interface{})["value"]; ok3 {
+				totalSales = utils.ToInt64(math.Floor(t1.(float64)))
+			}
+		}
+		if t, ok2 := h.(map[string]interface{})["total_gmv"]; ok2 {
+			if t1, ok3 := t.(map[string]interface{})["value"]; ok3 {
+				totalGmv = t1.(float64)
+			}
+		}
+	}
 	return
 }
 

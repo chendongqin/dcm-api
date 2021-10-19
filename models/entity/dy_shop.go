@@ -2,6 +2,7 @@ package entity
 
 var DyShopMap = HbaseEntity{
 	"avg_cos_ratio":   {Double, "avg_cos_ratio"},
+	"brand":           {Int, "is_brand"},
 	"coo_kol_num":     {Long, "coo_kol_num"},
 	"expr_score":      {Double, "expr_score"},
 	"logistics_score": {Json, "logistics_score"},
@@ -27,6 +28,8 @@ type DyShop struct {
 	OrderNum       int64       `json:"order_num"`       //合作商品商量
 	Sales          int64       `json:"sales"`           //月销量
 	CrawlTime      int64       `json:"crawl_time"`      //爬虫时间
+	IsBrand        int64       `json:"is_brand"`        //是否品牌
+	Level          string      `json:"level"`           //店铺口碑
 }
 
 type DyShopScore struct {

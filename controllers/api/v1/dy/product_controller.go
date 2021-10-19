@@ -569,7 +569,7 @@ func (receiver *ProductController) ProductLiveRoomList() {
 		return
 	}
 	esLiveBusiness := es.NewEsLiveBusiness()
-	list, total, comErr := esLiveBusiness.SearchProductRooms(productId, keyword, sortStr, orderBy, page, size, t1, t2)
+	list, total, totalSales, totalGmv, comErr := esLiveBusiness.SearchProductRooms(productId, keyword, sortStr, orderBy, page, size, t1, t2)
 	if comErr != nil {
 		receiver.FailReturn(comErr)
 		return
@@ -699,6 +699,8 @@ func (receiver *ProductController) ProductLiveRoomList() {
 		"list":           countList,
 		"total":          total,
 		"max_show_total": maxTotal,
+		"total_sales":    totalSales,
+		"total_gmv":      totalGmv,
 	})
 	return
 }
@@ -994,7 +996,7 @@ func (receiver *ProductController) ProductAweme() {
 	orderBy := receiver.GetString("order_by", "")
 	page := receiver.GetPage("page")
 	pageSize := receiver.GetPageSize("page_size", 10, 50)
-	list, total, comErr := es.NewEsVideoBusiness().SearchAwemeByProduct(productId, keyword, sortStr, orderBy, startTime, endTime, page, pageSize)
+	list, total, totalSales, totalGmv, comErr := es.NewEsVideoBusiness().SearchAwemeByProduct(productId, keyword, sortStr, orderBy, startTime, endTime, page, pageSize)
 	for k, v := range list {
 		list[k].ProductId = business.IdEncrypt(v.ProductId)
 		list[k].AuthorId = business.IdEncrypt(v.AuthorId)
@@ -1012,6 +1014,8 @@ func (receiver *ProductController) ProductAweme() {
 		"list":           list,
 		"total":          total,
 		"max_show_total": maxTotal,
+		"total_sales":    totalSales,
+		"total_gmv":      totalGmv,
 	})
 }
 
@@ -1133,6 +1137,103 @@ func (receiver *ProductController) ProductFanAnalyse() {
 		"word":            info.Word,
 		"context_num":     contextNum,
 		"digg_info":       info.DiggInfo,
+	})
+	return
+}
+
+//商品成交分析
+func (receiver *ProductController) ProductDealAnalyse() {
+	productId := business.IdDecrypt(receiver.Ctx.Input.Param(":product_id"))
+	info, _ := hbase.GetProductDealHx(productId)
+	var genderTotal int64 = 0
+	var ageTotal int64 = 0
+	var cityTotal int64 = 0
+	var provinceTotal int64 = 0
+	genderChart := make([]entity.XtDistributionsList, 0)
+	ageChart := make([]entity.XtDistributionsList, 0)
+	cityChart := make([]entity.XtDistributionsList, 0)
+	provinceChart := make([]entity.XtDistributionsList, 0)
+	var genDerMap = map[string]string{"男": "male", "女": "female"}
+	for _, v := range info.Gender {
+		gender := genDerMap[v.Gender]
+		if gender == "" {
+			continue
+		}
+		genderNum := utils.ToInt64(v.GenderNum)
+		genderTotal += genderNum
+		genderChart = append(genderChart, entity.XtDistributionsList{
+			DistributionKey:   gender,
+			DistributionValue: genderNum,
+		})
+	}
+	for _, v := range info.AgeDistrinbution {
+		if v.AgeDistrinbution == "" {
+			continue
+		}
+		ageDistributionNum := utils.ToInt64(v.AgeDistrinbutionNum)
+		ageTotal += ageDistributionNum
+		ageChart = append(ageChart, entity.XtDistributionsList{
+			DistributionKey:   v.AgeDistrinbution,
+			DistributionValue: ageDistributionNum,
+		})
+	}
+	for _, v := range info.City {
+		if v.City == "" {
+			continue
+		}
+		cityNum := utils.ToInt64(v.CityNum)
+		cityTotal += cityNum
+		cityChart = append(cityChart, entity.XtDistributionsList{
+			DistributionKey:   v.City,
+			DistributionValue: cityNum,
+		})
+	}
+	for _, v := range info.Province {
+		if v.Province == "" {
+			continue
+		}
+		distributionValue := utils.ToInt64(v.ProvinceNum)
+		provinceTotal += distributionValue
+		provinceChart = append(provinceChart, entity.XtDistributionsList{
+			DistributionKey:   v.Province,
+			DistributionValue: distributionValue,
+		})
+	}
+	sort.Slice(cityChart, func(i, j int) bool {
+		return cityChart[i].DistributionValue > cityChart[j].DistributionValue
+	})
+	sort.Slice(provinceChart, func(i, j int) bool {
+		return provinceChart[i].DistributionValue > provinceChart[j].DistributionValue
+	})
+	if genderTotal > 0 {
+		for k, v := range genderChart {
+			genderChart[k].DistributionPer = float64(v.DistributionValue) / float64(genderTotal)
+		}
+	}
+	if ageTotal > 0 {
+		for k, v := range ageChart {
+			ageChart[k].DistributionPer = float64(v.DistributionValue) / float64(ageTotal)
+		}
+	}
+	if cityTotal > 0 {
+		for k, v := range cityChart {
+			cityChart[k].DistributionPer = float64(v.DistributionValue) / float64(cityTotal)
+		}
+	}
+	if provinceTotal > 0 {
+		for k, v := range provinceChart {
+			provinceChart[k].DistributionPer = float64(v.DistributionValue) / float64(provinceTotal)
+		}
+	}
+	receiver.SuccReturn(map[string]interface{}{
+		"age_people":      ageTotal,
+		"age_chart":       ageChart,
+		"gender_chart":    genderChart,
+		"gender_total":    genderTotal,
+		"city_chart":      cityChart,
+		"city_total":      cityTotal,
+		"province_chart":  provinceChart,
+		"province_people": provinceTotal,
 	})
 	return
 }

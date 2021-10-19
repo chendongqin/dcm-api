@@ -36,6 +36,7 @@ const (
 
 	HbaseDyProduct                     = "dy_product"
 	HbaseDyProductHx                   = "dy_product_hx"
+	HbaseDyProductDealHx               = "dy_product_deal_hx"
 	HbaseDyProductBrand                = "dy_product_brand"
 	HbaseDyProductDaily                = "dy_product_daily"
 	HbaseDyProductAwemeDailyDistribute = "dy_product_aweme_daily_distribute"

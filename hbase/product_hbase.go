@@ -126,6 +126,44 @@ func GetProductHXInfo(productId string) (data entity.DyProduct, comErr global.Co
 	return
 }
 
+//商品成交画像详情
+func GetProductDealHx(productId string) (data entity.DyProductDealHx, comErr global.CommonError) {
+	query := hbasehelper.NewQuery()
+	result, err := query.SetTable(hbaseService.HbaseDyProductDealHx).GetByRowKey([]byte(productId))
+	if err != nil {
+		comErr = global.NewError(5000)
+		logger.Error(err)
+		return
+	}
+	if result.Row == nil {
+		comErr = global.NewError(4040)
+		return
+	}
+	detailMap := hbaseService.HbaseFormat(result, entity.DyProductDealHxMap)
+	utils.MapToStruct(detailMap, &data)
+	data.ProductID = productId
+	//if data.TbCouponInfo == "null" {
+	//	data.TbCouponInfo = ""
+	//}
+	//if data.ManmadeCategory.FirstCname != "" {
+	//	data.Label = data.ManmadeCategory.FirstCname
+	//} else if data.AiCategory.FirstCname != "" {
+	//	data.Label = data.AiCategory.FirstCname
+	//}
+	////null数据初始化
+	//if len(data.ContextNum) == 0 {
+	//	data.ContextNum = []entity.ContextNum{}
+	//}
+	//if len(data.DiggInfo) == 0 {
+	//	data.DiggInfo = []entity.DiggInfo{}
+	//}
+	//佣金比例处理
+	//if data.CosRatio == 0 {
+	//	data.CosRatio = data.SecCosRatio
+	//}
+	return
+}
+
 //获取商品品牌数据
 func GetDyProductBrand(productId string) (data entity.DyProductBrand, comErr global.CommonError) {
 	query := hbasehelper.NewQuery()
