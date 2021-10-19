@@ -255,6 +255,37 @@ func ParseDyShortUrl(url string) (string, bool) {
 	}
 }
 
+//短url还原解析
+func ParseDyShortUrlToSecUid(url string) (string, bool) {
+	url = strings.TrimSpace(url)
+	//判断是否短网址,之后加入缓存
+	pattern := `^(http|https):\/\/v\.douyin\.com\/.*?`
+	reg := regexp.MustCompile(pattern)
+	returl := ""
+	if reg.MatchString(url) == true {
+		redisService := services.NewRedisService()
+		returl = redisService.Hget("douyin:shorturl:hashmap", url)
+		if returl == "" {
+			client := &http.Client{CheckRedirect: nil}
+			request, _ := http.NewRequest("GET", url, nil)
+			response, err := client.Do(request)
+			if err != nil {
+				return "", false
+			}
+			defer response.Body.Close()
+			returl = response.Request.Response.Request.URL.Path
+			if len(returl) == 0 {
+				return "", false
+			}
+			redisService.Hset("douyin:shorturl:hashmap", url, returl)
+		}
+		return returl, true
+	} else {
+		logs.Info("[短链转换失败][%s]", url)
+		return url, false
+	}
+}
+
 //id加密
 func IdEncrypt(id string) string {
 	if global.IsDev() || strings.Index(id, "==") == 0 {
