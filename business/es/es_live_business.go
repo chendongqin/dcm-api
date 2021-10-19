@@ -910,6 +910,7 @@ func (receiver *EsLiveBusiness) SearchProductRooms(productId, keyword, sortStr, 
 		SetMultiQuery().
 		Query()
 	utils.MapToStruct(results, &list)
+	total = esMultiQuery.Count
 	if keyword != "" {
 		keyword = strings.ToLower(keyword)
 		newList := []es.EsAuthorLiveProduct{}
@@ -951,7 +952,7 @@ func (receiver *EsLiveBusiness) SearchProductRooms(productId, keyword, sortStr, 
 		//	list[k].BuyRate = v.PredictSales / float64(v.Pv)
 		//}
 	}
-	total = esMultiQuery.Count
+
 	countResult := newEsMultiQuery.
 		RawQuery(map[string]interface{}{
 			"query": map[string]interface{}{
