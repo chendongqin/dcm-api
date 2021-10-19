@@ -945,9 +945,15 @@ func (a *AuthorBusiness) NewGetAuthorProductAnalyse(authorId, keyword, firstCate
 	//判断自卖和推荐
 	hasShop := false
 	isRecommend := false
-	liveList, _, _ := es.NewEsLiveBusiness().ScanLiveProductByAuthor(authorId, keyword, firstCate, secondCate, thirdCate, brandName, shopId, shopType, startTime, endTime, 1, 10000)
-	awemeList, _, _ := es.NewEsVideoBusiness().ScanAwemeProductByAuthor(authorId, keyword, firstCate, secondCate, thirdCate, brandName, shopId, shopType, startTime, endTime, 1, 10000)
+	liveList, _, _ := es.NewEsLiveBusiness().ScanLiveProductByAuthor(authorId, "", firstCate, secondCate, thirdCate, brandName, shopId, shopType, startTime, endTime, 1, 10000)
+	awemeList, _, _ := es.NewEsVideoBusiness().ScanAwemeProductByAuthor(authorId, "", firstCate, secondCate, thirdCate, brandName, shopId, shopType, startTime, endTime, 1, 10000)
+	keyword = strings.ToLower(keyword)
 	for _, v := range liveList {
+		if keyword != "" {
+			if strings.Index(strings.ToLower(v.Title), keyword) < 0 {
+				continue
+			}
+		}
 		if v.ShopId == shopId && shopId != "" {
 			hasShop = true
 		} else {
@@ -1031,6 +1037,11 @@ func (a *AuthorBusiness) NewGetAuthorProductAnalyse(authorId, keyword, firstCate
 		}
 	}
 	for _, v := range awemeList {
+		if keyword != "" {
+			if strings.Index(strings.ToLower(v.Title), keyword) < 0 {
+				continue
+			}
+		}
 		if v.ShopId == shopId && shopId != "" {
 			hasShop = true
 		} else {
