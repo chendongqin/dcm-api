@@ -7,6 +7,7 @@ import (
 	"dongchamao/models/repost/dy"
 	"dongchamao/services/elasticsearch"
 	"math"
+	"strings"
 	"time"
 )
 
@@ -44,24 +45,30 @@ func (e *EsVideoBusiness) SearchAwemeByProduct(productId, keyword, sortStr, orde
 		"gte": startTime.Unix(),
 		"lt":  endTime.AddDate(0, 0, 1).Unix(),
 	})
+	tmpPage := page
+	tmpPageSize := pageSize
 	if keyword != "" {
-		esQuery.AddCondition(map[string]interface{}{
-			"bool": map[string]interface{}{
-				"should": []map[string]interface{}{
-					{
-						"match_phrase": map[string]interface{}{
-							"aweme_title": keyword,
-						},
-					},
-					{
-						"match_phrase": map[string]interface{}{
-							"nickname": keyword,
-						},
-					},
-				},
-			},
-		})
+		tmpPage = 1
+		tmpPageSize = 10000
 	}
+	//if keyword != "" {
+	//	esQuery.AddCondition(map[string]interface{}{
+	//		"bool": map[string]interface{}{
+	//			"should": []map[string]interface{}{
+	//				{
+	//					"match_phrase": map[string]interface{}{
+	//						"aweme_title": keyword,
+	//					},
+	//				},
+	//				{
+	//					"match_phrase": map[string]interface{}{
+	//						"nickname": keyword,
+	//					},
+	//				},
+	//			},
+	//		},
+	//	})
+	//}
 	var cacheTime time.Duration = 180
 	newEsMultiQuery := esMultiQuery.
 		SetConnection(connection).
@@ -70,11 +77,32 @@ func (e *EsVideoBusiness) SearchAwemeByProduct(productId, keyword, sortStr, orde
 		AddMust(esQuery.Condition)
 	result := newEsMultiQuery.
 		SetOrderBy(elasticsearch.NewElasticOrder().Add(sortStr, orderBy).Order).
-		SetLimit((page-1)*pageSize, pageSize).
+		SetLimit((tmpPage-1)*tmpPageSize, tmpPageSize).
 		SetMultiQuery().
 		Query()
 	utils.MapToStruct(result, &list)
 	total = esMultiQuery.Count
+	if keyword != "" {
+		keyword = strings.ToLower(keyword)
+		newList := []es.DyProductVideo{}
+		for _, v := range list {
+			if strings.Index(strings.ToLower(v.AwemeTitle), keyword) < 0 && strings.Index(strings.ToLower(v.Nickname), keyword) < 0 {
+				continue
+			}
+			newList = append(newList, v)
+		}
+		total = len(newList)
+		if total == 0 {
+			list = newList
+			return
+		}
+		start := (page - 1) * pageSize
+		end := start + pageSize
+		if total < end {
+			end = total
+		}
+		list = newList[start:end]
+	}
 
 	countResult := newEsMultiQuery.
 		RawQuery(map[string]interface{}{

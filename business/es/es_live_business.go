@@ -12,6 +12,7 @@ import (
 	"dongchamao/services/elasticsearch"
 	jsoniter "github.com/json-iterator/go"
 	"math"
+	"strings"
 	"time"
 )
 
@@ -890,19 +891,46 @@ func (receiver *EsLiveBusiness) SearchProductRooms(productId, keyword, sortStr, 
 		"gte": startTime.Unix(),
 		"lt":  endTime.AddDate(0, 0, 1).Unix(),
 	})
+	tmpPage := page
+	tmpPageSize := size
 	if keyword != "" {
-		esQuery.SetMultiMatch([]string{"room_title", "nickname"}, keyword)
+		tmpPage = 1
+		tmpPageSize = 10000
 	}
+	//if keyword != "" {
+	//	esQuery.SetMultiMatch([]string{"room_title", "nickname"}, keyword)
+	//}
 	newEsMultiQuery := esMultiQuery.
 		SetConnection(connection).
 		SetTable(esTable).
 		AddMust(esQuery.Condition)
 	results := newEsMultiQuery.
-		SetLimit((page-1)*size, size).
+		SetLimit((tmpPage-1)*tmpPageSize, tmpPageSize).
 		SetOrderBy(elasticsearch.NewElasticOrder().Add(sortStr, orderBy).Order).
 		SetMultiQuery().
 		Query()
 	utils.MapToStruct(results, &list)
+	if keyword != "" {
+		keyword = strings.ToLower(keyword)
+		newList := []es.EsAuthorLiveProduct{}
+		for _, v := range list {
+			if strings.Index(strings.ToLower(v.RoomTitle), keyword) < 0 && strings.Index(strings.ToLower(v.Nickname), keyword) < 0 {
+				continue
+			}
+			newList = append(newList, v)
+		}
+		total = len(newList)
+		if total == 0 {
+			list = newList
+			return
+		}
+		start := (page - 1) * size
+		end := start + size
+		if total < end {
+			end = total
+		}
+		list = newList[start:end]
+	}
 	for k, v := range list {
 		list[k].PredictSales = math.Floor(v.PredictSales)
 		list[k].Cover = dyimg.Fix(v.Cover)
