@@ -273,7 +273,7 @@ func ParseDyShortUrlToSecUid(url string) (string, bool) {
 				return "", false
 			}
 			defer response.Body.Close()
-			returl = response.Request.Response.Request.URL.Path
+			returl = response.Request.URL.Path
 			if len(returl) == 0 {
 				return "", false
 			}
