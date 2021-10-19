@@ -694,7 +694,7 @@ func (receiver *AuthorController) AuthorAwemes() {
 	orderBy := receiver.GetString("order_by", "")
 	page := receiver.GetPage("page")
 	pageSize := receiver.GetPageSize("page_size", 10, 30)
-	list, total, comErr := es.NewEsVideoBusiness().SearchByAuthor(authorId, keyword, sortStr, orderBy, hasProduct, page, pageSize, startTime, endTime)
+	list, total, totalSales, totalGmv, comErr := es.NewEsVideoBusiness().SearchByAuthor(authorId, keyword, sortStr, orderBy, hasProduct, page, pageSize, startTime, endTime)
 	if comErr != nil {
 		receiver.FailReturn(comErr)
 		return
@@ -715,6 +715,8 @@ func (receiver *AuthorController) AuthorAwemes() {
 	receiver.SuccReturn(map[string]interface{}{
 		"list":           list,
 		"total":          total,
+		"total_sales":    totalSales,
+		"total_gmv":      totalGmv,
 		"max_show_total": maxTotal,
 	})
 	return
@@ -949,7 +951,7 @@ func (receiver *AuthorController) AuthorLiveRooms() {
 		return
 	}
 	esLiveBusiness := es.NewEsLiveBusiness()
-	list, total, comErr := esLiveBusiness.SearchAuthorRooms(authorId, keyword, sortStr, orderBy, page, size, t1, t2)
+	list, total, totalSales, totalGmv, comErr := esLiveBusiness.SearchAuthorRooms(authorId, keyword, sortStr, orderBy, page, size, t1, t2)
 	if listType == 1 {
 		roomIds := []string{}
 		for _, v := range list {
@@ -980,8 +982,10 @@ func (receiver *AuthorController) AuthorLiveRooms() {
 		return
 	}
 	receiver.SuccReturn(map[string]interface{}{
-		"list":  list,
-		"total": total,
+		"list":        list,
+		"total":       total,
+		"total_sales": totalSales,
+		"total_gmv":   totalGmv,
 	})
 	return
 }
