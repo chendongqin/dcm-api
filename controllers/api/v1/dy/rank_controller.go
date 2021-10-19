@@ -1146,7 +1146,7 @@ func (receiver *RankController) LiveProductRank() {
 		break
 	case 3: //月榜
 		month := dateTime.Format("200601")
-		key := month + "_" + fCate
+		key := month + "_" + fCate + "_" + sortStr
 		rowKey = utils.Md5_encode(key)
 		break
 	}
@@ -1162,68 +1162,68 @@ func (receiver *RankController) LiveProductRank() {
 	total := 0
 	finished := false
 	orginList := make([]entity.LiveProduct, 0)
-	if dataType != 3 {
+	//if dataType != 3 {
 
-		if orderBy == "asc" {
-			for i := 0; i < 5; i++ {
-				tempData, _ := hbase.GetLiveProductRank(rowKey, i)
-				lenNum := len(tempData)
-				tmpTotal := total
-				total += lenNum
-				if finished {
-					continue
-				}
-				if total > start {
-					if end <= total {
-						orginList = append(orginList, tempData[start-tmpTotal:end-tmpTotal]...)
-						finished = true
-					} else {
-						orginList = append(orginList, tempData[start-tmpTotal:]...)
-						start = total
-					}
-				}
+	if orderBy == "asc" {
+		for i := 0; i < 5; i++ {
+			tempData, _ := hbase.GetLiveProductRank(rowKey, i)
+			lenNum := len(tempData)
+			tmpTotal := total
+			total += lenNum
+			if finished {
+				continue
 			}
-		} else {
-			for i := 4; i >= 0; i-- {
-				tempData, _ := hbase.GetLiveProductRank(rowKey, i)
-				lenNum := len(tempData)
-				for j := 0; j < lenNum/2; j++ { //倒序
-					temp := tempData[lenNum-1-j]
-					tempData[lenNum-1-j] = tempData[j]
-					tempData[j] = temp
-				}
-				tmpTotal := total
-				total += lenNum
-				if finished {
-					continue
-				}
-				if total > start {
-					if end <= total {
-						orginList = append(orginList, tempData[start-tmpTotal:end-tmpTotal]...)
-						finished = true
-					} else {
-						orginList = append(orginList, tempData[start-tmpTotal:]...)
-						start = total
-					}
+			if total > start {
+				if end <= total {
+					orginList = append(orginList, tempData[start-tmpTotal:end-tmpTotal]...)
+					finished = true
+				} else {
+					orginList = append(orginList, tempData[start-tmpTotal:]...)
+					start = total
 				}
 			}
 		}
 	} else {
-		orginList, _ = hbase.GetLiveProductRank(rowKey, -1)
-		sort.Slice(orginList, func(i, j int) bool {
-			switch sortStr {
-			case "saleroom":
-				return orginList[i].Saleroom > orginList[j].Saleroom
-			case "sales":
-				return orginList[i].Sales > orginList[j].Sales
-			case "price":
-				return orginList[i].Price > orginList[j].Price
-			default:
-				return orginList[i].Sales > orginList[j].Sales
+		for i := 4; i >= 0; i-- {
+			tempData, _ := hbase.GetLiveProductRank(rowKey, i)
+			lenNum := len(tempData)
+			for j := 0; j < lenNum/2; j++ { //倒序
+				temp := tempData[lenNum-1-j]
+				tempData[lenNum-1-j] = tempData[j]
+				tempData[j] = temp
 			}
-		})
-		total = len(orginList)
+			tmpTotal := total
+			total += lenNum
+			if finished {
+				continue
+			}
+			if total > start {
+				if end <= total {
+					orginList = append(orginList, tempData[start-tmpTotal:end-tmpTotal]...)
+					finished = true
+				} else {
+					orginList = append(orginList, tempData[start-tmpTotal:]...)
+					start = total
+				}
+			}
+		}
 	}
+	//} else {
+	//	orginList, _ = hbase.GetLiveProductRank(rowKey, -1)
+	//	sort.Slice(orginList, func(i, j int) bool {
+	//		switch sortStr {
+	//		case "saleroom":
+	//			return orginList[i].Saleroom > orginList[j].Saleroom
+	//		case "sales":
+	//			return orginList[i].Sales > orginList[j].Sales
+	//		case "price":
+	//			return orginList[i].Price > orginList[j].Price
+	//		default:
+	//			return orginList[i].Sales > orginList[j].Sales
+	//		}
+	//	})
+	//	total = len(orginList)
+	//}
 	if !receiver.HasAuth && total > receiver.MaxTotal {
 		total = receiver.MaxTotal
 	}
