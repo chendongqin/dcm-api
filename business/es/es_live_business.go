@@ -861,56 +861,23 @@ func (receiver *EsLiveBusiness) SumAuthorProductCountRoom(authorId, productId st
 
 //商品直播间搜索
 func (receiver *EsLiveBusiness) SearchProductRooms(productId, keyword, sortStr, orderBy string,
-	page, size int, startTime, endTime time.Time) (list []es.EsAuthorLiveProduct, total int, totalSales int64, totalGmv float64, comErr global.CommonError) {
-	if sortStr == "" {
-		sortStr = "shelf_time"
-	}
-	if orderBy == "" {
-		orderBy = "desc"
-	}
-	if !utils.InArrayString(sortStr, []string{"shelf_time", "live_create_time", "predict_gmv", "predict_sales", "gpm"}) {
-		comErr = global.NewError(4000)
-		return
-	}
-	if !utils.InArrayString(orderBy, []string{"desc", "asc"}) {
-		comErr = global.NewError(4000)
-		return
-	}
-	if size > 50 {
-		comErr = global.NewError(4000)
-		return
-	}
-	esTable, connection, err := GetESTableByTime(es.DyRoomProductRecordsTable, startTime, endTime)
-	if err != nil {
-		comErr = global.NewError(4000)
-		return
-	}
-	esQuery, esMultiQuery := elasticsearch.NewElasticQueryGroup()
-	esQuery.SetTerm("product_id", productId)
-	esQuery.SetRange("live_create_time", map[string]interface{}{
-		"gte": startTime.Unix(),
-		"lt":  endTime.AddDate(0, 0, 1).Unix(),
-	})
+	page, size int, startTime, endTime time.Time) (list []es.EsAuthorLiveProduct, total int, comErr global.CommonError) {
+
 	tmpPage := page
 	tmpPageSize := size
 	if keyword != "" {
 		tmpPage = 1
 		tmpPageSize = 10000
 	}
-	//if keyword != "" {
-	//	esQuery.SetMultiMatch([]string{"room_title", "nickname"}, keyword)
-	//}
-	newEsMultiQuery := esMultiQuery.
-		SetConnection(connection).
-		SetTable(esTable).
-		AddMust(esQuery.Condition)
+	var newEsMultiQuery *elasticsearch.ElasticMultiQuery
+	newEsMultiQuery, _, comErr = receiver.getSearchProductRoomsEs(productId, keyword, sortStr, orderBy, page, size, startTime, endTime)
 	results := newEsMultiQuery.
 		SetLimit((tmpPage-1)*tmpPageSize, tmpPageSize).
 		SetOrderBy(elasticsearch.NewElasticOrder().Add(sortStr, orderBy).Order).
 		SetMultiQuery().
 		Query()
 	utils.MapToStruct(results, &list)
-	total = esMultiQuery.Count
+	total = newEsMultiQuery.Count
 	if keyword != "" {
 		keyword = strings.ToLower(keyword)
 		newList := []es.EsAuthorLiveProduct{}
@@ -952,6 +919,15 @@ func (receiver *EsLiveBusiness) SearchProductRooms(productId, keyword, sortStr, 
 		//	list[k].BuyRate = v.PredictSales / float64(v.Pv)
 		//}
 	}
+	return
+}
+
+//商品直播间搜索total
+func (receiver *EsLiveBusiness) SearchProductRoomsTotal(productId, keyword, sortStr, orderBy string,
+	page, size int, startTime, endTime time.Time) (totalSales int64, totalGmv float64, comErr global.CommonError) {
+	var newEsMultiQuery *elasticsearch.ElasticMultiQuery
+	var esQuery *elasticsearch.ElasticQuery
+	newEsMultiQuery, esQuery, comErr = receiver.getSearchProductRoomsEs(productId, keyword, sortStr, orderBy, page, size, startTime, endTime)
 
 	countResult := newEsMultiQuery.
 		RawQuery(map[string]interface{}{
@@ -987,6 +963,50 @@ func (receiver *EsLiveBusiness) SearchProductRooms(productId, keyword, sortStr, 
 			}
 		}
 	}
+	return
+}
+
+//获取es句柄
+func (receiver *EsLiveBusiness) getSearchProductRoomsEs(productId, keyword, sortStr, orderBy string,
+	page, size int, startTime, endTime time.Time) (newEsMultiQuery *elasticsearch.ElasticMultiQuery, eQ *elasticsearch.ElasticQuery, comErr global.CommonError) {
+	if sortStr == "" {
+		sortStr = "shelf_time"
+	}
+	if orderBy == "" {
+		orderBy = "desc"
+	}
+	if !utils.InArrayString(sortStr, []string{"shelf_time", "live_create_time", "predict_gmv", "predict_sales", "gpm"}) {
+		comErr = global.NewError(4000)
+		return
+	}
+	if !utils.InArrayString(orderBy, []string{"desc", "asc"}) {
+		comErr = global.NewError(4000)
+		return
+	}
+	if size > 50 {
+		comErr = global.NewError(4000)
+		return
+	}
+	esTable, connection, err := GetESTableByTime(es.DyRoomProductRecordsTable, startTime, endTime)
+	if err != nil {
+		comErr = global.NewError(4000)
+		return
+	}
+	esQuery, esMultiQuery := elasticsearch.NewElasticQueryGroup()
+	esQuery.SetTerm("product_id", productId)
+	esQuery.SetRange("live_create_time", map[string]interface{}{
+		"gte": startTime.Unix(),
+		"lt":  endTime.AddDate(0, 0, 1).Unix(),
+	})
+
+	//if keyword != "" {
+	//	esQuery.SetMultiMatch([]string{"room_title", "nickname"}, keyword)
+	//}
+	newEsMultiQuery = esMultiQuery.
+		SetConnection(connection).
+		SetTable(esTable).
+		AddMust(esQuery.Condition)
+	eQ = esQuery
 	return
 }
 

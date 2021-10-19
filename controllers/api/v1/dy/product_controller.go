@@ -703,6 +703,37 @@ func (receiver *ProductController) ProductLiveRoomList() {
 	return
 }
 
+//商品直播间列表
+func (receiver *ProductController) ProductLiveRoomTotal() {
+	productId := business.IdDecrypt(receiver.Ctx.Input.Param(":product_id"))
+	InputData := receiver.InputFormat()
+	keyword := InputData.GetString("keyword", "")
+	sortStr := InputData.GetString("sort", "shelf_time")
+	orderBy := InputData.GetString("order_by", "desc")
+	page := InputData.GetInt("page", 1)
+	size := InputData.GetInt("page_size", 10)
+	if productId == "" {
+		receiver.FailReturn(global.NewError(4000))
+		return
+	}
+	t1, t2, comErr := receiver.GetRangeDate()
+	if comErr != nil {
+		receiver.FailReturn(comErr)
+		return
+	}
+	esLiveBusiness := es.NewEsLiveBusiness()
+	totalSales, totalGvm, comErr := esLiveBusiness.SearchProductRoomsTotal(productId, keyword, sortStr, orderBy, page, size, t1, t2)
+	if comErr != nil {
+		receiver.FailReturn(comErr)
+		return
+	}
+	receiver.SuccReturn(map[string]interface{}{
+		"total_sales": totalSales,
+		"total_gvm":   totalGvm,
+	})
+	return
+}
+
 //商品达人概览
 func (receiver *ProductController) ProductAuthorView() {
 	productId := business.IdDecrypt(receiver.Ctx.Input.Param(":product_id"))
@@ -1029,6 +1060,10 @@ func (receiver *ProductController) ProductAwemeTotal() {
 	page := receiver.GetPage("page")
 	pageSize := receiver.GetPageSize("page_size", 10, 50)
 	totalSales, totalGvm, comErr := es.NewEsVideoBusiness().SearchAwemeByProductTotal(productId, keyword, sortStr, orderBy, startTime, endTime, page, pageSize)
+	if comErr != nil {
+		receiver.FailReturn(comErr)
+		return
+	}
 	receiver.SuccReturn(map[string]interface{}{
 		"total_sales": totalSales,
 		"total_gvm":   totalGvm,

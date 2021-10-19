@@ -19,69 +19,23 @@ func NewEsVideoBusiness() *EsVideoBusiness {
 }
 
 func (e *EsVideoBusiness) SearchAwemeByProduct(productId, keyword, sortStr, orderBy string,
-	startTime, endTime time.Time, page, pageSize int) (list []es.DyProductVideo, total int, totalSales int64, totalGmv float64, comErr global.CommonError) {
-	if orderBy == "" {
-		orderBy = "desc"
-	}
-	if sortStr == "" {
-		sortStr = "aweme_create_time"
-	}
-	if !utils.InArrayString(orderBy, []string{"desc", "asc"}) {
-		comErr = global.NewError(4000)
-		return
-	}
-	if !utils.InArrayString(sortStr, []string{"aweme_create_time", "aweme_gmv", "sales", "comment_count", "digg_count", "forward_count"}) {
-		comErr = global.NewError(4000)
-		return
-	}
-	esTable, connection, err := GetESTableByMonthTime(es.DyProductVideoTable, startTime, endTime)
-	if err != nil {
-		comErr = global.NewError(4000)
-		return
-	}
-	esQuery, esMultiQuery := elasticsearch.NewElasticQueryGroup()
-	esQuery.SetTerm("product_id", productId)
-	esQuery.SetRange("aweme_create_time", map[string]interface{}{
-		"gte": startTime.Unix(),
-		"lt":  endTime.AddDate(0, 0, 1).Unix(),
-	})
+	startTime, endTime time.Time, page, pageSize int) (list []es.DyProductVideo, total int, comErr global.CommonError) {
+
 	tmpPage := page
 	tmpPageSize := pageSize
 	if keyword != "" {
 		tmpPage = 1
 		tmpPageSize = 10000
 	}
-	//if keyword != "" {
-	//	esQuery.AddCondition(map[string]interface{}{
-	//		"bool": map[string]interface{}{
-	//			"should": []map[string]interface{}{
-	//				{
-	//					"match_phrase": map[string]interface{}{
-	//						"aweme_title": keyword,
-	//					},
-	//				},
-	//				{
-	//					"match_phrase": map[string]interface{}{
-	//						"nickname": keyword,
-	//					},
-	//				},
-	//			},
-	//		},
-	//	})
-	//}
-	var cacheTime time.Duration = 180
-	newEsMultiQuery := esMultiQuery.
-		SetConnection(connection).
-		SetTable(esTable).
-		SetCache(cacheTime).
-		AddMust(esQuery.Condition)
+	var newEsMultiQuery *elasticsearch.ElasticMultiQuery
+	newEsMultiQuery, _, comErr = e.getSearchAwemeByProductEs(productId, keyword, sortStr, orderBy, startTime, endTime, page, pageSize)
 	result := newEsMultiQuery.
 		SetOrderBy(elasticsearch.NewElasticOrder().Add(sortStr, orderBy).Order).
 		SetLimit((tmpPage-1)*tmpPageSize, tmpPageSize).
 		SetMultiQuery().
 		Query()
 	utils.MapToStruct(result, &list)
-	total = esMultiQuery.Count
+	total = newEsMultiQuery.Count
 	if keyword != "" {
 		keyword = strings.ToLower(keyword)
 		newList := []es.DyProductVideo{}
@@ -104,6 +58,14 @@ func (e *EsVideoBusiness) SearchAwemeByProduct(productId, keyword, sortStr, orde
 		list = newList[start:end]
 	}
 
+	return
+}
+
+func (e *EsVideoBusiness) SearchAwemeByProductTotal(productId, keyword, sortStr, orderBy string,
+	startTime, endTime time.Time, page, pageSize int) (totalSales int64, totalGmv float64, comErr global.CommonError) {
+	var newEsMultiQuery *elasticsearch.ElasticMultiQuery
+	var esQuery *elasticsearch.ElasticQuery
+	newEsMultiQuery, esQuery, comErr = e.getSearchAwemeByProductEs(productId, keyword, sortStr, orderBy, startTime, endTime, page, pageSize)
 	countResult := newEsMultiQuery.
 		RawQuery(map[string]interface{}{
 			"query": map[string]interface{}{
@@ -138,6 +100,61 @@ func (e *EsVideoBusiness) SearchAwemeByProduct(productId, keyword, sortStr, orde
 			}
 		}
 	}
+	return
+}
+
+func (e *EsVideoBusiness) getSearchAwemeByProductEs(productId, keyword, sortStr, orderBy string,
+	startTime, endTime time.Time, page, pageSize int) (newEsMultiQuery *elasticsearch.ElasticMultiQuery, eQ *elasticsearch.ElasticQuery, comErr global.CommonError) {
+	if orderBy == "" {
+		orderBy = "desc"
+	}
+	if sortStr == "" {
+		sortStr = "aweme_create_time"
+	}
+	if !utils.InArrayString(orderBy, []string{"desc", "asc"}) {
+		comErr = global.NewError(4000)
+		return
+	}
+	if !utils.InArrayString(sortStr, []string{"aweme_create_time", "aweme_gmv", "sales", "comment_count", "digg_count", "forward_count"}) {
+		comErr = global.NewError(4000)
+		return
+	}
+	esTable, connection, err := GetESTableByMonthTime(es.DyProductVideoTable, startTime, endTime)
+	if err != nil {
+		comErr = global.NewError(4000)
+		return
+	}
+	esQuery, esMultiQuery := elasticsearch.NewElasticQueryGroup()
+	esQuery.SetTerm("product_id", productId)
+	esQuery.SetRange("aweme_create_time", map[string]interface{}{
+		"gte": startTime.Unix(),
+		"lt":  endTime.AddDate(0, 0, 1).Unix(),
+	})
+	//if keyword != "" {
+	//	esQuery.AddCondition(map[string]interface{}{
+	//		"bool": map[string]interface{}{
+	//			"should": []map[string]interface{}{
+	//				{
+	//					"match_phrase": map[string]interface{}{
+	//						"aweme_title": keyword,
+	//					},
+	//				},
+	//				{
+	//					"match_phrase": map[string]interface{}{
+	//						"nickname": keyword,
+	//					},
+	//				},
+	//			},
+	//		},
+	//	})
+	//}
+	var cacheTime time.Duration = 180
+	newEsMultiQuery = esMultiQuery.
+		SetConnection(connection).
+		SetTable(esTable).
+		SetCache(cacheTime).
+		AddMust(esQuery.Condition)
+	eQ = esQuery
 	return
 }
 
