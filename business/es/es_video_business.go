@@ -170,9 +170,15 @@ func (e *EsVideoBusiness) SearchByAuthor(authorId, keyword, sortStr, orderBy str
 		"gte": startTime.Unix(),
 		"lt":  endTime.AddDate(0, 0, 1).Unix(),
 	})
+	tmpPage := page
+	tmpPageSize := pageSize
 	if keyword != "" {
-		esQuery.SetMatchPhrase("aweme_title", keyword)
+		tmpPage = 1
+		tmpPageSize = 10000
 	}
+	//if keyword != "" {
+	//	esQuery.SetMatchPhrase("aweme_title", keyword)
+	//}
 	if hasProduct == 1 {
 		esQuery.SetExist("field", "product_ids")
 	}
@@ -184,12 +190,33 @@ func (e *EsVideoBusiness) SearchByAuthor(authorId, keyword, sortStr, orderBy str
 		AddMust(esQuery.Condition)
 	result := newEsMultiQuery.
 		SetOrderBy(elasticsearch.NewElasticOrder().Add(sortStr, orderBy).Order).
-		SetLimit((page-1)*pageSize, pageSize).
+		//SetLimit((page-1)*pageSize, pageSize).
+		SetLimit((tmpPage-1)*tmpPageSize, tmpPageSize).
 		SetMultiQuery().
 		Query()
 	utils.MapToStruct(result, &list)
 	total = esMultiQuery.Count
-
+	if keyword != "" {
+		keyword = strings.ToLower(keyword)
+		newList := []es.DyAweme{}
+		for _, v := range list {
+			if strings.Index(strings.ToLower(v.AwemeTitle), keyword) < 0 {
+				continue
+			}
+			newList = append(newList, v)
+		}
+		total = len(newList)
+		if total == 0 {
+			list = newList
+			return
+		}
+		start := (page - 1) * pageSize
+		end := start + pageSize
+		if total < end {
+			end = total
+		}
+		list = newList[start:end]
+	}
 	//计算汇总数据
 	countResult := newEsMultiQuery.
 		RawQuery(map[string]interface{}{
