@@ -332,7 +332,7 @@ func checkcachKey(cachKey string) (isExist bool) {
 
 //检测该日榜周榜榜单是否已经存在了数据
 func checkIsExistDate(key string) (isExist bool) {
-	cachKey := cache.GetCacheKey(cache.DyRankCache, "monitor", key)
+	cachKey := cache.GetCacheKey(cache.DyRankCache, "day", key)
 	isExist = checkcachKey(cachKey)
 	if isExist == false {
 		pathInfo := getRoute(key)
@@ -352,7 +352,7 @@ func checkIsExistDate(key string) (isExist bool) {
 
 //检测该小时榜榜单是否已经存在了数据
 func checkIsExistHour(key string, currentHour int) (isExist bool) {
-	cachKey := cache.GetCacheKey(cache.DyRankCache, "monitor", key)
+	cachKey := cache.GetCacheKey(cache.DyRankCache, "hour", key)
 	isExist = checkcachKey(cachKey)
 	if isExist == false {
 		pathInfo := getRoute(key)
