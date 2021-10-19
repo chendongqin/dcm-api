@@ -279,6 +279,7 @@ func ParseDyShortUrlToSecUid(url string) (string, bool) {
 			}
 			redisService.Hset("douyin:shorturl:hashmap", url, returl)
 		}
+		logs.Info("[短链转换][%s]", returl)
 		return returl, true
 	} else {
 		logs.Info("[短链转换失败][%s]", url)
