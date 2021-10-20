@@ -10,7 +10,11 @@ import (
 	"time"
 )
 
-const SignKey = "We6BkysyuB5RNed4"
+const (
+	SignKey                = "We6BkysyuB5RNed4"
+	CheckIOSSmsVersion     = "1.0.4"
+	CheckAndroidSmsVersion = "1.0.5"
+)
 
 type AccountAuthBusiness struct {
 }
@@ -158,4 +162,18 @@ func (receiver *AccountAuthBusiness) GetAppSecret(appId string, enableCache bool
 	}
 
 	return model.Secret, exist
+}
+
+//是否短信验证
+func (receiver *AccountAuthBusiness) CheckSmsSend(clientos, version string) bool {
+	clientos = strings.ToLower(clientos)
+	if !utils.InArrayString(clientos, []string{"android", "ios"}) {
+		return true
+	}
+	if clientos == "ios" && version < CheckIOSSmsVersion {
+		return false
+	} else if clientos == "android" && version < CheckAndroidSmsVersion {
+		return false
+	}
+	return true
 }

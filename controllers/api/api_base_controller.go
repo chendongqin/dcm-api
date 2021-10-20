@@ -35,6 +35,8 @@ type ApiBaseController struct {
 	TbLevel          int
 	Ip               string
 	TrueUri          string
+	Clientos         string
+	AppVersion       string
 	Channel          string
 	ChannelWords     string
 	IsInitToken      bool               //是否初始化过token
@@ -322,6 +324,8 @@ func (this *ApiBaseController) InitApi() {
 	}
 	authBusiness := business.NewAccountAuthBusiness()
 	this.TrueUri = authBusiness.GetTrueRequestUri(this.Ctx.Input.URI(), this.Ctx.Input.Params())
+	this.AppVersion = this.Ctx.Input.Header("APPVERSION")
+	this.Clientos = this.Ctx.Input.Header("CLIENTOS")
 	this.Channel = this.Ctx.Input.Header("CHANNEL")
 	this.ChannelWords = this.Ctx.Input.Header("CHANNELWORDS")
 	this.LogInputOutput("Input", this.ApiDatas)

@@ -43,7 +43,7 @@ func (receiver *CommonController) Sms() {
 		receiver.FailReturn(global.NewError(4205))
 		return
 	}
-	if receiver.AppId == 10000 && global.IsDev() {
+	if business.NewAccountAuthBusiness().CheckSmsSend(receiver.Clientos, receiver.AppVersion) {
 		ticket := receiver.InputFormat().GetString("ticket", "")
 		randStr := receiver.InputFormat().GetString("randstr", "")
 		if !tencent.TencentCaptcha(ticket, randStr, receiver.Ip) {
