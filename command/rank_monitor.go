@@ -202,7 +202,7 @@ func dateTimeLiveHour(key string) (res map[string][]string, dateHourList map[str
 	dateList := getDateList(7, now)
 	var currentHourList, commonHourList []string
 	getHourList := func(start int) (hourList []string) {
-		hourList = make([]string, 0)
+		hourList = []string{}
 		for i := 0; i <= start; i++ {
 			hourString := fmt.Sprintf("%02d:00", start-i)
 			hourList = append(hourList, hourString)
@@ -211,18 +211,15 @@ func dateTimeLiveHour(key string) (res map[string][]string, dateHourList map[str
 	}
 	res["date"] = dateList
 	startCurrentHour := now.Hour()
-	isExist := false
 	for i := startCurrentHour; i <= startCurrentHour; i-- {
-		if !isExist {
-			isExist = checkIsExistHour(key, i)
+		if checkIsExistHour(key, i) {
 			startCurrentHour = i
-		} else {
 			break
 		}
 	}
 	currentHourList = getHourList(startCurrentHour)
 	commonHourList = getHourList(23)
-	dateHourList = make(map[string][]string)
+	dateHourList = map[string][]string{}
 	for k, v := range dateList {
 		if k == 0 {
 			dateHourList[v] = currentHourList
@@ -261,7 +258,7 @@ func getWeekList(key string) (res []map[string]string) {
 	if !isExist {
 		startDateTime = startDateTime.AddDate(0, 0, -7)
 	}
-	var dateSelectList []map[string]string
+	dateSelectList := []map[string]string{}
 	for i := 0; i < num; i++ {
 		rightDate := startDateTime.AddDate(0, 0, -i*6)
 		leftDate := startDateTime.AddDate(0, 0, -(i+1)*6)
@@ -284,7 +281,7 @@ func getWeekListLiveShare() (res []map[string]string) {
 	}
 
 	startDateTime := time.Now().AddDate(0, 0, (offset - 1))
-	var dateSelectList []map[string]string
+	dateSelectList := []map[string]string{}
 	for i := 0; i < num; i++ {
 		rightDate := startDateTime.AddDate(0, 0, -i*6)
 		leftDate := startDateTime.AddDate(0, 0, -(i+1)*6)
@@ -337,7 +334,7 @@ func checkcachKey(cachKey string) (isExist bool) {
 
 //检测该日榜周榜榜单是否已经存在了数据
 func checkIsExistDate(key string) (isExist bool) {
-	cachKey := cache.GetCacheKey(cache.DyRankCache, "day", key)
+	cachKey := cache.GetCacheKey(cache.DyRankCache, time.Now().Format("20060102"), key)
 	isExist = checkcachKey(cachKey)
 	if isExist == false {
 		pathInfo := getRoute(key)
@@ -377,7 +374,7 @@ func checkIsExistMonth(key string) (isExist bool) {
 
 //检测该小时榜榜单是否已经存在了数据
 func checkIsExistHour(key string, currentHour int) (isExist bool) {
-	cachKey := cache.GetCacheKey(cache.DyRankCache, "hour", key)
+	cachKey := cache.GetCacheKey(cache.DyRankCache, currentHour, key)
 	isExist = checkcachKey(cachKey)
 	if isExist == false {
 		pathInfo := getRoute(key)
@@ -400,6 +397,7 @@ func checkIsExistHour(key string, currentHour int) (isExist bool) {
 
 //获取日期列表
 func getDateList(daysCount int, startTime time.Time) (list []string) {
+	list = []string{}
 	for i := 0; i < daysCount; i++ {
 		date := startTime.AddDate(0, 0, -i).Format("2006-01-02")
 		list = append(list, date)
