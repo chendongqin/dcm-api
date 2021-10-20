@@ -738,14 +738,14 @@ func (receiver *AuthorController) AuthorAwemesTotal() {
 	orderBy := receiver.GetString("order_by", "")
 	page := receiver.GetPage("page")
 	pageSize := receiver.GetPageSize("page_size", 10, 30)
-	totalSales, totalGvm, comErr := es.NewEsVideoBusiness().SearchByAuthorTotal(authorId, keyword, sortStr, orderBy, hasProduct, page, pageSize, startTime, endTime)
+	totalSales, totalGmv, comErr := es.NewEsVideoBusiness().SearchByAuthorTotal(authorId, keyword, sortStr, orderBy, hasProduct, page, pageSize, startTime, endTime)
 	if comErr != nil {
 		receiver.FailReturn(comErr)
 		return
 	}
 	receiver.SuccReturn(map[string]interface{}{
 		"total_sales": totalSales,
-		"total_gvm":   totalGvm,
+		"total_gmv":   totalGmv,
 	})
 	return
 }
@@ -1034,7 +1034,7 @@ func (receiver *AuthorController) AuthorLiveRoomsTotal() {
 		return
 	}
 	esLiveBusiness := es.NewEsLiveBusiness()
-	totalSales, totalGvm, comErr := esLiveBusiness.SearchAuthorRoomsTotal(authorId, keyword, sortStr, orderBy, size, t1, t2)
+	totalSales, totalGmv, comErr := esLiveBusiness.SearchAuthorRoomsTotal(authorId, keyword, sortStr, orderBy, size, t1, t2)
 
 	if comErr != nil {
 		receiver.FailReturn(comErr)
@@ -1042,7 +1042,7 @@ func (receiver *AuthorController) AuthorLiveRoomsTotal() {
 	}
 	receiver.SuccReturn(map[string]interface{}{
 		"total_sales": totalSales,
-		"total_gvm":   totalGvm,
+		"total_gmv":   totalGmv,
 	})
 	return
 }

@@ -722,14 +722,14 @@ func (receiver *ProductController) ProductLiveRoomTotal() {
 		return
 	}
 	esLiveBusiness := es.NewEsLiveBusiness()
-	totalSales, totalGvm, comErr := esLiveBusiness.SearchProductRoomsTotal(productId, keyword, sortStr, orderBy, page, size, t1, t2)
+	totalSales, totalGmv, comErr := esLiveBusiness.SearchProductRoomsTotal(productId, keyword, sortStr, orderBy, page, size, t1, t2)
 	if comErr != nil {
 		receiver.FailReturn(comErr)
 		return
 	}
 	receiver.SuccReturn(map[string]interface{}{
 		"total_sales": totalSales,
-		"total_gvm":   totalGvm,
+		"total_gmv":   totalGmv,
 	})
 	return
 }
@@ -956,6 +956,19 @@ func (receiver *ProductController) ProductAuthorAwemes() {
 //商品直播间
 func (receiver *ProductController) ProductRoomsRangeDate() {
 	productId := business.IdDecrypt(receiver.GetString(":product_id", ""))
+	sortStr := receiver.GetString("sort_str", "live_create_time")
+	orderBy := receiver.GetString("order_by", "desc")
+	var commonError global.CommonError
+	if !utils.InArrayString(sortStr, []string{"live_create_time", "gmv", "sales"}) {
+		commonError = global.NewError(4000)
+		receiver.FailReturn(commonError)
+		return
+	}
+	if !utils.InArrayString(orderBy, []string{"asc", "desc"}) {
+		commonError = global.NewError(4000)
+		receiver.FailReturn(commonError)
+		return
+	}
 	startTime, endTime, comErr := receiver.GetRangeDate()
 	if comErr != nil {
 		receiver.FailReturn(comErr)
@@ -964,7 +977,7 @@ func (receiver *ProductController) ProductRoomsRangeDate() {
 	page := receiver.GetPage("page")
 	pageSize := receiver.GetPageSize("page_size", 5, 10)
 	authorBusiness := business.NewAuthorBusiness()
-	list, total, comErr := authorBusiness.GetAuthorProductRooms("", productId, startTime, endTime, page, pageSize, "live_create_time", "desc")
+	list, total, comErr := authorBusiness.GetAuthorProductRooms("", productId, startTime, endTime, page, pageSize, sortStr, orderBy)
 	if comErr != nil {
 		receiver.FailReturn(comErr)
 		return
@@ -1059,14 +1072,14 @@ func (receiver *ProductController) ProductAwemeTotal() {
 	orderBy := receiver.GetString("order_by", "")
 	page := receiver.GetPage("page")
 	pageSize := receiver.GetPageSize("page_size", 10, 50)
-	totalSales, totalGvm, comErr := es.NewEsVideoBusiness().SearchAwemeByProductTotal(productId, keyword, sortStr, orderBy, startTime, endTime, page, pageSize)
+	totalSales, totalGmv, comErr := es.NewEsVideoBusiness().SearchAwemeByProductTotal(productId, keyword, sortStr, orderBy, startTime, endTime, page, pageSize)
 	if comErr != nil {
 		receiver.FailReturn(comErr)
 		return
 	}
 	receiver.SuccReturn(map[string]interface{}{
 		"total_sales": totalSales,
-		"total_gvm":   totalGvm,
+		"total_gmv":   totalGmv,
 	})
 }
 
