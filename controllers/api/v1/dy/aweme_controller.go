@@ -283,7 +283,9 @@ func (receiver *AwemeController) AwemeProductAnalyse() {
 	if end > lenNum {
 		end = lenNum
 	}
-	list = list[start:end]
+	if lenNum > 0 {
+		list = list[start:end]
+	}
 	receiver.SuccReturn(map[string]interface{}{
 		"list":  list,
 		"total": lenNum,
@@ -338,7 +340,9 @@ func (receiver *AwemeController) getAwemeProducts(awemeId string, page, pageSize
 		if end > total {
 			end = total
 		}
-		list = list[start:end]
+		if total > 0 {
+			list = list[start:end]
+		}
 	}
 	receiver.SuccReturn(map[string]interface{}{
 		"list":  list,
