@@ -10,6 +10,7 @@ type DcVipOrderInvoice struct {
 	Username    string    `xorm:"not null default '' comment('用户名') VARCHAR(32)"`
 	Amount      float64   `xorm:"default 0.00 comment('开票金额') DECIMAL(10,2)"`
 	Head        string    `xorm:"not null default '' comment('发票抬头') VARCHAR(100)"`
+	HeadType    int       `xorm:"not null default 0 comment('抬头类型0企业1个人') TINYINT(1)"`
 	InvoiceNum  string    `xorm:"not null default '' comment('企业纳税识别号') VARCHAR(100)"`
 	Email       string    `xorm:"not null default '' comment('电子邮箱') VARCHAR(100)"`
 	Phone       string    `xorm:"not null default '' comment('手机号') VARCHAR(100)"`
