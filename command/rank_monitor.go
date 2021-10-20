@@ -340,10 +340,10 @@ func checkIsExistDate(key string) (isExist bool) {
 		if isExist {
 			//有数据情况，缓存设置到今天结束
 			now := time.Now()
-			dateString := fmt.Sprintf("%s 23:59:59", now.Format("2006-01-02"))
+			dateString := fmt.Sprintf("%s 00:00:00", now.AddDate(0, 0, 1).Format("2006-01-02"))
 			stopTime, _ := time.ParseInLocation("2006-01-02 15:04:05", dateString, time.Local)
 			seconds := stopTime.Unix() - now.Unix()
-			secondsDuration := time.Duration(seconds) * time.Second
+			secondsDuration := time.Duration(seconds)
 			global.Cache.Set(cachKey, "1", secondsDuration)
 		}
 	}
@@ -366,7 +366,7 @@ func checkIsExistHour(key string, currentHour int) (isExist bool) {
 			dateString := fmt.Sprintf("%s %s:59:59", now.Format("2006-01-02"), strconv.Itoa(now.Hour()))
 			stopTime, _ := time.ParseInLocation("2006-01-02 15:04:05", dateString, time.Local)
 			seconds := stopTime.Unix() - now.Unix()
-			secondsDuration := time.Duration(seconds) * time.Second
+			secondsDuration := time.Duration(seconds)
 			global.Cache.Set(cachKey, "1", secondsDuration)
 		}
 	}
