@@ -145,7 +145,9 @@ func requestRank(pathInfo PathDesc) (checkRes bool) {
 	resMap := map[string]interface{}{}
 	utils.MapToStruct(res, &resMap)
 	if v, exist := resMap["list"]; exist {
-		if len(v.([]interface{})) > 0 {
+		list := make([]interface{}, 0)
+		utils.MapToStruct(v, &list)
+		if len(list) > 0 {
 			checkRes = true
 		}
 	}
