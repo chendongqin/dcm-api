@@ -894,6 +894,9 @@ func (a *AuthorBusiness) GetAuthorProductAnalyse(authorId, keyword, firstCate, s
 	if listLen < end {
 		end = listLen
 	}
+	if start > listLen {
+		start = listLen
+	}
 	if listLen > 0 {
 		list = newList[start:end]
 	}
@@ -1188,6 +1191,9 @@ func (a *AuthorBusiness) NewGetAuthorProductAnalyse(authorId, keyword, firstCate
 	if listLen < end {
 		end = listLen
 	}
+	if start > listLen {
+		start = listLen
+	}
 	if listLen > 0 {
 		list = newList[start:end]
 	} else {
@@ -1330,6 +1336,9 @@ func (a *AuthorBusiness) GetAuthorShopAnalyse(authorId, keyword, sortStr, orderB
 	listLen := len(newList)
 	if listLen < end {
 		end = listLen
+	}
+	if start > listLen {
+		start = listLen
 	}
 	if total > 0 {
 		list = newList[start:end]

@@ -769,6 +769,9 @@ func (receiver *RankController) DyAuthorTakeGoodsRank() {
 
 	list := make([]dy.TakeGoodsRankRet, 0)
 	if total > 0 {
+		if start > total {
+			start = total
+		}
 		if start > 0 {
 			lens := end - start
 			list = data[0:lens]
@@ -885,6 +888,9 @@ func (receiver *RankController) DyAuthorFollowerRank() {
 	}
 	list := make([]dy.AuthorFansRankRet, 0)
 	if total > 0 {
+		if start > total {
+			start = total
+		}
 		if start > 0 {
 			lens := end - start
 			list = data[0:lens]

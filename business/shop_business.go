@@ -437,6 +437,9 @@ func (receiver *ShopBusiness) ShopLiveAuthorAnalysis(shopId, keyword, tag string
 	if total < end {
 		end = total
 	}
+	if start > total {
+		start = total
+	}
 	if total == 0 {
 		return
 	}
@@ -665,6 +668,9 @@ func (receiver *ShopBusiness) ShopAwemeAuthorAnalysis(shopId, keyword, tag strin
 	end := start + pageSize
 	if total < end {
 		end = total
+	}
+	if start > total {
+		start = total
 	}
 	if total == 0 {
 		return

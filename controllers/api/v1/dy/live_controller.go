@@ -1111,6 +1111,9 @@ func (receiver LiveController) LivingMessage() {
 		if lenNum < end {
 			end = lenNum
 		}
+		if start > lenNum {
+			start = lenNum
+		}
 		if lenNum > 0 {
 			list = data.Latest500Msg[start:end]
 		}
@@ -1143,6 +1146,9 @@ func (receiver LiveController) LivingMessage() {
 		end = start + pageSize
 		if visitLenNum < end {
 			end = visitLenNum
+		}
+		if start > visitLenNum {
+			start = visitLenNum
 		}
 		if visitLenNum > 0 {
 			visitList = data.Visits[start:end]
