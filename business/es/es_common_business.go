@@ -12,6 +12,7 @@ var EsTableConnectionMap = map[string]string{
 	"dy_product_aweme_author_analysis_%s": "aweme",
 	"dy_product_aweme_%s":                 "aweme",
 	"dy_aweme_%s":                         "aweme",
+	"dy_aweme_product_%s":                 "aweme",
 }
 
 //对应的es集群
