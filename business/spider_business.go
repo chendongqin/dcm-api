@@ -36,6 +36,7 @@ const (
 	LiveSpiderUrl            = "http://dy-live.spider.dongchamao.cn/"
 	ZHIMASpiderUrl           = "http://zhima-proxy.spider.dongchamao.cn/"
 	AuthorInfoUrl            = "https://webcast-hl.amemv.com/webcast/room/reflow/info/?room_id=70&user_id=%s&live_id=1&app_id=1128"
+	AuthorInfoUrlV2          = "https://www.iesdouyin.com/web/api/v2/user/info/?sec_uid=%s"
 )
 
 var SpiderNames = map[string]int{
@@ -274,6 +275,31 @@ func (s *SpiderBusiness) GetAuthorBaseInfo(authorId string) *dy2.DyAuthorIncome 
 			AuthorId:     jd.Get("data.user.id_str").String(),
 			Avatar:       jd.Get("data.user.avatar_thumb.url_list.0").String(),
 			Nickname:     jd.Get("data.user.nickname").String(),
+			UniqueId:     uniqueId,
+			IsCollection: 0,
+		}
+		return authorIncome
+	}
+	return nil
+}
+
+//抓取达人基本信息
+func (s *SpiderBusiness) GetAuthorBaseInfoV2(secUid string) *dy2.DyAuthorIncome {
+	pushUrl := fmt.Sprintf(AuthorInfoUrlV2, secUid)
+	headers := map[string]string{fasthttp.HeaderUserAgent: GetH5UserAgent()}
+	body := utils.TryDoReq(pushUrl, "", false, nil, headers)
+	jd := gjson.ParseBytes(body)
+	if jd.Get("status_code").Int() != 0 {
+		logs.Error("[搜索达人] author_id:[%s] 失败", secUid)
+	} else {
+		uniqueId := jd.Get("user_info.unique_id").String()
+		if uniqueId == "0" || uniqueId == "" {
+			uniqueId = jd.Get("user_info.short_id").String()
+		}
+		authorIncome := &dy2.DyAuthorIncome{
+			AuthorId:     jd.Get("user_info.uid").String(),
+			Avatar:       jd.Get("user_info.avatar_thumb.url_list.0").String(),
+			Nickname:     jd.Get("user_info.nickname").String(),
 			UniqueId:     uniqueId,
 			IsCollection: 0,
 		}
