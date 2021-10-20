@@ -1,6 +1,7 @@
 package global
 
 import (
+	"dongchamao/services/dingding"
 	"encoding/json"
 	"fmt"
 	"github.com/astaxie/beego"
@@ -30,6 +31,11 @@ func RequestRecoverPanic(ctx *context.Context) {
 		}
 		stacks := GetStacks()
 		logs.Critical(fmt.Sprintf("request url: %s, err: %s,  stack: %s", ctx.Input.URL(), err, stacks))
+		dingdingUrl := Cfg.String("ding_ding_error")
+		if dingdingUrl != "" {
+			ding := dingding.NewWithTokenUrl(dingdingUrl)
+			_ = ding.SendMarkDown("洞察猫服务异常", fmt.Sprintf("request url: %s, err: %s,  stack: %s", ctx.Input.URL(), err, stacks))
+		}
 		if ctx.Output.Status != 0 {
 			ctx.ResponseWriter.WriteHeader(ctx.Output.Status)
 		} else {
