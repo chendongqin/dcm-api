@@ -408,6 +408,9 @@ func (receiver *ProductBusiness) ProductAuthorAnalysis(productId, keyword, tag s
 	if total < end {
 		end = total
 	}
+	if start > total {
+		start = total
+	}
 	if total > 0 {
 		list = list[start:end]
 	}
@@ -455,6 +458,9 @@ func (receiver *ProductBusiness) ProductAuthorLiveRooms(productId, shopId, autho
 	end := start + pageSize
 	if total < end {
 		end = total
+	}
+	if start > total {
+		start = total
 	}
 	if total > 0 {
 		list = list[start:end]
@@ -671,6 +677,9 @@ func (receiver *ProductBusiness) ProductAwemeAuthorAnalysis(productId, keyword, 
 	if total < end {
 		end = total
 	}
+	if start > total {
+		start = total
+	}
 	if total == 0 {
 		return
 	}
@@ -707,6 +716,9 @@ func (receiver *ProductBusiness) ProductAuthorAwemes(productId, shopId, authorId
 	end := start + pageSize
 	if total < end {
 		end = total
+	}
+	if start > total {
+		start = total
 	}
 	if total > 0 {
 		sumList = sumList[start:end]
@@ -827,6 +839,9 @@ func (receiver *ProductBusiness) NewProductAuthorAwemes(productId, authorId stri
 	end := start + pageSize
 	if total < end {
 		end = total
+	}
+	if start > total {
+		start = total
 	}
 	if total == 0 {
 		return
