@@ -36,3 +36,8 @@ type DcVipOrder struct {
 	Image          string    `xorm:"not null default '' comment('相关图片') VARCHAR(2000)"`
 	TestOrder      int       `xorm:"not null default 0 comment('是否测试订单') TINYINT(1)"`
 }
+
+type DcVipInvoiceOrder struct {
+	DcVipOrder        `xorm:"extends"`
+	DcVipOrderInvoice `xorm:"extends"`
+}

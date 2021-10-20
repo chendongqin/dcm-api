@@ -696,11 +696,16 @@ func (receiver *PayController) OrderList() {
 	platform := receiver.Ctx.Input.Param(":platform")
 	selectStatus, _ := receiver.GetInt("select_status", 0)
 	invoiceStatus, _ := receiver.GetInt("invoice_status", 0)
+	isInvoice, _ := receiver.GetInt("is_invoice", 0) //可开票订单
 	page := receiver.GetPage("page")
 	pageSize := receiver.GetPageSize("page_size", 10, 30)
-	vipOrderList := make([]dcm.DcVipOrder, 0)
+	vipOrderList := make([]dcm.DcVipInvoiceOrder, 0)
 	start := (page - 1) * pageSize
-	sql := fmt.Sprintf("user_id=%d AND platform='%s'", receiver.UserId, platform)
+	sql := fmt.Sprintf("dc_vip_order.user_id=%d AND dc_vip_order.platform='%s'", receiver.UserId, platform)
+	if isInvoice == 1 { //筛选可开票订单
+		invoiceStatus = 1
+		sql += " AND dc_vip_order.amount <= 10000"
+	}
 	if selectStatus == 1 {
 		sql += " AND pay_status = 1 "
 	} else if selectStatus == 2 {
@@ -709,38 +714,43 @@ func (receiver *PayController) OrderList() {
 		sql += fmt.Sprintf(" AND pay_status = 0 AND expiration_time >= '%s'", time.Now().Format("2006-01-02 15:04:05"))
 	}
 	if invoiceStatus == 1 {
-		sql += " AND invoice_id = 0"
+		sql += " AND (dc_vip_order.invoice_id = 0 OR dc_vip_order_invoice.status in (0,2))"
 	} else if invoiceStatus == 2 {
 		sql += " AND invoice_id > 0"
+		sql += " AND dc_vip_order_invoice.status in (1,3)"
 	}
+
 	total, _ := dcm.GetSlaveDbSession().
+		Table(&dcm.DcVipOrder{}).
+		Join("LEFT", "dc_vip_order_invoice", "dc_vip_order.invoice_id=dc_vip_order_invoice.id").
 		Where(sql).
-		Where("status!=-1").
+		Where("dc_vip_order.status!=-1").
 		Limit(pageSize, start).
-		Desc("create_time").
+		Desc("dc_vip_order.create_time").
 		FindAndCount(&vipOrderList)
 	list := make([]repost.VipOrderDetail, 0)
 	for _, v := range vipOrderList {
-		status := v.Status
+		status := v.DcVipOrder.Status
 		if v.PayStatus == 0 && v.ExpirationTime.Before(time.Now()) {
 			status = 2
 		}
 		list = append(list, repost.VipOrderDetail{
-			OrderId:      v.Id,
-			TradeNo:      v.TradeNo,
-			OrderType:    v.OrderType,
-			PayType:      v.PayType,
-			Level:        v.Level,
-			BuyDays:      v.BuyDays,
-			Title:        v.Title,
-			Amount:       v.Amount,
-			Channel:      v.Channel,
-			TicketAmount: v.TicketAmount,
-			Status:       status,
-			PayStatus:    v.PayStatus,
-			CreateTime:   v.CreateTime.Format("2006-01-02 15:04:05"),
-			PayTime:      v.PayTime.Format("2006-01-02 15:04:05"),
-			InvoiceId:    v.InvoiceId,
+			OrderId:       v.DcVipOrder.Id,
+			TradeNo:       v.TradeNo,
+			OrderType:     v.OrderType,
+			PayType:       v.PayType,
+			Level:         v.Level,
+			BuyDays:       v.BuyDays,
+			Title:         v.Title,
+			Amount:        v.DcVipOrder.Amount,
+			Channel:       v.Channel,
+			TicketAmount:  v.TicketAmount,
+			Status:        status,
+			PayStatus:     v.PayStatus,
+			CreateTime:    v.DcVipOrder.CreateTime.Format("2006-01-02 15:04:05"),
+			PayTime:       v.PayTime.Format("2006-01-02 15:04:05"),
+			InvoiceId:     v.InvoiceId,
+			InvoiceStatus: v.DcVipOrderInvoice.Status,
 		})
 	}
 
@@ -752,25 +762,32 @@ func (receiver *PayController) OrderList() {
 
 func (receiver *PayController) CreateOrderInvoice() {
 	InputData := receiver.InputFormat()
-	orderIds := InputData.GetArrInt("orderIds")
-	amount := InputData.GetFloat64("amount", 0)           //开票金额
-	head := InputData.GetString("head", "")               //发票抬头
-	invoiceNum := InputData.GetString("invoiceNum", "")   //纳税人识别号
-	email := InputData.GetString("email", "")             //电子邮箱
-	remark := InputData.GetString("remark", "")           //发票备注
-	phone := InputData.GetString("phone", "")             //收件人手机号
-	bankName := InputData.GetString("bankName", "")       //开户银行
-	bankAccount := InputData.GetString("bankAccount", "") //开户行账号
-	regAddress := InputData.GetString("regAddress", "")   //注册地址
-	invoiceType := InputData.GetInt("invoiceType", 0)     //发票类型
-	address := InputData.GetString("address", "")         //收件人地址
+	orderIds := InputData.GetArrInt("order_ids")
+	amount := InputData.GetFloat64("amount", 0)            //开票金额
+	head := InputData.GetString("head", "")                //发票抬头
+	headType := InputData.GetInt("head_type", 0)           //抬头类型
+	invoiceNum := InputData.GetString("invoice_num", "")   //纳税人识别号
+	email := InputData.GetString("email", "")              //电子邮箱
+	remark := InputData.GetString("remark", "")            //发票备注
+	phone := InputData.GetString("phone", "")              //收件人手机号
+	bankName := InputData.GetString("bank_name", "")       //开户银行
+	bankAccount := InputData.GetString("bank_account", "") //开户行账号
+	regAddress := InputData.GetString("reg_address", "")   //注册地址
+	invoiceType := InputData.GetInt("invoice_type", 0)     //发票类型
+	address := InputData.GetString("address", "")          //收件人地址
 	now := time.Now()
-	if amount == 0 || head == "" || invoiceNum == "" || bankName == "" || bankAccount == "" || regAddress == "" {
+	if amount == 0 || head == "" {
 		receiver.FailReturn(global.NewError(4000))
 		return
 	}
+	if headType == 0 { //抬头类型为企业
+		if invoiceNum == "" {
+			receiver.FailReturn(global.NewError(4000))
+			return
+		}
+	}
 	if invoiceType == 0 { //增值税专用发票
-		if phone == "" || address == "" {
+		if bankName == "" || bankAccount == "" || regAddress == "" || phone == "" || address == "" {
 			receiver.FailReturn(global.NewError(4000))
 			return
 		}
@@ -790,6 +807,7 @@ func (receiver *PayController) CreateOrderInvoice() {
 	orderInvoice := dcm.DcVipOrderInvoice{
 		UserId:      receiver.UserId,
 		Username:    receiver.UserInfo.Username,
+		HeadType:    headType,
 		Amount:      amount,
 		Head:        head,
 		InvoiceNum:  invoiceNum,
