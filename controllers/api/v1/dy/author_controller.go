@@ -240,6 +240,17 @@ func (receiver *AuthorController) BaseSearch() {
 			authorData, _ := hbase.GetAuthor(v.AuthorId)
 			list[k].RoomId = business.IdEncrypt(authorData.RoomId)
 		}
+		if list[k].DiggFollowerRate > 1 {
+			list[k].DiggFollowerRate = 1
+		} else {
+			list[k].DiggFollowerRate = utils.RateMin(list[k].DiggFollowerRate)
+		}
+		if list[k].InteractionRate > 1 {
+			list[k].InteractionRate = 1
+		} else {
+			list[k].InteractionRate = utils.RateMin(list[k].InteractionRate)
+		}
+
 		list[k].IsCollection = 1
 		list[k].DiggFollowerRate = utils.RateMin(list[k].DiggFollowerRate)
 		list[k].InteractionRate = utils.RateMin(list[k].InteractionRate)
