@@ -211,12 +211,9 @@ func dateTimeLiveHour(key string) (res map[string][]string, dateHourList map[str
 	}
 	res["date"] = dateList
 	startCurrentHour := now.Hour()
-	isExist := false
 	for i := startCurrentHour; i <= startCurrentHour; i-- {
-		if !isExist {
-			isExist = checkIsExistHour(key, i)
+		if checkIsExistHour(key, i) {
 			startCurrentHour = i
-		} else {
 			break
 		}
 	}
@@ -332,7 +329,7 @@ func checkcachKey(cachKey string) (isExist bool) {
 
 //检测该日榜周榜榜单是否已经存在了数据
 func checkIsExistDate(key string) (isExist bool) {
-	cachKey := cache.GetCacheKey(cache.DyRankCache, "day", key)
+	cachKey := cache.GetCacheKey(cache.DyRankCache, time.Now().Format("20060102"), key)
 	isExist = checkcachKey(cachKey)
 	if isExist == false {
 		pathInfo := getRoute(key)
@@ -352,7 +349,7 @@ func checkIsExistDate(key string) (isExist bool) {
 
 //检测该小时榜榜单是否已经存在了数据
 func checkIsExistHour(key string, currentHour int) (isExist bool) {
-	cachKey := cache.GetCacheKey(cache.DyRankCache, "hour", key)
+	cachKey := cache.GetCacheKey(cache.DyRankCache, currentHour, key)
 	isExist = checkcachKey(cachKey)
 	if isExist == false {
 		pathInfo := getRoute(key)
