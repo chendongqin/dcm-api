@@ -112,7 +112,9 @@ func (receiver *ShopBusiness) ShopProductAnalysis(shopId, keyword, category, sor
 	if total < end {
 		end = total
 	}
-	list = list[start:end]
+	if total > 0 {
+		list = list[start:end]
+	}
 	productIds := []string{}
 	for _, v := range list {
 		productIds = append(productIds, v.ProductId)
@@ -435,6 +437,9 @@ func (receiver *ShopBusiness) ShopLiveAuthorAnalysis(shopId, keyword, tag string
 	if total < end {
 		end = total
 	}
+	if total == 0 {
+		return
+	}
 	list = list[start:end]
 	return
 }
@@ -660,6 +665,9 @@ func (receiver *ShopBusiness) ShopAwemeAuthorAnalysis(shopId, keyword, tag strin
 	end := start + pageSize
 	if total < end {
 		end = total
+	}
+	if total == 0 {
+		return
 	}
 	list = list[start:end]
 	return

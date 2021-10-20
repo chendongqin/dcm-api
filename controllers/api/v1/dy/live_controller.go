@@ -1111,7 +1111,9 @@ func (receiver LiveController) LivingMessage() {
 		if lenNum < end {
 			end = lenNum
 		}
-		list = data.Latest500Msg[start:end]
+		if lenNum > 0 {
+			list = data.Latest500Msg[start:end]
+		}
 		lastKey := -1
 		for k, v := range list {
 			list[k].Avatar = dyimg.Fix(v.Avatar)
@@ -1142,7 +1144,9 @@ func (receiver LiveController) LivingMessage() {
 		if visitLenNum < end {
 			end = visitLenNum
 		}
-		visitList = data.Visits[start:end]
+		if visitLenNum > 0 {
+			visitList = data.Visits[start:end]
+		}
 		lastKey := -1
 		for k := range visitList {
 			lastKey = k

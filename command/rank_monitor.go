@@ -68,7 +68,7 @@ func checkTime(currentTime time.Time, hour, minute int) bool {
 **name:榜单名称
 **hour：小时
  */
-func getRoute(key string) (pathInfo PathDesc) {
+func getRoute(key string, hours ...int) (pathInfo PathDesc) {
 	now := time.Now()
 	toDate := now.Format("2006-01-02")
 	yesDate := now.AddDate(0, 0, -1).Format("2006-01-02")
@@ -80,7 +80,47 @@ func getRoute(key string) (pathInfo PathDesc) {
 	}
 	weekStartDate := now.AddDate(0, 0, offset).Format("2006-01-02") //本周第一天
 	hour := time.Now().Hour()
+	if len(hours) > 0 {
+		hour = hours[0]
+	}
 	currentHourString := strconv.Itoa(hour)
+
+	var routeMap = map[string]PathDesc{
+		/*********直播*********/
+		"live_hour": {fmt.Sprintf("/v1/dy/rank/live/hour/%s/%s:00", toDate, currentHourString), "直播小时榜"},
+		"live_top":  {fmt.Sprintf("/v1/dy/rank/live/top/%s/%s:00", toDate, currentHourString), "直播热榜"},
+		/*********商品*********/
+		"product_sale":           {fmt.Sprintf("/v1/dy/rank/product/sale/%s?data_type=1&first_cate=&order_by=desc&sort=order_count&page=1&page_size=50", yesDate), "抖音销量榜"},
+		"product_share":          {fmt.Sprintf("/v1/dy/rank/product/share/%s?first_cate=&data_type=1&order_by=desc&sort=share_count&page=1&page_size=50", yesDate), "抖音热推榜"},
+		"product_live_sale":      {fmt.Sprintf("/v1/dy/rank/product/live/sale/%s?data_type=1&first_cate=&order_by=desc&sort=sales&page=1&page_size=50", yesDate), "直播商品榜"},
+		"product_live_sale_week": {fmt.Sprintf("/v1/dy/rank/product/live/sale/%s?data_type=2&first_cate=&order_by=desc&sort=sales&page=1&page_size=50", weekStartDate), "直播商品榜-周榜"},
+		"product":                {fmt.Sprintf("/v1/dy/rank/product/%s?first_cate=&order_by=desc&sort=sales&data_type=1&page=1&page_size=50", yesDate), "视频商品榜"},
+		"product_week":           {fmt.Sprintf("/v1/dy/rank/product/%s?first_cate=&order_by=desc&sort=sales&data_type=2&page=1&page_size=50", weekStartDate), "视频商品榜-周榜"},
+		/*********达人*********/
+		"author_follower_inc": {fmt.Sprintf("/v1/dy/rank/author/follower/inc/%s?tags=&province=&page=1&is_delivery=0&page_size=50&order_by=desc&sort=inc_follower_count", yesDate), "达人涨粉榜"},
+		"author_goods":        {fmt.Sprintf("/v1/dy/rank/author/goods/%s?date_type=1&tags=&verified=0&page=1&page_size=50&sort=sum_gmv&order_by=desc", yesDate), "达人带货榜"},
+		//"video_share":         {fmt.Sprintf("/v1/dy/rank/video/share/%s", BeforeYesDate), "电商视频达人分享榜"},
+		"live_share":        {fmt.Sprintf("/v1/dy/rank/live/share/%s/%s", weekDate, yesDate), "电商直播达人分享榜"},
+		"author_aweme_rank": {"/v1/dy/rank/author/aweme?rank_type=达人指数榜&category=全部", "抖音短视频达人热榜"},
+		"author_aweme_live": {"/v1/dy/rank/author/live?rank_type=达人指数榜", "抖音直播主播热榜"},
+	}
+	pathInfo = routeMap[key]
+	return
+}
+
+func getCheckRoute(key string, now time.Time) (pathInfo PathDesc) {
+	//now := time.Now()
+	toDate := now.Format("2006-01-02")
+	yesDate := now.AddDate(0, 0, -1).Format("2006-01-02")
+	//BeforeYesDate := time.Now().AddDate(0, 0, -1).Format("2006-01-02")
+	weekDate := now.AddDate(0, 0, -7).Format("2006-01-02")
+	offset := int(time.Monday - now.Weekday())
+	if offset > 0 {
+		offset = -6
+	}
+	weekStartDate := now.AddDate(0, 0, offset).Format("2006-01-02") //本周第一天
+	hour := now.Hour()
+	currentHourString := fmt.Sprintf("%02d", hour)
 
 	var routeMap = map[string]PathDesc{
 		/*********直播*********/
@@ -205,8 +245,8 @@ func dateTimeLiveHour(key string) (res map[string][]string, dateHourList map[str
 	var currentHourList, commonHourList []string
 	getHourList := func(start int) (hourList []string) {
 		hourList = []string{}
-		for i := 0; i <= start; i++ {
-			hourString := fmt.Sprintf("%02d:00", start-i)
+		for i := start; i >= 0; i-- {
+			hourString := fmt.Sprintf("%02d:00", i)
 			hourList = append(hourList, hourString)
 		}
 		return
@@ -226,8 +266,10 @@ func dateTimeLiveHour(key string) (res map[string][]string, dateHourList map[str
 	commonHourList = getHourList(23)
 	dateHourList = map[string][]string{}
 	for k, v := range dateList {
-		if k == 0 && len(currentHourList) > 0 {
-			dateHourList[v] = currentHourList
+		if k == 0 {
+			if len(currentHourList) > 0 {
+				dateHourList[v] = currentHourList
+			}
 		} else {
 			dateHourList[v] = commonHourList
 		}
@@ -354,20 +396,17 @@ func checkIsExistDate(key string) (isExist bool) {
 
 //检测该小时榜榜单是否已经存在了数据
 func checkIsExistHour(key string, currentHour int) (isExist bool) {
-	cachKey := cache.GetCacheKey(cache.DyRankCache, currentHour, key)
+	cachKey := cache.GetCacheKey(cache.DyRankCache, utils.ToString(currentHour), key)
 	isExist = checkcachKey(cachKey)
 	if isExist == false {
-		pathInfo := getRoute(key)
-		pathString := pathInfo.Path
-		now := time.Now()
-		hourString := strconv.Itoa(now.Hour())
-		pathInfo.Path = strings.Replace(pathString, hourString, strconv.Itoa(currentHour), 1)
+		checkNowTime, _ := time.ParseInLocation("20060102150405", fmt.Sprintf("%s%02d0000", time.Now().Format("20060102"), currentHour), time.Local)
+		pathInfo := getCheckRoute(key, checkNowTime)
 		isExist = requestRank(pathInfo)
 		if isExist {
 			//有数据情况，缓存设置到今天结束
-			dateString := fmt.Sprintf("%s %s:59:59", now.Format("2006-01-02"), strconv.Itoa(now.Hour()))
+			dateString := fmt.Sprintf("%s %s:59:59", checkNowTime.Format("2006-01-02"), strconv.Itoa(checkNowTime.Hour()))
 			stopTime, _ := time.ParseInLocation("2006-01-02 15:04:05", dateString, time.Local)
-			seconds := stopTime.Unix() - now.Unix()
+			seconds := stopTime.Unix() - checkNowTime.Unix()
 			secondsDuration := time.Duration(seconds)
 			global.Cache.Set(cachKey, "1", secondsDuration)
 		}

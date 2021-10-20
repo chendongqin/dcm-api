@@ -400,12 +400,17 @@ func (receiver *ProductBusiness) ProductAuthorAnalysis(productId, keyword, tag s
 		return list[i].Gmv > list[j].Gmv
 	})
 	total = len(list)
+	if total == 0 {
+		return
+	}
 	start := (page - 1) * pageSize
 	end := start + pageSize
 	if total < end {
 		end = total
 	}
-	list = list[start:end]
+	if total > 0 {
+		list = list[start:end]
+	}
 	return
 }
 
@@ -443,12 +448,17 @@ func (receiver *ProductBusiness) ProductAuthorLiveRooms(productId, shopId, autho
 		}
 	})
 	total = len(list)
+	if total == 0 {
+		return
+	}
 	start := (page - 1) * pageSize
 	end := start + pageSize
 	if total < end {
 		end = total
 	}
-	list = list[start:end]
+	if total > 0 {
+		list = list[start:end]
+	}
 	return
 }
 
@@ -661,6 +671,9 @@ func (receiver *ProductBusiness) ProductAwemeAuthorAnalysis(productId, keyword, 
 	if total < end {
 		end = total
 	}
+	if total == 0 {
+		return
+	}
 	list = list[start:end]
 	return
 }
@@ -695,7 +708,11 @@ func (receiver *ProductBusiness) ProductAuthorAwemes(productId, shopId, authorId
 	if total < end {
 		end = total
 	}
-	sumList = sumList[start:end]
+	if total > 0 {
+		sumList = sumList[start:end]
+	} else {
+		sumList = sumList
+	}
 	for _, v := range sumList {
 		awemeIds = append(awemeIds, v.Key)
 		awemeGmvMap[v.Key] = v.TotalGmv.Value
@@ -810,6 +827,9 @@ func (receiver *ProductBusiness) NewProductAuthorAwemes(productId, authorId stri
 	end := start + pageSize
 	if total < end {
 		end = total
+	}
+	if total == 0 {
+		return
 	}
 	list = list[start:end]
 	return
