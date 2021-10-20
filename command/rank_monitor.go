@@ -202,7 +202,7 @@ func dateTimeLiveHour(key string) (res map[string][]string, dateHourList map[str
 	dateList := getDateList(7, now)
 	var currentHourList, commonHourList []string
 	getHourList := func(start int) (hourList []string) {
-		hourList = make([]string, 0)
+		hourList = []string{}
 		for i := 0; i <= start; i++ {
 			hourString := fmt.Sprintf("%02d:00", start-i)
 			hourList = append(hourList, hourString)
@@ -222,7 +222,7 @@ func dateTimeLiveHour(key string) (res map[string][]string, dateHourList map[str
 	}
 	currentHourList = getHourList(startCurrentHour)
 	commonHourList = getHourList(23)
-	dateHourList = make(map[string][]string)
+	dateHourList = map[string][]string{}
 	for k, v := range dateList {
 		if k == 0 {
 			dateHourList[v] = currentHourList
@@ -261,7 +261,7 @@ func getWeekList(key string) (res []map[string]string) {
 	if !isExist {
 		startDateTime = startDateTime.AddDate(0, 0, -7)
 	}
-	dateSelectList := make([]map[string]string, 0)
+	dateSelectList := []map[string]string{}
 	for i := 0; i < num; i++ {
 		rightDate := startDateTime.AddDate(0, 0, -i*6)
 		leftDate := startDateTime.AddDate(0, 0, -(i+1)*6)
@@ -284,7 +284,7 @@ func getWeekListLiveShare() (res []map[string]string) {
 	}
 
 	startDateTime := time.Now().AddDate(0, 0, (offset - 1))
-	dateSelectList := make([]map[string]string, 0)
+	dateSelectList := []map[string]string{}
 	for i := 0; i < num; i++ {
 		rightDate := startDateTime.AddDate(0, 0, -i*6)
 		leftDate := startDateTime.AddDate(0, 0, -(i+1)*6)
