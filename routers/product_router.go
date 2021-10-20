@@ -18,6 +18,7 @@ func init() {
 			beego.NSRouter("/deal/analysis/:product_id", &v1dy.ProductController{}, "get:ProductDealAnalyse"),
 			beego.NSRouter("/live/chart/:product_id/:start/:end", &v1dy.ProductController{}, "get:ProductLiveChart"),
 			beego.NSRouter("/live/room/:product_id/:start/:end", &v1dy.ProductController{}, "get:ProductLiveRoomList"),
+			beego.NSRouter("/live/room/total/:product_id/:start/:end", &v1dy.ProductController{}, "get:ProductLiveRoomTotal"),
 			beego.NSRouter("/author/:product_id/:start/:end", &v1dy.ProductController{}, "get:ProductLiveAuthorAnalysis"),
 			beego.NSRouter("/author/view/:product_id/:start/:end", &v1dy.ProductController{}, "get:ProductAuthorView"),
 			beego.NSRouter("/author/aweme/:product_id/:start/:end", &v1dy.ProductController{}, "get:ProductAwemeAuthorAnalysis"),
@@ -28,6 +29,7 @@ func init() {
 			beego.NSRouter("/room/:product_id/:start/:end", &v1dy.ProductController{}, "get:ProductRoomsRangeDate"),
 			beego.NSRouter("/aweme/sales/chart/:product_id/:start/:end", &v1dy.ProductController{}, "get:ProductAwemeSalesTrend"),
 			beego.NSRouter("/aweme/list/:product_id/:start/:end", &v1dy.ProductController{}, "get:ProductAweme"),
+			beego.NSRouter("/aweme/total/:product_id/:start/:end", &v1dy.ProductController{}, "get:ProductAwemeTotal"),
 		),
 	)
 	// 注册路由组

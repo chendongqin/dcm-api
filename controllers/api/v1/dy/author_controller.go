@@ -707,7 +707,7 @@ func (receiver *AuthorController) AuthorAwemes() {
 	orderBy := receiver.GetString("order_by", "")
 	page := receiver.GetPage("page")
 	pageSize := receiver.GetPageSize("page_size", 10, 30)
-	list, total, totalSales, totalGmv, comErr := es.NewEsVideoBusiness().SearchByAuthor(authorId, keyword, sortStr, orderBy, hasProduct, page, pageSize, startTime, endTime)
+	list, total, comErr := es.NewEsVideoBusiness().SearchByAuthor(authorId, keyword, sortStr, orderBy, hasProduct, page, pageSize, startTime, endTime)
 	if comErr != nil {
 		receiver.FailReturn(comErr)
 		return
@@ -728,9 +728,33 @@ func (receiver *AuthorController) AuthorAwemes() {
 	receiver.SuccReturn(map[string]interface{}{
 		"list":           list,
 		"total":          total,
-		"total_sales":    totalSales,
-		"total_gmv":      totalGmv,
 		"max_show_total": maxTotal,
+	})
+	return
+}
+
+//达人视频列表-total
+func (receiver *AuthorController) AuthorAwemesTotal() {
+	authorId := business.IdDecrypt(receiver.Ctx.Input.Param(":author_id"))
+	startTime, endTime, comErr := receiver.GetRangeDate()
+	if comErr != nil {
+		receiver.FailReturn(comErr)
+		return
+	}
+	hasProduct, _ := receiver.GetInt("has_product", 0)
+	keyword := receiver.GetString("keyword", "")
+	sortStr := receiver.GetString("sort", "")
+	orderBy := receiver.GetString("order_by", "")
+	page := receiver.GetPage("page")
+	pageSize := receiver.GetPageSize("page_size", 10, 30)
+	totalSales, totalGvm, comErr := es.NewEsVideoBusiness().SearchByAuthorTotal(authorId, keyword, sortStr, orderBy, hasProduct, page, pageSize, startTime, endTime)
+	if comErr != nil {
+		receiver.FailReturn(comErr)
+		return
+	}
+	receiver.SuccReturn(map[string]interface{}{
+		"total_sales": totalSales,
+		"total_gvm":   totalGvm,
 	})
 	return
 }
@@ -964,7 +988,7 @@ func (receiver *AuthorController) AuthorLiveRooms() {
 		return
 	}
 	esLiveBusiness := es.NewEsLiveBusiness()
-	list, total, totalSales, totalGmv, comErr := esLiveBusiness.SearchAuthorRooms(authorId, keyword, sortStr, orderBy, page, size, t1, t2)
+	list, total, comErr := esLiveBusiness.SearchAuthorRooms(authorId, keyword, sortStr, orderBy, page, size, t1, t2)
 	if listType == 1 {
 		roomIds := []string{}
 		for _, v := range list {
@@ -995,10 +1019,39 @@ func (receiver *AuthorController) AuthorLiveRooms() {
 		return
 	}
 	receiver.SuccReturn(map[string]interface{}{
-		"list":        list,
-		"total":       total,
+		"list":  list,
+		"total": total,
+	})
+	return
+}
+
+//达人直播间列表total
+func (receiver *AuthorController) AuthorLiveRoomsTotal() {
+	authorId := business.IdDecrypt(receiver.Ctx.Input.Param(":author_id"))
+	InputData := receiver.InputFormat()
+	keyword := InputData.GetString("keyword", "")
+	sortStr := InputData.GetString("sort", "create_time")
+	orderBy := InputData.GetString("order_by", "desc")
+	size := InputData.GetInt("page_size", 10)
+	if authorId == "" {
+		receiver.FailReturn(global.NewError(4000))
+		return
+	}
+	t1, t2, comErr := receiver.GetRangeDate()
+	if comErr != nil {
+		receiver.FailReturn(comErr)
+		return
+	}
+	esLiveBusiness := es.NewEsLiveBusiness()
+	totalSales, totalGvm, comErr := esLiveBusiness.SearchAuthorRoomsTotal(authorId, keyword, sortStr, orderBy, size, t1, t2)
+
+	if comErr != nil {
+		receiver.FailReturn(comErr)
+		return
+	}
+	receiver.SuccReturn(map[string]interface{}{
 		"total_sales": totalSales,
-		"total_gmv":   totalGmv,
+		"total_gvm":   totalGvm,
 	})
 	return
 }

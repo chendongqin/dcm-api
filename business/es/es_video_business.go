@@ -19,7 +19,59 @@ func NewEsVideoBusiness() *EsVideoBusiness {
 }
 
 func (e *EsVideoBusiness) SearchAwemeByProduct(productId, keyword, sortStr, orderBy string,
-	startTime, endTime time.Time, page, pageSize int) (list []es.DyProductVideo, total int, totalSales int64, totalGmv float64, comErr global.CommonError) {
+	startTime, endTime time.Time, page, pageSize int) (list []es.DyProductVideo, total int, comErr global.CommonError) {
+
+	tmpPage := page
+	tmpPageSize := pageSize
+	if keyword != "" {
+		tmpPage = 1
+		tmpPageSize = 10000
+	}
+	var newEsMultiQuery *elasticsearch.ElasticMultiQuery
+	newEsMultiQuery, _, comErr = e.getSearchAwemeByProductEs(productId, keyword, sortStr, orderBy, startTime, endTime, page, pageSize)
+	result := newEsMultiQuery.
+		SetOrderBy(elasticsearch.NewElasticOrder().Add(sortStr, orderBy).Order).
+		SetLimit((tmpPage-1)*tmpPageSize, tmpPageSize).
+		SetMultiQuery().
+		Query()
+	utils.MapToStruct(result, &list)
+	total = newEsMultiQuery.Count
+	if keyword != "" {
+		keyword = strings.ToLower(keyword)
+		newList := []es.DyProductVideo{}
+		for _, v := range list {
+			if strings.Index(strings.ToLower(v.AwemeTitle), keyword) < 0 && strings.Index(strings.ToLower(v.Nickname), keyword) < 0 {
+				continue
+			}
+			newList = append(newList, v)
+		}
+		total = len(newList)
+		if total == 0 {
+			list = newList
+			return
+		}
+		start := (page - 1) * pageSize
+		end := start + pageSize
+		if total < end {
+			end = total
+		}
+		list = newList[start:end]
+	}
+
+	return
+}
+
+func (e *EsVideoBusiness) SearchAwemeByProductTotal(productId, keyword, sortStr, orderBy string,
+	startTime, endTime time.Time, page, pageSize int) (totalSales int64, totalGmv float64, comErr global.CommonError) {
+	var newEsMultiQuery *elasticsearch.ElasticMultiQuery
+	var esQuery *elasticsearch.ElasticQuery
+	newEsMultiQuery, esQuery, comErr = e.getSearchAwemeByProductEs(productId, keyword, sortStr, orderBy, startTime, endTime, page, pageSize)
+	totalSales, totalGmv = e.getVideoTotal(newEsMultiQuery, esQuery, "sales", "aweme_gmv")
+	return
+}
+
+func (e *EsVideoBusiness) getSearchAwemeByProductEs(productId, keyword, sortStr, orderBy string,
+	startTime, endTime time.Time, page, pageSize int) (newEsMultiQuery *elasticsearch.ElasticMultiQuery, eQ *elasticsearch.ElasticQuery, comErr global.CommonError) {
 	if orderBy == "" {
 		orderBy = "desc"
 	}
@@ -45,12 +97,6 @@ func (e *EsVideoBusiness) SearchAwemeByProduct(productId, keyword, sortStr, orde
 		"gte": startTime.Unix(),
 		"lt":  endTime.AddDate(0, 0, 1).Unix(),
 	})
-	tmpPage := page
-	tmpPageSize := pageSize
-	if keyword != "" {
-		tmpPage = 1
-		tmpPageSize = 10000
-	}
 	//if keyword != "" {
 	//	esQuery.AddCondition(map[string]interface{}{
 	//		"bool": map[string]interface{}{
@@ -70,23 +116,42 @@ func (e *EsVideoBusiness) SearchAwemeByProduct(productId, keyword, sortStr, orde
 	//	})
 	//}
 	var cacheTime time.Duration = 180
-	newEsMultiQuery := esMultiQuery.
+	newEsMultiQuery = esMultiQuery.
 		SetConnection(connection).
 		SetTable(esTable).
 		SetCache(cacheTime).
 		AddMust(esQuery.Condition)
+	eQ = esQuery
+	return
+}
+
+//获取达人视频列表
+func (e *EsVideoBusiness) SearchByAuthor(authorId, keyword, sortStr, orderBy string, hasProduct, page, pageSize int, startTime, endTime time.Time) (list []es.DyAweme, total int, comErr global.CommonError) {
+
+	tmpPage := page
+	tmpPageSize := pageSize
+	if keyword != "" {
+		tmpPage = 1
+		tmpPageSize = 10000
+	}
+	//if keyword != "" {
+	//	esQuery.SetMatchPhrase("aweme_title", keyword)
+	//}
+	var newEsMultiQuery *elasticsearch.ElasticMultiQuery
+	newEsMultiQuery, _, comErr = e.getSearchByAuthorEs(authorId, keyword, sortStr, orderBy, hasProduct, startTime, endTime)
 	result := newEsMultiQuery.
 		SetOrderBy(elasticsearch.NewElasticOrder().Add(sortStr, orderBy).Order).
+		//SetLimit((page-1)*pageSize, pageSize).
 		SetLimit((tmpPage-1)*tmpPageSize, tmpPageSize).
 		SetMultiQuery().
 		Query()
 	utils.MapToStruct(result, &list)
-	total = esMultiQuery.Count
+	total = newEsMultiQuery.Count
 	if keyword != "" {
 		keyword = strings.ToLower(keyword)
-		newList := []es.DyProductVideo{}
+		newList := []es.DyAweme{}
 		for _, v := range list {
-			if strings.Index(strings.ToLower(v.AwemeTitle), keyword) < 0 && strings.Index(strings.ToLower(v.Nickname), keyword) < 0 {
+			if strings.Index(strings.ToLower(v.AwemeTitle), keyword) < 0 {
 				continue
 			}
 			newList = append(newList, v)
@@ -104,6 +169,19 @@ func (e *EsVideoBusiness) SearchAwemeByProduct(productId, keyword, sortStr, orde
 		list = newList[start:end]
 	}
 
+	return
+}
+
+//获取达人视频列表
+func (e *EsVideoBusiness) SearchByAuthorTotal(authorId, keyword, sortStr, orderBy string, hasProduct, page, pageSize int, startTime, endTime time.Time) (totalSales int64, totalGmv float64, comErr global.CommonError) {
+	var newEsMultiQuery *elasticsearch.ElasticMultiQuery
+	var esQuery *elasticsearch.ElasticQuery
+	newEsMultiQuery, esQuery, comErr = e.getSearchByAuthorEs(authorId, keyword, sortStr, orderBy, hasProduct, startTime, endTime)
+	//计算汇总数据
+	totalSales, totalGmv = e.getVideoTotal(newEsMultiQuery, esQuery, "sales", "aweme_gmv")
+	return
+}
+func (receiver *EsVideoBusiness) getVideoTotal(newEsMultiQuery *elasticsearch.ElasticMultiQuery, esQuery *elasticsearch.ElasticQuery, fieldSales, fieldGmv string) (totalSales int64, totalGmv float64) {
 	countResult := newEsMultiQuery.
 		RawQuery(map[string]interface{}{
 			"query": map[string]interface{}{
@@ -115,12 +193,12 @@ func (e *EsVideoBusiness) SearchAwemeByProduct(productId, keyword, sortStr, orde
 			"aggs": map[string]interface{}{
 				"total_gmv": map[string]interface{}{
 					"sum": map[string]interface{}{
-						"field": "aweme_gmv",
+						"field": fieldGmv,
 					},
 				},
 				"total_sales": map[string]interface{}{
 					"sum": map[string]interface{}{
-						"field": "sales",
+						"field": fieldSales,
 					},
 				},
 			},
@@ -141,8 +219,8 @@ func (e *EsVideoBusiness) SearchAwemeByProduct(productId, keyword, sortStr, orde
 	return
 }
 
-//获取达人视频列表
-func (e *EsVideoBusiness) SearchByAuthor(authorId, keyword, sortStr, orderBy string, hasProduct, page, pageSize int, startTime, endTime time.Time) (list []es.DyAweme, total int, totalSales int64, totalGmv float64, comErr global.CommonError) {
+//获取达人视频列表-es句柄
+func (e *EsVideoBusiness) getSearchByAuthorEs(authorId, keyword, sortStr, orderBy string, hasProduct int, startTime, endTime time.Time) (newEsMultiQuery *elasticsearch.ElasticMultiQuery, eQ *elasticsearch.ElasticQuery, comErr global.CommonError) {
 	if orderBy == "" {
 		orderBy = "desc"
 	}
@@ -170,12 +248,6 @@ func (e *EsVideoBusiness) SearchByAuthor(authorId, keyword, sortStr, orderBy str
 		"gte": startTime.Unix(),
 		"lt":  endTime.AddDate(0, 0, 1).Unix(),
 	})
-	tmpPage := page
-	tmpPageSize := pageSize
-	if keyword != "" {
-		tmpPage = 1
-		tmpPageSize = 10000
-	}
 	//if keyword != "" {
 	//	esQuery.SetMatchPhrase("aweme_title", keyword)
 	//}
@@ -183,74 +255,12 @@ func (e *EsVideoBusiness) SearchByAuthor(authorId, keyword, sortStr, orderBy str
 		esQuery.SetExist("field", "product_ids")
 	}
 	var cacheTime time.Duration = 180
-	newEsMultiQuery := esMultiQuery.
+	newEsMultiQuery = esMultiQuery.
 		SetConnection(connection).
 		SetTable(esTable).
 		SetCache(cacheTime).
 		AddMust(esQuery.Condition)
-	result := newEsMultiQuery.
-		SetOrderBy(elasticsearch.NewElasticOrder().Add(sortStr, orderBy).Order).
-		//SetLimit((page-1)*pageSize, pageSize).
-		SetLimit((tmpPage-1)*tmpPageSize, tmpPageSize).
-		SetMultiQuery().
-		Query()
-	utils.MapToStruct(result, &list)
-	total = esMultiQuery.Count
-	if keyword != "" {
-		keyword = strings.ToLower(keyword)
-		newList := []es.DyAweme{}
-		for _, v := range list {
-			if strings.Index(strings.ToLower(v.AwemeTitle), keyword) < 0 {
-				continue
-			}
-			newList = append(newList, v)
-		}
-		total = len(newList)
-		if total == 0 {
-			list = newList
-			return
-		}
-		start := (page - 1) * pageSize
-		end := start + pageSize
-		if total < end {
-			end = total
-		}
-		list = newList[start:end]
-	}
-	//计算汇总数据
-	countResult := newEsMultiQuery.
-		RawQuery(map[string]interface{}{
-			"query": map[string]interface{}{
-				"bool": map[string]interface{}{
-					"must": esQuery.Condition,
-				},
-			},
-			"size": 0,
-			"aggs": map[string]interface{}{
-				"total_gmv": map[string]interface{}{
-					"sum": map[string]interface{}{
-						"field": "aweme_gmv",
-					},
-				},
-				"total_sales": map[string]interface{}{
-					"sum": map[string]interface{}{
-						"field": "sales",
-					},
-				},
-			},
-		})
-	if h, ok := countResult["aggregations"]; ok {
-		if t, ok2 := h.(map[string]interface{})["total_sales"]; ok2 {
-			if t1, ok3 := t.(map[string]interface{})["value"]; ok3 {
-				totalSales = utils.ToInt64(math.Floor(t1.(float64)))
-			}
-		}
-		if t, ok2 := h.(map[string]interface{})["total_gmv"]; ok2 {
-			if t1, ok3 := t.(map[string]interface{})["value"]; ok3 {
-				totalGmv = t1.(float64)
-			}
-		}
-	}
+	eQ = esQuery
 	return
 }
 
