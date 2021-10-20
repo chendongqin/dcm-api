@@ -1004,20 +1004,19 @@ func (receiver *ProductController) ProductAwemeSalesTrend() {
 	}
 	chartList := make([]dy2.ProductSalesTrendChart, 0)
 	dateChart := make([]int64, 0)
-	dateChartTmp := make([]string, 0)
-	for k := range hbaseDataList {
-		dateChartTmp = append(dateChartTmp, k)
-	}
-	sort.Strings(dateChartTmp)
-	for _, date := range dateChartTmp {
-		timestamp, _ := utils.Strtotime(date, "20060102")
+	for {
+		if startTime.After(endTime) {
+			break
+		}
+		timestamp := startTime.Unix()
+		v := hbaseDataList[startTime.Format("20060102")]
 		dateChart = append(dateChart, timestamp)
-		v := hbaseDataList[date]
 		chartList = append(chartList, dy2.ProductSalesTrendChart{
 			DateTimestamp: timestamp,
 			Sales:         v.Sales,
 			VideoNum:      v.AwemeNum,
 		})
+		startTime = startTime.AddDate(0, 0, 1)
 	}
 	receiver.SuccReturn(map[string]interface{}{
 		"date": dateChart,
