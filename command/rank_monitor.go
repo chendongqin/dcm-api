@@ -3,6 +3,7 @@ package command
 import (
 	"dongchamao/business"
 	"dongchamao/global"
+	"dongchamao/global/cache"
 	"dongchamao/global/utils"
 	"fmt"
 	"strconv"
@@ -123,25 +124,30 @@ func getHourGroup() (hourGroup map[string][]string) {
 	return
 }
 
-//demo
+//监控报警对应的榜单
 func checkLiveHotRank(pathInfo PathDesc) {
-	fmt.Println(pathInfo)
+	checkRes := requestRank(pathInfo)
+	if !checkRes {
+		business.NewMonitorBusiness().SendTemplateMessage("S", pathInfo.Desc, fmt.Sprintf("%s挂了，请求地址：%s", pathInfo.Desc, pathInfo.Path))
+	}
+	return
+}
+
+//请求对应的榜单
+func requestRank(pathInfo PathDesc) (checkRes bool) {
 	interBusiness := business.NewInterBusiness()
 	testApi := interBusiness.BuildURL(pathInfo.Path)
 	res, comErr := interBusiness.HttpGet(testApi)
 	if comErr != nil {
 		return
 	}
-	checkRes := false
+	checkRes = false
 	resMap := map[string]interface{}{}
 	utils.MapToStruct(res, &resMap)
 	if v, exist := resMap["list"]; exist {
 		if len(v.([]interface{})) > 0 {
 			checkRes = true
 		}
-	}
-	if !checkRes {
-		business.NewMonitorBusiness().SendTemplateMessage("S", pathInfo.Desc, fmt.Sprintf("%s挂了，请求地址：%s", pathInfo.Desc, pathInfo.Path))
 	}
 	return
 }
@@ -163,20 +169,20 @@ func SwitchTopDateTime(key string) (main map[string][]string, hourList map[strin
 	main = make(map[string][]string)
 	switch key {
 	case "live_hour":
-		main, hourList = dateTimeLiveHour()
+		main, hourList = dateTimeLiveHour(key)
 	case "live_top":
-		main, hourList = dateTimeLiveHour()
+		main, hourList = dateTimeLiveHour(key)
 	case "product_sale":
 		main = getCheckDateList(key)
 	case "product_share":
 		main = getCheckDateList(key)
 	case "product_live_sale":
 		main = getCheckDateList(key)
-		weekList = getWeekList()
+		weekList = getWeekList(key)
 		monthList = getMonthList()
 	case "product":
 		main = getCheckDateList(key)
-		weekList = getWeekList()
+		weekList = getWeekList(key)
 		monthList = getMonthList()
 	case "author_follower_inc":
 		main = getCheckDateList(key)
@@ -190,7 +196,7 @@ func SwitchTopDateTime(key string) (main map[string][]string, hourList map[strin
 }
 
 //直播小时榜的日期和时间/直播全天热榜，目前这两个榜单日期时间一样
-func dateTimeLiveHour() (res map[string][]string, dateHourList map[string][]string) {
+func dateTimeLiveHour(key string) (res map[string][]string, dateHourList map[string][]string) {
 	res = map[string][]string{"date": {}, "hour": {}}
 	now := time.Now()
 	dateList := getDateList(7, now)
@@ -204,7 +210,17 @@ func dateTimeLiveHour() (res map[string][]string, dateHourList map[string][]stri
 		return
 	}
 	res["date"] = dateList
-	currentHourList = getHourList(now.Hour())
+	startCurrentHour := now.Hour()
+	isExist := false
+	for i := startCurrentHour; i <= startCurrentHour; i-- {
+		if !isExist {
+			isExist = checkIsExistHour(key, i)
+			startCurrentHour = i
+		} else {
+			break
+		}
+	}
+	currentHourList = getHourList(startCurrentHour)
 	commonHourList = getHourList(23)
 	dateHourList = make(map[string][]string)
 	for k, v := range dateList {
@@ -217,13 +233,13 @@ func dateTimeLiveHour() (res map[string][]string, dateHourList map[string][]stri
 	return
 }
 
-//根据监控时间判断获取日期列表获取
+//根据是否有数据判断日期列表
 func getCheckDateList(key string) (res map[string][]string) {
 	res = map[string][]string{"date": {}, "hour": {}}
 	now := time.Now()
-	isBefore := checkIsBefore(key)
+	isExist := checkIsExistDate(key)
 	beforeInt := -2
-	if isBefore {
+	if isExist {
 		beforeInt = -1
 	}
 	startSate := now.AddDate(0, 0, beforeInt)
@@ -232,7 +248,7 @@ func getCheckDateList(key string) (res map[string][]string) {
 }
 
 //周榜日期列表获取
-func getWeekList() (res []map[string]string) {
+func getWeekList(key string) (res []map[string]string) {
 	//这里仿照前段，只给三个切片
 	now := time.Now()
 	num := 3
@@ -241,6 +257,10 @@ func getWeekList() (res []map[string]string) {
 		offset = -6
 	}
 	startDateTime := time.Now().AddDate(0, 0, (offset - 1))
+	isExist := checkIsExistDate(key)
+	if !isExist {
+		startDateTime = startDateTime.AddDate(0, 0, -7)
+	}
 	var dateSelectList []map[string]string
 	for i := 0; i < num; i++ {
 		rightDate := startDateTime.AddDate(0, 0, -i*6)
@@ -262,6 +282,7 @@ func getWeekListLiveShare() (res []map[string]string) {
 	if offset > 0 {
 		offset = -6
 	}
+
 	startDateTime := time.Now().AddDate(0, 0, (offset - 1))
 	var dateSelectList []map[string]string
 	for i := 0; i < num; i++ {
@@ -279,41 +300,77 @@ func getWeekListLiveShare() (res []map[string]string) {
 //月榜列表获取
 func getMonthList() (res []string) {
 	//这里仿照前段，只给三个切片
-	num := 3
-	startDateTime := time.Now().AddDate(0, -1, 0)
-	var dateSelectList []string
-	for i := 0; i < num; i++ {
-		monthDate := startDateTime.AddDate(0, -i, 0)
-		stopDate, _ := time.ParseInLocation("2006-01-02 15:04:05", "2021-09-01 00:00:00", time.Local)
-		if stopDate.Before(monthDate) {
-			dateString := monthDate.Format("2006-01")
-			dateSelectList = append(dateSelectList, dateString)
-		}
-	}
+	//num := 3
+	//startDateTime := time.Now().AddDate(0, -1, 0)
+	dateSelectList := []string{}
+	//for i := 0; i < num; i++ {
+	//	monthDate := startDateTime.AddDate(0, -i, 0)
+	//	stopDate, _ := time.ParseInLocation("2006-01-02 15:04:05", "2021-09-01 00:00:00", time.Local)
+	//	if stopDate.Before(monthDate) {
+	//		dateString := monthDate.Format("2006-01")
+	//		dateSelectList = append(dateSelectList, dateString)
+	//	}
+	//}
 	res = dateSelectList
 	return
 }
 
-//检测当前是否已经超过了监控时间
-func checkIsBefore(key string) (isBefore bool) {
-	hourGroup := getHourGroup()
-	groupKey := ""
-	for k, v := range hourGroup {
-		if utils.InArrayString(key, v) {
-			groupKey = k
+//判断缓存是否存在
+func checkcachKey(cachKey string) (isExist bool) {
+	result := global.Cache.Get(cachKey)
+	if result != "" {
+		if result == "1" {
+			isExist = true
+		} else {
+			isExist = false
+		}
+	} else {
+		isExist = false
+	}
+	return
+}
+
+//检测该日榜周榜榜单是否已经存在了数据
+func checkIsExistDate(key string) (isExist bool) {
+	cachKey := cache.GetCacheKey(cache.DyRankCache, "day", key)
+	isExist = checkcachKey(cachKey)
+	if isExist == false {
+		pathInfo := getRoute(key)
+		isExist = requestRank(pathInfo)
+		if isExist {
+			//有数据情况，缓存设置到今天结束
+			now := time.Now()
+			dateString := fmt.Sprintf("%s 00:00:00", now.AddDate(0, 0, 1).Format("2006-01-02"))
+			stopTime, _ := time.ParseInLocation("2006-01-02 15:04:05", dateString, time.Local)
+			seconds := stopTime.Unix() - now.Unix()
+			secondsDuration := time.Duration(seconds)
+			global.Cache.Set(cachKey, "1", secondsDuration)
 		}
 	}
-	isInclude := strings.Contains(groupKey, ":30")
-	if !isInclude {
-		groupKey = fmt.Sprintf("%s:00:00", groupKey)
-	} else {
-		groupKey = fmt.Sprintf("%s:00", groupKey)
-	}
-	dateTime := fmt.Sprintf("%s %s", time.Now().Format("2006-01-02"), groupKey)
-	dateTimeStampObj, _ := time.ParseInLocation("2006-01-02 15:04:05", dateTime, time.Local)
-	isBefore = dateTimeStampObj.Before(time.Now())
 	return
+}
 
+//检测该小时榜榜单是否已经存在了数据
+func checkIsExistHour(key string, currentHour int) (isExist bool) {
+	cachKey := cache.GetCacheKey(cache.DyRankCache, "hour", key)
+	isExist = checkcachKey(cachKey)
+	if isExist == false {
+		pathInfo := getRoute(key)
+		pathString := pathInfo.Path
+		now := time.Now()
+		hourString := strconv.Itoa(now.Hour())
+		pathInfo.Path = strings.Replace(pathString, hourString, strconv.Itoa(currentHour), 1)
+		isExist = requestRank(pathInfo)
+		if isExist {
+			//有数据情况，缓存设置到今天结束
+			dateString := fmt.Sprintf("%s %s:59:59", now.Format("2006-01-02"), strconv.Itoa(now.Hour()))
+			stopTime, _ := time.ParseInLocation("2006-01-02 15:04:05", dateString, time.Local)
+			seconds := stopTime.Unix() - now.Unix()
+			secondsDuration := time.Duration(seconds)
+			global.Cache.Set(cachKey, "1", secondsDuration)
+		}
+	}
+	return
 }
 
 //获取日期列表
