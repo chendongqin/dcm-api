@@ -211,7 +211,7 @@ func dateTimeLiveHour(key string) (res map[string][]string, dateHourList map[str
 	}
 	res["date"] = dateList
 	startCurrentHour := now.Hour()
-	for i := startCurrentHour; i <= startCurrentHour; i-- {
+	for i := startCurrentHour; i <= 0; i-- {
 		if checkIsExistHour(key, i) {
 			startCurrentHour = i
 			break
