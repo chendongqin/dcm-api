@@ -1023,7 +1023,6 @@ func (receiver *AuthorController) AuthorLiveRoomsTotal() {
 	keyword := InputData.GetString("keyword", "")
 	sortStr := InputData.GetString("sort", "create_time")
 	orderBy := InputData.GetString("order_by", "desc")
-	page := InputData.GetInt("page", 1)
 	size := InputData.GetInt("page_size", 10)
 	if authorId == "" {
 		receiver.FailReturn(global.NewError(4000))
@@ -1035,7 +1034,7 @@ func (receiver *AuthorController) AuthorLiveRoomsTotal() {
 		return
 	}
 	esLiveBusiness := es.NewEsLiveBusiness()
-	totalSales, totalGvm, comErr := esLiveBusiness.SearchAuthorRoomsTotal(authorId, keyword, sortStr, orderBy, page, size, t1, t2)
+	totalSales, totalGvm, comErr := esLiveBusiness.SearchAuthorRoomsTotal(authorId, keyword, sortStr, orderBy, size, t1, t2)
 
 	if comErr != nil {
 		receiver.FailReturn(comErr)

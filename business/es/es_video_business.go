@@ -138,7 +138,7 @@ func (e *EsVideoBusiness) SearchByAuthor(authorId, keyword, sortStr, orderBy str
 	//	esQuery.SetMatchPhrase("aweme_title", keyword)
 	//}
 	var newEsMultiQuery *elasticsearch.ElasticMultiQuery
-	newEsMultiQuery, _, comErr = e.getSearchByAuthorEs(authorId, keyword, sortStr, orderBy, hasProduct, page, pageSize, startTime, endTime)
+	newEsMultiQuery, _, comErr = e.getSearchByAuthorEs(authorId, keyword, sortStr, orderBy, hasProduct, startTime, endTime)
 	result := newEsMultiQuery.
 		SetOrderBy(elasticsearch.NewElasticOrder().Add(sortStr, orderBy).Order).
 		//SetLimit((page-1)*pageSize, pageSize).
@@ -176,12 +176,12 @@ func (e *EsVideoBusiness) SearchByAuthor(authorId, keyword, sortStr, orderBy str
 func (e *EsVideoBusiness) SearchByAuthorTotal(authorId, keyword, sortStr, orderBy string, hasProduct, page, pageSize int, startTime, endTime time.Time) (totalSales int64, totalGmv float64, comErr global.CommonError) {
 	var newEsMultiQuery *elasticsearch.ElasticMultiQuery
 	var esQuery *elasticsearch.ElasticQuery
-	newEsMultiQuery, esQuery, comErr = e.getSearchByAuthorEs(authorId, keyword, sortStr, orderBy, hasProduct, page, pageSize, startTime, endTime)
+	newEsMultiQuery, esQuery, comErr = e.getSearchByAuthorEs(authorId, keyword, sortStr, orderBy, hasProduct, startTime, endTime)
 	//计算汇总数据
 	totalSales, totalGmv = e.getVideoTotal(newEsMultiQuery, esQuery, "sales", "aweme_gmv")
 	return
 }
-func (receiver *EsVideoBusiness) getVideoTotal(newEsMultiQuery *elasticsearch.ElasticMultiQuery, esQuery *elasticsearch.ElasticQuery, field_sales, field_gmv string) (totalSales int64, totalGmv float64) {
+func (receiver *EsVideoBusiness) getVideoTotal(newEsMultiQuery *elasticsearch.ElasticMultiQuery, esQuery *elasticsearch.ElasticQuery, fieldSales, fieldGmv string) (totalSales int64, totalGmv float64) {
 	countResult := newEsMultiQuery.
 		RawQuery(map[string]interface{}{
 			"query": map[string]interface{}{
@@ -193,12 +193,12 @@ func (receiver *EsVideoBusiness) getVideoTotal(newEsMultiQuery *elasticsearch.El
 			"aggs": map[string]interface{}{
 				"total_gmv": map[string]interface{}{
 					"sum": map[string]interface{}{
-						"field": field_gmv,
+						"field": fieldGmv,
 					},
 				},
 				"total_sales": map[string]interface{}{
 					"sum": map[string]interface{}{
-						"field": field_sales,
+						"field": fieldSales,
 					},
 				},
 			},
@@ -220,7 +220,7 @@ func (receiver *EsVideoBusiness) getVideoTotal(newEsMultiQuery *elasticsearch.El
 }
 
 //获取达人视频列表-es句柄
-func (e *EsVideoBusiness) getSearchByAuthorEs(authorId, keyword, sortStr, orderBy string, hasProduct, page, pageSize int, startTime, endTime time.Time) (newEsMultiQuery *elasticsearch.ElasticMultiQuery, eQ *elasticsearch.ElasticQuery, comErr global.CommonError) {
+func (e *EsVideoBusiness) getSearchByAuthorEs(authorId, keyword, sortStr, orderBy string, hasProduct int, startTime, endTime time.Time) (newEsMultiQuery *elasticsearch.ElasticMultiQuery, eQ *elasticsearch.ElasticQuery, comErr global.CommonError) {
 	if orderBy == "" {
 		orderBy = "desc"
 	}

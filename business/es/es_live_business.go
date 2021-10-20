@@ -26,7 +26,7 @@ func NewEsLiveBusiness() *EsLiveBusiness {
 //达人直播间搜索
 func (receiver *EsLiveBusiness) SearchAuthorRooms(authorId, keyword, sortStr, orderBy string, page, size int, startDate, endDate time.Time) (list []es.EsDyLiveInfo, total int, comErr global.CommonError) {
 	var newEsMultiQuery *elasticsearch.ElasticMultiQuery
-	newEsMultiQuery, _, comErr = receiver.getSearchAuthorRoomsEs(authorId, keyword, sortStr, orderBy, page, size, startDate, endDate)
+	newEsMultiQuery, _, comErr = receiver.getSearchAuthorRoomsEs(authorId, keyword, sortStr, orderBy, size, startDate, endDate)
 	results := newEsMultiQuery.
 		SetLimit((page-1)*size, size).
 		SetOrderBy(elasticsearch.NewElasticOrder().Add(sortStr, orderBy).Order).
@@ -38,14 +38,14 @@ func (receiver *EsLiveBusiness) SearchAuthorRooms(authorId, keyword, sortStr, or
 }
 
 //达人直播间搜索-total
-func (receiver *EsLiveBusiness) SearchAuthorRoomsTotal(authorId, keyword, sortStr, orderBy string, page, size int, startDate, endDate time.Time) (totalSales int64, totalGmv float64, comErr global.CommonError) {
+func (receiver *EsLiveBusiness) SearchAuthorRoomsTotal(authorId, keyword, sortStr, orderBy string, size int, startDate, endDate time.Time) (totalSales int64, totalGmv float64, comErr global.CommonError) {
 	var newEsMultiQuery *elasticsearch.ElasticMultiQuery
 	var esQuery *elasticsearch.ElasticQuery
-	newEsMultiQuery, esQuery, comErr = receiver.getSearchAuthorRoomsEs(authorId, keyword, sortStr, orderBy, page, size, startDate, endDate)
+	newEsMultiQuery, esQuery, comErr = receiver.getSearchAuthorRoomsEs(authorId, keyword, sortStr, orderBy, size, startDate, endDate)
 	totalSales, totalGmv = receiver.getLiveTotal(newEsMultiQuery, esQuery, "real_sales", "real_gmv")
 	return
 }
-func (receiver *EsLiveBusiness) getLiveTotal(newEsMultiQuery *elasticsearch.ElasticMultiQuery, esQuery *elasticsearch.ElasticQuery, field_sales, field_gmv string) (totalSales int64, totalGmv float64) {
+func (receiver *EsLiveBusiness) getLiveTotal(newEsMultiQuery *elasticsearch.ElasticMultiQuery, esQuery *elasticsearch.ElasticQuery, fieldSales, fieldGmv string) (totalSales int64, totalGmv float64) {
 	countResult := newEsMultiQuery.
 		RawQuery(map[string]interface{}{
 			"query": map[string]interface{}{
@@ -57,12 +57,12 @@ func (receiver *EsLiveBusiness) getLiveTotal(newEsMultiQuery *elasticsearch.Elas
 			"aggs": map[string]interface{}{
 				"total_gmv": map[string]interface{}{
 					"sum": map[string]interface{}{
-						"field": field_gmv,
+						"field": fieldGmv,
 					},
 				},
 				"total_sales": map[string]interface{}{
 					"sum": map[string]interface{}{
-						"field": field_sales,
+						"field": fieldSales,
 					},
 				},
 			},
@@ -84,7 +84,7 @@ func (receiver *EsLiveBusiness) getLiveTotal(newEsMultiQuery *elasticsearch.Elas
 }
 
 //达人直播间搜索-获取es句柄
-func (receiver *EsLiveBusiness) getSearchAuthorRoomsEs(authorId, keyword, sortStr, orderBy string, page, size int, startDate, endDate time.Time) (newEsMultiQuery *elasticsearch.ElasticMultiQuery, eQ *elasticsearch.ElasticQuery, comErr global.CommonError) {
+func (receiver *EsLiveBusiness) getSearchAuthorRoomsEs(authorId, keyword, sortStr, orderBy string, size int, startDate, endDate time.Time) (newEsMultiQuery *elasticsearch.ElasticMultiQuery, eQ *elasticsearch.ElasticQuery, comErr global.CommonError) {
 	if sortStr == "" {
 		sortStr = "create_time"
 	}
@@ -889,7 +889,7 @@ func (receiver *EsLiveBusiness) SearchProductRooms(productId, keyword, sortStr, 
 		tmpPageSize = 10000
 	}
 	var newEsMultiQuery *elasticsearch.ElasticMultiQuery
-	newEsMultiQuery, _, comErr = receiver.getSearchProductRoomsEs(productId, keyword, sortStr, orderBy, page, size, startTime, endTime)
+	newEsMultiQuery, _, comErr = receiver.getSearchProductRoomsEs(productId, keyword, sortStr, orderBy, size, startTime, endTime)
 	results := newEsMultiQuery.
 		SetLimit((tmpPage-1)*tmpPageSize, tmpPageSize).
 		SetOrderBy(elasticsearch.NewElasticOrder().Add(sortStr, orderBy).Order).
@@ -946,14 +946,13 @@ func (receiver *EsLiveBusiness) SearchProductRoomsTotal(productId, keyword, sort
 	page, size int, startTime, endTime time.Time) (totalSales int64, totalGmv float64, comErr global.CommonError) {
 	var newEsMultiQuery *elasticsearch.ElasticMultiQuery
 	var esQuery *elasticsearch.ElasticQuery
-	newEsMultiQuery, esQuery, comErr = receiver.getSearchProductRoomsEs(productId, keyword, sortStr, orderBy, page, size, startTime, endTime)
+	newEsMultiQuery, esQuery, comErr = receiver.getSearchProductRoomsEs(productId, keyword, sortStr, orderBy, size, startTime, endTime)
 	totalSales, totalGmv = receiver.getLiveTotal(newEsMultiQuery, esQuery, "predict_sales", "predict_gmv")
 	return
 }
 
 //获取es句柄
-func (receiver *EsLiveBusiness) getSearchProductRoomsEs(productId, keyword, sortStr, orderBy string,
-	page, size int, startTime, endTime time.Time) (newEsMultiQuery *elasticsearch.ElasticMultiQuery, eQ *elasticsearch.ElasticQuery, comErr global.CommonError) {
+func (receiver *EsLiveBusiness) getSearchProductRoomsEs(productId, keyword, sortStr, orderBy string, size int, startTime, endTime time.Time) (newEsMultiQuery *elasticsearch.ElasticMultiQuery, eQ *elasticsearch.ElasticQuery, comErr global.CommonError) {
 	if sortStr == "" {
 		sortStr = "shelf_time"
 	}
