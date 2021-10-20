@@ -894,7 +894,9 @@ func (a *AuthorBusiness) GetAuthorProductAnalyse(authorId, keyword, firstCate, s
 	if listLen < end {
 		end = listLen
 	}
-	list = newList[start:end]
+	if listLen > 0 {
+		list = newList[start:end]
+	}
 	for k, v := range list {
 		list[k].Image = dyimg.Product(v.Image)
 		list[k].AuthorId = IdEncrypt(v.AuthorId)
@@ -1186,7 +1188,11 @@ func (a *AuthorBusiness) NewGetAuthorProductAnalyse(authorId, keyword, firstCate
 	if listLen < end {
 		end = listLen
 	}
-	list = newList[start:end]
+	if listLen > 0 {
+		list = newList[start:end]
+	} else {
+		list = newList
+	}
 	productIds := []string{}
 	for k, v := range list {
 		if n, exist := productLiveIdMap[v.ProductId]; exist {
@@ -1325,7 +1331,11 @@ func (a *AuthorBusiness) GetAuthorShopAnalyse(authorId, keyword, sortStr, orderB
 	if listLen < end {
 		end = listLen
 	}
-	list = newList[start:end]
+	if total > 0 {
+		list = newList[start:end]
+	} else {
+		list = newList
+	}
 	shopIds := []string{}
 	for k, v := range list {
 		shopIds = append(shopIds, v.ShopId)

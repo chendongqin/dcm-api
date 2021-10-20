@@ -200,6 +200,9 @@ func GetAwemeTopComment(awemeId string, start, end int) (data []entity.DyAwemeCo
 		if end > total {
 			end = total
 		}
+		if total == 0 {
+			return
+		}
 		data = data[start:end]
 	}
 	return

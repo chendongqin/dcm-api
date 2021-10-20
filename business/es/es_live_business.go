@@ -264,7 +264,9 @@ func (receiver *EsLiveBusiness) RoomProductByRoomId(roomInfo entity.DyLiveInfo, 
 	if listLen < end {
 		end = listLen
 	}
-	list = list[start:end]
+	if listLen > 0 {
+		list = list[start:end]
+	}
 	for k, v := range list {
 		list[k].Cover = dyimg.Product(v.Cover)
 		////todo 真实gmv存在，按gmv处理
