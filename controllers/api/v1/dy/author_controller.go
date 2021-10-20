@@ -1273,6 +1273,8 @@ func (receiver *AuthorController) AuthorIncome() {
 	spiderBusiness := business.NewSpiderBusiness()
 	ret, ok := spiderBusiness.SpiderSpeedUp("author", authorIdDec)
 	if ok {
+		//添加直播加速
+		business.NewSpiderBusiness().AddLive(authorIdDec, 2000, 0, time.Now().AddDate(0, 0, 7).Unix())
 		receiver.SuccReturn([]string{authorIdDec})
 	} else {
 		receiver.FailReturn(global.NewError(4000))
