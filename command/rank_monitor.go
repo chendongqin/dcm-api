@@ -145,7 +145,9 @@ func requestRank(pathInfo PathDesc) (checkRes bool) {
 	resMap := map[string]interface{}{}
 	utils.MapToStruct(res, &resMap)
 	if v, exist := resMap["list"]; exist {
-		if len(v.([]interface{})) > 0 {
+		list := make([]interface{}, 0)
+		utils.MapToStruct(v, &list)
+		if len(list) > 0 {
 			checkRes = true
 		}
 	}
@@ -211,9 +213,12 @@ func dateTimeLiveHour(key string) (res map[string][]string, dateHourList map[str
 	}
 	res["date"] = dateList
 	startCurrentHour := now.Hour()
-	for i := startCurrentHour; i <= startCurrentHour; i-- {
+	for i := startCurrentHour; i >= 0; i-- {
 		if checkIsExistHour(key, i) {
 			startCurrentHour = i
+			break
+		} else if i == 0 {
+			startCurrentHour = -1
 			break
 		}
 	}
@@ -221,7 +226,7 @@ func dateTimeLiveHour(key string) (res map[string][]string, dateHourList map[str
 	commonHourList = getHourList(23)
 	dateHourList = map[string][]string{}
 	for k, v := range dateList {
-		if k == 0 {
+		if k == 0 && len(currentHourList) > 0 {
 			dateHourList[v] = currentHourList
 		} else {
 			dateHourList[v] = commonHourList
