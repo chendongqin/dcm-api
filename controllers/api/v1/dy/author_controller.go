@@ -8,6 +8,7 @@ import (
 	"dongchamao/global/cache"
 	"dongchamao/global/utils"
 	"dongchamao/hbase"
+	"dongchamao/models/dcm"
 	"dongchamao/models/entity"
 	es2 "dongchamao/models/es"
 	dy2 "dongchamao/models/repost/dy"
@@ -1336,6 +1337,12 @@ func (receiver *AuthorController) AuthorIncome() {
 	if ok {
 		//添加直播加速
 		business.NewSpiderBusiness().AddLive(authorIdDec, 2000, 0, time.Now().AddDate(0, 0, 7).Unix())
+		authorIncome := dcm.DyAuthorIncome{
+			AuthorId:   authorIdDec,
+			UserId:     receiver.UserId,
+			CreateTime: utils.ToInt(time.Now().Unix()),
+		}
+		_, _ = dcm.Insert(nil, &authorIncome)
 		receiver.SuccReturn([]string{authorIdDec})
 	} else {
 		receiver.FailReturn(global.NewError(4000))

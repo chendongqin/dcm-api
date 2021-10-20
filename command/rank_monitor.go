@@ -261,7 +261,7 @@ func getWeekList(key string) (res []map[string]string) {
 	if !isExist {
 		startDateTime = startDateTime.AddDate(0, 0, -7)
 	}
-	var dateSelectList []map[string]string
+	dateSelectList := make([]map[string]string, 0)
 	for i := 0; i < num; i++ {
 		rightDate := startDateTime.AddDate(0, 0, -i*6)
 		leftDate := startDateTime.AddDate(0, 0, -(i+1)*6)
@@ -284,7 +284,7 @@ func getWeekListLiveShare() (res []map[string]string) {
 	}
 
 	startDateTime := time.Now().AddDate(0, 0, (offset - 1))
-	var dateSelectList []map[string]string
+	dateSelectList := make([]map[string]string, 0)
 	for i := 0; i < num; i++ {
 		rightDate := startDateTime.AddDate(0, 0, -i*6)
 		leftDate := startDateTime.AddDate(0, 0, -(i+1)*6)
@@ -400,6 +400,7 @@ func checkIsExistHour(key string, currentHour int) (isExist bool) {
 
 //获取日期列表
 func getDateList(daysCount int, startTime time.Time) (list []string) {
+	list = []string{}
 	for i := 0; i < daysCount; i++ {
 		date := startTime.AddDate(0, 0, -i).Format("2006-01-02")
 		list = append(list, date)
