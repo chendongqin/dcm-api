@@ -422,6 +422,26 @@ func checkIsExistWeek(key string) (isExist bool) {
 	return
 }
 
+//检测该日榜周榜榜单是否已经存在了数据
+func checkIsExistMonth(key string) (isExist bool) {
+	cachKey := cache.GetCacheKey(cache.DyRankCache, "month", key)
+	isExist = checkcachKey(cachKey)
+	if isExist == false {
+		pathInfo := getRoute(key)
+		isExist = requestRank(pathInfo)
+		if isExist {
+			//有数据情况，缓存设置到当前月份结束
+			now := time.Now()
+			dateString := fmt.Sprintf("%s-01 00:00:00", now.AddDate(0, 1, 0).Format("2006-01"))
+			stopTime, _ := time.ParseInLocation("2006-01-02 15:04:05", dateString, time.Local)
+			seconds := stopTime.Unix() - now.Unix()
+			secondsDuration := time.Duration(seconds)
+			global.Cache.Set(cachKey, "1", secondsDuration)
+		}
+	}
+	return
+}
+
 //检测该小时榜榜单是否已经存在了数据
 func checkIsExistHour(key string, currentHour int) (isExist bool) {
 	cachKey := cache.GetCacheKey(cache.DyRankCache, utils.ToString(currentHour), key)

@@ -703,8 +703,9 @@ func (receiver *PayController) OrderList() {
 	start := (page - 1) * pageSize
 	sql := fmt.Sprintf("dc_vip_order.user_id=%d AND dc_vip_order.platform='%s'", receiver.UserId, platform)
 	if isInvoice == 1 { //筛选可开票订单
-		invoiceStatus = 1
+		selectStatus = 1
 		sql += " AND dc_vip_order.amount <= 10000"
+		sql += " AND (dc_vip_order.invoice_id = 0 OR dc_vip_order_invoice.status=2)"
 	}
 	if selectStatus == 1 {
 		sql += " AND pay_status = 1 "
@@ -776,7 +777,7 @@ func (receiver *PayController) CreateOrderInvoice() {
 	invoiceType := InputData.GetInt("invoice_type", 0)     //发票类型
 	address := InputData.GetString("address", "")          //收件人地址
 	now := time.Now()
-	if amount == 0 || head == "" {
+	if amount == 0 || head == "" || amount > 10000 {
 		receiver.FailReturn(global.NewError(4000))
 		return
 	}
@@ -787,12 +788,12 @@ func (receiver *PayController) CreateOrderInvoice() {
 		}
 	}
 	if invoiceType == 0 { //增值税专用发票
-		if bankName == "" || bankAccount == "" || regAddress == "" || phone == "" || address == "" {
+		if bankName == "" || bankAccount == "" || regAddress == "" || phone == "" || address == "" || !utils.CheckType(phone, "phone") {
 			receiver.FailReturn(global.NewError(4000))
 			return
 		}
 	} else {
-		if email == "" {
+		if email == "" || !utils.CheckType(email, "email") {
 			receiver.FailReturn(global.NewError(4000))
 			return
 		}
