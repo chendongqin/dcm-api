@@ -232,12 +232,12 @@ func (e *EsVideoBusiness) SearchByAuthorTotal(authorId, keyword string, hasProdu
 	if keyword != "" {
 		keyword = strings.ToLower(keyword)
 		list := []es.DyAweme{}
+		esQuery.SetExist("field", "aweme_gmv")
 		result := esMultiQuery.
 			SetConnection(connection).
 			SetTable(esTable).
 			SetCache(cacheTime).
 			AddMust(esQuery.Condition).
-			SetOrderBy(elasticsearch.NewElasticOrder().Add("awemw_gmv", "desc").Order).
 			SetLimit(0, 10000).
 			SetMultiQuery().
 			Query()
