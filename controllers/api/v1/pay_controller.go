@@ -777,7 +777,7 @@ func (receiver *PayController) CreateOrderInvoice() {
 	invoiceType := InputData.GetInt("invoice_type", 0)     //发票类型
 	address := InputData.GetString("address", "")          //收件人地址
 	now := time.Now()
-	if amount == 0 || head == "" {
+	if amount == 0 || head == "" || amount > 10000 {
 		receiver.FailReturn(global.NewError(4000))
 		return
 	}
@@ -787,11 +787,8 @@ func (receiver *PayController) CreateOrderInvoice() {
 			return
 		}
 	}
-	linkOrders := utils.SerializeData(orderIds)
-	orders := utils.DeserializeData(linkOrders)
-	fmt.Println(linkOrders, orders)
 	if invoiceType == 0 { //增值税专用发票
-		if bankName == "" || bankAccount == "" || regAddress == "" || phone == "" || address == "" || utils.CheckType(phone, "phone") {
+		if bankName == "" || bankAccount == "" || regAddress == "" || phone == "" || address == "" || !utils.CheckType(phone, "phone") {
 			receiver.FailReturn(global.NewError(4000))
 			return
 		}
