@@ -72,13 +72,13 @@ func getRoute(key string, hours ...int) (pathInfo PathDesc) {
 	now := time.Now()
 	toDate := now.Format("2006-01-02")
 	yesDate := now.AddDate(0, 0, -1).Format("2006-01-02")
-	//BeforeYesDate := time.Now().AddDate(0, 0, -1).Format("2006-01-02")
-	weekDate := now.AddDate(0, 0, -7).Format("2006-01-02")
 	offset := int(time.Monday - now.Weekday())
 	if offset > 0 {
 		offset = -6
 	}
-	weekStartDate := now.AddDate(0, 0, offset).Format("2006-01-02") //本周第一天
+	weekStartTime := now.AddDate(0, 0, offset)
+	weekEndDate := weekStartTime.AddDate(0, 0, -1).Format("2006-01-02")
+	weekStartDate := weekStartTime.AddDate(0, 0, -7).Format("2006-01-02")
 	hour := time.Now().Hour()
 	if len(hours) > 0 {
 		hour = hours[0]
@@ -100,7 +100,7 @@ func getRoute(key string, hours ...int) (pathInfo PathDesc) {
 		"author_follower_inc": {fmt.Sprintf("/v1/dy/rank/author/follower/inc/%s?tags=&province=&page=1&is_delivery=0&page_size=50&order_by=desc&sort=inc_follower_count", yesDate), "达人涨粉榜"},
 		"author_goods":        {fmt.Sprintf("/v1/dy/rank/author/goods/%s?date_type=1&tags=&verified=0&page=1&page_size=50&sort=sum_gmv&order_by=desc", yesDate), "达人带货榜"},
 		//"video_share":         {fmt.Sprintf("/v1/dy/rank/video/share/%s", BeforeYesDate), "电商视频达人分享榜"},
-		"live_share":        {fmt.Sprintf("/v1/dy/rank/live/share/%s/%s", weekDate, yesDate), "电商直播达人分享榜"},
+		"live_share":        {fmt.Sprintf("/v1/dy/rank/live/share/%s/%s", weekStartDate, weekEndDate), "电商直播达人分享榜"},
 		"author_aweme_rank": {"/v1/dy/rank/author/aweme?rank_type=达人指数榜&category=全部", "抖音短视频达人热榜"},
 		"author_aweme_live": {"/v1/dy/rank/author/live?rank_type=达人指数榜", "抖音直播主播热榜"},
 	}
@@ -231,7 +231,8 @@ func SwitchTopDateTime(key string) (main map[string][]string, hourList map[strin
 	case "author_goods":
 		main = getCheckDateList(key)
 	case "live_share":
-		weekList = getWeekList(key)
+		main = map[string][]string{"date": {}, "hour": {}}
+		weekList = getWeekListLiveShare(key)
 	}
 	main["desc"] = []string{fmt.Sprintf("%s的日期时间", desc)}
 	return
@@ -318,7 +319,7 @@ func getWeekList(key string) (res []map[string]string) {
 }
 
 //电商直播达人分享榜
-func getWeekListLiveShare() (res []map[string]string) {
+func getWeekListLiveShare(key string) (res []map[string]string) {
 	//这里仿照前段，只给三个切片
 	now := time.Now()
 	num := 3
@@ -328,6 +329,10 @@ func getWeekListLiveShare() (res []map[string]string) {
 	}
 
 	startDateTime := time.Now().AddDate(0, 0, (offset - 1))
+	isExist := checkIsExistWeek(key)
+	if !isExist {
+		startDateTime = startDateTime.AddDate(0, 0, -7)
+	}
 	dateSelectList := []map[string]string{}
 	for i := 0; i < num; i++ {
 		rightDate := startDateTime.AddDate(0, 0, -i*6)
