@@ -824,10 +824,13 @@ func (receiver *ProductController) ProductAwemeAuthorAnalysis() {
 	tag := receiver.GetString("tag", "")
 	minFollow, _ := receiver.GetInt64("min_follow", 0)
 	maxFollow, _ := receiver.GetInt64("max_follow", 0)
-	scoreType, _ := receiver.GetInt("score_type", 5)
+	scoreType, _ := receiver.GetInt("score_type", -1)
 	page := receiver.GetPage("page")
 	pageSize := receiver.GetPageSize("page_size", 10, 50)
 	productBusiness := business.NewProductBusiness()
+	if scoreType == 5 {
+		scoreType = -1
+	}
 	list, total, comErr := productBusiness.ProductAwemeAuthorAnalysisV2(productId, "", keyword, tag, startTime, endTime, minFollow, maxFollow, scoreType, page, pageSize)
 	if comErr != nil {
 		receiver.FailReturn(comErr)
