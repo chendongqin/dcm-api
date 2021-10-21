@@ -24,29 +24,75 @@ func NewEsLiveBusiness() *EsLiveBusiness {
 }
 
 //达人直播间搜索
-func (receiver *EsLiveBusiness) SearchAuthorRooms(authorId, keyword, sortStr, orderBy string, page, size int, startDate, endDate time.Time) (list []es.EsDyLiveInfo, total int, comErr global.CommonError) {
-	var newEsMultiQuery *elasticsearch.ElasticMultiQuery
-	newEsMultiQuery, _, comErr = receiver.getSearchAuthorRoomsEs(authorId, keyword, sortStr, orderBy, size, startDate, endDate)
-	results := newEsMultiQuery.
-		SetLimit((page-1)*size, size).
+func (receiver *EsLiveBusiness) SearchAuthorRooms(authorId, keyword, sortStr, orderBy string, page, pageSize int, startDate, endDate time.Time) (list []es.EsDyLiveInfo, total int, comErr global.CommonError) {
+	if sortStr == "" {
+		sortStr = "create_time"
+	}
+	if orderBy == "" {
+		orderBy = "desc"
+	}
+	if !utils.InArrayString(sortStr, []string{"create_time", "predict_gmv", "predict_sales", "max_user_count"}) {
+		comErr = global.NewError(4000)
+		return
+	}
+	if !utils.InArrayString(orderBy, []string{"desc", "asc"}) {
+		comErr = global.NewError(4000)
+		return
+	}
+	if pageSize > 100 {
+		comErr = global.NewError(4000)
+		return
+	}
+	esTable, connection, err := GetESTableByTime(es.DyLiveInfoBaseTable, startDate, endDate)
+	if err != nil {
+		comErr = global.NewError(4000)
+		return
+	}
+	esQuery, esMultiQuery := elasticsearch.NewElasticQueryGroup()
+	esQuery.SetTerm("author_id", authorId)
+	esQuery.SetRange("create_time", map[string]interface{}{
+		"gte": startDate.Unix(),
+		"lt":  endDate.AddDate(0, 0, 1).Unix(),
+	})
+	if keyword != "" {
+		esQuery.SetMultiMatch([]string{"title", "product_title"}, keyword)
+	}
+	var cacheTime time.Duration = 120
+	results := esMultiQuery.
+		SetConnection(connection).
+		SetTable(esTable).
+		SetCache(cacheTime).
+		AddMust(esQuery.Condition).
+		SetLimit((page-1)*pageSize, pageSize).
 		SetOrderBy(elasticsearch.NewElasticOrder().Add(sortStr, orderBy).Order).
 		SetMultiQuery().
 		Query()
 	utils.MapToStruct(results, &list)
-	total = newEsMultiQuery.Count
+	total = esMultiQuery.Count
 	return
 }
 
 //达人直播间搜索-total
-func (receiver *EsLiveBusiness) SearchAuthorRoomsTotal(authorId, keyword, sortStr, orderBy string, size int, startDate, endDate time.Time) (totalSales int64, totalGmv float64, comErr global.CommonError) {
-	var newEsMultiQuery *elasticsearch.ElasticMultiQuery
-	var esQuery *elasticsearch.ElasticQuery
-	newEsMultiQuery, esQuery, comErr = receiver.getSearchAuthorRoomsEs(authorId, keyword, sortStr, orderBy, size, startDate, endDate)
-	totalSales, totalGmv = receiver.getLiveTotal(newEsMultiQuery, esQuery, "real_sales", "real_gmv")
-	return
-}
-func (receiver *EsLiveBusiness) getLiveTotal(newEsMultiQuery *elasticsearch.ElasticMultiQuery, esQuery *elasticsearch.ElasticQuery, fieldSales, fieldGmv string) (totalSales int64, totalGmv float64) {
-	countResult := newEsMultiQuery.
+func (receiver *EsLiveBusiness) SearchAuthorRoomsTotal(authorId, keyword string, startDate, endDate time.Time) (totalSales int64, totalGmv float64, comErr global.CommonError) {
+	esTable, connection, err := GetESTableByTime(es.DyLiveInfoBaseTable, startDate, endDate)
+	if err != nil {
+		comErr = global.NewError(4000)
+		return
+	}
+	esQuery, esMultiQuery := elasticsearch.NewElasticQueryGroup()
+	esQuery.SetTerm("author_id", authorId)
+	esQuery.SetRange("create_time", map[string]interface{}{
+		"gte": startDate.Unix(),
+		"lt":  endDate.AddDate(0, 0, 1).Unix(),
+	})
+	if keyword != "" {
+		esQuery.SetMultiMatch([]string{"title", "product_title"}, keyword)
+	}
+	var cacheTime time.Duration = 120
+	countResult := esMultiQuery.
+		SetConnection(connection).
+		SetCache(cacheTime).
+		SetTable(esTable).
 		RawQuery(map[string]interface{}{
 			"query": map[string]interface{}{
 				"bool": map[string]interface{}{
@@ -57,12 +103,12 @@ func (receiver *EsLiveBusiness) getLiveTotal(newEsMultiQuery *elasticsearch.Elas
 			"aggs": map[string]interface{}{
 				"total_gmv": map[string]interface{}{
 					"sum": map[string]interface{}{
-						"field": fieldGmv,
+						"field": "predict_gmv",
 					},
 				},
 				"total_sales": map[string]interface{}{
 					"sum": map[string]interface{}{
-						"field": fieldSales,
+						"field": "predict_sales",
 					},
 				},
 			},
@@ -80,50 +126,6 @@ func (receiver *EsLiveBusiness) getLiveTotal(newEsMultiQuery *elasticsearch.Elas
 			}
 		}
 	}
-	return
-}
-
-//达人直播间搜索-获取es句柄
-func (receiver *EsLiveBusiness) getSearchAuthorRoomsEs(authorId, keyword, sortStr, orderBy string, size int, startDate, endDate time.Time) (newEsMultiQuery *elasticsearch.ElasticMultiQuery, eQ *elasticsearch.ElasticQuery, comErr global.CommonError) {
-	if sortStr == "" {
-		sortStr = "create_time"
-	}
-	if orderBy == "" {
-		orderBy = "desc"
-	}
-	if !utils.InArrayString(sortStr, []string{"create_time", "predict_gmv", "predict_sales", "max_user_count"}) {
-		comErr = global.NewError(4000)
-		return
-	}
-	if !utils.InArrayString(orderBy, []string{"desc", "asc"}) {
-		comErr = global.NewError(4000)
-		return
-	}
-	if size > 100 {
-		comErr = global.NewError(4000)
-		return
-	}
-	//兼容数据 2021-06-29
-	esTable, connection, err := GetESTableByTime(es.DyLiveInfoBaseTable, startDate, endDate)
-	if err != nil {
-		comErr = global.NewError(4000)
-		return
-	}
-	esQuery, esMultiQuery := elasticsearch.NewElasticQueryGroup()
-	esQuery.SetTerm("author_id", authorId)
-	esQuery.SetRange("create_time", map[string]interface{}{
-		"gte": startDate.Unix(),
-		"lt":  endDate.AddDate(0, 0, 1).Unix(),
-	})
-	if keyword != "" {
-		esQuery.SetMultiMatch([]string{"title", "product_title"}, keyword)
-	}
-
-	newEsMultiQuery = esMultiQuery.
-		SetConnection(connection).
-		SetTable(esTable).
-		AddMust(esQuery.Condition)
-	eQ = esQuery
 	return
 }
 
@@ -691,7 +693,7 @@ func (receiver *EsLiveBusiness) GetAuthorProductSearchRoomSumList(authorId, prod
 		esQuery.SetTerm("product_id", productId)
 	}
 	if startTime.Unix() != stopTime.Unix() {
-		esQuery.SetRange("shelf_time", map[string]interface{}{
+		esQuery.SetRange("live_create_time", map[string]interface{}{
 			"gte": startTime.Unix(),
 			"lt":  stopTime.AddDate(0, 0, 1).Unix(),
 		})
@@ -886,22 +888,56 @@ func (receiver *EsLiveBusiness) SumAuthorProductCountRoom(authorId, productId st
 //商品直播间搜索
 func (receiver *EsLiveBusiness) SearchProductRooms(productId, keyword, sortStr, orderBy string,
 	page, size int, startTime, endTime time.Time) (list []es.EsAuthorLiveProduct, total int, comErr global.CommonError) {
-
+	if sortStr == "" {
+		sortStr = "shelf_time"
+	}
+	if orderBy == "" {
+		orderBy = "desc"
+	}
+	if !utils.InArrayString(sortStr, []string{"shelf_time", "live_create_time", "predict_gmv", "predict_sales", "gpm"}) {
+		comErr = global.NewError(4000)
+		return
+	}
+	if !utils.InArrayString(orderBy, []string{"desc", "asc"}) {
+		comErr = global.NewError(4000)
+		return
+	}
+	if size > 50 {
+		comErr = global.NewError(4000)
+		return
+	}
+	esTable, connection, err := GetESTableByTime(es.DyRoomProductRecordsTable, startTime, endTime)
+	if err != nil {
+		comErr = global.NewError(4000)
+		return
+	}
+	esQuery, esMultiQuery := elasticsearch.NewElasticQueryGroup()
+	esQuery.SetTerm("product_id", productId)
+	esQuery.SetRange("live_create_time", map[string]interface{}{
+		"gte": startTime.Unix(),
+		"lt":  endTime.AddDate(0, 0, 1).Unix(),
+	})
 	tmpPage := page
 	tmpPageSize := size
 	if keyword != "" {
 		tmpPage = 1
 		tmpPageSize = 10000
 	}
-	var newEsMultiQuery *elasticsearch.ElasticMultiQuery
-	newEsMultiQuery, _, comErr = receiver.getSearchProductRoomsEs(productId, keyword, sortStr, orderBy, size, startTime, endTime)
-	results := newEsMultiQuery.
+	//if keyword != "" {
+	//	esQuery.SetMultiMatch([]string{"room_title", "nickname"}, keyword)
+	//}
+	var cacheTime time.Duration = 120
+	results := esMultiQuery.
+		SetConnection(connection).
+		SetTable(esTable).
+		SetCache(cacheTime).
+		AddMust(esQuery.Condition).
 		SetLimit((tmpPage-1)*tmpPageSize, tmpPageSize).
 		SetOrderBy(elasticsearch.NewElasticOrder().Add(sortStr, orderBy).Order).
 		SetMultiQuery().
 		Query()
 	utils.MapToStruct(results, &list)
-	total = newEsMultiQuery.Count
+	total = esMultiQuery.Count
 	if keyword != "" {
 		keyword = strings.ToLower(keyword)
 		newList := []es.EsAuthorLiveProduct{}
@@ -947,35 +983,8 @@ func (receiver *EsLiveBusiness) SearchProductRooms(productId, keyword, sortStr, 
 }
 
 //商品直播间搜索total
-func (receiver *EsLiveBusiness) SearchProductRoomsTotal(productId, keyword, sortStr, orderBy string,
-	page, size int, startTime, endTime time.Time) (totalSales int64, totalGmv float64, comErr global.CommonError) {
-	var newEsMultiQuery *elasticsearch.ElasticMultiQuery
-	var esQuery *elasticsearch.ElasticQuery
-	newEsMultiQuery, esQuery, comErr = receiver.getSearchProductRoomsEs(productId, keyword, sortStr, orderBy, size, startTime, endTime)
-	totalSales, totalGmv = receiver.getLiveTotal(newEsMultiQuery, esQuery, "predict_sales", "predict_gmv")
-	return
-}
-
-//获取es句柄
-func (receiver *EsLiveBusiness) getSearchProductRoomsEs(productId, keyword, sortStr, orderBy string, size int, startTime, endTime time.Time) (newEsMultiQuery *elasticsearch.ElasticMultiQuery, eQ *elasticsearch.ElasticQuery, comErr global.CommonError) {
-	if sortStr == "" {
-		sortStr = "shelf_time"
-	}
-	if orderBy == "" {
-		orderBy = "desc"
-	}
-	if !utils.InArrayString(sortStr, []string{"shelf_time", "live_create_time", "predict_gmv", "predict_sales", "gpm"}) {
-		comErr = global.NewError(4000)
-		return
-	}
-	if !utils.InArrayString(orderBy, []string{"desc", "asc"}) {
-		comErr = global.NewError(4000)
-		return
-	}
-	if size > 50 {
-		comErr = global.NewError(4000)
-		return
-	}
+func (receiver *EsLiveBusiness) SearchProductRoomsTotal(productId, keyword string,
+	startTime, endTime time.Time) (totalSales int64, totalGmv float64, comErr global.CommonError) {
 	esTable, connection, err := GetESTableByTime(es.DyRoomProductRecordsTable, startTime, endTime)
 	if err != nil {
 		comErr = global.NewError(4000)
@@ -987,15 +996,66 @@ func (receiver *EsLiveBusiness) getSearchProductRoomsEs(productId, keyword, sort
 		"gte": startTime.Unix(),
 		"lt":  endTime.AddDate(0, 0, 1).Unix(),
 	})
-
-	//if keyword != "" {
-	//	esQuery.SetMultiMatch([]string{"room_title", "nickname"}, keyword)
-	//}
-	newEsMultiQuery = esMultiQuery.
+	var cacheTime time.Duration = 120
+	if keyword != "" {
+		list := []es.EsAuthorLiveProduct{}
+		results := esMultiQuery.
+			SetConnection(connection).
+			SetTable(esTable).
+			SetCache(cacheTime).
+			AddMust(esQuery.Condition).
+			SetLimit(0, 10000).
+			SetOrderBy(elasticsearch.NewElasticOrder().Add("predict_gmv", "desc").Order).
+			SetMultiQuery().
+			Query()
+		utils.MapToStruct(results, &list)
+		keyword = strings.ToLower(keyword)
+		for _, v := range list {
+			if strings.Index(strings.ToLower(v.RoomTitle), keyword) < 0 && strings.Index(strings.ToLower(v.Nickname), keyword) < 0 {
+				continue
+			}
+			totalGmv += v.PredictGmv
+			totalSales += utils.ToInt64(math.Floor(v.PredictSales))
+		}
+		return
+	}
+	countResult := esMultiQuery.
 		SetConnection(connection).
 		SetTable(esTable).
-		AddMust(esQuery.Condition)
-	eQ = esQuery
+		SetCache(cacheTime).
+		RawQuery(map[string]interface{}{
+			"query": map[string]interface{}{
+				"bool": map[string]interface{}{
+					"must": esQuery.Condition,
+				},
+			},
+			"size": 0,
+			"aggs": map[string]interface{}{
+				"total_gmv": map[string]interface{}{
+					"sum": map[string]interface{}{
+						"field": "predict_gmv",
+					},
+				},
+				"total_sales": map[string]interface{}{
+					"sum": map[string]interface{}{
+						"field": "predict_sales",
+					},
+				},
+			},
+		})
+
+	if h, ok := countResult["aggregations"]; ok {
+		if t, ok2 := h.(map[string]interface{})["total_sales"]; ok2 {
+			if t1, ok3 := t.(map[string]interface{})["value"]; ok3 {
+				totalSales = utils.ToInt64(math.Floor(t1.(float64)))
+			}
+		}
+		if t, ok2 := h.(map[string]interface{})["total_gmv"]; ok2 {
+			if t1, ok3 := t.(map[string]interface{})["value"]; ok3 {
+				totalGmv = t1.(float64)
+			}
+		}
+	}
 	return
 }
 

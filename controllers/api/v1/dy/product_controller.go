@@ -708,10 +708,6 @@ func (receiver *ProductController) ProductLiveRoomTotal() {
 	productId := business.IdDecrypt(receiver.Ctx.Input.Param(":product_id"))
 	InputData := receiver.InputFormat()
 	keyword := InputData.GetString("keyword", "")
-	sortStr := InputData.GetString("sort", "shelf_time")
-	orderBy := InputData.GetString("order_by", "desc")
-	page := InputData.GetInt("page", 1)
-	size := InputData.GetInt("page_size", 10)
 	if productId == "" {
 		receiver.FailReturn(global.NewError(4000))
 		return
@@ -722,7 +718,7 @@ func (receiver *ProductController) ProductLiveRoomTotal() {
 		return
 	}
 	esLiveBusiness := es.NewEsLiveBusiness()
-	totalSales, totalGmv, comErr := esLiveBusiness.SearchProductRoomsTotal(productId, keyword, sortStr, orderBy, page, size, t1, t2)
+	totalSales, totalGmv, comErr := esLiveBusiness.SearchProductRoomsTotal(productId, keyword, t1, t2)
 	if comErr != nil {
 		receiver.FailReturn(comErr)
 		return

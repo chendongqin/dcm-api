@@ -753,11 +753,7 @@ func (receiver *AuthorController) AuthorAwemesTotal() {
 	}
 	hasProduct, _ := receiver.GetInt("has_product", 0)
 	keyword := receiver.GetString("keyword", "")
-	sortStr := receiver.GetString("sort", "")
-	orderBy := receiver.GetString("order_by", "")
-	page := receiver.GetPage("page")
-	pageSize := receiver.GetPageSize("page_size", 10, 30)
-	totalSales, totalGmv, comErr := es.NewEsVideoBusiness().SearchByAuthorTotal(authorId, keyword, sortStr, orderBy, hasProduct, page, pageSize, startTime, endTime)
+	totalSales, totalGmv, comErr := es.NewEsVideoBusiness().SearchByAuthorTotal(authorId, keyword, hasProduct, startTime, endTime)
 	if comErr != nil {
 		receiver.FailReturn(comErr)
 		return
@@ -1040,9 +1036,6 @@ func (receiver *AuthorController) AuthorLiveRoomsTotal() {
 	authorId := business.IdDecrypt(receiver.Ctx.Input.Param(":author_id"))
 	InputData := receiver.InputFormat()
 	keyword := InputData.GetString("keyword", "")
-	sortStr := InputData.GetString("sort", "create_time")
-	orderBy := InputData.GetString("order_by", "desc")
-	size := InputData.GetInt("page_size", 10)
 	if authorId == "" {
 		receiver.FailReturn(global.NewError(4000))
 		return
@@ -1053,7 +1046,7 @@ func (receiver *AuthorController) AuthorLiveRoomsTotal() {
 		return
 	}
 	esLiveBusiness := es.NewEsLiveBusiness()
-	totalSales, totalGmv, comErr := esLiveBusiness.SearchAuthorRoomsTotal(authorId, keyword, sortStr, orderBy, size, t1, t2)
+	totalSales, totalGmv, comErr := esLiveBusiness.SearchAuthorRoomsTotal(authorId, keyword, t1, t2)
 
 	if comErr != nil {
 		receiver.FailReturn(comErr)
