@@ -698,9 +698,6 @@ func (receiver *ProductBusiness) ProductAwemeAuthorAnalysisV2(productId, shopId,
 	authorTagMap := map[string]string{}
 	keyword = strings.ToLower(keyword)
 	for _, v := range allList {
-		if scoreType != 5 && scoreType != v.Level {
-			continue
-		}
 		if at, ok := authorTagMap[v.AuthorId]; ok {
 			v.Tags = at
 		} else {
