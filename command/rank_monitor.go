@@ -231,13 +231,13 @@ func SwitchTopDateTime(key string) (main map[string][]string, hourList map[strin
 	case "author_goods":
 		main = getCheckDateList(key)
 	case "live_share":
-		weekList = getWeekListLiveShare()
+		weekList = getWeekList(key)
 	}
 	main["desc"] = []string{fmt.Sprintf("%s的日期时间", desc)}
 	return
 }
 
-//直播小时榜的日期和时间/直播全天热榜，目前这两个榜单日期时间一样
+//小时榜
 func dateTimeLiveHour(key string) (res map[string][]string, dateHourList map[string][]string) {
 	res = map[string][]string{"date": {}, "hour": {}}
 	now := time.Now()
@@ -301,7 +301,7 @@ func getWeekList(key string) (res []map[string]string) {
 		offset = -6
 	}
 	startDateTime := time.Now().AddDate(0, 0, (offset - 1))
-	isExist := checkIsExistDate(key)
+	isExist := checkIsExistWeek(key)
 	if !isExist {
 		startDateTime = startDateTime.AddDate(0, 0, -7)
 	}
@@ -385,6 +385,29 @@ func checkIsExistDate(key string) (isExist bool) {
 			//有数据情况，缓存设置到今天结束
 			now := time.Now()
 			dateString := fmt.Sprintf("%s 00:00:00", now.AddDate(0, 0, 1).Format("2006-01-02"))
+			stopTime, _ := time.ParseInLocation("2006-01-02 15:04:05", dateString, time.Local)
+			seconds := stopTime.Unix() - now.Unix()
+			secondsDuration := time.Duration(seconds)
+			global.Cache.Set(cachKey, "1", secondsDuration)
+		}
+	}
+	return
+}
+
+//检测周榜榜单是否已经存在了数据
+func checkIsExistWeek(key string) (isExist bool) {
+	cachKey := cache.GetCacheKey(cache.DyRankCache, "week", key)
+	isExist = checkcachKey(cachKey)
+	if isExist == false {
+		if key != "live_share" {
+			key = fmt.Sprintf("%s_week", key)
+		}
+		pathInfo := getRoute(key)
+		isExist = requestRank(pathInfo)
+		if isExist {
+			//有数据情况，缓存到本周结束
+			now := time.Now()
+			dateString := fmt.Sprintf("%s 00:00:00", now.AddDate(0, 0, (8-int(now.Weekday()))).Format("2006-01-02"))
 			stopTime, _ := time.ParseInLocation("2006-01-02 15:04:05", dateString, time.Local)
 			seconds := stopTime.Unix() - now.Unix()
 			secondsDuration := time.Duration(seconds)
