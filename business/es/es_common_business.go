@@ -8,6 +8,8 @@ import (
 	"time"
 )
 
+const DataStartTimestamp = 1627747200
+
 var EsTableConnectionMap = map[string]string{
 	"dy_product_aweme_author_analysis_%s": "aweme",
 	"dy_product_aweme_%s":                 "aweme",
@@ -24,9 +26,9 @@ func SureConnection(tableName string) string {
 }
 
 func GetESTableByTime(table string, start, stop time.Time) (string, string, error) {
-	//时间截止至9.1号
-	if start.Unix() < 1630425600 {
-		start = time.Unix(1630425600, 0)
+	//时间截止至8.1号
+	if start.Unix() < DataStartTimestamp {
+		start = time.Unix(DataStartTimestamp, 0)
 	}
 	if start.After(stop) {
 		return "", "", errors.New("参数错误")
@@ -52,9 +54,9 @@ func GetESTableByTime(table string, start, stop time.Time) (string, string, erro
 }
 
 func GetESTableByDayTime(table string, start, stop time.Time) (string, string, error) {
-	//时间截止至9.1号
-	if start.Unix() < 1630425600 {
-		start = time.Unix(1630425600, 0)
+	//时间截止至8.1号
+	if start.Unix() < DataStartTimestamp {
+		start = time.Unix(DataStartTimestamp, 0)
 	}
 	if start.After(stop) {
 		return "", "", errors.New("参数错误")
@@ -73,9 +75,9 @@ func GetESTableByDayTime(table string, start, stop time.Time) (string, string, e
 }
 
 func GetESTableByMonthTime(table string, start, stop time.Time) (string, string, error) {
-	//时间截止至9.1号
-	if start.Unix() < 1630425600 {
-		start = time.Unix(1630425600, 0)
+	//时间截止至8.1号
+	if start.Unix() < DataStartTimestamp {
+		start = time.Unix(DataStartTimestamp, 0)
 	}
 	if start.After(stop) {
 		return "", "", errors.New("参数错误")

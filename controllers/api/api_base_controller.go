@@ -3,6 +3,7 @@ package controllers
 import (
 	"bytes"
 	"dongchamao/business"
+	"dongchamao/business/es"
 	"dongchamao/controllers"
 	"dongchamao/global"
 	"dongchamao/global/cache"
@@ -57,18 +58,7 @@ func (this *ApiBaseController) InitApiController() {
 	this.AsfCheck()
 	this.CheckSign()
 	this.InitUserToken()
-	//todo 上线白名单过滤
-	//if this.AppId < 20000 {
-	//if this.AppId <= 10000 {
-	//	if !utils.InArrayString(this.TrueUri, []string{"/v1/user/login", "/v1/account/info", "/v1/config/list", "/v1/sms/verify", "/v1/sms/code",
-	//		"/v1/wechat/phone", "/v1/pay/price/dy", "/v1/pay/notify/alipay", "/v1/pay/notify/wechat",
-	//		"/v1/account/logout", "/v1/wechat/check", "/v1/wechat/qrcode", "/v1/account/password", "/v1/callback/wechat"}) {
-	//		if business.WitheUsername(this.UserInfo.Username) != nil {
-	//			this.FailReturn(global.NewError(88888))
-	//			return
-	//		}
-	//	}
-	//}
+	this.AsfCheck()
 }
 
 func (this *ApiBaseController) IsMobileRequest() (is bool, version string) {
@@ -476,21 +466,19 @@ func (this *ApiBaseController) AsfCheck() {
 	if disabled == "1" {
 		return
 	}
-	if this.IsMonitor {
+	if this.UserId == 1 {
 		return
 	}
 	verifyUser := ""
+	verifyIp := ""
 	if this.UserId > 0 {
 		verifyUser = global.Cache.Get(cache.GetCacheKey(cache.SecurityVerifyCodeUid, this.UserId))
 	} else {
-		verifyIp := global.Cache.Get(cache.GetCacheKey(cache.SecurityVerifyCodeIp, this.Ip))
-		if verifyIp == "verify" || verifyUser == "verify" {
-			//if this.Ip == "47.103.153.227" {
-			//	return
-			//}
-			this.FailReturn(global.NewError(80000))
-			return
-		}
+		verifyIp = global.Cache.Get(cache.GetCacheKey(cache.SecurityVerifyCodeIp, this.Ip))
+	}
+	if verifyIp == "verify" || verifyUser == "verify" {
+		this.FailReturn(global.NewError(8000))
+		return
 	}
 }
 
@@ -621,9 +609,9 @@ func (receiver *ApiBaseController) GetRangeDate() (startTime, endTime time.Time,
 		commonError = global.NewError(4000)
 		return
 	}
-	//时间截止至9.1号
-	if startTime.Unix() < 1630425600 {
-		startTime = time.Unix(1630425600, 0)
+	//时间截止至8.1号
+	if startTime.Unix() < es.DataStartTimestamp {
+		startTime = time.Unix(es.DataStartTimestamp, 0)
 	}
 	endTime, err = time.ParseInLocation(pslTime, endDay, time.Local)
 	if err != nil {
