@@ -170,6 +170,8 @@ func (receiver *AccountAuthBusiness) CheckSmsSend(clientos, version string) bool
 	if !utils.InArrayString(clientos, []string{"android", "ios"}) {
 		return true
 	}
+	//todo app滑块下一版本处理
+	return false
 	if clientos == "ios" && version < CheckIOSSmsVersion {
 		return false
 	} else if clientos == "android" && version < CheckAndroidSmsVersion {
