@@ -399,7 +399,9 @@ func checkIsExistWeek(key string) (isExist bool) {
 	cachKey := cache.GetCacheKey(cache.DyRankCache, "week", key)
 	isExist = checkcachKey(cachKey)
 	if isExist == false {
-		key = fmt.Sprintf("%s_week", key)
+		if key != "live_share" {
+			key = fmt.Sprintf("%s_week", key)
+		}
 		pathInfo := getRoute(key)
 		isExist = requestRank(pathInfo)
 		if isExist {
