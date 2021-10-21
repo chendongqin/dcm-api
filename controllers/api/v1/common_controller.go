@@ -519,3 +519,19 @@ func (receiver *CommonController) CountChannelClick() {
 	}
 	receiver.SuccReturn(nil)
 }
+
+//滑块处理
+func (receiver *CommonController) ClearAcfVerify() {
+	ticket := receiver.InputFormat().GetString("ticket", "")
+	randStr := receiver.InputFormat().GetString("randstr", "")
+	if !tencent.TencentCaptcha(ticket, randStr, receiver.Ip) {
+		receiver.FailReturn(global.NewError(8001))
+		return
+	}
+	if receiver.UserId > 0 {
+		_ = global.Cache.Delete(cache.GetCacheKey(cache.SecurityVerifyCodeUid, receiver.UserId))
+	}
+	_ = global.Cache.Delete(cache.GetCacheKey(cache.SecurityVerifyCodeIp, receiver.Ip))
+	receiver.SuccReturn(nil)
+	return
+}
