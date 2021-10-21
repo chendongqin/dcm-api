@@ -683,7 +683,7 @@ func (receiver *ShopBusiness) ShopAwemeAuthorAnalysis(shopId, keyword, tag strin
 func (receiver *ShopBusiness) ShopAwemeAuthorAnalysisV2(shopId, keyword, tag string, startTime, endTime time.Time, minFollow, maxFollow int64, scoreType, page, pageSize int) (list []entity.DyProductAwemeAuthorAnalysis, total int, comErr global.CommonError) {
 	list = []entity.DyProductAwemeAuthorAnalysis{}
 	allList, _, comErr := es.NewEsVideoBusiness().SearchAwemeAuthor("", shopId, tag, minFollow, maxFollow, startTime, endTime, scoreType)
-	if comErr == nil {
+	if comErr != nil {
 		return
 	}
 	authorMap := map[string]entity.DyProductAwemeAuthorAnalysis{}
