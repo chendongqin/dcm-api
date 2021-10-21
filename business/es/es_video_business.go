@@ -20,22 +20,49 @@ func NewEsVideoBusiness() *EsVideoBusiness {
 
 func (e *EsVideoBusiness) SearchAwemeByProduct(productId, keyword, sortStr, orderBy string,
 	startTime, endTime time.Time, page, pageSize int) (list []es.DyProductVideo, total int, comErr global.CommonError) {
-
+	if orderBy == "" {
+		orderBy = "desc"
+	}
+	if sortStr == "" {
+		sortStr = "aweme_create_time"
+	}
+	if !utils.InArrayString(orderBy, []string{"desc", "asc"}) {
+		comErr = global.NewError(4000)
+		return
+	}
+	if !utils.InArrayString(sortStr, []string{"aweme_create_time", "aweme_gmv", "sales", "comment_count", "digg_count", "forward_count"}) {
+		comErr = global.NewError(4000)
+		return
+	}
+	esTable, connection, err := GetESTableByMonthTime(es.DyAuthorAwemeProductTable, startTime, endTime)
+	if err != nil {
+		comErr = global.NewError(4000)
+		return
+	}
+	esQuery, esMultiQuery := elasticsearch.NewElasticQueryGroup()
+	esQuery.SetTerm("product_id", productId)
+	esQuery.SetRange("aweme_create_time", map[string]interface{}{
+		"gte": startTime.Unix(),
+		"lt":  endTime.AddDate(0, 0, 1).Unix(),
+	})
 	tmpPage := page
 	tmpPageSize := pageSize
 	if keyword != "" {
 		tmpPage = 1
 		tmpPageSize = 10000
 	}
-	var newEsMultiQuery *elasticsearch.ElasticMultiQuery
-	newEsMultiQuery, _, comErr = e.getSearchAwemeByProductEs(productId, keyword, sortStr, orderBy, startTime, endTime, page, pageSize)
-	result := newEsMultiQuery.
+	var cacheTime time.Duration = 180
+	result := esMultiQuery.
+		SetConnection(connection).
+		SetTable(esTable).
+		SetCache(cacheTime).
+		AddMust(esQuery.Condition).
 		SetOrderBy(elasticsearch.NewElasticOrder().Add(sortStr, orderBy).Order).
 		SetLimit((tmpPage-1)*tmpPageSize, tmpPageSize).
 		SetMultiQuery().
 		Query()
 	utils.MapToStruct(result, &list)
-	total = newEsMultiQuery.Count
+	total = esMultiQuery.Count
 	if keyword != "" {
 		keyword = strings.ToLower(keyword)
 		newList := []es.DyProductVideo{}
@@ -61,32 +88,9 @@ func (e *EsVideoBusiness) SearchAwemeByProduct(productId, keyword, sortStr, orde
 	return
 }
 
-func (e *EsVideoBusiness) SearchAwemeByProductTotal(productId, keyword, sortStr, orderBy string,
-	startTime, endTime time.Time, page, pageSize int) (totalSales int64, totalGmv float64, comErr global.CommonError) {
-	var newEsMultiQuery *elasticsearch.ElasticMultiQuery
-	var esQuery *elasticsearch.ElasticQuery
-	newEsMultiQuery, esQuery, comErr = e.getSearchAwemeByProductEs(productId, keyword, sortStr, orderBy, startTime, endTime, page, pageSize)
-	totalSales, totalGmv = e.getVideoTotal(newEsMultiQuery, esQuery, "sales", "aweme_gmv")
-	return
-}
-
-func (e *EsVideoBusiness) getSearchAwemeByProductEs(productId, keyword, sortStr, orderBy string,
-	startTime, endTime time.Time, page, pageSize int) (newEsMultiQuery *elasticsearch.ElasticMultiQuery, eQ *elasticsearch.ElasticQuery, comErr global.CommonError) {
-	if orderBy == "" {
-		orderBy = "desc"
-	}
-	if sortStr == "" {
-		sortStr = "aweme_create_time"
-	}
-	if !utils.InArrayString(orderBy, []string{"desc", "asc"}) {
-		comErr = global.NewError(4000)
-		return
-	}
-	if !utils.InArrayString(sortStr, []string{"aweme_create_time", "aweme_gmv", "sales", "comment_count", "digg_count", "forward_count"}) {
-		comErr = global.NewError(4000)
-		return
-	}
-	esTable, connection, err := GetESTableByMonthTime(es.DyProductVideoTable, startTime, endTime)
+func (e *EsVideoBusiness) SearchAwemeByProductTotal(productId, keyword string,
+	startTime, endTime time.Time) (totalSales int64, totalGmv float64, comErr global.CommonError) {
+	esTable, connection, err := GetESTableByMonthTime(es.DyAuthorAwemeProductTable, startTime, endTime)
 	if err != nil {
 		comErr = global.NewError(4000)
 		return
@@ -97,31 +101,67 @@ func (e *EsVideoBusiness) getSearchAwemeByProductEs(productId, keyword, sortStr,
 		"gte": startTime.Unix(),
 		"lt":  endTime.AddDate(0, 0, 1).Unix(),
 	})
-	//if keyword != "" {
-	//	esQuery.AddCondition(map[string]interface{}{
-	//		"bool": map[string]interface{}{
-	//			"should": []map[string]interface{}{
-	//				{
-	//					"match_phrase": map[string]interface{}{
-	//						"aweme_title": keyword,
-	//					},
-	//				},
-	//				{
-	//					"match_phrase": map[string]interface{}{
-	//						"nickname": keyword,
-	//					},
-	//				},
-	//			},
-	//		},
-	//	})
-	//}
 	var cacheTime time.Duration = 180
-	newEsMultiQuery = esMultiQuery.
+	if keyword != "" {
+		keyword = strings.ToLower(keyword)
+		list := []es.DyProductVideo{}
+		esQuery.SetExist("filed", "aweme_gmv")
+		results := esMultiQuery.
+			SetConnection(connection).
+			SetTable(esTable).
+			SetCache(cacheTime).
+			AddMust(esQuery.Condition).
+			SetOrderBy(elasticsearch.NewElasticOrder().Add("aweme_gmv", "desc").Order).
+			SetLimit(0, 10000).
+			SetMultiQuery().
+			Query()
+		utils.MapToStruct(results, &list)
+		for _, v := range list {
+			if strings.Index(strings.ToLower(v.AwemeTitle), keyword) < 0 && strings.Index(strings.ToLower(v.Nickname), keyword) < 0 {
+				continue
+			}
+			totalGmv += v.AwemeGmv
+			totalSales += v.Sales
+		}
+		return
+	}
+	countResult := esMultiQuery.
 		SetConnection(connection).
 		SetTable(esTable).
 		SetCache(cacheTime).
-		AddMust(esQuery.Condition)
-	eQ = esQuery
+		RawQuery(map[string]interface{}{
+			"query": map[string]interface{}{
+				"bool": map[string]interface{}{
+					"must": esQuery.Condition,
+				},
+			},
+			"size": 0,
+			"aggs": map[string]interface{}{
+				"total_gmv": map[string]interface{}{
+					"sum": map[string]interface{}{
+						"field": "aweme_gmv",
+					},
+				},
+				"total_sales": map[string]interface{}{
+					"sum": map[string]interface{}{
+						"field": "sales",
+					},
+				},
+			},
+		})
+
+	if h, ok := countResult["aggregations"]; ok {
+		if t, ok2 := h.(map[string]interface{})["total_sales"]; ok2 {
+			if t1, ok3 := t.(map[string]interface{})["value"]; ok3 {
+				totalSales = utils.ToInt64(math.Floor(t1.(float64)))
+			}
+		}
+		if t, ok2 := h.(map[string]interface{})["total_gmv"]; ok2 {
+			if t1, ok3 := t.(map[string]interface{})["value"]; ok3 {
+				totalGmv = t1.(float64)
+			}
+		}
+	}
 	return
 }
 
@@ -272,44 +312,6 @@ func (e *EsVideoBusiness) SearchByAuthorTotal(authorId, keyword string, hasProdu
 				"total_sales": map[string]interface{}{
 					"sum": map[string]interface{}{
 						"field": "sales",
-					},
-				},
-			},
-		})
-
-	if h, ok := countResult["aggregations"]; ok {
-		if t, ok2 := h.(map[string]interface{})["total_sales"]; ok2 {
-			if t1, ok3 := t.(map[string]interface{})["value"]; ok3 {
-				totalSales = utils.ToInt64(math.Floor(t1.(float64)))
-			}
-		}
-		if t, ok2 := h.(map[string]interface{})["total_gmv"]; ok2 {
-			if t1, ok3 := t.(map[string]interface{})["value"]; ok3 {
-				totalGmv = t1.(float64)
-			}
-		}
-	}
-	return
-}
-
-func (receiver *EsVideoBusiness) getVideoTotal(newEsMultiQuery *elasticsearch.ElasticMultiQuery, esQuery *elasticsearch.ElasticQuery, fieldSales, fieldGmv string) (totalSales int64, totalGmv float64) {
-	countResult := newEsMultiQuery.
-		RawQuery(map[string]interface{}{
-			"query": map[string]interface{}{
-				"bool": map[string]interface{}{
-					"must": esQuery.Condition,
-				},
-			},
-			"size": 0,
-			"aggs": map[string]interface{}{
-				"total_gmv": map[string]interface{}{
-					"sum": map[string]interface{}{
-						"field": fieldGmv,
-					},
-				},
-				"total_sales": map[string]interface{}{
-					"sum": map[string]interface{}{
-						"field": fieldSales,
 					},
 				},
 			},
@@ -538,7 +540,7 @@ func (e *EsVideoBusiness) ScanAwemeProductByAuthor(authorId, keyword, category, 
 	if shopType == 1 && shopId == "" {
 		return
 	}
-	esTable, connection, err := GetESTableByTime(es.DyAuthorAwemeProductTable, startTime, endTime)
+	esTable, connection, err := GetESTableByMonthTime(es.DyAuthorAwemeProductTable, startTime, endTime)
 	if err != nil {
 		comErr = global.NewError(4000)
 		return
@@ -596,7 +598,7 @@ func (e *EsVideoBusiness) ScanAwemeProductByAuthor(authorId, keyword, category, 
 
 //获取达人小店商品数据
 func (e *EsVideoBusiness) ScanAwemeShopByAuthor(authorId, keyword string, startTime, endTime time.Time, page, pageSize int) (list []es.EsDyAuthorAwemeProduct, total int, comErr global.CommonError) {
-	esTable, connection, err := GetESTableByTime(es.DyAuthorAwemeProductTable, startTime, endTime)
+	esTable, connection, err := GetESTableByMonthTime(es.DyAuthorAwemeProductTable, startTime, endTime)
 	if err != nil {
 		comErr = global.NewError(4000)
 		return
@@ -635,7 +637,7 @@ func (e *EsVideoBusiness) ScanAwemeShopByAuthor(authorId, keyword string, startT
 
 //获取达人带货视频聚合
 func (e *EsVideoBusiness) AuthorProductAwemeSumList(authorId, productId, shopId, sortStr, orderBy string, startTime, endTime time.Time, page, pageSize int) (list []es.DyProductAwemeSum, total int, comErr global.CommonError) {
-	esTable, connection, err := GetESTableByTime(es.DyAuthorAwemeProductTable, startTime, endTime)
+	esTable, connection, err := GetESTableByMonthTime(es.DyAuthorAwemeProductTable, startTime, endTime)
 	if err != nil {
 		comErr = global.NewError(4000)
 		return

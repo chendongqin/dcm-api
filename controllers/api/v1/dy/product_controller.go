@@ -1063,11 +1063,7 @@ func (receiver *ProductController) ProductAwemeTotal() {
 		return
 	}
 	keyword := receiver.GetString("keyword", "")
-	sortStr := receiver.GetString("sort", "")
-	orderBy := receiver.GetString("order_by", "")
-	page := receiver.GetPage("page")
-	pageSize := receiver.GetPageSize("page_size", 10, 50)
-	totalSales, totalGmv, comErr := es.NewEsVideoBusiness().SearchAwemeByProductTotal(productId, keyword, sortStr, orderBy, startTime, endTime, page, pageSize)
+	totalSales, totalGmv, comErr := es.NewEsVideoBusiness().SearchAwemeByProductTotal(productId, keyword, startTime, endTime)
 	if comErr != nil {
 		receiver.FailReturn(comErr)
 		return
