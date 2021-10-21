@@ -231,6 +231,7 @@ func SwitchTopDateTime(key string) (main map[string][]string, hourList map[strin
 	case "author_goods":
 		main = getCheckDateList(key)
 	case "live_share":
+		main = map[string][]string{"date": {}, "hour": {}}
 		weekList = getWeekList(key)
 	}
 	main["desc"] = []string{fmt.Sprintf("%s的日期时间", desc)}
