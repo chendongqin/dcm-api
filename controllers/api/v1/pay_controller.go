@@ -546,17 +546,17 @@ func (receiver *PayController) IosPay() {
 		return
 	}
 	status, _ := jsonObj.Get("status").Int()
-	if global.IsDev() {
-		if status == 21007 {
-			jsonObj, err = utils.Curl(appleVerifyUrlTest, "POST", string(paramStr), "application/json")
-			if err != nil {
-				business.NewMonitorBusiness().SendErr("苹果支付错误:dev", err.Error())
-				logger.Error("苹果支付错误", err)
-				receiver.FailReturn(global.NewError(5000))
-				return
-			}
-			status, _ = jsonObj.Get("status").Int()
+	isDevPay := false
+	if status == 21007 {
+		isDevPay = true
+		jsonObj, err = utils.Curl(appleVerifyUrlTest, "POST", string(paramStr), "application/json")
+		if err != nil {
+			business.NewMonitorBusiness().SendErr("苹果支付错误:dev", err.Error())
+			logger.Error("苹果支付错误", err)
+			receiver.FailReturn(global.NewError(5000))
+			return
 		}
+		status, _ = jsonObj.Get("status").Int()
 	}
 	if status != 0 {
 		receiver.FailReturn(global.NewError(4000))
@@ -604,6 +604,10 @@ func (receiver *PayController) IosPay() {
 	payTime := time.Unix(payTimestamp, 0)
 	if payTimestamp <= 0 {
 		payTime = time.Now()
+	}
+	if isDevPay && !global.IsDev() {
+		receiver.SuccReturn(nil)
+		return
 	}
 	updateData := map[string]interface{}{
 		"pay_status":     1,
