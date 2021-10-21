@@ -232,7 +232,7 @@ func SwitchTopDateTime(key string) (main map[string][]string, hourList map[strin
 		main = getCheckDateList(key)
 	case "live_share":
 		main = map[string][]string{"date": {}, "hour": {}}
-		weekList = getWeekList(key)
+		weekList = getWeekListLiveShare(key)
 	}
 	main["desc"] = []string{fmt.Sprintf("%s的日期时间", desc)}
 	return
@@ -319,7 +319,7 @@ func getWeekList(key string) (res []map[string]string) {
 }
 
 //电商直播达人分享榜
-func getWeekListLiveShare() (res []map[string]string) {
+func getWeekListLiveShare(key string) (res []map[string]string) {
 	//这里仿照前段，只给三个切片
 	now := time.Now()
 	num := 3
@@ -329,6 +329,10 @@ func getWeekListLiveShare() (res []map[string]string) {
 	}
 
 	startDateTime := time.Now().AddDate(0, 0, (offset - 1))
+	isExist := checkIsExistWeek(key)
+	if !isExist {
+		startDateTime = startDateTime.AddDate(0, 0, -7)
+	}
 	dateSelectList := []map[string]string{}
 	for i := 0; i < num; i++ {
 		rightDate := startDateTime.AddDate(0, 0, -i*6)
