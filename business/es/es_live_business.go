@@ -321,6 +321,9 @@ func (receiver *EsLiveBusiness) RoomProductByRoomId(roomInfo entity.DyLiveInfo, 
 	if listLen < end {
 		end = listLen
 	}
+	if start > listLen {
+		start = listLen
+	}
 	if listLen > 0 {
 		list = list[start:end]
 	}

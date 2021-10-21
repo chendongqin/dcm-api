@@ -283,6 +283,9 @@ func (receiver *AwemeController) AwemeProductAnalyse() {
 	if end > lenNum {
 		end = lenNum
 	}
+	if start > lenNum {
+		start = lenNum
+	}
 	if lenNum > 0 {
 		list = list[start:end]
 	}
