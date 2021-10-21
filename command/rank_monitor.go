@@ -221,23 +221,23 @@ func SwitchTopDateTime(key string) (main map[string][]string, hourList map[strin
 	case "product_live_sale":
 		main = getCheckDateList(key)
 		weekList = getWeekList(key)
-		monthList = getMonthList(key)
+		monthList = getMonthList()
 	case "product":
 		main = getCheckDateList(key)
 		weekList = getWeekList(key)
-		monthList = getMonthList(key)
+		monthList = getMonthList()
 	case "author_follower_inc":
 		main = getCheckDateList(key)
 	case "author_goods":
 		main = getCheckDateList(key)
 	case "live_share":
-		weekList = getWeekListLiveShare()
+		weekList = getWeekList(key)
 	}
 	main["desc"] = []string{fmt.Sprintf("%s的日期时间", desc)}
 	return
 }
 
-//直播小时榜的日期和时间/直播全天热榜，目前这两个榜单日期时间一样
+//小时榜
 func dateTimeLiveHour(key string) (res map[string][]string, dateHourList map[string][]string) {
 	res = map[string][]string{"date": {}, "hour": {}}
 	now := time.Now()
@@ -301,7 +301,7 @@ func getWeekList(key string) (res []map[string]string) {
 		offset = -6
 	}
 	startDateTime := time.Now().AddDate(0, 0, (offset - 1))
-	isExist := checkIsExistDate(key)
+	isExist := checkIsExistWeek(key)
 	if !isExist {
 		startDateTime = startDateTime.AddDate(0, 0, -7)
 	}
@@ -342,24 +342,19 @@ func getWeekListLiveShare() (res []map[string]string) {
 }
 
 //月榜列表获取
-func getMonthList(key string) (res []string) {
-	//这里仿照前端，只给三个切片
-	num := 3
-	beforeMonthNum := 1
-	isExist := checkIsExistMonth(key)
-	if !isExist {
-		beforeMonthNum = 2
-	}
-	startDateTime := time.Now().AddDate(0, -beforeMonthNum, 0)
+func getMonthList() (res []string) {
+	//这里仿照前段，只给三个切片
+	//num := 3
+	//startDateTime := time.Now().AddDate(0, -1, 0)
 	dateSelectList := []string{}
-	for i := 0; i < num; i++ {
-		monthDate := startDateTime.AddDate(0, -i, 0)
-		stopDate, _ := time.ParseInLocation("2006-01-02 15:04:05", "2021-09-01 00:00:00", time.Local)
-		if stopDate.Before(monthDate) {
-			dateString := monthDate.Format("2006-01")
-			dateSelectList = append(dateSelectList, dateString)
-		}
-	}
+	//for i := 0; i < num; i++ {
+	//	monthDate := startDateTime.AddDate(0, -i, 0)
+	//	stopDate, _ := time.ParseInLocation("2006-01-02 15:04:05", "2021-09-01 00:00:00", time.Local)
+	//	if stopDate.Before(monthDate) {
+	//		dateString := monthDate.Format("2006-01")
+	//		dateSelectList = append(dateSelectList, dateString)
+	//	}
+	//}
 	res = dateSelectList
 	return
 }
@@ -399,17 +394,18 @@ func checkIsExistDate(key string) (isExist bool) {
 	return
 }
 
-//检测该日榜周榜榜单是否已经存在了数据
-func checkIsExistMonth(key string) (isExist bool) {
-	cachKey := cache.GetCacheKey(cache.DyRankCache, "month", key)
+//检测周榜榜单是否已经存在了数据
+func checkIsExistWeek(key string) (isExist bool) {
+	cachKey := cache.GetCacheKey(cache.DyRankCache, "week", key)
 	isExist = checkcachKey(cachKey)
 	if isExist == false {
+		key = fmt.Sprintf("%s_week", key)
 		pathInfo := getRoute(key)
 		isExist = requestRank(pathInfo)
 		if isExist {
-			//有数据情况，缓存设置到当前月份结束
+			//有数据情况，缓存到本周结束
 			now := time.Now()
-			dateString := fmt.Sprintf("%s-01 00:00:00", now.AddDate(0, 1, 0).Format("2006-01"))
+			dateString := fmt.Sprintf("%s 00:00:00", now.AddDate(0, 0, (8-int(now.Weekday()))).Format("2006-01-02"))
 			stopTime, _ := time.ParseInLocation("2006-01-02 15:04:05", dateString, time.Local)
 			seconds := stopTime.Unix() - now.Unix()
 			secondsDuration := time.Duration(seconds)
