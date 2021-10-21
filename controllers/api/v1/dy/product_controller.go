@@ -828,7 +828,7 @@ func (receiver *ProductController) ProductAwemeAuthorAnalysis() {
 	page := receiver.GetPage("page")
 	pageSize := receiver.GetPageSize("page_size", 10, 50)
 	productBusiness := business.NewProductBusiness()
-	list, total, comErr := productBusiness.ProductAwemeAuthorAnalysis(productId, keyword, tag, startTime, endTime, minFollow, maxFollow, scoreType, page, pageSize)
+	list, total, comErr := productBusiness.ProductAwemeAuthorAnalysisV2(productId, "", keyword, tag, startTime, endTime, minFollow, maxFollow, scoreType, page, pageSize)
 	if comErr != nil {
 		receiver.FailReturn(comErr)
 		return
@@ -862,7 +862,7 @@ func (receiver *ProductController) ProductAwemeAuthorAnalysisCount() {
 	}
 	keyword := receiver.GetString("keyword", "")
 	productBusiness := business.NewProductBusiness()
-	countList, comErr := productBusiness.ProductAwemeAuthorAnalysisCount(productId, keyword, startTime, endTime)
+	countList, comErr := productBusiness.ProductAwemeAuthorAnalysisCount(productId, "", keyword, startTime, endTime)
 	if comErr != nil {
 		receiver.FailReturn(comErr)
 		return

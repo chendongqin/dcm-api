@@ -687,6 +687,88 @@ func (receiver *ProductBusiness) ProductAwemeAuthorAnalysis(productId, keyword, 
 	return
 }
 
+func (receiver *ProductBusiness) ProductAwemeAuthorAnalysisV2(productId, shopId, keyword, tag string, startTime, endTime time.Time, minFollow, maxFollow int64, scoreType, page, pageSize int) (list []entity.DyProductAwemeAuthorAnalysis, total int, comErr global.CommonError) {
+	list = []entity.DyProductAwemeAuthorAnalysis{}
+	allList, _, comErr := es.NewEsVideoBusiness().SearchAwemeAuthor(productId, shopId, tag, minFollow, maxFollow, startTime, endTime, scoreType)
+	if comErr == nil {
+		return
+	}
+	authorMap := map[string]entity.DyProductAwemeAuthorAnalysis{}
+	authorAwemeMap := map[string]map[string]string{}
+	authorTagMap := map[string]string{}
+	keyword = strings.ToLower(keyword)
+	for _, v := range allList {
+		if scoreType != 5 && scoreType != v.Level {
+			continue
+		}
+		if at, ok := authorTagMap[v.AuthorId]; ok {
+			v.Tags = at
+		} else {
+			authorTagMap[v.AuthorId] = v.Tags
+		}
+		if keyword != "" {
+			if strings.Index(strings.ToLower(v.Nickname), keyword) < 0 && v.UniqueId != keyword && v.ShortId != keyword {
+				continue
+			}
+		}
+		if _, ok := authorAwemeMap[v.AuthorId]; !ok {
+			authorAwemeMap[v.AuthorId] = map[string]string{}
+		}
+		authorAwemeMap[v.AuthorId][v.AwemeId] = v.AwemeId
+		if d, ok := authorMap[v.AuthorId]; ok {
+			d.Gmv += v.AwemeGmv
+			d.Sales += v.Sales
+			d.DiggCount += v.DiggCount
+			authorMap[v.AuthorId] = d
+		} else {
+			authorMap[v.AuthorId] = entity.DyProductAwemeAuthorAnalysis{
+				ProductId:   v.ProductId,
+				AuthorId:    v.AuthorId,
+				Nickname:    v.Nickname,
+				CreateSdf:   v.DistDate,
+				DisplayId:   v.UniqueId,
+				ShortId:     v.ShortId,
+				Score:       v.Score,
+				Level:       v.Level,
+				FirstName:   v.Tags,
+				SecondName:  v.TagsLevelTwo,
+				Avatar:      v.Avatar,
+				FollowCount: v.FollowerCount,
+				DiggCount:   v.DiggCount,
+				Sales:       v.Sales,
+				Gmv:         v.AwemeGmv,
+			}
+		}
+	}
+	for _, v := range authorMap {
+		if minFollow > 0 && v.FollowCount < minFollow {
+			continue
+		}
+		if maxFollow > 0 && v.FollowCount >= maxFollow {
+			continue
+		}
+		v.AwemesNum = len(v.RelatedAwemes)
+		list = append(list, v)
+	}
+	sort.Slice(list, func(i, j int) bool {
+		return list[i].Sales > list[j].Sales
+	})
+	total = len(list)
+	start := (page - 1) * pageSize
+	end := start + pageSize
+	if total < end {
+		end = total
+	}
+	if start > total {
+		start = total
+	}
+	if total == 0 {
+		return
+	}
+	list = list[start:end]
+	return
+}
+
 func (receiver *ProductBusiness) ProductAuthorAwemes(productId, shopId, authorId string, startTime, endTime time.Time, sortStr, orderBy string, page, pageSize int) (list []entity.DyProductAuthorRelatedAweme, total int) {
 	list = []entity.DyProductAuthorRelatedAweme{}
 	//esProductBusiness := es.NewEsProductBusiness()
@@ -850,49 +932,18 @@ func (receiver *ProductBusiness) NewProductAuthorAwemes(productId, authorId stri
 	return
 }
 
-func (receiver *ProductBusiness) ProductAwemeAuthorAnalysisCount(productId, keyword string, startTime, endTime time.Time) (countList dy.DyProductAwemeCount, comErr global.CommonError) {
+func (receiver *ProductBusiness) ProductAwemeAuthorAnalysisCount(productId, shopId, keyword string, startTime, endTime time.Time) (countList dy.DyProductAwemeCount, comErr global.CommonError) {
 	countList = dy.DyProductAwemeCount{
 		Tags:  []dy.DyCate{},
 		Level: []dy.DyIntCate{},
 	}
-	cKey := cache.GetCacheKey(cache.ProductAwemeAuthorCount, productId, startTime.Format("20060102"), endTime.Format("20060102"))
-	if keyword == "" {
-		countJson := global.Cache.Get(cKey)
-		if countJson != "" {
-			countJson = utils.DeserializeData(countJson)
-			_ = jsoniter.Unmarshal([]byte(countJson), &countList)
-			return
-		}
-	}
-	esProductBusiness := es.NewEsProductBusiness()
-	startRow, stopRow, _, comErr := esProductBusiness.SearchAwemeRangeDateRowKey(productId, keyword, startTime, endTime)
-	if startRow.ProductId == "" || stopRow.ProductId == "" {
-		return
-	}
-	if comErr != nil {
-		return
-	}
-	startRowKey := startRow.ProductId + "_" + startRow.CreateSdf + "_" + startRow.AuthorId
-	stopRowKey := stopRow.ProductId + "_" + stopRow.CreateSdf + "_" + stopRow.AuthorId
-	allList := make([]entity.DyProductAwemeAuthorAnalysis, 0)
-	cacheKey := cache.GetCacheKey(cache.ProductAwemeAuthorAllList, startRowKey, stopRowKey)
-	cacheStr := global.Cache.Get(cacheKey)
-	if cacheStr != "" {
-		cacheStr = utils.DeserializeData(cacheStr)
-		_ = jsoniter.Unmarshal([]byte(cacheStr), &allList)
+	cKey := ""
+	if shopId != "" {
+		cKey = cache.GetCacheKey(cache.ProductAwemeAuthorCount, shopId, startTime.Format("20060102"), endTime.Format("20060102"))
 	} else {
-		if startRowKey != stopRowKey {
-			allList, _ = hbase.GetProductAwemeAuthorAnalysisRange(startRowKey, stopRowKey)
-		}
-		lastRow, err := hbase.GetProductAwemeAuthorAnalysis(stopRowKey)
-		if err == nil {
-			allList = append(allList, lastRow)
-		}
-		sort.Slice(allList, func(i, j int) bool {
-			return allList[i].CreateSdf > allList[j].CreateSdf
-		})
-		_ = global.Cache.Set(cacheKey, utils.SerializeData(allList), 300)
+		cKey = cache.GetCacheKey(cache.ProductAwemeAuthorCount, productId, startTime.Format("20060102"), endTime.Format("20060102"))
 	}
+	allList, _, comErr := es.NewEsVideoBusiness().SearchAwemeAuthor(productId, shopId, "", 0, 0, startTime, endTime, -1)
 	tagsMap := map[string]int{}
 	levelMap := map[int]int{}
 	authorMap := map[string]string{}
@@ -902,19 +953,19 @@ func (receiver *ProductBusiness) ProductAwemeAuthorAnalysisCount(productId, keyw
 			continue
 		}
 		if at, ok := authorTagMap[v.AuthorId]; ok {
-			v.FirstName = at
+			v.Tags = at
 		} else {
-			authorTagMap[v.AuthorId] = v.FirstName
+			authorTagMap[v.AuthorId] = v.Tags
 		}
 		if keyword != "" {
-			if strings.Index(v.Nickname, keyword) < 0 && v.DisplayId != keyword && v.ShortId != keyword {
+			if strings.Index(v.Nickname, keyword) < 0 && v.UniqueId != keyword && v.ShortId != keyword {
 				continue
 			}
 		}
-		if v.FirstName == "" || v.FirstName == "null" {
-			v.FirstName = "其他"
+		if v.Tags == "" || v.Tags == "null" {
+			v.Tags = "其他"
 		}
-		shopTags := strings.Split(v.FirstName, "_")
+		shopTags := strings.Split(v.Tags, "_")
 		for _, s := range shopTags {
 			if _, ok := tagsMap[s]; ok {
 				tagsMap[s] += 1
@@ -965,7 +1016,7 @@ func (receiver *ProductBusiness) ProductAwemeAuthorAnalysisCount(productId, keyw
 	}
 	if keyword == "" && (len(countList.Tags) > 0 || len(countList.Level) > 0) {
 		countJson := utils.SerializeData(countList)
-		_ = global.Cache.Set(cKey, countJson, 300)
+		_ = global.Cache.Set(cKey, countJson, 600)
 	}
 	return
 }

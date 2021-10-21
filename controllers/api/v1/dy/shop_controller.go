@@ -444,10 +444,13 @@ func (receiver *ShopController) ShopAwemeAuthorAnalysis() {
 	tag := receiver.GetString("tag", "")
 	minFollow, _ := receiver.GetInt64("min_follow", 0)
 	maxFollow, _ := receiver.GetInt64("max_follow", 0)
-	scoreType, _ := receiver.GetInt("score_type", 5)
+	scoreType, _ := receiver.GetInt("score_type", -1)
 	page := receiver.GetPage("page")
 	pageSize := receiver.GetPageSize("page_size", 10, 50)
-	list, total, comErr := business.NewShopBusiness().ShopAwemeAuthorAnalysis(shopId, keyword, tag, startTime, endTime, minFollow, maxFollow, scoreType, page, pageSize)
+	if scoreType == 5 {
+		scoreType = -1
+	}
+	list, total, comErr := business.NewShopBusiness().ShopAwemeAuthorAnalysisV2(shopId, keyword, tag, startTime, endTime, minFollow, maxFollow, scoreType, page, pageSize)
 	if comErr != nil {
 		receiver.FailReturn(comErr)
 		return
@@ -482,7 +485,7 @@ func (receiver *ShopController) ShopAwemeAuthorAnalysisCount() {
 	}
 	keyword := receiver.GetString("keyword", "")
 	productBusiness := business.NewProductBusiness()
-	countList, comErr := productBusiness.ProductAwemeAuthorAnalysisCount(shopId, keyword, startTime, endTime)
+	countList, comErr := productBusiness.ProductAwemeAuthorAnalysisCount("", shopId, keyword, startTime, endTime)
 	if comErr != nil {
 		receiver.FailReturn(comErr)
 		return

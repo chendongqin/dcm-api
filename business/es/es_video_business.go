@@ -773,3 +773,63 @@ func (e *EsVideoBusiness) GetByAwemeId(awemeId, date string) (info es.DyAweme, c
 	utils.MapToStruct(result, &info)
 	return
 }
+
+func (e *EsVideoBusiness) SearchAwemeAuthor(productId, shopId, tag string, minFollow, maxFollow int64,
+	startTime, endTime time.Time, scoreType int) (list []es.DyProductVideo, total int, comErr global.CommonError) {
+	esTable, connection, err := GetESTableByMonthTime(es.DyAuthorAwemeProductTable, startTime, endTime)
+	if err != nil {
+		comErr = global.NewError(4000)
+		return
+	}
+	esQuery, esMultiQuery := elasticsearch.NewElasticQueryGroup()
+	if productId != "" {
+		esQuery.SetTerm("product_id", productId)
+	}
+	if shopId != "" {
+		esQuery.SetTerm("shop_id", shopId)
+	}
+	if scoreType > 0 {
+		esQuery.SetTerm("level", scoreType)
+	}
+	if tag != "" {
+		esQuery.SetMatchPhrase("tags", tag)
+	}
+	esQuery.SetRange("aweme_create_time", map[string]interface{}{
+		"gte": startTime.Unix(),
+		"lt":  endTime.AddDate(0, 0, 1).Unix(),
+	})
+	if minFollow > 0 || maxFollow > 0 {
+		rangeMap := map[string]interface{}{}
+		if minFollow > 0 {
+			rangeMap["gte"] = minFollow
+		}
+		if maxFollow > 0 {
+			rangeMap["lt"] = maxFollow
+		}
+		esQuery.SetRange("follower_count", rangeMap)
+	}
+	var cacheTime time.Duration = 600
+	result := esMultiQuery.
+		SetConnection(connection).
+		SetTable(esTable).
+		SetCache(cacheTime).
+		AddMust(esQuery.Condition).
+		SetOrderBy(elasticsearch.NewElasticOrder().Add("aweme_create_time", "desc").Order).
+		SetLimit(0, 10000).
+		SetMultiQuery().
+		Query()
+	utils.MapToStruct(result, &list)
+	total = esMultiQuery.Count
+	//if keyword != "" {
+	//	keyword = strings.ToLower(keyword)
+	//	newList := []es.DyProductVideo{}
+	//	for _, v := range list {
+	//		if strings.Index(strings.ToLower(v.AwemeTitle), keyword) < 0 && strings.Index(strings.ToLower(v.Nickname), keyword) < 0 {
+	//			continue
+	//		}
+	//		newList = append(newList, v)
+	//	}
+	//	list = newList
+	//}
+	return
+}
