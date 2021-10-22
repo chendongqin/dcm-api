@@ -18,7 +18,7 @@ type DcVipOrder struct {
 	Level          int       `xorm:"not null default 0 comment('购买等级') TINYINT(1)"`
 	BuyDays        int       `xorm:"not null default 0 comment('购买天数') SMALLINT(5)"`
 	Title          string    `xorm:"not null comment('订单描述标题') VARCHAR(100)"`
-	Amount         float64   `xorm:"not null default 0.00 comment('订单支付金额') DECIMAL(10,2)"`
+	Amount         string    `xorm:"not null default 0.00 comment('订单支付金额') DECIMAL(10,2)"`
 	TicketAmount   string    `xorm:"not null default 0.00 comment('优惠券金额') DECIMAL(10,2)"`
 	TicketId       int       `xorm:"not null default 0 comment('优惠券id') INT(11)"`
 	Status         int       `xorm:"not null default 0 comment('订单状态，1有效，2已取消，0未处理') TINYINT(1)"`
