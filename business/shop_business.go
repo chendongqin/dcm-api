@@ -682,26 +682,18 @@ func (receiver *ShopBusiness) ShopAwemeAuthorAnalysis(shopId, keyword, tag strin
 //小店视频达人分析从es查询
 func (receiver *ShopBusiness) ShopAwemeAuthorAnalysisV2(shopId, keyword, tag string, startTime, endTime time.Time, minFollow, maxFollow int64, scoreType, page, pageSize int) (list []entity.DyProductAwemeAuthorAnalysis, total int, comErr global.CommonError) {
 	list = []entity.DyProductAwemeAuthorAnalysis{}
-	allList, _, comErr := es.NewEsVideoBusiness().SearchAwemeAuthor("", shopId, tag, minFollow, maxFollow, startTime, endTime, scoreType)
+	allList, _, comErr := es.NewEsVideoBusiness().SearchAwemeAuthor("", shopId, "", 0, 0, startTime, endTime, -1)
 	if comErr != nil {
 		return
 	}
 	authorMap := map[string]entity.DyProductAwemeAuthorAnalysis{}
 	//authorIds := make([]string, 0)
-	authorTagMap := map[string]string{}
 	authorAwemeMap := map[string]map[string]string{}
 	authorProductMap := map[string]map[string]entity.DyProductAwemeAuthorAnalysis{}
 	keyword = strings.ToLower(keyword)
 	for _, v := range allList {
-		if at, ok := authorTagMap[v.AuthorId]; ok {
-			v.Tags = at
-		} else {
-			authorTagMap[v.AuthorId] = v.Tags
-		}
-		if keyword != "" {
-			if strings.Index(strings.ToLower(v.Nickname), keyword) < 0 && v.UniqueId != keyword && v.ShortId != keyword {
-				continue
-			}
+		if v.AuthorId == "" {
+			continue
 		}
 		if _, ok := authorProductMap[v.AuthorId]; !ok {
 			authorProductMap[v.AuthorId] = map[string]entity.DyProductAwemeAuthorAnalysis{}
@@ -748,6 +740,25 @@ func (receiver *ShopBusiness) ShopAwemeAuthorAnalysisV2(shopId, keyword, tag str
 		}
 	}
 	for _, v := range authorMap {
+		if minFollow > 0 && v.FollowCount < minFollow {
+			continue
+		}
+		if maxFollow > 0 && v.FollowCount >= maxFollow {
+			continue
+		}
+		if tag != "" {
+			if strings.Index(v.FirstName, tag) < 0 {
+				return
+			}
+		}
+		if scoreType != -1 && scoreType != v.Level {
+			continue
+		}
+		if keyword != "" {
+			if strings.Index(strings.ToLower(v.Nickname), keyword) < 0 && v.DisplayId != keyword && v.ShortId != keyword {
+				continue
+			}
+		}
 		if p, exist := authorProductMap[v.AuthorId]; exist {
 			v.ProductNum = len(p)
 		}
