@@ -37,7 +37,7 @@ func init() {
 			beego.NSRouter("/income/list/search", &v1dy.AuthorController{}, "get:AuthorListIncomeSearch"),
 			beego.NSRouter("/income", &v1dy.AuthorController{}, "put:AuthorIncome"),
 			beego.NSRouter("/speed/:author_id", &v1dy.AuthorController{}, "get:SpiderSpeedUp"),
-			//beego.NSRouter("/cate/change", &v1dy.AuthorController{}, "put:ChangeAuthorCate"),
+			beego.NSRouter("/cate/change", &v1dy.AuthorController{}, "put:ChangeAuthorCate"),
 		),
 		beego.NSNamespace("/xt/author",
 			beego.NSRouter("/index/:author_id", &v1dy.AuthorController{}, "get:AuthorStarSimpleData"),

@@ -8,10 +8,13 @@ import (
 	"dongchamao/global/cache"
 	"dongchamao/global/utils"
 	"dongchamao/hbase"
+	"dongchamao/models/dcm"
 	"dongchamao/models/entity"
 	dy2 "dongchamao/models/repost/dy"
 	"dongchamao/services/dyimg"
+	"fmt"
 	"github.com/astaxie/beego/logs"
+	jsoniter "github.com/json-iterator/go"
 	"math"
 	"sort"
 	"time"
@@ -1352,5 +1355,57 @@ func (receiver *ProductController) GetBaseByIds() {
 		}
 	}
 	receiver.SuccReturn(productMap)
+	return
+}
+
+func (receiver *AuthorController) ChangeProductCate() {
+	InputData := receiver.InputFormat()
+	productId := business.IdDecrypt(InputData.GetString("product_id", ""))
+	oldFirstCate := InputData.GetString("old_fcate", "")
+	oldSecondCate := InputData.GetString("old_scate", "")
+	oldThirdCate := InputData.GetString("old_taste", "")
+	newFirstCate := InputData.GetString("new_fcate", "")
+	newSecondCate := InputData.GetString("new_scate", "")
+	newThirdCate := InputData.GetString("new_taste", "")
+	if !business.UserActionLock("change_author_cate", productId, 2) {
+		receiver.FailReturn(global.NewError(4211))
+		return
+	}
+	if oldFirstCate == "" || newFirstCate == "" {
+		receiver.FailReturn(global.NewError(4000))
+		return
+	}
+	OriginalMap := make(map[string]string, 0)
+	TargetMap := make(map[string]string, 0)
+	OriginalMap["dcm_level_first"] = oldFirstCate
+	OriginalMap["first_cname"] = oldSecondCate
+	OriginalMap["second_cname"] = oldThirdCate
+	TargetMap["tags"] = newFirstCate
+	TargetMap["tags_two"] = newSecondCate
+	TargetMap["second_cname"] = newThirdCate
+	originalData, _ := jsoniter.MarshalToString(OriginalMap)
+	targetData, _ := jsoniter.MarshalToString(TargetMap)
+	fmt.Printf(originalData, targetData)
+	now := time.Now()
+	productChangeLog := dcm.DcDirtyLog{
+		AdminId:      0,
+		ChangeType:   2,
+		DataId:       productId,
+		OriginalData: originalData,
+		TargetData:   targetData,
+		Status:       1,
+		CreateTime:   now,
+		UpdateTime:   now,
+		UserId:       receiver.UserId,
+		Channel:      1,
+	}
+	_, err := dcm.Insert(nil, &productChangeLog)
+	if err != nil || productChangeLog.Id == 0 {
+		receiver.FailReturn(global.NewError(5000))
+		return
+	}
+	receiver.SuccReturn(map[string]interface{}{
+		"apply_id": productChangeLog.Id,
+	})
 	return
 }
