@@ -689,24 +689,16 @@ func (receiver *ProductBusiness) ProductAwemeAuthorAnalysis(productId, keyword, 
 
 func (receiver *ProductBusiness) ProductAwemeAuthorAnalysisV2(productId, shopId, keyword, tag string, startTime, endTime time.Time, minFollow, maxFollow int64, scoreType, page, pageSize int) (list []entity.DyProductAwemeAuthorAnalysis, total int, comErr global.CommonError) {
 	list = []entity.DyProductAwemeAuthorAnalysis{}
-	allList, _, comErr := es.NewEsVideoBusiness().SearchAwemeAuthor(productId, shopId, tag, minFollow, maxFollow, startTime, endTime, scoreType)
+	allList, _, comErr := es.NewEsVideoBusiness().SearchAwemeAuthor(productId, shopId, "", 0, 0, startTime, endTime, -1)
 	if comErr != nil {
 		return
 	}
 	authorMap := map[string]entity.DyProductAwemeAuthorAnalysis{}
 	authorAwemeMap := map[string]map[string]string{}
-	authorTagMap := map[string]string{}
 	keyword = strings.ToLower(keyword)
 	for _, v := range allList {
-		if at, ok := authorTagMap[v.AuthorId]; ok {
-			v.Tags = at
-		} else {
-			authorTagMap[v.AuthorId] = v.Tags
-		}
-		if keyword != "" {
-			if strings.Index(strings.ToLower(v.Nickname), keyword) < 0 && v.UniqueId != keyword && v.ShortId != keyword {
-				continue
-			}
+		if v.AuthorId == "" {
+			continue
 		}
 		if _, ok := authorAwemeMap[v.AuthorId]; !ok {
 			authorAwemeMap[v.AuthorId] = map[string]string{}
@@ -744,7 +736,22 @@ func (receiver *ProductBusiness) ProductAwemeAuthorAnalysisV2(productId, shopId,
 		if maxFollow > 0 && v.FollowCount >= maxFollow {
 			continue
 		}
-		v.AwemesNum = len(v.RelatedAwemes)
+		if tag != "" {
+			if strings.Index(v.FirstName, tag) < 0 {
+				return
+			}
+		}
+		if scoreType != -1 && scoreType != v.Level {
+			continue
+		}
+		if keyword != "" {
+			if strings.Index(strings.ToLower(v.Nickname), keyword) < 0 && v.DisplayId != keyword && v.ShortId != keyword {
+				continue
+			}
+		}
+		if a, exist := authorAwemeMap[v.AuthorId]; exist {
+			v.AwemesNum = len(a)
+		}
 		list = append(list, v)
 	}
 	sort.Slice(list, func(i, j int) bool {
