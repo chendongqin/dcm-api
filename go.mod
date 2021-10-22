@@ -15,7 +15,6 @@ require (
 	github.com/apache/thrift v0.13.0
 	github.com/astaxie/beego v1.12.3
 	github.com/baiyubin/aliyun-sts-go-sdk v0.0.0-20180326062324-cfa1a18b161f // indirect
-	github.com/beego/bee v1.12.3 // indirect
 	github.com/bitly/go-simplejson v0.5.0
 	github.com/bmizerany/assert v0.0.0-20160611221934-b7ed37b82869
 	github.com/cespare/xxhash/v2 v2.1.2 // indirect
@@ -30,6 +29,7 @@ require (
 	github.com/golang/protobuf v1.5.2 // indirect
 	github.com/gomodule/redigo v2.0.0+incompatible
 	github.com/json-iterator/go v1.1.11
+	github.com/lib/pq v1.7.0 // indirect
 	github.com/mailru/easyjson v0.7.7 // indirect
 	github.com/nilorg/go-opentaobao v1.0.0
 	github.com/olivere/elastic v6.2.35+incompatible
