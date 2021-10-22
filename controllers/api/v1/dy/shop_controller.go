@@ -387,7 +387,7 @@ func (receiver *ShopController) ShopLiveAuthorAnalysisCount() {
 		return
 	}
 	keyword := receiver.GetString("keyword", "")
-	countList, comErr := business.NewProductBusiness().ProductAwemeAuthorAnalysisCount("", shopId, keyword, startTime, endTime)
+	countList, comErr := business.NewShopBusiness().ShopLiveAuthorAnalysisCount(shopId, keyword, startTime, endTime)
 	if comErr != nil {
 		receiver.FailReturn(comErr)
 		return
