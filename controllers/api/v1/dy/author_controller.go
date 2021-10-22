@@ -1433,3 +1433,7 @@ func (receiver *AuthorController) SpiderSpeedUp() {
 	receiver.SuccReturn([]string{})
 	return
 }
+
+//func (receiver *AuthorController) ChangeAuthorCate() {
+//
+//}
