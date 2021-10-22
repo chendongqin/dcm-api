@@ -969,7 +969,7 @@ func (receiver *ProductBusiness) ProductAwemeAuthorAnalysisCount(productId, shop
 		if v.Tags == "" || v.Tags == "null" {
 			v.Tags = "其他"
 		}
-		shopTags := strings.Split(v.Tags, "_")
+		shopTags := strings.Split(v.Tags, "|")
 		for _, s := range shopTags {
 			if _, ok := tagsMap[s]; ok {
 				tagsMap[s] += 1
