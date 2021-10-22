@@ -1432,6 +1432,50 @@ func (receiver *AuthorController) SpiderSpeedUp() {
 	return
 }
 
-//func (receiver *AuthorController) ChangeAuthorCate() {
-//
-//}
+func (receiver *AuthorController) ChangeAuthorCate() {
+	InputData := receiver.InputFormat()
+	authorId := business.IdDecrypt(InputData.GetString("author_id", ""))
+	oldFirstCate := InputData.GetString("old_fcate", "")
+	oldSecondCate := InputData.GetString("old_scate", "")
+	newFirstCate := InputData.GetString("new_fcate", "")
+	newSecondCate := InputData.GetString("new_scate", "")
+	if !business.UserActionLock("change_author_cate", authorId, 2) {
+		receiver.FailReturn(global.NewError(4211))
+		return
+	}
+	if oldFirstCate == "" || newFirstCate == "" {
+		receiver.FailReturn(global.NewError(4000))
+		return
+	}
+	OriginalMap := make(map[string]string, 0)
+	TargetMap := make(map[string]string, 0)
+	OriginalMap["tags"] = oldFirstCate
+	OriginalMap["tags_two"] = oldSecondCate
+	TargetMap["tags"] = newFirstCate
+	TargetMap["tags_two"] = newSecondCate
+	originalData, _ := jsoniter.MarshalToString(OriginalMap)
+	targetData, _ := jsoniter.MarshalToString(TargetMap)
+	fmt.Printf(originalData, targetData)
+	now := time.Now()
+	authorChangeLog := dcm.DcDirtyLog{
+		AdminId:      0,
+		ChangeType:   1,
+		DataId:       authorId,
+		OriginalData: originalData,
+		TargetData:   targetData,
+		Status:       1,
+		CreateTime:   now,
+		UpdateTime:   now,
+		UserId:       receiver.UserId,
+		Channel:      1,
+	}
+	_, err := dcm.Insert(nil, &authorChangeLog)
+	if err != nil || authorChangeLog.Id == 0 {
+		receiver.FailReturn(global.NewError(5000))
+		return
+	}
+	receiver.SuccReturn(map[string]interface{}{
+		"apply_id": authorChangeLog.Id,
+	})
+	return
+}
