@@ -996,6 +996,9 @@ func (receiver *ProductBusiness) ProductAwemeAuthorAnalysisCount(productId, shop
 			Num:  v,
 		})
 	}
+	sort.Slice(countList.Level, func(i, j int) bool {
+		return countList.Level[i].Num > countList.Level[j].Num
+	})
 	if otherTags > 0 {
 		countList.Tags = append(countList.Tags, dy.DyCate{
 			Name: "其他",
@@ -1012,6 +1015,9 @@ func (receiver *ProductBusiness) ProductAwemeAuthorAnalysisCount(productId, shop
 			Num:  v,
 		})
 	}
+	sort.Slice(countList.Tags, func(i, j int) bool {
+		return countList.Tags[i].Num > countList.Tags[j].Num
+	})
 	if otherLevel > 0 {
 		countList.Level = append(countList.Level, dy.DyIntCate{
 			Name: 0,
