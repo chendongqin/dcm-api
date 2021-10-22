@@ -37,4 +37,13 @@ type EsAuthorLiveProduct struct {
 	RealGmv        float64 `json:"real_gmv"`
 	BuyRate        float64 `json:"buy_rate"`
 	AuthorRoomID   string  `json:"author_room_id"`
+	Dt             string  `json:"dt"`
+	Tags           string  `json:"tags"`
+	Score          float64 `json:"score"`
+	Level          int     `json:"level"`
+	FinishTime     int64   `json:"finish_time"`
+	TotalUser      int64   `json:"total_user"`
+	FollowerCount  int64   `json:"follower_count"`
+	DisplayId      string  `json:"displayId"`
+	ShortId        string  `json:"shortId"`
 }

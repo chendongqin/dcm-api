@@ -15,8 +15,10 @@ require (
 	github.com/apache/thrift v0.13.0
 	github.com/astaxie/beego v1.12.3
 	github.com/baiyubin/aliyun-sts-go-sdk v0.0.0-20180326062324-cfa1a18b161f // indirect
+	github.com/beego/bee v1.12.3 // indirect
 	github.com/bitly/go-simplejson v0.5.0
 	github.com/bmizerany/assert v0.0.0-20160611221934-b7ed37b82869
+	github.com/cespare/xxhash/v2 v2.1.2 // indirect
 	github.com/dgrijalva/jwt-go v3.2.0+incompatible
 	github.com/elastic/go-elasticsearch/v8 v8.0.0-20210608143047-aa1301e7ba9d
 	github.com/fortytw2/leaktest v1.3.0 // indirect
@@ -25,12 +27,16 @@ require (
 	github.com/go-xorm/xorm v0.7.9
 	github.com/gogo/protobuf v1.3.1
 	github.com/golang-jwt/jwt v3.2.2+incompatible // indirect
+	github.com/golang/protobuf v1.5.2 // indirect
 	github.com/gomodule/redigo v2.0.0+incompatible
 	github.com/json-iterator/go v1.1.11
 	github.com/mailru/easyjson v0.7.7 // indirect
 	github.com/nilorg/go-opentaobao v1.0.0
 	github.com/olivere/elastic v6.2.35+incompatible
 	github.com/pkg/errors v0.9.1
+	github.com/prometheus/common v0.32.1 // indirect
+	github.com/prometheus/procfs v0.7.3 // indirect
+	github.com/shiena/ansicolor v0.0.0-20200904210342-c7312218db18 // indirect
 	github.com/silenceper/pool v1.0.0
 	github.com/silenceper/wechat/v2 v2.0.6
 	github.com/stretchr/testify v1.7.0
@@ -45,6 +51,11 @@ require (
 	github.com/vmihailenco/msgpack/v4 v4.3.12
 	github.com/wazsmwazsm/mortar v1.5.2
 	github.com/wechatpay-apiv3/wechatpay-go v0.2.5
+	golang.org/x/crypto v0.0.0-20210921155107-089bfa567519 // indirect
+	golang.org/x/net v0.0.0-20211020060615-d418f374d309 // indirect
+	golang.org/x/sys v0.0.0-20211020174200-9d6173849985 // indirect
+	golang.org/x/text v0.3.7 // indirect
+	google.golang.org/protobuf v1.27.1 // indirect
 	gopkg.in/mgo.v2 v2.0.0-20190816093944-a6b53ec6cb22
 	xorm.io/core v0.7.3
 )

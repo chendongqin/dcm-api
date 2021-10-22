@@ -64,10 +64,10 @@ func GetShop(shopId string) (data entity.DyShop, comErr global.CommonError) {
 }
 
 //获取小店某天数据
-func GetShopDetailByDate(shopId, date string) (data entity.DyShopDetail, comErr global.CommonError) {
+func GetShopDetail(shopId string) (data entity.DyShopDetail, comErr global.CommonError) {
 	query := hbasehelper.NewQuery()
-	rowKey := shopId + "_" + date
-	result, err := query.SetTable(hbaseService.HbaseDyShopDetail).GetByRowKey([]byte(rowKey))
+	rowKey := shopId
+	result, err := query.SetTable(hbaseService.HbaseDyShopDetailSnapshot).GetByRowKey([]byte(rowKey))
 	if err != nil {
 		comErr = global.NewError(5000)
 		logger.Error(err)

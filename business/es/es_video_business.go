@@ -414,8 +414,9 @@ func (e *EsVideoBusiness) SumDiggByAuthors(authorIds []string, startTime, endTim
 	if err != nil {
 		return
 	}
+	var cacheTime time.Duration = 300
 	countResult := esMultiQuery.
-		SetCache(300).
+		SetCache(cacheTime).
 		SetConnection(connection).
 		SetTable(esTable).
 		RawQuery(map[string]interface{}{
@@ -618,10 +619,11 @@ func (e *EsVideoBusiness) ScanAwemeShopByAuthor(authorId, keyword string, startT
 			},
 		},
 	})
+	var cacheTime time.Duration = 300
 	results := esMultiQuery.
 		SetConnection(connection).
 		SetTable(esTable).
-		SetCache(300).
+		SetCache(cacheTime).
 		AddMust(esQuery.Condition).
 		SetLimit((page-1)*pageSize, pageSize).
 		SetOrderBy(elasticsearch.NewElasticOrder().Add("aweme_create_time", "desc").Order).

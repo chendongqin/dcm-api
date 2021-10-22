@@ -8,8 +8,10 @@ import (
 	"dongchamao/global/utils"
 	"dongchamao/hbase"
 	"dongchamao/models/entity"
+	"dongchamao/models/form"
 	"dongchamao/models/repost/dy"
 	"dongchamao/services/dyimg"
+	"github.com/astaxie/beego/validation"
 	"math"
 	"sort"
 	"strconv"
@@ -615,6 +617,37 @@ func (receiver *RankController) ProductShareTopDayRank() {
 		"list":      list,
 		"total":     total,
 	})
+	return
+}
+
+//达人带货榜(新)
+func (receiver *RankController) DyAuthorGoodsRank() {
+	//表单校验层 start
+	//todo：待确认表单校验层位置后需要迁移代码
+	valid := validation.Validation{}
+	params := form.DefaultDyAuthorGoodsRankParams()
+	if err := receiver.ParseForm(&params); err != nil {
+		receiver.FailReturn(global.NewCodeError(4000, err.Error()))
+		return
+	}
+	b, err := valid.Valid(&params)
+	if err != nil {
+		receiver.FailReturn(global.NewCodeError(4000, err.Error()))
+		return
+	}
+	if !b {
+		for _, err := range valid.Errors {
+			receiver.FailReturn(global.NewCodeError(4000, err.Message))
+			return
+		}
+	}
+	//表单校验层 end
+
+
+	ret := map[string]interface{}{
+		"list":  params,
+	}
+	receiver.SuccReturn(ret)
 	return
 }
 

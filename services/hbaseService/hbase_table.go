@@ -57,10 +57,10 @@ const (
 
 	HbaseDyAwemeTopComment = "dws_dy_aweme_ext_topcomment_di"
 
-	HbaseDyShop                = "dy_shop"                  //小店数据
-	HbaseDyShopDetail          = "dy_shop_detail"           //小店详情
-	HbaseDyShopProductAnalysis = "dy_shop_product_analysis" //小店商品分析
-
+	HbaseDyShop                 = "dy_shop"                     //小店数据
+	HbaseDyShopDetail           = "dy_shop_detail"              //小店详情
+	HbaseDyShopDetailSnapshot   = "dy_shop_detail_snapshot"     //小店详情新表
+	HbaseDyShopProductAnalysis  = "dy_shop_product_analysis"    //小店商品分析
 	HbaseProductSellRank        = "dy_commodity_TopN"           //抖音销量榜
 	HbaseShortVideoProductRank  = "shortvideo_commodity_topN"   //视频商品榜
 	HbaseLiveProductRank        = "live_commodity_TopN"         //直播商品榜
