@@ -4,6 +4,7 @@ import (
 	"crypto/tls"
 	"dongchamao/global/cache"
 	_ "dongchamao/global/cache/redis"
+	logger2 "dongchamao/global/logger"
 	"dongchamao/global/mysql"
 	aliLog "dongchamao/services/ali_log"
 	"dongchamao/services/elastichelper"
@@ -87,6 +88,7 @@ func _initBConfig() {
 
 func _initLogs() {
 	err0 := logs.SetLogger(logs.AdapterFile, fmt.Sprintf(`{"filename":"%s","level":6,"maxlines":2000000,"maxsize":0,"daily":true,"maxdays":7,"color":true}`, Cfg.String("logfile")))
+	logger2.InitLogger(logs.GetBeeLogger(), IsDev())
 	fmt.Println(err0)
 	logs.Async()
 }
