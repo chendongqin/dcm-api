@@ -766,9 +766,12 @@ func (receiver *ProductController) ProductLiveAuthorAnalysis() {
 	tag := receiver.GetString("tag", "")
 	minFollow, _ := receiver.GetInt64("min_follow", 0)
 	maxFollow, _ := receiver.GetInt64("max_follow", 0)
-	scoreType, _ := receiver.GetInt("score_type", 5)
+	scoreType, _ := receiver.GetInt("score_type", -1)
 	page := receiver.GetPage("page")
 	pageSize := receiver.GetPageSize("page_size", 10, 50)
+	if scoreType == 5 {
+		scoreType = -1
+	}
 	productBusiness := business.NewProductBusiness()
 	list, total, comErr := productBusiness.ProductAuthorAnalysisV2(productId, keyword, tag, startTime, endTime, minFollow, maxFollow, scoreType, page, pageSize)
 	if comErr != nil {
