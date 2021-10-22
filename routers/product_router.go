@@ -30,6 +30,7 @@ func init() {
 			beego.NSRouter("/aweme/sales/chart/:product_id/:start/:end", &v1dy.ProductController{}, "get:ProductAwemeSalesTrend"),
 			beego.NSRouter("/aweme/list/:product_id/:start/:end", &v1dy.ProductController{}, "get:ProductAweme"),
 			beego.NSRouter("/aweme/total/:product_id/:start/:end", &v1dy.ProductController{}, "get:ProductAwemeTotal"),
+			beego.NSRouter("/cate/change", &v1dy.AuthorController{}, "put:ChangeProductCate"),
 		),
 	)
 	// 注册路由组

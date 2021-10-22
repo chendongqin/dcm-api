@@ -15,4 +15,6 @@ type DcDirtyLog struct {
 	CreateTime   time.Time `xorm:"TIMESTAMP"`
 	UpdateTime   time.Time `xorm:"TIMESTAMP"`
 	Remark       string    `xorm:"not null default '' VARCHAR(100)"`
+	UserId       int       `xorm:"not null default  '0' comment(修改用户id)"`
+	Channel      int       `xorm:"not null default  '0' comment(修改来源0后台1用户;)"`
 }
