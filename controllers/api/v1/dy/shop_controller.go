@@ -133,19 +133,20 @@ func (receiver *ShopController) ShopBase() {
 		receiver.FailReturn(comErr)
 		return
 	}
-	shopDetailData, comErr := hbase.GetShopDetailByDate(shopId, time.Now().AddDate(0, 0, -1).Format("20060102"))
-	if comErr != nil { //昨天取不到，取前日数据
-		shopDetailData, comErr = hbase.GetShopDetailByDate(shopId, time.Now().AddDate(0, 0, -2).Format("20060102"))
-		if comErr != nil {
-			if comErr != nil { //前天取不到，取大前日数据
-				shopDetailData, comErr = hbase.GetShopDetailByDate(shopId, time.Now().AddDate(0, 0, -3).Format("20060102"))
-				if comErr != nil {
-					returnRes.BaseData.CrawlTime = time.Unix(returnRes.BaseData.CrawlTime, 0).AddDate(0, 0, -3).Unix()
-				}
-			}
-			returnRes.BaseData.CrawlTime = time.Unix(returnRes.BaseData.CrawlTime, 0).AddDate(0, 0, -2).Unix()
-		}
-	}
+	shopDetailData, comErr := hbase.GetShopDetail(shopId)
+	//if comErr != nil { //昨天取不到，取前日数据
+	//	shopDetailData, comErr = hbase.GetShopDetailByDate(shopId, time.Now().AddDate(0, 0, -2).Format("20060102"))
+	//	if comErr != nil {
+	//		if comErr != nil { //前天取不到，取大前日数据
+	//			shopDetailData, comErr = hbase.GetShopDetailByDate(shopId, time.Now().AddDate(0, 0, -3).Format("20060102"))
+	//			if comErr != nil {
+	//				returnRes.BaseData.CrawlTime = time.Unix(returnRes.BaseData.CrawlTime, 0).AddDate(0, 0, -3).Unix()
+	//			}
+	//		}
+	//		returnRes.BaseData.CrawlTime = time.Unix(returnRes.BaseData.CrawlTime, 0).AddDate(0, 0, -2).Unix()
+	//	}
+	//}
+	returnRes.BaseData.CrawlTime = time.Unix(returnRes.BaseData.CrawlTime, 0).Unix()
 	returnRes.DetailData.ProductCnt = shopDetailData.ProductCnt
 	returnRes.DetailData.Sales = shopDetailData.Sales
 	returnRes.DetailData.Gmv = shopDetailData.Gmv
