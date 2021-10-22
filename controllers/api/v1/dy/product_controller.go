@@ -770,7 +770,7 @@ func (receiver *ProductController) ProductLiveAuthorAnalysis() {
 	page := receiver.GetPage("page")
 	pageSize := receiver.GetPageSize("page_size", 10, 50)
 	productBusiness := business.NewProductBusiness()
-	list, total, comErr := productBusiness.ProductAuthorAnalysis(productId, keyword, tag, startTime, endTime, minFollow, maxFollow, scoreType, page, pageSize)
+	list, total, comErr := productBusiness.ProductAuthorAnalysisV2(productId, keyword, tag, startTime, endTime, minFollow, maxFollow, scoreType, page, pageSize)
 	if comErr != nil {
 		receiver.FailReturn(comErr)
 		return
@@ -805,7 +805,7 @@ func (receiver *ProductController) ProductLiveAuthorAnalysisCount() {
 	}
 	keyword := receiver.GetString("keyword", "")
 	productBusiness := business.NewProductBusiness()
-	countList, comErr := productBusiness.ProductAuthorAnalysisCount(productId, keyword, startTime, endTime)
+	countList, comErr := productBusiness.ProductAuthorAnalysisCountV2(productId, keyword, startTime, endTime)
 	if comErr != nil {
 		receiver.FailReturn(comErr)
 		return

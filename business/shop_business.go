@@ -11,6 +11,7 @@ import (
 	"dongchamao/services/dyimg"
 	"fmt"
 	jsoniter "github.com/json-iterator/go"
+	"math"
 	"sort"
 	"strings"
 	"time"
@@ -325,45 +326,19 @@ func (receiver *ShopBusiness) ShopAuthorView(shopId string, startTime, endTime t
 //小店直播达人分析
 func (receiver *ShopBusiness) ShopLiveAuthorAnalysis(shopId, keyword, tag string, startTime, endTime time.Time, minFollow, maxFollow int64, scoreType, page, pageSize int) (list []entity.DyProductAuthorAnalysis, total int, comErr global.CommonError) {
 	list = []entity.DyProductAuthorAnalysis{}
-	startDate := startTime.Format("20060102")
-	stopDate := endTime.Format("20060102")
-	allList := make([]entity.DyProductAuthorAnalysis, 0)
-	cacheKey := cache.GetCacheKey(cache.ShopLiveAuthorAllList, utils.Md5_encode(fmt.Sprintf("%s%s%s%s", shopId, startDate, stopDate, keyword)))
-	cacheStr := global.Cache.Get(cacheKey)
-	if cacheStr != "" {
-		cacheStr = utils.DeserializeData(cacheStr)
-		_ = jsoniter.Unmarshal([]byte(cacheStr), &allList)
-	} else {
-		idsList, idTotal, comErr1 := es.NewEsShopBusiness().GetShopLiveAuthorRowKeys(shopId, "", keyword, startTime, endTime)
-		if comErr1 != nil {
-			comErr = comErr1
-			return
-		}
-		if idTotal == 0 {
-			return
-		}
-		for _, v := range idsList {
-			startRowKey := v.Key + "_" + startDate + "_"
-			stopRowKey := v.Key + "_" + stopDate + "_99999999999999999"
-			tmpList, _ := hbase.GetProductAuthorAnalysisRange(startRowKey, stopRowKey)
-			allList = append(allList, tmpList...)
-		}
-		sort.Slice(allList, func(i, j int) bool {
-			return allList[i].Date > allList[j].Date
-		})
-		_ = global.Cache.Set(cacheKey, utils.SerializeData(allList), 300)
-	}
+	allList, _, comErr := es.NewEsLiveBusiness().SearchLiveAuthor("", shopId, startTime, endTime)
 	authorMap := map[string]entity.DyProductAuthorAnalysis{}
+	authorLiveMap := map[string]map[string]string{}
 	authorTagMap := map[string]string{}
-	authorProductMap := map[string]map[string]entity.DyProductAuthorAnalysis{}
+	authorProductMap := map[string]map[string]string{}
 	for _, v := range allList {
 		if v.ShortId != shopId {
 			continue
 		}
-		if at, ok := authorTagMap[v.AuthorId]; ok {
-			v.ShopTags = at
+		if at, ok := authorTagMap[v.AuthorID]; ok {
+			v.Tags = at
 		} else {
-			authorTagMap[v.AuthorId] = v.ShopTags
+			authorTagMap[v.AuthorID] = v.Tags
 		}
 		if keyword != "" {
 			if strings.Index(strings.ToLower(v.Nickname), strings.ToLower(keyword)) < 0 && v.DisplayId != keyword && v.ShortId != keyword {
@@ -374,36 +349,46 @@ func (receiver *ShopBusiness) ShopLiveAuthorAnalysis(shopId, keyword, tag string
 			continue
 		}
 		if tag == "其他" {
-			if v.ShopTags != "" && strings.Index(v.ShopTags, tag) < 0 {
+			if v.Tags != "" && strings.Index(v.Tags, tag) < 0 {
 				continue
 			}
 		} else {
 			if tag != "" {
-				if strings.Index(v.ShopTags, tag) < 0 {
+				if strings.Index(v.Tags, tag) < 0 {
 					continue
 				}
 			}
 		}
-		if _, ok := authorProductMap[v.AuthorId]; !ok {
-			authorProductMap[v.AuthorId] = map[string]entity.DyProductAuthorAnalysis{}
+		if _, ok := authorProductMap[v.AuthorID]; !ok {
+			authorProductMap[v.AuthorID] = map[string]string{}
 		}
-		if p, ok := authorProductMap[v.AuthorId][v.ProductId]; ok {
-			p.Gmv += v.Gmv
-			p.Sales += v.Sales
-			if p.Date < v.Date {
-				p.Date = v.Date
+		authorProductMap[v.AuthorID][v.ProductID] = v.ProductID
+		if _, exist := authorLiveMap[v.AuthorID]; !exist {
+			authorLiveMap[v.AuthorID] = map[string]string{}
+		}
+		authorLiveMap[v.AuthorID][v.RoomID] = v.RoomID
+		if d, ok := authorMap[v.AuthorID]; ok {
+			d.Gmv += v.PredictGmv
+			d.Sales += utils.ToInt64(math.Floor(v.PredictSales))
+			authorMap[v.AuthorID] = d
+		} else {
+			authorMap[v.AuthorID] = entity.DyProductAuthorAnalysis{
+				AuthorId:    v.AuthorID,
+				DisplayId:   v.DisplayId,
+				FollowCount: v.FollowerCount,
+				Gmv:         v.PredictGmv,
+				Nickname:    v.Nickname,
+				Avatar:      v.Avatar,
+				Price:       v.Price,
+				ProductId:   v.ProductID,
+				Sales:       utils.ToInt64(math.Floor(v.PredictSales)),
+				Score:       v.Score,
+				Level:       v.Level,
+				ShopTags:    v.Tags,
+				ShortId:     v.ShortId,
+				ShopId:      v.ShopId,
+				Date:        v.Dt,
 			}
-			authorProductMap[v.AuthorId][v.ProductId] = p
-		} else {
-			authorProductMap[v.AuthorId][v.ProductId] = v
-		}
-		if d, ok := authorMap[v.AuthorId]; ok {
-			d.Gmv += v.Gmv
-			d.Sales += v.Sales
-			d.RelatedRooms = append(d.RelatedRooms, v.RelatedRooms...)
-			authorMap[v.AuthorId] = d
-		} else {
-			authorMap[v.AuthorId] = v
 		}
 	}
 	for _, v := range authorMap {
@@ -413,19 +398,12 @@ func (receiver *ShopBusiness) ShopLiveAuthorAnalysis(shopId, keyword, tag string
 		if maxFollow > 0 && v.FollowCount >= maxFollow {
 			continue
 		}
-		item := []entity.DyAuthorProductDetail{}
 		if p, exist := authorProductMap[v.AuthorId]; exist {
 			v.ProductNum = len(p)
-			for _, p1 := range p {
-				item = append(item, entity.DyAuthorProductDetail{
-					Gmv:       p1.Gmv,
-					ProductId: p1.ProductId,
-					Sales:     p1.Sales,
-					Date:      p1.Date,
-				})
-			}
 		}
-		v.Products = item
+		if l, exist := authorLiveMap[v.AuthorId]; exist {
+			v.RoomNum = len(l)
+		}
 		list = append(list, v)
 	}
 	sort.Slice(list, func(i, j int) bool {
