@@ -1380,10 +1380,11 @@ func (receiver *EsLiveBusiness) ScanLiveShopByAuthor(authorId, keyword string, s
 			},
 		},
 	})
+	var cacheTime time.Duration = 300
 	results := esMultiQuery.
 		SetConnection(connection).
 		SetTable(esTable).
-		SetCache(300).
+		SetCache(cacheTime).
 		AddMust(esQuery.Condition).
 		SetLimit((page-1)*pageSize, pageSize).
 		SetOrderBy(elasticsearch.NewElasticOrder().Add("shelf_time", "desc").Order).
@@ -1411,7 +1412,6 @@ func (receiver *EsLiveBusiness) SumDataByAuthors(authorIds []string, startTime, 
 		SetConnection(connection).
 		SetCache(cacheTime).
 		SetTable(esTable).
-		SetMust(esQuery.Condition).
 		RawQuery(map[string]interface{}{
 			"query": map[string]interface{}{
 				"bool": map[string]interface{}{
@@ -1423,7 +1423,7 @@ func (receiver *EsLiveBusiness) SumDataByAuthors(authorIds []string, startTime, 
 				"authors": map[string]interface{}{
 					"terms": map[string]interface{}{
 						"field": "author_id.keyword",
-						"size":  1000,
+						"size":  10000,
 					},
 					"aggs": map[string]interface{}{
 						"total_gmv": map[string]interface{}{
@@ -1463,5 +1463,88 @@ func (receiver *EsLiveBusiness) SearchRoomById(roomInfo *entity.DyLiveInfo) (dat
 		SetMultiQuery().
 		QueryOne()
 	utils.MapToStruct(result, &data)
+	return
+}
+
+//按天统计商品直播销量
+func (receiver *EsLiveBusiness) SumProductLiveData(productId string, startTime, endTime time.Time) (data es.SumGmvAndSales, comErr global.CommonError) {
+	esTable, connection, err := GetESTableByTime(es.DyRoomProductRecordsTable, startTime, endTime)
+	if err != nil {
+		comErr = global.NewError(4000)
+		return
+	}
+	esQuery, esMultiQuery := elasticsearch.NewElasticQueryGroup()
+	esQuery.SetRange("live_create_time", map[string]interface{}{
+		"gte": startTime.Unix(),
+		"lt":  endTime.AddDate(0, 0, 1).Unix(),
+	})
+	esQuery.SetTerm("product_id", productId)
+	var cacheTime time.Duration = 300
+	results := esMultiQuery.
+		SetConnection(connection).
+		SetTable(esTable).
+		SetCache(cacheTime).
+		RawQuery(map[string]interface{}{
+			"query": map[string]interface{}{
+				"bool": map[string]interface{}{
+					"must": esQuery.Condition,
+				},
+			},
+			"size": 0,
+			"aggs": map[string]interface{}{
+				"authors": map[string]interface{}{
+					"terms": map[string]interface{}{
+						"field": "dt.keyword",
+						"size":  10000,
+					},
+					"aggs": map[string]interface{}{
+						"total_gmv": map[string]interface{}{
+							"stats": map[string]interface{}{
+								"field": "predict_gmv",
+							},
+						},
+						"total_sales": map[string]interface{}{
+							"stats": map[string]interface{}{
+								"field": "predict_sales",
+							},
+						},
+					},
+				},
+			},
+		})
+	utils.MapToStruct(results, &data)
+	return
+}
+
+//商品直播达人全部数据
+func (receiver *EsLiveBusiness) SearchLiveAuthor(productId, shopId string, startTime, endTime time.Time) (list []es.EsAuthorLiveProduct, total int, comErr global.CommonError) {
+	esTable, connection, err := GetESTableByTime(es.DyRoomProductRecordsTable, startTime, endTime)
+	if err != nil {
+		comErr = global.NewError(4000)
+		return
+	}
+	esQuery, esMultiQuery := elasticsearch.NewElasticQueryGroup()
+	esQuery.SetRange("live_create_time", map[string]interface{}{
+		"gte": startTime.Unix(),
+		"lt":  endTime.AddDate(0, 0, 1).Unix(),
+	})
+	if productId != "" {
+		esQuery.SetTerm("product_id", productId)
+	}
+	if shopId != "" {
+		esQuery.SetTerm("shop_id", shopId)
+	}
+	var cacheTime time.Duration = 300
+	results := esMultiQuery.
+		SetConnection(connection).
+		SetTable(esTable).
+		SetCache(cacheTime).
+		AddMust(esQuery.Condition).
+		SetLimit(0, 10000).
+		SetOrderBy(elasticsearch.NewElasticOrder().Add("shelf_time", "desc").Order).
+		SetMultiQuery().
+		Query()
+	utils.MapToStruct(results, &list)
+	total = esMultiQuery.Count
 	return
 }

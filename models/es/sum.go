@@ -128,3 +128,14 @@ type DyProductLiveRoomSum struct {
 		Value int64 `json:"value"`
 	} `json:"max_user_count"`
 }
+
+type SumGmvAndSales struct {
+	Key      string `json:"key"`
+	DocCount int    `json:"doc_count"`
+	TotalGmv struct {
+		Value float64 `json:"value"`
+	} `json:"total_gmv"`
+	TotalSales struct {
+		Value float64 `json:"value"`
+	} `json:"total_sales"`
+}
