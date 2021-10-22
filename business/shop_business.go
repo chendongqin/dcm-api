@@ -431,56 +431,34 @@ func (receiver *ShopBusiness) ShopLiveAuthorAnalysisCount(shopId, keyword string
 		Tags:  []dy.DyCate{},
 		Level: []dy.DyIntCate{},
 	}
-	startDate := startTime.Format("20060102")
-	stopDate := endTime.Format("20060102")
-	allList := make([]entity.DyProductAuthorAnalysis, 0)
-	cacheKey := cache.GetCacheKey(cache.ShopLiveAuthorAllList, utils.Md5_encode(fmt.Sprintf("%s%s%s%s", shopId, startDate, stopDate, keyword)))
-	cacheStr := global.Cache.Get(cacheKey)
-	if cacheStr != "" {
-		cacheStr = utils.DeserializeData(cacheStr)
-		_ = jsoniter.Unmarshal([]byte(cacheStr), &allList)
-	} else {
-		idsList, idTotal, comErr1 := es.NewEsShopBusiness().GetShopLiveAuthorRowKeys(shopId, "", keyword, startTime, endTime)
-		if comErr1 != nil {
-			comErr = comErr1
-			return
-		}
-		if idTotal == 0 {
-			return
-		}
-		for _, v := range idsList {
-			startRowKey := v.Key + "_" + startDate + "_"
-			stopRowKey := v.Key + "_" + stopDate + "_99999999999999999"
-			tmpList, _ := hbase.GetProductAuthorAnalysisRange(startRowKey, stopRowKey)
-			allList = append(allList, tmpList...)
-		}
-		sort.Slice(allList, func(i, j int) bool {
-			return allList[i].Date > allList[j].Date
-		})
-		_ = global.Cache.Set(cacheKey, utils.SerializeData(allList), 300)
-	}
+	allList, _, comErr := es.NewEsLiveBusiness().SearchLiveAuthor("", shopId, startTime, endTime)
 	tagsMap := map[string]int{}
 	levelMap := map[int]int{}
 	authorMap := map[string]string{}
 	authorTagMap := map[string]string{}
 	for _, v := range allList {
-		if _, ok := authorMap[v.AuthorId]; ok {
+		if _, ok := authorMap[v.AuthorID]; ok {
 			continue
 		}
-		if at, ok := authorTagMap[v.AuthorId]; ok {
-			v.ShopTags = at
+		if at, ok := authorTagMap[v.AuthorID]; ok {
+			v.Tags = at
 		} else {
-			authorTagMap[v.AuthorId] = v.ShopTags
+			authorTagMap[v.AuthorID] = v.Tags
 		}
 		if keyword != "" {
 			if strings.Index(v.Nickname, keyword) < 0 && v.DisplayId != keyword && v.ShortId != keyword {
 				continue
 			}
 		}
-		if v.ShopTags == "" || v.ShopTags == "null" {
-			v.ShopTags = "其他"
+		if v.Tags == "" || v.Tags == "null" {
+			v.Tags = "其他"
 		}
-		shopTags := strings.Split(v.ShopTags, "_")
+		shopTags := []string{}
+		if strings.Index(v.Tags, "_") >= 0 {
+			shopTags = strings.Split(v.Tags, "_")
+		} else {
+			shopTags = strings.Split(v.Tags, "|")
+		}
 		for _, s := range shopTags {
 			if _, ok := tagsMap[s]; ok {
 				tagsMap[s] += 1
@@ -493,7 +471,7 @@ func (receiver *ShopBusiness) ShopLiveAuthorAnalysisCount(shopId, keyword string
 		} else {
 			levelMap[v.Level] = 1
 		}
-		authorMap[v.AuthorId] = v.AuthorId
+		authorMap[v.AuthorID] = v.AuthorID
 	}
 	otherTags := 0
 	otherLevel := 0
@@ -507,6 +485,9 @@ func (receiver *ShopBusiness) ShopLiveAuthorAnalysisCount(shopId, keyword string
 			Num:  v,
 		})
 	}
+	sort.Slice(countList.Tags, func(i, j int) bool {
+		return countList.Tags[i].Num > countList.Tags[j].Num
+	})
 	if otherTags > 0 {
 		countList.Tags = append(countList.Tags, dy.DyCate{
 			Name: "其他",
@@ -523,6 +504,9 @@ func (receiver *ShopBusiness) ShopLiveAuthorAnalysisCount(shopId, keyword string
 			Num:  v,
 		})
 	}
+	sort.Slice(countList.Level, func(i, j int) bool {
+		return countList.Level[i].Num > countList.Level[j].Num
+	})
 	if otherLevel > 0 {
 		countList.Level = append(countList.Level, dy.DyIntCate{
 			Name: 0,
