@@ -1243,7 +1243,6 @@ func (receiver *EsLiveBusiness) SumDataByAuthor(authorId string, startTime, endT
 		SetConnection(connection).
 		SetCache(cacheTime).
 		SetTable(esTable).
-		SetMust(esQuery.Condition).
 		RawQuery(map[string]interface{}{
 			"query": map[string]interface{}{
 				"bool": map[string]interface{}{

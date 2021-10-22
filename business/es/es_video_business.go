@@ -295,7 +295,6 @@ func (e *EsVideoBusiness) SearchByAuthorTotal(authorId, keyword string, hasProdu
 		SetConnection(connection).
 		SetTable(esTable).
 		SetCache(cacheTime).
-		AddMust(esQuery.Condition).
 		RawQuery(map[string]interface{}{
 			"query": map[string]interface{}{
 				"bool": map[string]interface{}{
@@ -350,7 +349,6 @@ func (e *EsVideoBusiness) SumDataByAuthor(authorId string, startTime, endTime ti
 		SetCache(cacheTime).
 		SetConnection(connection).
 		SetTable(esTable).
-		SetMust(esQuery.Condition).
 		RawQuery(map[string]interface{}{
 			"query": map[string]interface{}{
 				"bool": map[string]interface{}{
@@ -420,7 +418,6 @@ func (e *EsVideoBusiness) SumDiggByAuthors(authorIds []string, startTime, endTim
 		SetCache(300).
 		SetConnection(connection).
 		SetTable(esTable).
-		SetMust(esQuery.Condition).
 		RawQuery(map[string]interface{}{
 			"query": map[string]interface{}{
 				"bool": map[string]interface{}{
@@ -432,7 +429,7 @@ func (e *EsVideoBusiness) SumDiggByAuthors(authorIds []string, startTime, endTim
 				"videos": map[string]interface{}{
 					"terms": map[string]interface{}{
 						"field": "author_id.keyword",
-						"size":  100000,
+						"size":  10000,
 					},
 					"aggs": map[string]interface{}{
 						"total_digg": map[string]interface{}{
