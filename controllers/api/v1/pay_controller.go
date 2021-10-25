@@ -708,7 +708,7 @@ func (receiver *PayController) OrderList() {
 	sql := fmt.Sprintf("dc_vip_order.user_id=%d AND dc_vip_order.platform='%s'", receiver.UserId, platform)
 	if isInvoice == 1 { //筛选可开票订单
 		selectStatus = 1
-		sql += " AND dc_vip_order.order_type in (1,2,3,5,7)"
+		sql += " AND dc_vip_order.order_type in (1,2,3,4,5,7)"
 		sql += " AND (dc_vip_order.invoice_id = 0 OR dc_vip_order_invoice.status=2)"
 	}
 	if selectStatus == 1 {
