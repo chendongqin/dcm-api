@@ -709,6 +709,7 @@ func (receiver *PayController) OrderList() {
 	if isInvoice == 1 { //筛选可开票订单
 		selectStatus = 1
 		sql += " AND dc_vip_order.amount <= 10000"
+		sql += " AND dc_vip_order.order_type in (1,2,3,5,7)"
 		sql += " AND (dc_vip_order.invoice_id = 0 OR dc_vip_order_invoice.status=2)"
 	}
 	if selectStatus == 1 {
@@ -724,7 +725,6 @@ func (receiver *PayController) OrderList() {
 		sql += " AND invoice_id > 0"
 		sql += " AND dc_vip_order_invoice.status in (1,3)"
 	}
-
 	total, _ := dcm.GetSlaveDbSession().
 		Table(&dcm.DcVipOrder{}).
 		Join("LEFT", "dc_vip_order_invoice", "dc_vip_order.invoice_id=dc_vip_order_invoice.id").
