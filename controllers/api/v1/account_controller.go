@@ -161,6 +161,7 @@ func (receiver *AccountController) Info() {
 		usernameEncrypt = username[:3] + "****" + username[7:]
 	}
 	account := dy.RepostAccountData{
+		BindPhone:   receiver.UserInfo.BindPhone,
 		UserId:      receiver.UserInfo.Id,
 		Username:    usernameEncrypt,
 		Nickname:    receiver.UserInfo.Nickname,
