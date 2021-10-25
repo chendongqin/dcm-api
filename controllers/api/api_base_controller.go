@@ -178,7 +178,7 @@ func (this *ApiBaseController) InitUserToken() {
 			return
 		}
 		//除bindphone外的接口 没有phone不让访问
-		if this.UserId > 0 && this.UserInfo.Username == "" {
+		if this.UserId > 0 && this.UserInfo.Username == "" && this.AppId != 10004 {
 			this.FailReturn(global.NewError(4005))
 			return
 		}
