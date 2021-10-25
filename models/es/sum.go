@@ -69,6 +69,11 @@ type DyLiveDataCategorySumCount struct {
 	} `json:"total_ticket_count"`
 }
 
+type DyRoomProductDataCategorySum struct {
+	TotalGmv struct {
+		Value float64 `json:"value"`
+	} `json:"total_gmv"`
+}
 type DyLiveCategoryRateByWatchCnt struct {
 	DocCount int `json:"doc_count"`
 	Key      struct {

@@ -332,7 +332,7 @@ func (receiver *ShopBusiness) ShopLiveAuthorAnalysis(shopId, keyword, tag string
 	authorTagMap := map[string]string{}
 	authorProductMap := map[string]map[string]string{}
 	for _, v := range allList {
-		if v.ShortId != shopId {
+		if v.ShopId != shopId {
 			continue
 		}
 		if at, ok := authorTagMap[v.AuthorID]; ok {
@@ -345,7 +345,7 @@ func (receiver *ShopBusiness) ShopLiveAuthorAnalysis(shopId, keyword, tag string
 				continue
 			}
 		}
-		if scoreType != 5 && scoreType != v.Level {
+		if scoreType != -1 && scoreType != v.Level {
 			continue
 		}
 		if tag == "其他" {
