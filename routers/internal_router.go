@@ -12,6 +12,7 @@ func init() {
 			beego.NSRouter("/cate/:author_id", &controllers.InternalController{}, "post:ChangeAuthorCate"),
 			beego.NSRouter("/search", &controllers.InternalController{}, "get:AuthorSearch"),
 			beego.NSRouter("/info/:author_id", &controllers.InternalController{}, "get:AuthorInfo"),
+			beego.NSRouter("/search/ids", &controllers.InternalController{}, "post:AuthorSearchByIds"),
 		),
 		beego.NSNamespace("/product",
 			beego.NSRouter("/search", &controllers.InternalController{}, "get:ProductSearch"),

@@ -322,6 +322,27 @@ func (receiver *EsAuthorBusiness) SimpleSearch(
 	return
 }
 
+//后台内部通过authorIds获取达人信息
+func (receiver *EsAuthorBusiness) SimpleSearchByIds(authorIds []string, page, pageSize int) (list []es.DyAuthor, total int, comErr global.CommonError) {
+	if pageSize > 30 {
+		comErr = global.NewError(4000)
+		return
+	}
+	esTable, connection := GetESTable(es.DyAuthorTable)
+	esQuery, esMultiQuery := elasticsearch.NewElasticQueryGroup()
+	esQuery.SetTerms("author_id", authorIds)
+	results := esMultiQuery.
+		SetConnection(connection).
+		SetTable(esTable).
+		AddMust(esQuery.Condition).
+		SetLimit((page-1)*pageSize, pageSize).
+		SetMultiQuery().
+		Query()
+	utils.MapToStruct(results, &list)
+	total = esMultiQuery.Count
+	return
+}
+
 func (receiver *EsAuthorBusiness) KeywordSearch(keyword string) (list []es.DyAuthor) {
 	esQuery, esMultiQuery := elasticsearch.NewElasticQueryGroup()
 	esTable, connection := GetESTable(es.DyAuthorTable)
