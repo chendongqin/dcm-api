@@ -234,8 +234,16 @@ func (receiver *UserBusiness) SmsLogin(mobile, code, password, unionid, appleId 
 		}
 		isNew = 1
 	}
+	if user.AppleId != "" && appleId != "" {
+		comErr = global.NewError(4406)
+		return
+	}
 	user.AppleId = appleId
 	if unionid != "" {
+		if user.Unionid != "" {
+			comErr = global.NewError(4305)
+			return
+		}
 		wechatModel := dcm.DcWechat{} //如果有微信信息 头像/昵称 默认用微信
 		if exist, _ := dcm.GetSlaveDbSession().Where("unionid = ?", unionid).Get(&wechatModel); !exist {
 			comErr = global.NewError(4304)
