@@ -47,6 +47,22 @@ func (receiver *LiveCountBusiness) CountMonthInc(startTime, endTime time.Time, c
 	return
 }
 
+//同比上月数据
+func (receiver *LiveCountBusiness) CountGmvMonthInc(startTime, endTime time.Time, category string) (value float64, comErr global.CommonError) {
+	startTime, endTime = receiver.getLastMonth(startTime, endTime)
+	firstTime := GetFirstDay()
+	if endTime.Before(firstTime) {
+		comErr = global.NewError(4000)
+		return
+	}
+	if startTime.Before(firstTime) {
+		startTime = firstTime
+	}
+	data := es.NewEsLiveDataBusiness().RoomProductDataByCategory(startTime, endTime, category, 0)
+	value = data.TotalGmv.Value
+	return
+}
+
 //环比上期数据
 func (receiver *LiveCountBusiness) CountLastInc(startTime, endTime time.Time, category string) (returnData dy.LiveSumCountByCategoryBase, comErr global.CommonError) {
 	startTime, endTime = receiver.getLastDate(startTime, endTime)
