@@ -780,7 +780,7 @@ func (receiver *PayController) CreateOrderInvoice() {
 	invoiceType := InputData.GetInt("invoice_type", 0)     //发票类型
 	address := InputData.GetString("address", "")          //收件人地址
 	now := time.Now()
-	if amount == 0 || head == "" || amount > 10000 {
+	if amount == 0 || head == "" {
 		receiver.FailReturn(global.NewError(4000))
 		return
 	}
