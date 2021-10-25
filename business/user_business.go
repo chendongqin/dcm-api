@@ -164,6 +164,7 @@ func (receiver *UserBusiness) AppleLogin(appleId string, appId int) (user dcm.Dc
 			comErr = global.NewError(5001)
 			return
 		}
+		user.Username = fmt.Sprintf("8888%07d", user.Id)
 		user.Nickname = "appleUser" + strconv.Itoa(user.Id)
 		_, err = dcm.GetDbSession().Where("id=?", user.Id).Update(&user)
 		if err != nil {
@@ -225,6 +226,7 @@ func (receiver *UserBusiness) SmsLogin(mobile, code, password, unionid, appleId 
 		user.UpdateTime = time.Now()
 		//来源
 		user.Entrance = AppIdMap[appId]
+		user.BindPhone = 1
 		affect, err := dcm.Insert(nil, &user)
 		if affect == 0 || err != nil {
 			comErr = global.NewError(5001)

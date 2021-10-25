@@ -90,6 +90,7 @@ func (receiver *LoginController) Login() {
 		"vip":          setPassword,
 		"set_password": setPassword,
 		"is_new":       isNew,
+		"bind_phone":   user.BindPhone,
 		"token_info": dy.RepostAccountToken{
 			UserId:      user.Id,
 			TokenString: authToken,
