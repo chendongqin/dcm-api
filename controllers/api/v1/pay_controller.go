@@ -776,6 +776,7 @@ func (receiver *PayController) CreateOrderInvoice() {
 	phone := InputData.GetString("phone", "")              //收件人手机号
 	bankName := InputData.GetString("bank_name", "")       //开户银行
 	bankAccount := InputData.GetString("bank_account", "") //开户行账号
+	CompanyTel := InputData.GetString("company_tel", "")   //公司电话
 	regAddress := InputData.GetString("reg_address", "")   //注册地址
 	invoiceType := InputData.GetInt("invoice_type", 0)     //发票类型
 	address := InputData.GetString("address", "")          //收件人地址
@@ -791,7 +792,7 @@ func (receiver *PayController) CreateOrderInvoice() {
 		}
 	}
 	if invoiceType == 0 { //增值税专用发票
-		if bankName == "" || bankAccount == "" || regAddress == "" || phone == "" || address == "" || !utils.CheckType(phone, "phone") {
+		if bankName == "" || bankAccount == "" || regAddress == "" || phone == "" || address == "" || !utils.CheckType(phone, "phone") || CompanyTel == "" {
 			receiver.FailReturn(global.NewError(4000))
 			return
 		}
@@ -817,6 +818,7 @@ func (receiver *PayController) CreateOrderInvoice() {
 		InvoiceNum:  invoiceNum,
 		Email:       email,
 		Phone:       phone,
+		CompanyTel:  CompanyTel,
 		BankName:    bankName,
 		BankAccount: bankAccount,
 		RegAddress:  regAddress,
