@@ -36,7 +36,7 @@ func GetShopByIds(shopIds []string) (map[string]entity.DyShop, error) {
 	return infoMap, nil
 }
 
-//小店数据
+//小店基础数据
 func GetShop(shopId string) (data entity.DyShop, comErr global.CommonError) {
 	query := hbasehelper.NewQuery()
 	result, err := query.SetTable(hbaseService.HbaseDyShop).GetByRowKey([]byte(shopId))

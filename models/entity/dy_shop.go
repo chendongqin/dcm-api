@@ -12,6 +12,7 @@ var DyShopMap = HbaseEntity{
 	"name":            {String, "name"},
 	"order_num":       {Long, "order_num"},
 	"sales":           {Long, "sales"},
+	"uid":             {String, "unique_id"},
 	"crawl_time":      {Long, "crawl_time"},
 }
 
@@ -30,6 +31,7 @@ type DyShop struct {
 	CrawlTime      int64       `json:"crawl_time"`      //爬虫时间
 	IsBrand        int64       `json:"is_brand"`        //是否品牌
 	Level          string      `json:"level"`           //店铺口碑
+	UniqueId       string      `json:"unique_id"`       //抖音号
 }
 
 type DyShopScore struct {
