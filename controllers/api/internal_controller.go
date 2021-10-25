@@ -64,8 +64,17 @@ func (receiver *InternalController) AuthorSearchByIds() {
 		receiver.FailReturn(comErr)
 		return
 	}
+	resList := make([]map[string]interface{}, 0)
+	for _, v := range list {
+		tempAuthor := map[string]interface{}{
+			"data_id":   v.AuthorId,
+			"data_img":  dyimg.Fix(v.Avatar),
+			"data_name": v.Nickname,
+		}
+		resList = append(resList, tempAuthor)
+	}
 	receiver.SuccReturn(map[string]interface{}{
-		"list":  list,
+		"list":  resList,
 		"total": total,
 	})
 	return
@@ -134,6 +143,31 @@ func (receiver *InternalController) ProductSearch() {
 		"total": total,
 	})
 	return
+}
+func (receiver *InternalController) ProductSearchByIds() {
+	InputData := receiver.InputFormat()
+	AuthorIds := InputData.GetArrString("product_ids")
+	page := InputData.GetPage("page")
+	pageSize := InputData.GetPageSize("page_size", 10, 30)
+	list, total, comErr := es.NewEsProductBusiness().SimpleSearchByIds(AuthorIds, page, pageSize)
+	if comErr != nil {
+		receiver.FailReturn(comErr)
+		return
+	}
+	resList := make([]map[string]interface{}, 0)
+	for _, v := range list {
+		tempAuthor := map[string]interface{}{
+			"data_id":   v.ProductId,
+			"data_img":  dyimg.Fix(v.Image),
+			"data_name": v.Title,
+		}
+		resList = append(resList, tempAuthor)
+	}
+	receiver.SuccReturn(map[string]interface{}{
+		"list":  resList,
+		"total": total,
+	})
+
 }
 
 //修改商品分类

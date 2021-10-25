@@ -337,6 +337,27 @@ func (i *EsProductBusiness) SimpleSearch(productId, title, platformLabel, dcmLev
 	return
 }
 
+//后台内部通过productIds获取商品信息
+func (i *EsProductBusiness) SimpleSearchByIds(productIds []string, page, pageSize int) (list []es.DyProduct, total int, comErr global.CommonError) {
+	if pageSize > 30 {
+		comErr = global.NewError(4000)
+		return
+	}
+	esTable, connection := GetESTable(es.DyProductTable)
+	esQuery, esMultiQuery := elasticsearch.NewElasticQueryGroup()
+	esQuery.SetTerms("product_id", productIds)
+	results := esMultiQuery.
+		SetConnection(connection).
+		SetTable(esTable).
+		AddMust(esQuery.Condition).
+		SetLimit((page-1)*pageSize, pageSize).
+		SetMultiQuery().
+		Query()
+	utils.MapToStruct(results, &list)
+	total = esMultiQuery.Count
+	return
+}
+
 func (i *EsProductBusiness) KeywordSearch(keyword string) (list []es.DyProduct) {
 	esQuery, esMultiQuery := elasticsearch.NewElasticQueryGroup()
 	esTable, connection := GetESTable(es.DyProductTable)

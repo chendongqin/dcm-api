@@ -17,6 +17,7 @@ func init() {
 		beego.NSNamespace("/product",
 			beego.NSRouter("/search", &controllers.InternalController{}, "get:ProductSearch"),
 			beego.NSRouter("/cate/:product_id", &controllers.InternalController{}, "post:ChangeProductCate"),
+			beego.NSRouter("/search/ids", &controllers.InternalController{}, "post:ProductSearchByIds"),
 		),
 		beego.NSNamespace("/spider",
 			beego.NSRouter("/red/author/:author_id", &controllers.InternalController{}, "get:SpiderLiveSpeedUp"),
