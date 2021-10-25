@@ -85,3 +85,19 @@ func (receiver *LiveCountBusiness) CountLastInc(startTime, endTime time.Time, ca
 	}
 	return
 }
+
+//环比上期gmv数据
+func (receiver *LiveCountBusiness) CountLastGmvInc(startTime, endTime time.Time, category string) (value float64, comErr global.CommonError) {
+	startTime, endTime = receiver.getLastDate(startTime, endTime)
+	firstTime := GetFirstDay()
+	if endTime.Before(firstTime) {
+		comErr = global.NewError(4000)
+		return
+	}
+	if startTime.Before(firstTime) {
+		startTime = firstTime
+	}
+	data := es.NewEsLiveDataBusiness().RoomProductDataByCategory(startTime, endTime, category, 0)
+	value = data.TotalGmv.Value
+	return
+}

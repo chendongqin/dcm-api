@@ -233,8 +233,8 @@ func (receiver *LiveCountController) LiveSumByCategory() {
 	if living == 0 {
 		liveCountBusiness := business.NewLiveCountBusiness()
 		monthData, comErr := liveCountBusiness.CountMonthInc(startTime, startTime, category)
-		gmvMonthData, comErr := liveCountBusiness.CountGmvMonthInc(startTime, startTime, category)
-		if comErr == nil {
+		gmvMonthData, comErr1 := liveCountBusiness.CountGmvMonthInc(startTime, startTime, category)
+		if comErr == nil && comErr1 == nil {
 			if monthData.RoomNum > 0 {
 				returnData.RoomNumMonthInc = float64(returnData.RoomNum-monthData.RoomNum) / float64(monthData.RoomNum)
 			} else {
@@ -267,7 +267,8 @@ func (receiver *LiveCountController) LiveSumByCategory() {
 			}
 		}
 		lastData, comErr := liveCountBusiness.CountLastInc(startTime, startTime, category)
-		if comErr == nil {
+		lastGmvData, comErr1 := liveCountBusiness.CountLastGmvInc(startTime, startTime, category)
+		if comErr == nil && comErr1 == nil {
 			if lastData.RoomNum > 0 {
 				returnData.RoomNumLastInc = float64(returnData.RoomNum-lastData.RoomNum) / float64(lastData.RoomNum)
 			} else {
@@ -283,8 +284,8 @@ func (receiver *LiveCountController) LiveSumByCategory() {
 			} else {
 				returnData.UserCountLastInc = 1
 			}
-			if lastData.Gmv > 0 {
-				returnData.GmvLastInc = (returnData.Gmv - lastData.Gmv) / lastData.Gmv
+			if lastGmvData > 0 {
+				returnData.GmvLastInc = (returnData.Gmv - lastGmvData) / lastGmvData
 			} else {
 				returnData.GmvLastInc = 1
 			}
