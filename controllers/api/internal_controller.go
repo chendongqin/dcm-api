@@ -54,6 +54,24 @@ func (receiver *InternalController) AuthorSearch() {
 	return
 }
 
+func (receiver *InternalController) AuthorSearchByIds() {
+	InputData := receiver.InputFormat()
+	AuthorIds := InputData.GetArrString("author_ids")
+	page := InputData.GetPage("page")
+	pageSize := InputData.GetPageSize("page_size", 10, 30)
+	list, total, comErr := es.NewEsAuthorBusiness().SimpleSearchByIds(AuthorIds, page, pageSize)
+	if comErr != nil {
+		receiver.FailReturn(comErr)
+		return
+	}
+	receiver.SuccReturn(map[string]interface{}{
+		"list":  list,
+		"total": total,
+	})
+	return
+
+}
+
 func (receiver *InternalController) AuthorInfo() {
 	authorId := receiver.Ctx.Input.Param(":author_id")
 	data, err := hbase.GetAuthor(authorId)
