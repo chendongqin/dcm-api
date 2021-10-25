@@ -364,6 +364,56 @@ func (receiver *EsLiveDataBusiness) ProductLiveDataByCategory(startTime, endTime
 	return
 }
 
+//带货行业直播间商品数据分类统计
+func (receiver *EsLiveDataBusiness) RoomProductDataByCategory(startTime, endTime time.Time, category string, living int) (total int, data es.DyRoomProductDataCategorySum) {
+	data = es.DyRoomProductDataCategorySum{}
+	esTable, connection, err := GetESTableByTime(es.DyRoomProductRecordTable, startTime, endTime)
+	if err != nil {
+		return
+	}
+	esQuery, esMultiQuery := elasticsearch.NewElasticQueryGroup()
+	esQuery.SetRange("create_time", map[string]interface{}{
+		"gte": startTime.Unix(),
+		"lt":  endTime.AddDate(0, 0, 1).Unix(),
+	})
+	esQuery.SetRange("num_product", map[string]interface{}{
+		"gt": 0,
+	})
+	if category != "" {
+		esQuery.SetMatchPhrase("dcm_level_first", category)
+	}
+	if living == 1 {
+		esQuery.SetTerm("room_status", 2)
+	}
+	countResult := esMultiQuery.
+		SetConnection(connection).
+		SetTable(esTable).
+		RawQuery(map[string]interface{}{
+			"query": map[string]interface{}{
+				"bool": map[string]interface{}{
+					"must": esQuery.Condition,
+				},
+			},
+			"size": 0,
+			"aggs": map[string]interface{}{
+				"total_gmv": map[string]interface{}{
+					"sum": map[string]interface{}{
+						"field": "predict_gmv",
+					},
+				},
+			},
+		})
+	if r, ok := countResult["aggregations"]; ok {
+		utils.MapToStruct(r, &data)
+	}
+	if h, ok := countResult["hits"]; ok {
+		if t, ok2 := h.(map[string]interface{})["total"]; ok2 {
+			total = utils.ToInt(t.(float64))
+		}
+	}
+	return
+}
+
 //带货行业数据分类分级统计
 func (receiver *EsLiveDataBusiness) ProductLiveDataCategoryLevel(startTime, endTime time.Time, category string, living int) (total int, data []dy.EsLiveSumDataCategoryLevel) {
 	data = []dy.EsLiveSumDataCategoryLevel{}
