@@ -145,14 +145,26 @@ func (receiver *UserBusiness) LoginByPwd(username, pwd string, appId int) (user 
 }
 
 //密码登陆
-func (receiver *UserBusiness) AppleLogin(appleId string, appId int) (user dcm.DcUser, tokenString string, expire int64, comErr global.CommonError) {
+func (receiver *UserBusiness) AppleLogin(appleId string, appId int) (user dcm.DcUser, tokenString string, expire int64,isNew int, comErr global.CommonError) {
 	if appleId == "" {
 		comErr = global.NewError(4208)
 		return
 	}
 	exist, _ := dcm.GetBy("apple_id", appleId, &user)
 	if !exist {
-		return
+		//user.Nickname = mobile[:3] + "****" + mobile[7:]
+		user.Status = 1
+		user.CreateTime = time.Now()
+		user.UpdateTime = time.Now()
+		//来源
+		user.Entrance = AppIdMap[appId]
+		user.AppleId = appleId
+		affect, err := dcm.Insert(nil, &user)
+		if affect == 0 || err != nil {
+			comErr = global.NewError(5001)
+			return
+		}
+		isNew = 1
 	}
 	if user.Status != 1 {
 		if user.Status == 0 {

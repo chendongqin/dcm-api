@@ -53,7 +53,7 @@ func (receiver *LoginController) Login() {
 		user, authToken, expTime, comErr = userBusiness.WechatLogin(unionid, grantType, appId)
 	} else if grantType == "apple" { //苹果登录
 		appleId := InputData.GetString("apple_id", "")
-		user, authToken, expTime, comErr = userBusiness.AppleLogin(appleId, appId)
+		user, authToken, expTime, isNew, comErr = userBusiness.AppleLogin(appleId, appId)
 	} else {
 		comErr = global.NewError(4000)
 	}
