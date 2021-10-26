@@ -1383,8 +1383,8 @@ func (receiver *AuthorController) ChangeProductCate() {
 	OriginalMap["dcm_level_first"] = oldFirstCate
 	OriginalMap["first_cname"] = oldSecondCate
 	OriginalMap["second_cname"] = oldThirdCate
-	TargetMap["tags"] = newFirstCate
-	TargetMap["tags_two"] = newSecondCate
+	TargetMap["dcm_level_first"] = newFirstCate
+	TargetMap["first_cname"] = newSecondCate
 	TargetMap["second_cname"] = newThirdCate
 	originalData, _ := jsoniter.MarshalToString(OriginalMap)
 	targetData, _ := jsoniter.MarshalToString(TargetMap)
