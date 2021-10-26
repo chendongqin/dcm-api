@@ -320,28 +320,37 @@ func (receiver *LiveCountController) LiveSumByCategoryLevel() {
 	living, _ := receiver.GetInt("living", 0)
 	esLiveDataBusiness := es.NewEsLiveDataBusiness()
 	_, dataList := esLiveDataBusiness.ProductLiveDataCategoryLevel(startTime, endTime, category, living)
+	gmvDataList := esLiveDataBusiness.RoomProductDataCategoryLevel(startTime, endTime, category, living)
+	var gmvDataMap = make(map[string]es2.DyRoomProductDataCategorySum)
+	for _, v := range gmvDataList {
+		gmvDataMap[v.Key] = v
+	}
 	CustomerUnitPriceList := esLiveDataBusiness.ProductLiveDataCategoryCustomerUnitPriceLevel(startTime, endTime, category, living)
 	levelsArr := []string{"E", "D", "C", "B", "A", "S"}
 	levelMap := map[string]dy.LiveSumDataCategoryLevel{}
 	var allGmv float64 = 0
 	var allWatch int64 = 0
 	for _, v := range dataList {
+		var gmv float64
 		var avgWatch int64 = 0
 		var avgGmv float64 = 0
-		if v.TotalGmv.Value > 0 {
-			avgGmv = v.TotalGmv.Value / float64(v.DocCount)
+		if gmvData, exist := gmvDataMap[v.Key]; exist {
+			gmv = gmvData.TotalGmv.Value
+		}
+		if gmv > 0 {
+			avgGmv = gmv / float64(v.DocCount)
 		}
 		if v.TotalWatchCnt.Value > 0 {
 			avgWatch = v.TotalWatchCnt.Value / int64(v.DocCount)
 		}
-		allGmv += v.TotalGmv.Value
+		allGmv += gmv
 		allWatch += v.TotalWatchCnt.Value
 		item := dy.LiveSumDataCategoryLevel{
 			Level:      v.Key,
 			RoomCount:  v.DocCount,
 			TotalWatch: utils.ToInt64(v.TotalWatchCnt.Value),
 			AvgWatch:   avgWatch,
-			TotalGmv:   v.TotalGmv.Value,
+			TotalGmv:   gmv,
 			AvgGmv:     avgGmv,
 		}
 		item.CustomerUnitPrice.Min = v.StatsCustomerUnitPrice.Min

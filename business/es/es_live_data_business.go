@@ -487,6 +487,62 @@ func (receiver *EsLiveDataBusiness) ProductLiveDataCategoryLevel(startTime, endT
 	return
 }
 
+//带货行业数据分类分级GMV统计
+func (receiver *EsLiveDataBusiness) RoomProductDataCategoryLevel(startTime, endTime time.Time, category string, living int) (data []es.DyRoomProductDataCategorySum) {
+	data = []es.DyRoomProductDataCategorySum{}
+	esTable, connection, err := GetESTableByTime(es.DyRoomProductRecordTable, startTime, endTime)
+	if err != nil {
+		return
+	}
+	esQuery, esMultiQuery := elasticsearch.NewElasticQueryGroup()
+	esQuery.SetRange("start_time", map[string]interface{}{
+		"gte": startTime.Unix(),
+		"lt":  endTime.AddDate(0, 0, 1).Unix(),
+	})
+	if category != "" {
+		esQuery.SetMatchPhrase("dcm_level_first", category)
+	}
+	if living == 1 {
+		esQuery.SetTerm("room_status", 2)
+	}
+	var cacheTime time.Duration = 300
+	today := time.Now().Format("20060102")
+	if today != endTime.Format("20060102") {
+		cacheTime = 86400
+	}
+	countResult := esMultiQuery.
+		SetConnection(connection).
+		SetCache(cacheTime).
+		SetTable(esTable).
+		SetMust(esQuery.Condition).
+		RawQuery(map[string]interface{}{
+			"query": map[string]interface{}{
+				"bool": map[string]interface{}{
+					"must": esQuery.Condition,
+				},
+			},
+			"size": 0,
+			"aggs": map[string]interface{}{
+				"data": map[string]interface{}{
+					"terms": map[string]interface{}{
+						"field": "flow_rates_index.keyword",
+						"size":  10,
+					},
+					"aggs": map[string]interface{}{
+						"total_gmv": map[string]interface{}{
+							"sum": map[string]interface{}{
+								"field": "predict_gmv",
+							},
+						},
+					},
+				},
+			},
+		})
+	res := elasticsearch.GetBuckets(countResult, "data")
+	utils.MapToStruct(res, &data)
+	return
+}
+
 func (receiver *EsLiveDataBusiness) ProductLiveDataCategoryCustomerUnitPriceLevel(startTime, endTime time.Time, category string, living int) (data []dy.EsLiveSumDataCategoryCustomerUnitPriceLevel) {
 	data = []dy.EsLiveSumDataCategoryCustomerUnitPriceLevel{}
 	esTable, connection, err := GetESTableByTime(es.DyLiveInfoBaseTable, startTime, endTime)
