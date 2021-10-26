@@ -736,7 +736,9 @@ func (receiver *RankController) DyAuthorTakeGoodsRank() {
 	data := make([]dy.TakeGoodsRankRet, 0)
 	total := 0
 	for k, v := range originList {
-		total, _ = strconv.Atoi(v.RnMax)
+		if total == 0 && v.RnMax != "0" {
+			total, _ = strconv.Atoi(v.RnMax)
+		}
 		tempData := dy.TakeGoodsRankRet{}
 		tempData.Rank = (page-1)*pageSize + k + 1
 		tempData.AuthorId = business.IdEncrypt(v.AuthorId)
@@ -804,6 +806,9 @@ func (receiver *RankController) DyAuthorTakeGoodsRank() {
 	if total > 0 {
 		if start > total {
 			start = total
+		}
+		if end > total {
+			end = total
 		}
 		if start > 0 {
 			lens := end - start
