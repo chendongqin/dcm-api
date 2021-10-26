@@ -226,7 +226,6 @@ func (receiver *UserBusiness) SmsLogin(mobile, code, password, unionid, appleId 
 		user.UpdateTime = time.Now()
 		//来源
 		user.Entrance = AppIdMap[appId]
-		user.BindPhone = 1
 		affect, err := dcm.Insert(nil, &user)
 		if affect == 0 || err != nil {
 			comErr = global.NewError(5001)
@@ -238,6 +237,7 @@ func (receiver *UserBusiness) SmsLogin(mobile, code, password, unionid, appleId 
 		comErr = global.NewError(4406)
 		return
 	}
+	user.BindPhone = 1
 	user.AppleId = appleId
 	if unionid != "" {
 		if user.Unionid != "" {
