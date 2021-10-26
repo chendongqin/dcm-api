@@ -784,8 +784,8 @@ func (receiver *ProductController) ProductLiveAuthorAnalysis() {
 		list[k].AuthorId = business.IdEncrypt(v.AuthorId)
 		list[k].ProductId = business.IdEncrypt(v.ProductId)
 		list[k].Nickname = authorInfo.Data.Nickname
-		list[k].RoomNum = len(v.RelatedRooms)
-		list[k].RelatedRooms = []entity.DyProductAuthorRelatedRoom{}
+		//list[k].RoomNum = len(v.RelatedRooms)
+		//list[k].RelatedRooms = []entity.DyProductAuthorRelatedRoom{}
 	}
 	maxTotal := total
 	if total > business.EsMaxShowNum {
