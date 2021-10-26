@@ -719,7 +719,7 @@ func (receiver *PayController) OrderList() {
 		sql += fmt.Sprintf(" AND pay_status = 0 AND expiration_time >= '%s'", time.Now().Format("2006-01-02 15:04:05"))
 	}
 	if invoiceStatus == 1 {
-		sql += " AND (dc_vip_order.invoice_id = 0 OR dc_vip_order_invoice.status in (0,2))"
+		sql += " AND (dc_vip_order.invoice_id = 0 OR dc_vip_order_invoice.status=2)"
 	}
 	if invoiceStatus == 2 {
 		sql += " AND invoice_id > 0"
