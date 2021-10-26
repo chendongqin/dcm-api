@@ -720,9 +720,14 @@ func (receiver *PayController) OrderList() {
 	}
 	if invoiceStatus == 1 {
 		sql += " AND (dc_vip_order.invoice_id = 0 OR dc_vip_order_invoice.status in (0,2))"
-	} else if invoiceStatus == 2 {
+	}
+	if invoiceStatus == 2 {
 		sql += " AND invoice_id > 0"
 		sql += " AND dc_vip_order_invoice.status in (1,3)"
+	}
+	if invoiceStatus == 3 {
+		sql += " AND invoice_id > 0"
+		sql += " AND dc_vip_order_invoice.status =0"
 	}
 	total, _ := dcm.GetSlaveDbSession().
 		Table(&dcm.DcVipOrder{}).
@@ -737,6 +742,10 @@ func (receiver *PayController) OrderList() {
 		status := v.DcVipOrder.Status
 		if v.PayStatus == 0 && v.ExpirationTime.Before(time.Now()) {
 			status = 2
+		}
+		tempInvoiceStatus := v.DcVipOrderInvoice.Status
+		if v.InvoiceId == 0 {
+			tempInvoiceStatus = 4
 		}
 		list = append(list, repost.VipOrderDetail{
 			OrderId:       v.DcVipOrder.Id,
@@ -754,7 +763,7 @@ func (receiver *PayController) OrderList() {
 			CreateTime:    v.DcVipOrder.CreateTime.Format("2006-01-02 15:04:05"),
 			PayTime:       v.PayTime.Format("2006-01-02 15:04:05"),
 			InvoiceId:     v.InvoiceId,
-			InvoiceStatus: v.DcVipOrderInvoice.Status,
+			InvoiceStatus: tempInvoiceStatus,
 		})
 	}
 
