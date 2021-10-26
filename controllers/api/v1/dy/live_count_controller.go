@@ -221,18 +221,20 @@ func (receiver *LiveCountController) LiveSumByCategory() {
 	living, _ := receiver.GetInt("living", 0)
 	esLiveDataBusiness := es.NewEsLiveDataBusiness()
 	total, uv, buyRate, data := esLiveDataBusiness.ProductLiveDataByCategory(startTime, endTime, category, living)
+	gmvData := esLiveDataBusiness.RoomProductDataByCategory(startTime, endTime, category, living)
 	returnData := dy.LiveSumCountByCategory{
 		RoomNum:   total,
 		WatchCnt:  utils.ToInt64(data.TotalWatchCnt.Value),
 		UserCount: utils.ToInt64(data.TotalUserCount.Value),
-		Gmv:       data.TotalGmv.Value,
+		Gmv:       gmvData.TotalGmv.Value,
 		BuyRate:   utils.RateMin(buyRate),
 		Uv:        uv,
 	}
 	if living == 0 {
 		liveCountBusiness := business.NewLiveCountBusiness()
 		monthData, comErr := liveCountBusiness.CountMonthInc(startTime, startTime, category)
-		if comErr == nil {
+		gmvMonthData, comErr1 := liveCountBusiness.CountGmvMonthInc(startTime, startTime, category)
+		if comErr == nil && comErr1 == nil {
 			if monthData.RoomNum > 0 {
 				returnData.RoomNumMonthInc = float64(returnData.RoomNum-monthData.RoomNum) / float64(monthData.RoomNum)
 			} else {
@@ -248,8 +250,8 @@ func (receiver *LiveCountController) LiveSumByCategory() {
 			} else {
 				returnData.UserCountMonthInc = 1
 			}
-			if monthData.Gmv > 0 {
-				returnData.GmvMonthInc = (returnData.Gmv - monthData.Gmv) / monthData.Gmv
+			if gmvMonthData > 0 {
+				returnData.GmvMonthInc = (returnData.Gmv - gmvMonthData) / gmvMonthData
 			} else {
 				returnData.GmvMonthInc = 1
 			}
@@ -265,7 +267,8 @@ func (receiver *LiveCountController) LiveSumByCategory() {
 			}
 		}
 		lastData, comErr := liveCountBusiness.CountLastInc(startTime, startTime, category)
-		if comErr == nil {
+		lastGmvData, comErr1 := liveCountBusiness.CountLastGmvInc(startTime, startTime, category)
+		if comErr == nil && comErr1 == nil {
 			if lastData.RoomNum > 0 {
 				returnData.RoomNumLastInc = float64(returnData.RoomNum-lastData.RoomNum) / float64(lastData.RoomNum)
 			} else {
@@ -281,8 +284,8 @@ func (receiver *LiveCountController) LiveSumByCategory() {
 			} else {
 				returnData.UserCountLastInc = 1
 			}
-			if lastData.Gmv > 0 {
-				returnData.GmvLastInc = (returnData.Gmv - lastData.Gmv) / lastData.Gmv
+			if lastGmvData > 0 {
+				returnData.GmvLastInc = (returnData.Gmv - lastGmvData) / lastGmvData
 			} else {
 				returnData.GmvLastInc = 1
 			}
@@ -317,28 +320,37 @@ func (receiver *LiveCountController) LiveSumByCategoryLevel() {
 	living, _ := receiver.GetInt("living", 0)
 	esLiveDataBusiness := es.NewEsLiveDataBusiness()
 	_, dataList := esLiveDataBusiness.ProductLiveDataCategoryLevel(startTime, endTime, category, living)
+	gmvDataList := esLiveDataBusiness.RoomProductDataCategoryLevel(startTime, endTime, category, living)
+	var gmvDataMap = make(map[string]es2.DyRoomProductDataCategorySum)
+	for _, v := range gmvDataList {
+		gmvDataMap[v.Key] = v
+	}
 	CustomerUnitPriceList := esLiveDataBusiness.ProductLiveDataCategoryCustomerUnitPriceLevel(startTime, endTime, category, living)
 	levelsArr := []string{"E", "D", "C", "B", "A", "S"}
 	levelMap := map[string]dy.LiveSumDataCategoryLevel{}
 	var allGmv float64 = 0
 	var allWatch int64 = 0
 	for _, v := range dataList {
+		var gmv float64
 		var avgWatch int64 = 0
 		var avgGmv float64 = 0
-		if v.TotalGmv.Value > 0 {
-			avgGmv = v.TotalGmv.Value / float64(v.DocCount)
+		if gmvData, exist := gmvDataMap[v.Key]; exist {
+			gmv = gmvData.TotalGmv.Value
+		}
+		if gmv > 0 {
+			avgGmv = gmv / float64(v.DocCount)
 		}
 		if v.TotalWatchCnt.Value > 0 {
 			avgWatch = v.TotalWatchCnt.Value / int64(v.DocCount)
 		}
-		allGmv += v.TotalGmv.Value
+		allGmv += gmv
 		allWatch += v.TotalWatchCnt.Value
 		item := dy.LiveSumDataCategoryLevel{
 			Level:      v.Key,
 			RoomCount:  v.DocCount,
 			TotalWatch: utils.ToInt64(v.TotalWatchCnt.Value),
 			AvgWatch:   avgWatch,
-			TotalGmv:   v.TotalGmv.Value,
+			TotalGmv:   gmv,
 			AvgGmv:     avgGmv,
 		}
 		item.CustomerUnitPrice.Min = v.StatsCustomerUnitPrice.Min
