@@ -946,6 +946,7 @@ func (receiver *AuthorController) AuthorLiveRooms() {
 	keyword := InputData.GetString("keyword", "")
 	sortStr := InputData.GetString("sort", "create_time")
 	orderBy := InputData.GetString("order_by", "desc")
+	hasProduct := InputData.GetInt("has_product", 0)
 	page := InputData.GetInt("page", 1)
 	size := InputData.GetInt("page_size", 10)
 	listType, _ := receiver.GetInt("list_type", 0)
@@ -959,7 +960,7 @@ func (receiver *AuthorController) AuthorLiveRooms() {
 		return
 	}
 	esLiveBusiness := es.NewEsLiveBusiness()
-	list, total, comErr := esLiveBusiness.SearchAuthorRooms(authorId, keyword, sortStr, orderBy, page, size, t1, t2)
+	list, total, comErr := esLiveBusiness.SearchAuthorRooms(authorId, keyword,hasProduct, sortStr, orderBy, page, size, t1, t2)
 	if listType == 1 {
 		roomIds := []string{}
 		for _, v := range list {
