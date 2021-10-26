@@ -39,7 +39,7 @@ func init() {
 		),
 		beego.NSNamespace("/log",
 			beego.NSRouter("/url", &controllers.InternalController{}, "get:CommonUrlLog"),
-			beego.NSRouter("/speed/:days", &controllers.InternalController{}, "get:SpeedUp"),
+			beego.NSRouter("/speed/:type/:days/:end_time/:page", &controllers.InternalController{}, "get:SpeedUp"),
 		),
 	)
 	// 注册路由组

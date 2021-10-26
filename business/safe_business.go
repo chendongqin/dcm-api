@@ -7,6 +7,7 @@ import (
 	aliLog "dongchamao/services/ali_log"
 	"fmt"
 	sls "github.com/aliyun/aliyun-log-go-sdk"
+	"math"
 	"strings"
 	"time"
 )
@@ -155,13 +156,18 @@ func (s *SafeBusiness) SpeedLogs() (logList [][]LogField) {
 }
 
 //筛选需要加速的数据
-func (s *SafeBusiness) SpeedFilterLog(key string, days int) (list []string) {
+func (s *SafeBusiness) SpeedFilterLog(key string, days int, inputEndTime int64, page int) (result interface{}) {
 	s.InitSpeedConfig(days)
 	mapList := s.combineSpeedMap(days)
-	timeEnd := utils.Time() - 120
+	timeEnd := inputEndTime
+	todayStartStamp, _ := time.ParseInLocation("2006-01-02 15:04:05", fmt.Sprintf("%s 00:00:00", time.Now().Format("2006-01-02")), time.Local)
+	if inputEndTime == 0 || inputEndTime < todayStartStamp.Unix() {
+		timeEnd = utils.Time() - 120
+	}
 	mapRow := mapList[key]
 	uri := SpeedSaleBusinessConfig[key].Uri
 	logListRes, _ := s.reqestAliLog(timeEnd, mapRow)
+	list := []string{}
 	for _, v := range logListRes {
 		url := v.Url
 		if url != "null" {
@@ -170,8 +176,20 @@ func (s *SafeBusiness) SpeedFilterLog(key string, days int) (list []string) {
 			list = append(list, parami)
 		}
 	}
+	total := len(list)
+	totalPage, currentPage := 1, 1
+	pageSize := len(list)
 	if key == "speed_live" {
-		roomInfos, _ := hbase.GetLiveInfoByIds(list)
+		currentPage, pageSize = page, 30
+		totalPage = int(math.Ceil(float64(total) / float64(pageSize)))
+		sliceSplitLeft := (page - 1) * pageSize
+		sliceSplitRight := page * pageSize
+		if page >= totalPage {
+			currentPage = totalPage
+			sliceSplitLeft = (totalPage - 1) * pageSize
+			sliceSplitRight = total
+		}
+		roomInfos, _ := hbase.GetLiveInfoByIds(list[sliceSplitLeft:sliceSplitRight])
 		newList := []string{}
 		for _, v := range roomInfos {
 			if !utils.InArrayString(v.User.ID, newList) {
@@ -179,6 +197,13 @@ func (s *SafeBusiness) SpeedFilterLog(key string, days int) (list []string) {
 			}
 		}
 		list = newList
+	}
+	result = map[string]interface{}{
+		"list":         list,
+		"total":        total,
+		"current_page": currentPage,
+		"total_page":   totalPage,
+		"page_size":    pageSize,
 	}
 	return
 }
@@ -209,7 +234,7 @@ func (s *SafeBusiness) combineSpeedMap(days int) (mapList map[string]AnaListStru
 //组装加速的sql字符串
 func (s *SafeBusiness) combineSpeedSqlString(uri string, row AnaListStruct) (sqlString string) {
 	runmode := "prod"
-	sqlString = fmt.Sprintf("env:%s and log_type:\"Format\" and uri:\"%s\"  | select url,COUNT(*) as pv where uid <> 0  group by url HAVING pv>=%d order by pv desc", runmode, uri, row.Point)
+	sqlString = fmt.Sprintf("env:%s and log_type:\"Format\" and uri:\"%s\"  | select url,COUNT(*) as pv where uid <> 0  group by url HAVING pv>=%d order by pv desc limit 1000000", runmode, uri, row.Point)
 	return
 }
 
