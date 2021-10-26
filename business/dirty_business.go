@@ -41,7 +41,7 @@ func (receiver *DirtyBusiness) ChangeAuthorCate(authorId, tags, tagsTow string) 
 	}
 	//ret, _ := NewSpiderBusiness().SpiderSpeedUp("author", authorId)
 	//logs.Info("达人分类修改，爬虫推送结果：", ret)
-	kafka.SendAuthorCateChange(authorId)
+	kafka.SendAuthorCateChange(authorId, artificialData)
 	return nil
 }
 
@@ -74,6 +74,6 @@ func (receiver *DirtyBusiness) ChangeProductCate(productId, dcmLevelFirst, first
 	}
 	//ret, _ := NewSpiderBusiness().SpiderSpeedUp("product", productId)
 	//logs.Info("商品分类修改，爬虫推送结果：", ret)
-	kafka.SendProductCateChange(productId)
+	kafka.SendProductCateChange(productId,artificialData)
 	return nil
 }
