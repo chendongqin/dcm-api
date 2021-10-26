@@ -1548,3 +1548,60 @@ func (receiver *EsLiveBusiness) SearchLiveAuthor(productId, shopId string, start
 	total = esMultiQuery.Count
 	return
 }
+
+//商品直播达人全部数据
+func (receiver *EsLiveBusiness) SearchLiveAuthorProductList(authorId, shopId string, startTime, endTime time.Time) (list []es.EsAuthorLiveProduct, total int, comErr global.CommonError) {
+	esTable, connection, err := GetESTableByTime(es.DyRoomProductRecordsTable, startTime, endTime)
+	if err != nil {
+		comErr = global.NewError(4000)
+		return
+	}
+	esQuery, esMultiQuery := elasticsearch.NewElasticQueryGroup()
+	esQuery.SetRange("live_create_time", map[string]interface{}{
+		"gte": startTime.Unix(),
+		"lt":  endTime.AddDate(0, 0, 1).Unix(),
+	})
+	if authorId != "" {
+		esQuery.SetTerm("author_id", authorId)
+	}
+	if shopId != "" {
+		esQuery.SetTerm("shop_id", shopId)
+	}
+	results := esMultiQuery.
+		SetConnection(connection).
+		SetTable(esTable).
+		SetLimit(0, 10000).
+		RawQuery(map[string]interface{}{
+			"query": map[string]interface{}{
+				"bool": map[string]interface{}{
+					"must": esQuery.Condition,
+				},
+			},
+			"from": 0,
+			"size": 0,
+			"aggs": map[string]interface{}{
+				"product": map[string]interface{}{
+					"terms": map[string]interface{}{
+						"field": "product_id.keyword",
+						"size":  10000,
+					},
+					"aggs": map[string]interface{}{
+						"hits": map[string]interface{}{
+							"top_hits": map[string]interface{}{
+								"sort": []map[string]interface{}{
+									{
+										"live_create_time": map[string]string{
+											"order": "desc",
+										},
+									},
+								},
+								"size": 1,
+							},
+						},
+					},
+				},
+			}})
+	utils.MapToStruct(results, &list)
+	total = esMultiQuery.Count
+	return
+}

@@ -402,6 +402,33 @@ func (receiver *ShopController) ShopLiveAuthorAnalysisCount() {
 	return
 }
 
+//小店直播达人商品列表
+func (receiver *ShopController) ShopLiveAuthorProduct() {
+	shopId := business.IdDecrypt(receiver.Ctx.Input.Param(":shop_id"))
+	authorId := business.IdDecrypt(receiver.Ctx.Input.Param(":author_id"))
+	startTime, endTime, comErr := receiver.GetRangeDate()
+	if comErr != nil {
+		receiver.FailReturn(comErr)
+		return
+	}
+	keyword := receiver.GetString("keyword", "")
+	tag := receiver.GetString("tag", "")
+	minFollow, _ := receiver.GetInt64("min_follow", 0)
+	maxFollow, _ := receiver.GetInt64("max_follow", 0)
+	scoreType, _ := receiver.GetInt("score_type", -1)
+	page := receiver.GetPage("page")
+	pageSize := receiver.GetPageSize("page_size", 10, 50)
+	if scoreType == 5 {
+		scoreType = -1
+	}
+	list, total, comErr := business.NewShopBusiness().ShopLiveAuthorProductAnalysis(shopId, authorId, keyword, tag, startTime, endTime, minFollow, maxFollow, scoreType, page, pageSize)
+	receiver.SuccReturn(map[string]interface{}{
+		"list":  list,
+		"total": total,
+	})
+	return
+}
+
 //小店达人直播间列表
 func (receiver *ShopController) ShopLiveAuthorRooms() {
 	shopId := business.IdDecrypt(receiver.Ctx.Input.Param(":shop_id"))
