@@ -710,7 +710,7 @@ func (receiver *ShopBusiness) ShopAwemeAuthorAnalysisV2(shopId, keyword, tag str
 		}
 		if tag != "" {
 			if strings.Index(v.FirstName, tag) < 0 {
-				return
+				continue
 			}
 		}
 		if scoreType != -1 && scoreType != v.Level {
