@@ -173,3 +173,16 @@ type DyAuthorRawData struct {
 	VerificationType string `json:"verification_type"`
 	VerifyName       string `json:"verify_name"`
 }
+
+type DyAuthorBasic struct {
+	FollowerCount        int64 `json:"follower_count"`
+	FollowerCountBefore  int64 `json:"follower_count_before"`
+	TotalFansCount       int64 `json:"total_fans_count"`
+	TotalFansCountBefore int64 `json:"total_fans_count_before"`
+	TotalFavorited       int64 `json:"total_favorited"`
+	TotalFavoritedBefore int64 `json:"total_favorited_before"`
+	CommentCount         int64 `json:"comment_count"`
+	CommentCountBefore   int64 `json:"comment_count_before"`
+	ForwardCount         int64 `json:"forward_count"`
+	ForwardCountBefore   int64 `json:"forward_count_before"`
+}

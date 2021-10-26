@@ -291,6 +291,7 @@ func (receiver *AuthorController) AuthorBaseData() {
 	reputation, _ := authorBusiness.HbaseGetAuthorReputation(authorId)
 	fansClub, _ := hbase.GetAuthorFansClub(authorId)
 	//todo 昨天数据取前天
+	todayBasic, _ := hbase.GetAuthorBasic(authorId, time.Now().Format("20060102"))
 	basicBefore, _ := hbase.GetAuthorBasic(authorId, time.Now().AddDate(0, 0, -1).Format("20060102"))
 	yseBasicBefore, _ := hbase.GetAuthorBasic(authorId, time.Now().AddDate(0, 0, -2).Format("20060102"))
 	authorBase.Data.ID = business.IdEncrypt(authorBase.Data.ID)
@@ -298,7 +299,7 @@ func (receiver *AuthorController) AuthorBaseData() {
 	//获取榜单排名
 	mapRank := authorBusiness.HbaseGetAuthorRank(authorId)
 	mapRank["desc"] = fmt.Sprintf("达人%s%s%s名", mapRank["rank_name"], mapRank["date_type"], mapRank["value"])
-	basic := entity.DyAuthorBasic{
+	basic := dy2.DyAuthorBasic{
 		FollowerCount:        basicBefore.FollowerCount,
 		FollowerCountBefore:  yseBasicBefore.FollowerCount,
 		TotalFansCount:       basicBefore.TotalFansCount,
@@ -326,6 +327,7 @@ func (receiver *AuthorController) AuthorBaseData() {
 		"tags":        authorBase.Tags,
 		"second_tags": authorBase.TagsLevelTwo,
 		"basic":       basic,
+		"today_basic": todayBasic,
 		"shop": dy2.DyAuthorStoreSimple{
 			ShopId:   business.IdEncrypt(authorStore.Id),
 			ShopName: authorStore.ShopName,
