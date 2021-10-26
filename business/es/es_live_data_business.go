@@ -372,7 +372,7 @@ func (receiver *EsLiveDataBusiness) RoomProductDataByCategory(startTime, endTime
 		return
 	}
 	esQuery, esMultiQuery := elasticsearch.NewElasticQueryGroup()
-	esQuery.SetRange("start_time", map[string]interface{}{
+	esQuery.SetRange("live_create_time", map[string]interface{}{
 		"gte": startTime.Unix(),
 		"lt":  endTime.AddDate(0, 0, 1).Unix(),
 	})
@@ -495,7 +495,7 @@ func (receiver *EsLiveDataBusiness) RoomProductDataCategoryLevel(startTime, endT
 		return
 	}
 	esQuery, esMultiQuery := elasticsearch.NewElasticQueryGroup()
-	esQuery.SetRange("start_time", map[string]interface{}{
+	esQuery.SetRange("live_create_time", map[string]interface{}{
 		"gte": startTime.Unix(),
 		"lt":  endTime.AddDate(0, 0, 1).Unix(),
 	})
