@@ -53,6 +53,9 @@ func GetShop(shopId string) (data entity.DyShop, comErr global.CommonError) {
 	utils.MapToStruct(detailMap, &data)
 	data.ShopId = string(result.Row)
 	data.Logo = dyimg.Fix(data.Logo)
+	if data.UniqueId == "0" || data.UniqueId == "" {
+		data.UniqueId = data.ShortId
+	}
 	if data.ExprScore < 4.5 {
 		data.Level = "3"
 	} else if data.ExprScore < 4.7 {
