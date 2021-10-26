@@ -173,7 +173,7 @@ func (receiver *AccountController) Info() {
 		isWechat = 1
 	}
 	usernameEncrypt := ""
-	if len(username) >= 11 {
+	if len(username) >= 11 && receiver.UserInfo.BindPhone == 1 {
 		usernameEncrypt = username[:3] + "****" + username[7:]
 	}
 	account := dy.RepostAccountData{
