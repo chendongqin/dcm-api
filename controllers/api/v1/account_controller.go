@@ -92,11 +92,14 @@ func (receiver *AccountController) ChangeMobile() {
 		return
 	}
 	//旧手机验证
-	codeKey := cache.GetCacheKey(cache.SmsCodeVerify, "change_mobile", receiver.UserInfo.Username)
-	verifyCode := global.Cache.Get(codeKey)
-	if verifyCode != oldCode {
-		receiver.FailReturn(global.NewError(4209))
-		return
+	var codeKey string
+	if receiver.UserInfo.BindPhone == 1 {
+		codeKey = cache.GetCacheKey(cache.SmsCodeVerify, "change_mobile", receiver.UserInfo.Username)
+		verifyCode := global.Cache.Get(codeKey)
+		if verifyCode != oldCode {
+			receiver.FailReturn(global.NewError(4209))
+			return
+		}
 	}
 	//新手机验证码校验
 	codeKey1 := cache.GetCacheKey(cache.SmsCodeVerify, "bind_mobile", mobile)
@@ -109,9 +112,10 @@ func (receiver *AccountController) ChangeMobile() {
 	dbSession := dcm.GetDbSession()
 	_ = dbSession.Begin()
 	updateMap := map[string]interface{}{
-		"username": mobile,
+		"username":   mobile,
+		"bind_phone": 1,
 	}
-	if strings.Index(receiver.UserInfo.Nickname, "****") >= 0 {
+	if strings.Index(receiver.UserInfo.Nickname, "****") >= 0 || strings.Index(receiver.UserInfo.Nickname[:4], "appleUser") > 0 {
 		updateMap["nickname"] = mobile[:3] + "****" + mobile[7:]
 	}
 	affect, err := userBusiness.UpdateUserAndClearCache(dbSession, receiver.UserId, updateMap)
@@ -131,8 +135,20 @@ func (receiver *AccountController) ChangeMobile() {
 	_ = global.Cache.Delete(codeKey1)
 	//绑定/换绑手机成功通知
 	business.NewWechatBusiness().BindSendWechatMsg(&receiver.UserInfo)
-	receiver.Logout()
-	receiver.SuccReturn(nil)
+	var tokenString string
+	var expire int64 = 604800
+	if receiver.UserInfo.BindPhone == 0 {
+		tokenString, expire, _ = business.NewUserBusiness().CreateToken(receiver.AppId, receiver.UserInfo.Id, expire)
+		err = business.NewUserBusiness().AddOrUpdateUniqueToken(receiver.UserInfo.Id, receiver.AppId, tokenString)
+		receiver.RegisterLogin(tokenString, expire)
+	}
+	receiver.SuccReturn(map[string]interface{}{
+		"token_info": dy.RepostAccountToken{
+			UserId:      receiver.UserInfo.Id,
+			TokenString: tokenString,
+			ExpTime:     expire,
+		},
+	})
 	return
 }
 
@@ -157,10 +173,11 @@ func (receiver *AccountController) Info() {
 		isWechat = 1
 	}
 	usernameEncrypt := ""
-	if len(username) >= 11 {
+	if len(username) >= 11 && receiver.UserInfo.BindPhone == 1 {
 		usernameEncrypt = username[:3] + "****" + username[7:]
 	}
 	account := dy.RepostAccountData{
+		BindPhone:   receiver.UserInfo.BindPhone,
 		UserId:      receiver.UserInfo.Id,
 		Username:    usernameEncrypt,
 		Nickname:    receiver.UserInfo.Nickname,

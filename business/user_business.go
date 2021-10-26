@@ -12,6 +12,7 @@ import (
 	"github.com/go-xorm/xorm"
 	"github.com/gomodule/redigo/redis"
 	jsoniter "github.com/json-iterator/go"
+	"strconv"
 	"time"
 )
 
@@ -145,14 +146,32 @@ func (receiver *UserBusiness) LoginByPwd(username, pwd string, appId int) (user 
 }
 
 //密码登陆
-func (receiver *UserBusiness) AppleLogin(appleId string, appId int) (user dcm.DcUser, tokenString string, expire int64, comErr global.CommonError) {
+func (receiver *UserBusiness) AppleLogin(appleId string, appId int) (user dcm.DcUser, tokenString string, expire int64, isNew int, comErr global.CommonError) {
 	if appleId == "" {
 		comErr = global.NewError(4208)
 		return
 	}
 	exist, _ := dcm.GetBy("apple_id", appleId, &user)
 	if !exist {
-		return
+		user.Status = 1
+		user.CreateTime = time.Now()
+		user.UpdateTime = time.Now()
+		//来源
+		user.Entrance = AppIdMap[appId]
+		user.AppleId = appleId
+		affect, err := dcm.Insert(nil, &user)
+		if affect == 0 || err != nil {
+			comErr = global.NewError(5001)
+			return
+		}
+		user.Username = fmt.Sprintf("8888%07d", user.Id)
+		user.Nickname = "appleUser" + strconv.Itoa(user.Id)
+		_, err = dcm.GetDbSession().Where("id=?", user.Id).Update(&user)
+		if err != nil {
+			comErr = global.NewError(5001)
+			return
+		}
+		isNew = 1
 	}
 	if user.Status != 1 {
 		if user.Status == 0 {
@@ -214,8 +233,17 @@ func (receiver *UserBusiness) SmsLogin(mobile, code, password, unionid, appleId 
 		}
 		isNew = 1
 	}
+	if user.AppleId != "" && appleId != "" {
+		comErr = global.NewError(4406)
+		return
+	}
+	user.BindPhone = 1
 	user.AppleId = appleId
 	if unionid != "" {
+		if user.Unionid != "" {
+			comErr = global.NewError(4305)
+			return
+		}
 		wechatModel := dcm.DcWechat{} //如果有微信信息 头像/昵称 默认用微信
 		if exist, _ := dcm.GetSlaveDbSession().Where("unionid = ?", unionid).Get(&wechatModel); !exist {
 			comErr = global.NewError(4304)
