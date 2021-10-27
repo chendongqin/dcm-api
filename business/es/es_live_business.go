@@ -1555,7 +1555,7 @@ func (receiver *EsLiveBusiness) SearchLiveAuthor(productId, shopId string, start
 }
 
 //商品直播达人全部数据
-func (receiver *EsLiveBusiness) SearchLiveAuthorProductList(authorId, shopId string, startTime, endTime time.Time, sortType string) (list []es.LiveAuthorProductList, total int, comErr global.CommonError) {
+func (receiver *EsLiveBusiness) SearchLiveAuthorProductList(authorId, shopId string, startTime, endTime time.Time, orderBy, sortType string) (list []es.LiveAuthorProductList, total int, comErr global.CommonError) {
 	esTable, connection, err := GetESTableByTime(es.DyRoomProductRecordsTable, startTime, endTime)
 	if err != nil {
 		comErr = global.NewError(4000)
@@ -1623,8 +1623,8 @@ func (receiver *EsLiveBusiness) SearchLiveAuthorProductList(authorId, shopId str
 							"bucket_sort": map[string]interface{}{
 								"sort": []map[string]interface{}{
 									{
-										sortType: map[string]interface{}{
-											"order": "desc",
+										orderBy: map[string]interface{}{
+											"order": sortType,
 										},
 									},
 								},
