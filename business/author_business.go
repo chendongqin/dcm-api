@@ -1241,7 +1241,7 @@ func (a *AuthorBusiness) NewGetAuthorProductAnalyse(authorId, keyword, firstCate
 }
 
 //合作小店
-func (a *AuthorBusiness) GetAuthorShopAnalyse(authorId, keyword, sortStr, orderBy string, startTime, endTime time.Time, page, pageSize, userId int) (list []dy.DyAuthorShopAnalysis, total int, comErr global.CommonError) {
+func (a *AuthorBusiness) GetAuthorShopAnalyse(authorId, keyword, sortStr, orderBy string, startTime, endTime time.Time, page, pageSize, userId int) (list []dy.DyAuthorShopAnalysis, total int, totalSales int64, totalGmv float64, comErr global.CommonError) {
 	if orderBy == "" {
 		orderBy = "desc"
 	}
@@ -1316,6 +1316,8 @@ func (a *AuthorBusiness) GetAuthorShopAnalyse(authorId, keyword, sortStr, orderB
 			v.ProductNum = len(m)
 		}
 		newList = append(newList, v)
+		totalSales = totalSales + v.Sales
+		totalGmv = totalGmv + v.Gmv
 	}
 	total = len(shopMapList)
 	//排序

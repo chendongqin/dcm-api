@@ -309,14 +309,16 @@ func (receiver *ShopController) ShopProductAnalysis() {
 	sortStr := receiver.GetString("sort", "")
 	page := receiver.GetPage("page")
 	pageSize := receiver.GetPageSize("page_size", 10, 50)
-	list, total, comErr := business.NewShopBusiness().ShopProductAnalysis(shopId, keyword, category, sortStr, orderBy, startTime, stopTime, page, pageSize)
+	list, total, totalSales, totalGmv, comErr := business.NewShopBusiness().ShopProductAnalysis(shopId, keyword, category, sortStr, orderBy, startTime, stopTime, page, pageSize)
 	if comErr != nil {
 		receiver.FailReturn(comErr)
 		return
 	}
 	receiver.SuccReturn(map[string]interface{}{
-		"list":  list,
-		"total": total,
+		"list":        list,
+		"total":       total,
+		"total_sales": totalSales,
+		"total_gmv":   totalGmv,
 	})
 }
 

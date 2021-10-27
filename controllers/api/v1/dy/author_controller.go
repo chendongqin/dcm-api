@@ -999,7 +999,7 @@ func (receiver *AuthorController) AuthorLiveRooms() {
 		return
 	}
 	esLiveBusiness := es.NewEsLiveBusiness()
-	list, total, comErr := esLiveBusiness.SearchAuthorRooms(authorId, keyword,hasProduct, sortStr, orderBy, page, size, t1, t2)
+	list, total, comErr := esLiveBusiness.SearchAuthorRooms(authorId, keyword, hasProduct, sortStr, orderBy, page, size, t1, t2)
 	if listType == 1 {
 		roomIds := []string{}
 		for _, v := range list {
@@ -1118,14 +1118,16 @@ func (receiver *AuthorController) AuthorShopAnalyse() {
 	page := receiver.GetPage("page")
 	pageSize := receiver.GetPageSize("page_size", 10, 50)
 	authorBusiness := business.NewAuthorBusiness()
-	list, total, comErr := authorBusiness.GetAuthorShopAnalyse(authorId, keyword, sortStr, orderBy, startTime, endTime, page, pageSize, receiver.UserId)
+	list, total, totalSales, totalGmv, comErr := authorBusiness.GetAuthorShopAnalyse(authorId, keyword, sortStr, orderBy, startTime, endTime, page, pageSize, receiver.UserId)
 	if comErr != nil {
 		receiver.FailReturn(comErr)
 		return
 	}
 	receiver.SuccReturn(map[string]interface{}{
-		"list":  list,
-		"total": total,
+		"list":        list,
+		"total":       total,
+		"total_sales": totalSales,
+		"total_gmv":   totalGmv,
 	})
 	return
 }
