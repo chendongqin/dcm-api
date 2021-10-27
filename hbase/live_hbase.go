@@ -151,9 +151,14 @@ func GetLiveInfoByIds(roomIds []string) (map[string]entity.DyLiveInfo, error) {
 		data.RealSales = math.Floor(data.RealSales)
 		data.PredictSales = math.Floor(data.PredictSales)
 		//todo 套头gmv
-		//if data.TotalGmv > data.PredictGmv {
-		if data.TotalGmv > 0 {
-			data.PredictGmv = data.TotalGmv
+		if data.RoomStatus == 4 {
+			if data.PredictGmv == 0 {
+				data.PredictGmv = data.TotalGmv
+			}
+		}else {
+			if data.TotalGmv > 0 {
+				data.PredictGmv = data.TotalGmv
+			}
 		}
 		data.RoomID = string(v.Row)
 		roomMap[data.RoomID] = data
@@ -181,9 +186,14 @@ func GetLiveInfo(roomId string) (data entity.DyLiveInfo, comErr global.CommonErr
 	data.RealSales = math.Floor(data.RealSales)
 	data.PredictSales = math.Floor(data.PredictSales)
 	//todo 套头gmv
-	//if data.TotalGmv > data.PredictGmv {
-	if data.TotalGmv > 0 {
-		data.PredictGmv = data.TotalGmv
+	if data.RoomStatus == 4 {
+		if data.PredictGmv == 0 {
+			data.PredictGmv = data.TotalGmv
+		}
+	}else {
+		if data.TotalGmv > 0 {
+			data.PredictGmv = data.TotalGmv
+		}
 	}
 	data.RoomID = roomId
 	return
