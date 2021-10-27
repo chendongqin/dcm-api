@@ -425,14 +425,6 @@ func (receiver *ShopBusiness) ShopLiveAuthorAnalysis(shopId, keyword, tag string
 	return
 }
 
-//小店直播达人分析商品列表
-func (receiver *ShopBusiness) ShopLiveAuthorProductAnalysis(shopId, authorId, keyword, tag string, startTime, endTime time.Time, minFollow, maxFollow int64, scoreType, page, pageSize int) (list []entity.DyProductAuthorAnalysis, total int, comErr global.CommonError) {
-	list = []entity.DyProductAuthorAnalysis{}
-	allList, _, comErr := es.NewEsLiveBusiness().SearchLiveAuthorProductList(authorId, shopId, startTime, endTime)
-	fmt.Printf("allList:%+v\n", allList)
-	return
-}
-
 //小店直播达人分析统计
 func (receiver *ShopBusiness) ShopLiveAuthorAnalysisCount(shopId, keyword string, startTime, endTime time.Time) (countList dy.DyProductLiveCount, comErr global.CommonError) {
 	countList = dy.DyProductLiveCount{

@@ -7,6 +7,7 @@ import (
 	"dongchamao/global"
 	"dongchamao/hbase"
 	"dongchamao/models/entity"
+	es2 "dongchamao/models/es"
 	"dongchamao/models/repost/dy"
 	dy2 "dongchamao/models/repost/dy"
 	"dongchamao/services/dyimg"
@@ -411,19 +412,46 @@ func (receiver *ShopController) ShopLiveAuthorProduct() {
 		receiver.FailReturn(comErr)
 		return
 	}
-	keyword := receiver.GetString("keyword", "")
-	tag := receiver.GetString("tag", "")
-	minFollow, _ := receiver.GetInt64("min_follow", 0)
-	maxFollow, _ := receiver.GetInt64("max_follow", 0)
-	scoreType, _ := receiver.GetInt("score_type", -1)
+	sortType := receiver.GetString("sort_type", "live_create_ime")
 	page := receiver.GetPage("page")
 	pageSize := receiver.GetPageSize("page_size", 10, 50)
-	if scoreType == 5 {
-		scoreType = -1
+	productList, _, _ := es.NewEsLiveBusiness().SearchLiveAuthorProductList(authorId, shopId, startTime, endTime, sortType)
+	analysis := []es2.LiveAuthorProduct{}
+	for _, v := range productList {
+		tempData := v.Data.Hits.Hits[0].Source
+		tempData.LiveCreateTime = v.LiveCreateTime.Value
+		tempData.PredictGmv = v.PredictGmv.Value
+		tempData.PredictSales = v.PredictSales.Value
+		analysis = append(analysis, tempData)
 	}
-	list, total, comErr := business.NewShopBusiness().ShopLiveAuthorProductAnalysis(shopId, authorId, keyword, tag, startTime, endTime, minFollow, maxFollow, scoreType, page, pageSize)
+	switch sortType {
+	case "live_create_ime":
+		sort.Slice(analysis, func(i, j int) bool {
+			return analysis[i].LiveCreateTime > analysis[i].LiveCreateTime
+		})
+		break
+	case "predict_gmv":
+		sort.Slice(analysis, func(i, j int) bool {
+			return analysis[i].PredictGmv > analysis[j].PredictGmv
+		})
+		break
+	case "total_sales":
+		sort.Slice(analysis, func(i, j int) bool {
+			return analysis[i].PredictSales > analysis[j].PredictSales
+		})
+		break
+	}
+	start := (page - 1) * pageSize
+	end := page * pageSize
+	total := len(analysis)
+	if start > total {
+		start = total
+	}
+	if end > total {
+		end = total
+	}
 	receiver.SuccReturn(map[string]interface{}{
-		"list":  list,
+		"list":  analysis[start:end],
 		"total": total,
 	})
 	return

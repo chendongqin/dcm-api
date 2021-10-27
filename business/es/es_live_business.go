@@ -1550,7 +1550,7 @@ func (receiver *EsLiveBusiness) SearchLiveAuthor(productId, shopId string, start
 }
 
 //商品直播达人全部数据
-func (receiver *EsLiveBusiness) SearchLiveAuthorProductList(authorId, shopId string, startTime, endTime time.Time) (list []es.EsAuthorLiveProduct, total int, comErr global.CommonError) {
+func (receiver *EsLiveBusiness) SearchLiveAuthorProductList(authorId, shopId string, startTime, endTime time.Time, sortType string) (list []es.LiveAuthorProductList, total int, comErr global.CommonError) {
 	esTable, connection, err := GetESTableByTime(es.DyRoomProductRecordsTable, startTime, endTime)
 	if err != nil {
 		comErr = global.NewError(4000)
@@ -1567,10 +1567,11 @@ func (receiver *EsLiveBusiness) SearchLiveAuthorProductList(authorId, shopId str
 	if shopId != "" {
 		esQuery.SetTerm("shop_id", shopId)
 	}
+	var cacheTime time.Duration = 300
 	results := esMultiQuery.
 		SetConnection(connection).
 		SetTable(esTable).
-		SetLimit(0, 10000).
+		SetCache(cacheTime).
 		RawQuery(map[string]interface{}{
 			"query": map[string]interface{}{
 				"bool": map[string]interface{}{
@@ -1586,11 +1587,11 @@ func (receiver *EsLiveBusiness) SearchLiveAuthorProductList(authorId, shopId str
 						"size":  10000,
 					},
 					"aggs": map[string]interface{}{
-						"hits": map[string]interface{}{
+						"data": map[string]interface{}{
 							"top_hits": map[string]interface{}{
 								"sort": []map[string]interface{}{
 									{
-										"live_create_time": map[string]string{
+										"live_create_time": map[string]interface{}{
 											"order": "desc",
 										},
 									},
@@ -1598,10 +1599,38 @@ func (receiver *EsLiveBusiness) SearchLiveAuthorProductList(authorId, shopId str
 								"size": 1,
 							},
 						},
+						"predict_sales": map[string]interface{}{
+							"sum": map[string]interface{}{
+								"field": "predict_sales",
+							},
+						},
+						"predict_gmv": map[string]interface{}{
+							"sum": map[string]interface{}{
+								"field": "predict_gmv",
+							},
+						},
+						"live_create_time": map[string]interface{}{
+							"max": map[string]interface{}{
+								"field": "live_create_time",
+							},
+						},
+						"r_sort": map[string]interface{}{
+							"bucket_sort": map[string]interface{}{
+								"sort": []map[string]interface{}{
+									{
+										sortType: map[string]interface{}{
+											"order": "desc",
+										},
+									},
+								},
+							},
+						},
 					},
 				},
-			}})
-	utils.MapToStruct(results, &list)
-	total = esMultiQuery.Count
+			},
+		})
+	buckets := elasticsearch.GetBuckets(results, "product")
+	utils.MapToStruct(buckets, &list)
+	total = len(buckets)
 	return
 }
