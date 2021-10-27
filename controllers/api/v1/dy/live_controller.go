@@ -167,7 +167,7 @@ func (receiver *LiveController) LiveInfoData() {
 		Nickname:        liveInfo.User.Nickname,
 		WithCommerce:    liveInfo.User.WithCommerce,
 		ReputationScore: reputation.AuthorReputation.Score,
-		ReputationLevel: reputation.AuthorReputation.Level + 1,
+		ReputationLevel: reputation.AuthorReputation.Level,
 		RoomId:          authorInfo.RoomId,
 	}
 	//liveSaleData, _ := hbase.GetLiveSalesData(roomId)
@@ -253,7 +253,7 @@ func (receiver *LiveController) LiveInfoData() {
 	liveLevel := map[string]interface{}{
 		"date":           time.Unix(liveInfo.DiscoverTime, 0).Format("2006-01-02"),
 		"flow_rates":     esInfo.FlowRates,
-		"avg_stay_index": esInfo.AvgStayIndex,
+		"avg_stay_index": esInfo.AvgStayIndex + 1,
 		"tags":           esInfo.Tags,
 		"tags_arr":       strings.Split(esInfo.Tags, "_"),
 	}
