@@ -3,6 +3,7 @@ package v1
 import (
 	"dongchamao/business"
 	"dongchamao/business/es"
+	"dongchamao/command"
 	"dongchamao/controllers/api"
 	"dongchamao/global"
 	"dongchamao/global/cache"
@@ -125,6 +126,7 @@ func (receiver *CommonController) CheckSmsCode() {
 }
 
 func (receiver *CommonController) Test() {
+	command.CheckGoodsRank()
 	receiver.SuccReturn(nil)
 	return
 }
