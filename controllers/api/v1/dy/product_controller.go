@@ -1063,6 +1063,61 @@ func (receiver *ProductController) ProductAweme() {
 	})
 }
 
+func (receiver *ProductController) ProductRankAweme() {
+	productId := business.IdDecrypt(receiver.Ctx.Input.Param(":product_id"))
+	startTime, endTime, comErr := receiver.GetRangeDate()
+	if comErr != nil {
+		receiver.FailReturn(comErr)
+		return
+	}
+	sortStr := receiver.GetString("sort", "desc")
+	orderBy := receiver.GetString("order_by", "sales")
+	if !utils.InArray(orderBy, []string{"aweme_create_time", "aweme_gmv", "sales"}) {
+		receiver.FailReturn(global.NewError(4000))
+		return
+	}
+	page := receiver.GetPage("page")
+	pageSize := receiver.GetPageSize("page_size", 10, 50)
+	list := make([]entity.DyCommodityRelateAweme, 0)
+	startStr := startTime.Format("20060102")
+	endStr := endTime.Format("20060102")
+	cacheKey := cache.GetCacheKey(cache.ProductRelateAweme, productId, startStr, endStr)
+	cacheStr := global.Cache.Get(cacheKey)
+	if cacheStr != "" {
+		cacheStr = utils.DeserializeData(cacheStr)
+		_ = jsoniter.Unmarshal([]byte(cacheStr), &list)
+	} else {
+		list, comErr = hbase.GetDyProductAwemeList(productId, startStr, endStr)
+		for k, v := range list {
+			list[k].ProductId = business.IdEncrypt(v.ProductId)
+			list[k].AwemeId = business.IdEncrypt(v.AwemeId)
+			list[k].AwemeCover = dyimg.Fix(v.AwemeCover)
+			list[k].AwemeUrl = business.AwemeUrl + v.AwemeId
+		}
+		_ = global.Cache.Set(cacheKey, utils.SerializeData(list), 300)
+	}
+	sort.Slice(list, func(i, j int) bool {
+		if sortStr == "desc" {
+			return utils.StructFormat(list[i])[orderBy].(float64) > utils.StructFormat(list[j])[orderBy].(float64)
+		}
+		return utils.StructFormat(list[i])[orderBy].(float64) < utils.StructFormat(list[j])[orderBy].(float64)
+	})
+	total := len(list)
+	start := (page - 1) * pageSize
+	end := page * pageSize
+	if start > total {
+		start = total
+	}
+	if end > total {
+		end = total
+	}
+	list = list[start:end]
+	receiver.SuccReturn(map[string]interface{}{
+		"list":  list,
+		"total": total,
+	})
+}
+
 //商品视频总计
 func (receiver *ProductController) ProductAwemeTotal() {
 	productId := business.IdDecrypt(receiver.Ctx.Input.Param(":product_id"))
