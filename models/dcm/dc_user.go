@@ -27,6 +27,7 @@ type DcUser struct {
 	SetPassword      int       `xorm:"not null default 0 comment('是否设置了登陆密码') TINYINT(1)"`
 	Entrance         int       `xorm:"not null default 0 comment('用户来源0:PC,1:小程序,2:APP,3:wap') TINYINT(1)"`
 	IsInstallApp     int       `xorm:"not null default 0 comment('是否安装app') TINYINT(1)"`
+	BindPhone        int       `xorm:"not null default 0 comment('是否绑定手机') TINYINT(1)"`
 	Channel          string    `xorm:"not null default '' comment('渠道') VARCHAR(50)"`
 	ChannelWords     string    `xorm:"not null comment('渠道关键词') VARCHAR(50)"`
 }

@@ -53,7 +53,11 @@ func (receiver *LoginController) Login() {
 		user, authToken, expTime, comErr = userBusiness.WechatLogin(unionid, grantType, appId)
 	} else if grantType == "apple" { //苹果登录
 		appleId := InputData.GetString("apple_id", "")
-		user, authToken, expTime, comErr = userBusiness.AppleLogin(appleId, appId)
+		if appleId == "" {
+			receiver.FailReturn(global.NewError(4000))
+			return
+		}
+		user, authToken, expTime, isNew, comErr = userBusiness.AppleLogin(appleId, appId)
 	} else {
 		comErr = global.NewError(4000)
 	}
@@ -86,6 +90,7 @@ func (receiver *LoginController) Login() {
 		"vip":          setPassword,
 		"set_password": setPassword,
 		"is_new":       isNew,
+		"bind_phone":   user.BindPhone,
 		"token_info": dy.RepostAccountToken{
 			UserId:      user.Id,
 			TokenString: authToken,

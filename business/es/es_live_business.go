@@ -24,7 +24,7 @@ func NewEsLiveBusiness() *EsLiveBusiness {
 }
 
 //达人直播间搜索
-func (receiver *EsLiveBusiness) SearchAuthorRooms(authorId, keyword, sortStr, orderBy string, page, pageSize int, startDate, endDate time.Time) (list []es.EsDyLiveInfo, total int, comErr global.CommonError) {
+func (receiver *EsLiveBusiness) SearchAuthorRooms(authorId, keyword string,hasProduct int, sortStr, orderBy string, page, pageSize int, startDate, endDate time.Time) (list []es.EsDyLiveInfo, total int, comErr global.CommonError) {
 	if sortStr == "" {
 		sortStr = "create_time"
 	}
@@ -54,6 +54,11 @@ func (receiver *EsLiveBusiness) SearchAuthorRooms(authorId, keyword, sortStr, or
 		"gte": startDate.Unix(),
 		"lt":  endDate.AddDate(0, 0, 1).Unix(),
 	})
+	if hasProduct == 1 {
+		esQuery.SetRange("num_product", map[string]interface{}{
+			"gt": 0,
+		})
+	}
 	if keyword != "" {
 		esQuery.SetMultiMatch([]string{"title", "product_title"}, keyword)
 	}
