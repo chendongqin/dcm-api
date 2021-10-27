@@ -412,7 +412,7 @@ func (receiver *ShopController) ShopLiveAuthorProduct() {
 		receiver.FailReturn(comErr)
 		return
 	}
-	sortType := receiver.GetString("sort_type", "live_create_ime")
+	sortType := receiver.GetString("sort_type", "live_create_time")
 	page := receiver.GetPage("page")
 	pageSize := receiver.GetPageSize("page_size", 10, 50)
 	productList, _, _ := es.NewEsLiveBusiness().SearchLiveAuthorProductList(authorId, shopId, startTime, endTime, sortType)
@@ -425,7 +425,7 @@ func (receiver *ShopController) ShopLiveAuthorProduct() {
 		analysis = append(analysis, tempData)
 	}
 	switch sortType {
-	case "live_create_ime":
+	case "live_create_time":
 		sort.Slice(analysis, func(i, j int) bool {
 			return analysis[i].LiveCreateTime > analysis[i].LiveCreateTime
 		})
@@ -435,7 +435,7 @@ func (receiver *ShopController) ShopLiveAuthorProduct() {
 			return analysis[i].PredictGmv > analysis[j].PredictGmv
 		})
 		break
-	case "total_sales":
+	case "predict_sales":
 		sort.Slice(analysis, func(i, j int) bool {
 			return analysis[i].PredictSales > analysis[j].PredictSales
 		})
