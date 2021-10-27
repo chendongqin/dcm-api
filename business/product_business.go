@@ -510,6 +510,94 @@ func (receiver *ProductBusiness) ProductAuthorAnalysisV2(productId, keyword, tag
 	return
 }
 
+func (receiver *ProductBusiness) ProductAuthorAnalysisV3(productId, keyword, tag string, startTime, endTime time.Time, minFollow, maxFollow int64, scoreType, page, pageSize int) (list []entity.DyProductAuthorAnalysis, total int, comErr global.CommonError) {
+	list = []entity.DyProductAuthorAnalysis{}
+	allList, _, comErr := es.NewEsLiveBusiness().SumSearchLiveAuthor(productId, "", startTime, endTime)
+	if comErr != nil {
+		return
+	}
+	for _, l := range allList {
+		if len(l.Data.Hits.Hits) == 0 {
+			continue
+		}
+		v := l.Data.Hits.Hits[0].Source
+		v.Price = l.Price.Value
+		v.PredictGmv = l.PredictGmv.Value
+		v.PredictSales = math.Floor(l.PredictSales.Value)
+		if keyword != "" {
+			if strings.Index(v.Nickname, keyword) < 0 && v.DisplayId != keyword && v.ShortId != keyword {
+				continue
+			}
+		}
+		if scoreType != -1 && scoreType != v.Level {
+			continue
+		}
+		if tag == "其他" {
+			if v.Tags != "" && strings.Index(v.Tags, tag) < 0 {
+				continue
+			}
+		} else {
+			if tag != "" {
+				if strings.Index(v.Tags, tag) < 0 {
+					continue
+				}
+			}
+		}
+		if minFollow > 0 && v.FollowerCount < minFollow {
+			continue
+		}
+		if maxFollow > 0 && v.FollowerCount >= maxFollow {
+			continue
+		}
+		list = append(list, entity.DyProductAuthorAnalysis{
+			AuthorId:    v.AuthorId,
+			DisplayId:   v.DisplayId,
+			FollowCount: v.FollowerCount,
+			Gmv:         v.PredictGmv,
+			Nickname:    v.Nickname,
+			Avatar:      v.Avatar,
+			Price:       v.Price,
+			ProductId:   v.AuthorId,
+			Sales:       utils.ToInt64(math.Floor(v.PredictSales)),
+			Score:       v.Score,
+			Level:       v.Level,
+			ShopTags:    v.Tags,
+			ShortId:     v.ShortId,
+			ShopId:      v.ShopId,
+			Date:        v.Dt,
+		})
+	}
+	sort.Slice(list, func(i, j int) bool {
+		return list[i].Gmv > list[j].Gmv
+	})
+	total = len(list)
+	if total == 0 {
+		return
+	}
+	start := (page - 1) * pageSize
+	end := start + pageSize
+	if total < end {
+		end = total
+	}
+	if start > total {
+		start = total
+	}
+	if total > 0 {
+		list = list[start:end]
+	}
+	authorIds := []string{}
+	for _, v := range list {
+		authorIds = append(authorIds, v.AuthorId)
+	}
+	roomMap, _ := es.NewEsLiveBusiness().CountSearchLiveAuthorRoomNum(productId, "", authorIds, startTime, endTime)
+	for k, v := range list {
+		if num, exist := roomMap[v.AuthorId]; exist {
+			list[k].RoomNum = num
+		}
+	}
+	return
+}
+
 func (receiver *ProductBusiness) ProductAuthorLiveRooms(productId, shopId, authorId string, startTime, endTime time.Time, sortStr, orderBy string, page, pageSize int) (list []entity.DyProductAuthorRelatedRoom, total int) {
 	esProductBusiness := es.NewEsProductBusiness()
 	allList, _, _ := esProductBusiness.SearchRangeDateList(productId, shopId, authorId, startTime, endTime, 1, 1000)

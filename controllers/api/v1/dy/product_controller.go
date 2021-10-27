@@ -776,7 +776,7 @@ func (receiver *ProductController) ProductLiveAuthorAnalysis() {
 		scoreType = -1
 	}
 	productBusiness := business.NewProductBusiness()
-	list, total, comErr := productBusiness.ProductAuthorAnalysisV2(productId, keyword, tag, startTime, endTime, minFollow, maxFollow, scoreType, page, pageSize)
+	list, total, comErr := productBusiness.ProductAuthorAnalysisV3(productId, keyword, tag, startTime, endTime, minFollow, maxFollow, scoreType, page, pageSize)
 	if comErr != nil {
 		receiver.FailReturn(comErr)
 		return
