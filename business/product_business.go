@@ -649,6 +649,34 @@ func (receiver *ProductBusiness) ProductAuthorLiveRooms(productId, shopId, autho
 	return
 }
 
+func (receiver *ProductBusiness) ProductAuthorLiveRoomsV2(productId, shopId, authorId string, startTime, endTime time.Time, sortStr, orderBy string, page, pageSize int) (list []entity.DyProductAuthorRelatedRoom, total int) {
+	//gmv:销售额,sales：销量，start_ts：开播时间
+	if sortStr == "gmv" {
+		sortStr = "predict_gmv"
+	}else if sortStr == "sales" {
+		sortStr = "predict_sales"
+	}else if sortStr == "start_ts" {
+		sortStr = "live_create_time"
+	}else {
+		return
+	}
+	allList, _, _ := es.NewEsLiveBusiness().GetLiveRoomByProductAuthor(productId, shopId, authorId,sortStr, orderBy, startTime, endTime, page, pageSize)
+	list = []entity.DyProductAuthorRelatedRoom{}
+	for _, v := range allList {
+		list = append(list,entity.DyProductAuthorRelatedRoom{
+			EndTs:      v.FinishTime,
+			Gmv:        v.PredictGmv,
+			RoomId:     v.RoomID,
+			Sales:      utils.ToInt64(math.Floor(v.PredictSales)),
+			StartTs:    v.LiveCreateTime,
+			Title:      v.RoomTitle,
+			Cover:      v.Cover,
+			TotalUser:  v.TotalUser,
+		})
+	}
+	return
+}
+
 //func (receiver *ProductBusiness) ProductAuthorAnalysisCount(productId, keyword string, startTime, endTime time.Time) (countList dy.DyProductLiveCount, comErr global.CommonError) {
 //	countList = dy.DyProductLiveCount{
 //		Tags:  []dy.DyCate{},
