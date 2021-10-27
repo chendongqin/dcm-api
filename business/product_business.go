@@ -521,7 +521,6 @@ func (receiver *ProductBusiness) ProductAuthorAnalysisV3(productId, keyword, tag
 			continue
 		}
 		v := l.Data.Hits.Hits[0].Source
-		v.Price = l.Price.Value
 		v.PredictGmv = l.PredictGmv.Value
 		v.PredictSales = math.Floor(l.PredictSales.Value)
 		if keyword != "" {
@@ -557,7 +556,7 @@ func (receiver *ProductBusiness) ProductAuthorAnalysisV3(productId, keyword, tag
 			Nickname:    v.Nickname,
 			Avatar:      v.Avatar,
 			Price:       v.Price,
-			ProductId:   v.AuthorId,
+			ProductId:   v.ProductId,
 			Sales:       utils.ToInt64(math.Floor(v.PredictSales)),
 			Score:       v.Score,
 			Level:       v.Level,
@@ -653,25 +652,25 @@ func (receiver *ProductBusiness) ProductAuthorLiveRoomsV2(productId, shopId, aut
 	//gmv:销售额,sales：销量，start_ts：开播时间
 	if sortStr == "gmv" {
 		sortStr = "predict_gmv"
-	}else if sortStr == "sales" {
+	} else if sortStr == "sales" {
 		sortStr = "predict_sales"
-	}else if sortStr == "start_ts" {
+	} else if sortStr == "start_ts" {
 		sortStr = "live_create_time"
-	}else {
+	} else {
 		return
 	}
-	allList, _, _ := es.NewEsLiveBusiness().GetLiveRoomByProductAuthor(productId, shopId, authorId,sortStr, orderBy, startTime, endTime, page, pageSize)
+	allList, _, _ := es.NewEsLiveBusiness().GetLiveRoomByProductAuthor(productId, shopId, authorId, sortStr, orderBy, startTime, endTime, page, pageSize)
 	list = []entity.DyProductAuthorRelatedRoom{}
 	for _, v := range allList {
-		list = append(list,entity.DyProductAuthorRelatedRoom{
-			EndTs:      v.FinishTime,
-			Gmv:        v.PredictGmv,
-			RoomId:     v.RoomID,
-			Sales:      utils.ToInt64(math.Floor(v.PredictSales)),
-			StartTs:    v.LiveCreateTime,
-			Title:      v.RoomTitle,
-			Cover:      v.Cover,
-			TotalUser:  v.TotalUser,
+		list = append(list, entity.DyProductAuthorRelatedRoom{
+			EndTs:     v.FinishTime,
+			Gmv:       v.PredictGmv,
+			RoomId:    v.RoomID,
+			Sales:     utils.ToInt64(math.Floor(v.PredictSales)),
+			StartTs:   v.LiveCreateTime,
+			Title:     v.RoomTitle,
+			Cover:     v.Cover,
+			TotalUser: v.TotalUser,
 		})
 	}
 	return

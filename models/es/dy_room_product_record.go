@@ -90,9 +90,6 @@ type SumLiveProductAuthor struct {
 			} `json:"hits"`
 		} `json:"hits"`
 	} `json:"data"`
-	Price struct {
-		Value float64 `json:"value"`
-	} `json:"price"`
 	PredictSales struct {
 		Value float64 `json:"value"`
 	} `json:"predict_sales"`
