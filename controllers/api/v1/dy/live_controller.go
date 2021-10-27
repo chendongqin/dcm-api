@@ -253,7 +253,7 @@ func (receiver *LiveController) LiveInfoData() {
 	liveLevel := map[string]interface{}{
 		"date":           time.Unix(liveInfo.DiscoverTime, 0).Format("2006-01-02"),
 		"flow_rates":     esInfo.FlowRates,
-		"avg_stay_index": esInfo.AvgStayIndex,
+		"avg_stay_index": esInfo.AvgStayIndex + 1,
 		"tags":           esInfo.Tags,
 		"tags_arr":       strings.Split(esInfo.Tags, "_"),
 	}

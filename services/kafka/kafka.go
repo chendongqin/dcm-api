@@ -81,11 +81,12 @@ func SendMessage(message *sarama.ProducerMessage) {
 }
 
 //修改商品分类
-func NewProductCateChangeMsg(productId string) *sarama.ProducerMessage {
+func NewProductCateChangeMsg(productId string, artificialData map[string]interface{}) *sarama.ProducerMessage {
 	msg := &sarama.ProducerMessage{
 		Topic: "dy-product-cate-change",
 		Value: sarama.StringEncoder(pack(alias.M{
 			"product_id": productId,
+			"artificial_data": artificialData,
 			"type":       "product_cate_change",
 			"time":       time.Now().Format("2006-01-02 15:04:05"),
 		})),
@@ -94,22 +95,23 @@ func NewProductCateChangeMsg(productId string) *sarama.ProducerMessage {
 }
 
 //修改达人分类
-func NewAuthorCateChangeMsg(authorId string) *sarama.ProducerMessage {
+func NewAuthorCateChangeMsg(authorId string, artificialData map[string]interface{}) *sarama.ProducerMessage {
 	msg := &sarama.ProducerMessage{
 		Topic: "dy-author-cate-change",
 		Value: sarama.StringEncoder(pack(alias.M{
-			"author_id": authorId,
-			"type":      "author-cate-change",
-			"time":      time.Now().Format("2006-01-02 15:04:05"),
+			"author_id":       authorId,
+			"artificial_data": artificialData,
+			"type":            "author-cate-change",
+			"time":            time.Now().Format("2006-01-02 15:04:05"),
 		})),
 	}
 	return msg
 }
 
-func SendProductCateChange(productId string) {
-	SendMessage(NewProductCateChangeMsg(productId))
+func SendProductCateChange(productId string,artificialData map[string]interface{}) {
+	SendMessage(NewProductCateChangeMsg(productId,artificialData))
 }
 
-func SendAuthorCateChange(authorId string) {
-	SendMessage(NewAuthorCateChangeMsg(authorId))
+func SendAuthorCateChange(authorId string, artificialData map[string]interface{}) {
+	SendMessage(NewAuthorCateChangeMsg(authorId, artificialData))
 }
