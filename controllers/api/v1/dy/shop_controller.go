@@ -7,6 +7,7 @@ import (
 	"dongchamao/global"
 	"dongchamao/hbase"
 	"dongchamao/models/entity"
+	es2 "dongchamao/models/es"
 	"dongchamao/models/repost/dy"
 	dy2 "dongchamao/models/repost/dy"
 	"dongchamao/services/dyimg"
@@ -398,6 +399,60 @@ func (receiver *ShopController) ShopLiveAuthorAnalysisCount() {
 	}
 	receiver.SuccReturn(map[string]interface{}{
 		"list": countList,
+	})
+	return
+}
+
+//小店直播达人商品列表
+func (receiver *ShopController) ShopLiveAuthorProduct() {
+	shopId := business.IdDecrypt(receiver.Ctx.Input.Param(":shop_id"))
+	authorId := business.IdDecrypt(receiver.Ctx.Input.Param(":author_id"))
+	startTime, endTime, comErr := receiver.GetRangeDate()
+	if comErr != nil {
+		receiver.FailReturn(comErr)
+		return
+	}
+	sortType := receiver.GetString("sort_type", "live_create_ime")
+	page := receiver.GetPage("page")
+	pageSize := receiver.GetPageSize("page_size", 10, 50)
+	productList, _, _ := es.NewEsLiveBusiness().SearchLiveAuthorProductList(authorId, shopId, startTime, endTime, sortType)
+	analysis := []es2.LiveAuthorProduct{}
+	for _, v := range productList {
+		tempData := v.Data.Hits.Hits[0].Source
+		tempData.LiveCreateTime = v.LiveCreateTime.Value
+		tempData.PredictGmv = v.PredictGmv.Value
+		tempData.PredictSales = v.PredictSales.Value
+		analysis = append(analysis, tempData)
+	}
+	switch sortType {
+	case "live_create_ime":
+		sort.Slice(analysis, func(i, j int) bool {
+			return analysis[i].LiveCreateTime > analysis[i].LiveCreateTime
+		})
+		break
+	case "predict_gmv":
+		sort.Slice(analysis, func(i, j int) bool {
+			return analysis[i].PredictGmv > analysis[j].PredictGmv
+		})
+		break
+	case "total_sales":
+		sort.Slice(analysis, func(i, j int) bool {
+			return analysis[i].PredictSales > analysis[j].PredictSales
+		})
+		break
+	}
+	start := (page - 1) * pageSize
+	end := page * pageSize
+	total := len(analysis)
+	if start > total {
+		start = total
+	}
+	if end > total {
+		end = total
+	}
+	receiver.SuccReturn(map[string]interface{}{
+		"list":  analysis[start:end],
+		"total": total,
 	})
 	return
 }

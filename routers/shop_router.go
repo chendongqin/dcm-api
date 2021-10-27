@@ -16,6 +16,7 @@ func init() {
 			beego.NSRouter("/product/analysis/count/:shop_id/:start/:end", &v1dy.ShopController{}, "get:ShopProductAnalysisCount"),
 			beego.NSRouter("/author/gmv/top/:shop_id/:start/:end", &v1dy.ShopController{}, "get:ShopAuthorGmvRate"),
 			beego.NSRouter("/author/live/:shop_id/:start/:end", &v1dy.ShopController{}, "get:ShopLiveAuthorAnalysis"),
+			beego.NSRouter("/author/live/:shop_id/:author_id/:start/:end", &v1dy.ShopController{}, "get:ShopLiveAuthorProduct"),
 			beego.NSRouter("/author/live/count/:shop_id/:start/:end", &v1dy.ShopController{}, "get:ShopLiveAuthorAnalysisCount"),
 			beego.NSRouter("/author/live/room/:shop_id/:author_id/:start/:end", &v1dy.ShopController{}, "get:ShopLiveAuthorRooms"),
 			beego.NSRouter("/author/aweme/:shop_id/:start/:end", &v1dy.ShopController{}, "get:ShopAwemeAuthorAnalysis"),
