@@ -24,7 +24,7 @@ func NewEsLiveBusiness() *EsLiveBusiness {
 }
 
 //达人直播间搜索
-func (receiver *EsLiveBusiness) SearchAuthorRooms(authorId, keyword string,hasProduct int, sortStr, orderBy string, page, pageSize int, startDate, endDate time.Time) (list []es.EsDyLiveInfo, total int, comErr global.CommonError) {
+func (receiver *EsLiveBusiness) SearchAuthorRooms(authorId, keyword string, hasProduct int, sortStr, orderBy string, page, pageSize int, startDate, endDate time.Time) (list []es.EsDyLiveInfo, total int, comErr global.CommonError) {
 	if sortStr == "" {
 		sortStr = "create_time"
 	}
@@ -1551,6 +1551,152 @@ func (receiver *EsLiveBusiness) SearchLiveAuthor(productId, shopId string, start
 		Query()
 	utils.MapToStruct(results, &list)
 	total = esMultiQuery.Count
+	return
+}
+
+//商品直播达人聚合数据
+func (receiver *EsLiveBusiness) SumSearchLiveAuthor(productId, shopId string, startTime, endTime time.Time) (list []es.SumLiveProductAuthor, total int, comErr global.CommonError) {
+	esTable, connection, err := GetESTableByTime(es.DyRoomProductRecordsTable, startTime, endTime)
+	if err != nil {
+		comErr = global.NewError(4000)
+		return
+	}
+	esQuery, esMultiQuery := elasticsearch.NewElasticQueryGroup()
+	esQuery.SetRange("live_create_time", map[string]interface{}{
+		"gte": startTime.Unix(),
+		"lt":  endTime.AddDate(0, 0, 1).Unix(),
+	})
+	if productId != "" {
+		esQuery.SetTerm("product_id", productId)
+	}
+	if shopId != "" {
+		esQuery.SetTerm("shop_id", shopId)
+	}
+	var cacheTime time.Duration = 600
+	results := esMultiQuery.
+		SetConnection(connection).
+		SetTable(esTable).
+		SetCache(cacheTime).
+		RawQuery(map[string]interface{}{
+			"query": map[string]interface{}{
+				"bool": map[string]interface{}{
+					"must": esQuery.Condition,
+				},
+			},
+			"size": 0,
+			"aggs": map[string]interface{}{
+				"authors": map[string]interface{}{
+					"terms": map[string]interface{}{
+						"field": "author_id.keyword",
+						"size":  10000,
+					},
+					"aggs": map[string]interface{}{
+						"data": map[string]interface{}{
+							"top_hits": map[string]interface{}{
+								"sort": []map[string]interface{}{
+									{
+										"shelf_time": map[string]interface{}{
+											"order": "desc",
+										},
+									},
+								},
+								"size": 1,
+							},
+						},
+						"predict_sales": map[string]interface{}{
+							"sum": map[string]interface{}{
+								"field": "predict_sales",
+							},
+						},
+						"predict_gmv": map[string]interface{}{
+							"sum": map[string]interface{}{
+								"field": "predict_gmv",
+							},
+						},
+						"shelf_time": map[string]interface{}{
+							"max": map[string]interface{}{
+								"field": "shelf_time",
+							},
+						},
+						"r_sort": map[string]interface{}{
+							"bucket_sort": map[string]interface{}{
+								"sort": []map[string]interface{}{
+									{
+										"shelf_time": map[string]interface{}{
+											"order": "desc",
+										},
+									},
+								},
+							},
+						},
+					},
+				},
+			},
+		})
+	buckets := elasticsearch.GetBuckets(results, "authors")
+	utils.MapToStruct(buckets, &list)
+	total = len(buckets)
+	return
+}
+
+func (receiver *EsLiveBusiness) CountSearchLiveAuthorRoomNum(productId, shopId string,
+	authorIds []string, startTime, endTime time.Time) (roomMap map[string]int, comErr global.CommonError) {
+	if len(authorIds) == 0 {
+		return
+	}
+	esTable, connection, err := GetESTableByTime(es.DyRoomProductRecordsTable, startTime, endTime)
+	if err != nil {
+		comErr = global.NewError(4000)
+		return
+	}
+	esQuery, esMultiQuery := elasticsearch.NewElasticQueryGroup()
+	esQuery.SetRange("live_create_time", map[string]interface{}{
+		"gte": startTime.Unix(),
+		"lt":  endTime.AddDate(0, 0, 1).Unix(),
+	})
+	esQuery.SetTerms("author_id", authorIds)
+	if productId != "" {
+		esQuery.SetTerm("product_id", productId)
+	}
+	if shopId != "" {
+		esQuery.SetTerm("shop_id", shopId)
+	}
+	var cacheTime time.Duration = 180
+	results := esMultiQuery.
+		SetConnection(connection).
+		SetTable(esTable).
+		SetCache(cacheTime).
+		RawQuery(map[string]interface{}{
+			"query": map[string]interface{}{
+				"bool": map[string]interface{}{
+					"must": esQuery.Condition,
+				},
+			},
+			"size": 0,
+			"aggs": map[string]interface{}{
+				"authors": map[string]interface{}{
+					"terms": map[string]interface{}{
+						"field": "author_id.keyword",
+						"size":  100,
+					},
+					"aggs": map[string]interface{}{
+						"rooms": map[string]interface{}{
+							"terms": map[string]interface{}{
+								"field": "room_id.keyword",
+								"size":  10000,
+							},
+						},
+					},
+				},
+			},
+		})
+	buckets := elasticsearch.GetBuckets(results, "authors")
+	list := []es.CountAuthorProductRoom{}
+	utils.MapToStruct(buckets, &list)
+	roomMap = map[string]int{}
+	for _, v := range list {
+		roomMap[v.Key] = len(v.Rooms.Buckets)
+	}
 	return
 }
 

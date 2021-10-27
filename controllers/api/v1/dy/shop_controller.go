@@ -422,7 +422,7 @@ func (receiver *ShopController) ShopLiveAuthorProduct() {
 		tempData := v.Data.Hits.Hits[0].Source
 		tempData.LiveCreateTime = v.LiveCreateTime.Value
 		tempData.PredictGmv = v.PredictGmv.Value
-		tempData.PredictSales = v.PredictSales.Value
+		tempData.PredictSales = math.Floor(v.PredictSales.Value)
 		analysis = append(analysis, tempData)
 	}
 	start := (page - 1) * pageSize
