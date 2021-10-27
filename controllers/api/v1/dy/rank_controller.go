@@ -852,9 +852,9 @@ func (receiver *RankController) DyAuthorFollowerRank() {
 	if sortMap[sortStr] != "" {
 		sortStr = sortMap[sortStr]
 	}
-	if tags == "其他" {
-		tags = "null"
-	}
+	//if tags == "其他" {
+	//	tags = "null"
+	//}
 	if !receiver.HasAuth {
 		page = 1
 		if pageSize > receiver.MaxTotal {
