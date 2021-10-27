@@ -26,7 +26,7 @@ func NewShopBusiness() *ShopBusiness {
 
 //小店商品分析
 func (receiver *ShopBusiness) ShopProductAnalysis(shopId, keyword, category, sortStr, orderBy string, startTime, stopTime time.Time, page, pageSize int) (
-	list []entity.DyShopProductAnalysis, total int, comError global.CommonError) {
+	list []entity.DyShopProductAnalysis, total int, totalSales int64, totalGmv float64, comError global.CommonError) {
 	hbaseList := make([]entity.DyShopProductAnalysis, 0)
 	cacheKey := cache.GetCacheKey(cache.ShopProductAnalysisScanList, startTime.Format("20060102"), stopTime.Format("20060102"), shopId)
 	cacheStr := global.Cache.Get(cacheKey)
@@ -73,6 +73,8 @@ func (receiver *ShopBusiness) ShopProductAnalysis(shopId, keyword, category, sor
 	}
 	list = []entity.DyShopProductAnalysis{}
 	for _, v := range productMap {
+		totalSales = totalSales + v.Sales
+		totalGmv = totalGmv + v.Gmv
 		list = append(list, v)
 	}
 	//排序

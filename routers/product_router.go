@@ -29,6 +29,7 @@ func init() {
 			beego.NSRouter("/room/:product_id/:start/:end", &v1dy.ProductController{}, "get:ProductRoomsRangeDate"),
 			beego.NSRouter("/aweme/sales/chart/:product_id/:start/:end", &v1dy.ProductController{}, "get:ProductAwemeSalesTrend"),
 			beego.NSRouter("/aweme/list/:product_id/:start/:end", &v1dy.ProductController{}, "get:ProductAweme"),
+			beego.NSRouter("/rank/aweme/list/:product_id/:start/:end", &v1dy.ProductController{}, "get:ProductRankAweme"),
 			beego.NSRouter("/aweme/total/:product_id/:start/:end", &v1dy.ProductController{}, "get:ProductAwemeTotal"),
 			beego.NSRouter("/cate/change", &v1dy.AuthorController{}, "put:ChangeProductCate"),
 		),
