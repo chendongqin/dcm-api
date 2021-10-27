@@ -412,10 +412,11 @@ func (receiver *ShopController) ShopLiveAuthorProduct() {
 		receiver.FailReturn(comErr)
 		return
 	}
-	sortType := receiver.GetString("sort_type", "live_create_time")
+	sortType := receiver.GetString("sort_type", "desc")
+	orderBy := receiver.GetString("order_by", "live_create_time")
 	page := receiver.GetPage("page")
 	pageSize := receiver.GetPageSize("page_size", 10, 50)
-	productList, _, _ := es.NewEsLiveBusiness().SearchLiveAuthorProductList(authorId, shopId, startTime, endTime, sortType)
+	productList, _, _ := es.NewEsLiveBusiness().SearchLiveAuthorProductList(authorId, shopId, startTime, endTime, orderBy, sortType)
 	analysis := []es2.LiveAuthorProduct{}
 	for _, v := range productList {
 		tempData := v.Data.Hits.Hits[0].Source
@@ -423,23 +424,6 @@ func (receiver *ShopController) ShopLiveAuthorProduct() {
 		tempData.PredictGmv = v.PredictGmv.Value
 		tempData.PredictSales = v.PredictSales.Value
 		analysis = append(analysis, tempData)
-	}
-	switch sortType {
-	case "live_create_time":
-		sort.Slice(analysis, func(i, j int) bool {
-			return analysis[i].LiveCreateTime > analysis[i].LiveCreateTime
-		})
-		break
-	case "predict_gmv":
-		sort.Slice(analysis, func(i, j int) bool {
-			return analysis[i].PredictGmv > analysis[j].PredictGmv
-		})
-		break
-	case "predict_sales":
-		sort.Slice(analysis, func(i, j int) bool {
-			return analysis[i].PredictSales > analysis[j].PredictSales
-		})
-		break
 	}
 	start := (page - 1) * pageSize
 	end := page * pageSize
