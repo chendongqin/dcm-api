@@ -1076,18 +1076,19 @@ func (receiver *ProductController) ProductRankAweme() {
 		receiver.FailReturn(global.NewError(4000))
 		return
 	}
+	dataType, _ := receiver.GetInt("data_type", 1)
 	page := receiver.GetPage("page")
 	pageSize := receiver.GetPageSize("page_size", 10, 50)
 	list := make([]entity.DyCommodityRelateAweme, 0)
 	startStr := startTime.Format("20060102")
 	endStr := endTime.Format("20060102")
-	cacheKey := cache.GetCacheKey(cache.ProductRelateAweme, productId, startStr, endStr)
+	cacheKey := cache.GetCacheKey(cache.ProductRelateAweme, productId, dataType, startStr, endStr)
 	cacheStr := global.Cache.Get(cacheKey)
 	if cacheStr != "" {
 		cacheStr = utils.DeserializeData(cacheStr)
 		_ = jsoniter.Unmarshal([]byte(cacheStr), &list)
 	} else {
-		list, comErr = hbase.GetDyProductAwemeList(productId, startStr, endStr)
+		list, comErr = hbase.GetDyProductAwemeList(productId, dataType, startStr, endStr)
 		for k, v := range list {
 			list[k].ProductId = business.IdEncrypt(v.ProductId)
 			list[k].AwemeId = business.IdEncrypt(v.AwemeId)
@@ -1104,10 +1105,10 @@ func (receiver *ProductController) ProductRankAweme() {
 	})
 	total := len(list)
 	start := (page - 1) * pageSize
-	end := page * pageSize
 	if start > total {
 		start = total
 	}
+	end := page * pageSize
 	if end > total {
 		end = total
 	}
