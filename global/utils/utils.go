@@ -1933,3 +1933,9 @@ func RateMin(r float64) float64 {
 	}
 	return r
 }
+
+func StructFormat(data interface{}) (dataMap map[string]interface{}) {
+	marshal, _ := json.Marshal(data)
+	json.Unmarshal(marshal, &dataMap)
+	return
+}

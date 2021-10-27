@@ -495,3 +495,35 @@ func GetDyProductGpmRangeDate(productId string, startTime, endTime time.Time) (d
 	}
 	return
 }
+
+//视频商品数据
+func GetDyProductAwemeList(productId string, dataType int, beginDate, endDate string) (data []entity.DyCommodityRelateAweme, comErr global.CommonError) {
+	var startRowKey, stopRowKey string
+	switch dataType {
+	case 1:
+		startRowKey = productId + "_" + beginDate + "_"
+		stopRowKey = productId + "_" + endDate + "_9999999999999999"
+	case 2:
+		startRowKey = productId + "_" + beginDate + endDate + "_"
+		stopRowKey = productId + "_" + beginDate + endDate + "_9999999999999999"
+	case 3:
+	}
+	query := hbasehelper.NewQuery()
+	results, err := query.
+		SetTable(hbaseService.HbaseDyCommodityRelateAweme).
+		SetStartRow([]byte(startRowKey)).
+		SetStopRow([]byte(stopRowKey)).
+		Scan(1000)
+	if err != nil {
+		comErr = global.NewError(5000)
+		logger.Error(err)
+		return
+	}
+	for _, v := range results {
+		dataMap := hbaseService.HbaseFormat(v, entity.DyCommodityRelateAwemeMap)
+		hData := entity.DyCommodityRelateAweme{}
+		utils.MapToStruct(dataMap, &hData)
+		data = append(data, hData)
+	}
+	return
+}

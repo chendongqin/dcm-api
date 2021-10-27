@@ -40,6 +40,7 @@ const (
 	HbaseDyProductBrand                = "dy_product_brand"
 	HbaseDyProductDaily                = "dy_product_daily"
 	HbaseDyProductAwemeDailyDistribute = "dy_product_aweme_daily_distribute"
+	HbaseDyCommodityRelateAweme        = "dy_commodity_relate_aweme"
 	HbaseDyProductLiveSalesTrend       = "dy_product_live_sales_trend"
 	HbaseDyLivePromotionMonth          = "dy_live_promotion_month"
 	HbaseDyProductAuthorAnalysis       = "dy_product_author_analysis"
