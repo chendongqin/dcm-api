@@ -67,6 +67,7 @@ func (receiver *ShopBusiness) ShopProductAnalysis(shopId, keyword, category, sor
 				p.MonthPvCount = v.MonthPvCount
 				p.MonthCvr = utils.RateMin(v.MonthCvr)
 			}
+			productMap[v.ProductId] = p
 		} else {
 			productMap[v.ProductId] = v
 		}
