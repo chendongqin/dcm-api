@@ -428,6 +428,9 @@ func (receiver *ProductController) ProductBase() {
 		CosRatioMoney:       productInfo.CosRatio / 100 * productInfo.Price,
 		TbCouponPrice:       productInfo.TbCouponPrice,
 		TbCouponRemainCount: productInfo.TbCouponRemainCount,
+		FirstCname:          productInfo.AiCategory.FirstCname,
+		SecondCname:         productInfo.AiCategory.SecondCname,
+		ThirdCname:          productInfo.AiCategory.ThirdCname,
 	}
 	if simpleInfo.TbCouponRemainCount == 0 || simpleInfo.TbCouponPrice == 0 {
 		simpleInfo.TbCouponPrice = simpleInfo.Price

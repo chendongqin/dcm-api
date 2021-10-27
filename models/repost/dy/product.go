@@ -19,8 +19,10 @@ type SimpleDyProduct struct {
 	CosRatioMoney       float64 `json:"cos_ratio_money"`
 	TbCouponPrice       float64 `json:"tb_coupon_price"`
 	TbCouponRemainCount int64   `json:"tb_coupon_remain_count"`
+	FirstCname          string  `json:"first_cname"`
+	SecondCname         string  `json:"second_cname"`
+	ThirdCname          string  `json:"third_cname"`
 }
-
 type ProductOrderDaily struct {
 	Date       string  `json:"date"`
 	OrderCount int64   `json:"order_count"`
