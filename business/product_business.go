@@ -659,7 +659,7 @@ func (receiver *ProductBusiness) ProductAuthorLiveRoomsV2(productId, shopId, aut
 	} else {
 		return
 	}
-	allList, _, _ := es.NewEsLiveBusiness().GetLiveRoomByProductAuthor(productId, shopId, authorId, sortStr, orderBy, startTime, endTime, page, pageSize)
+	allList, total, _ := es.NewEsLiveBusiness().GetLiveRoomByProductAuthor(productId, shopId, authorId, sortStr, orderBy, startTime, endTime, page, pageSize)
 	list = []entity.DyProductAuthorRelatedRoom{}
 	for _, v := range allList {
 		list = append(list, entity.DyProductAuthorRelatedRoom{
