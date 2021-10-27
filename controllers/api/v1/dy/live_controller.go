@@ -167,7 +167,7 @@ func (receiver *LiveController) LiveInfoData() {
 		Nickname:        liveInfo.User.Nickname,
 		WithCommerce:    liveInfo.User.WithCommerce,
 		ReputationScore: reputation.AuthorReputation.Score,
-		ReputationLevel: reputation.AuthorReputation.Level,
+		ReputationLevel: reputation.AuthorReputation.Level + 1,
 		RoomId:          authorInfo.RoomId,
 	}
 	//liveSaleData, _ := hbase.GetLiveSalesData(roomId)
