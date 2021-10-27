@@ -130,8 +130,7 @@ func (receiver *ShopBusiness) ShopProductAnalysis(shopId, keyword, category, sor
 	return
 }
 
-func (receiver *ShopBusiness) ShopProductAnalysisCount(shopId, keyword string, startTime, stopTime time.Time) (
-	count []dy.DyCate, comError global.CommonError) {
+func (receiver *ShopBusiness) ShopProductAnalysisCount(shopId, keyword string, startTime, stopTime time.Time) (count []dy.DyCate, comError global.CommonError) {
 	hbaseList := make([]entity.DyShopProductAnalysis, 0)
 	cacheKey := cache.GetCacheKey(cache.ShopProductAnalysisCountScanList, startTime.Format("20060102"), stopTime.Format("20060102"), shopId)
 	cacheStr := global.Cache.Get(cacheKey)
@@ -144,45 +143,39 @@ func (receiver *ShopBusiness) ShopProductAnalysisCount(shopId, keyword string, s
 		hbaseList, _ = hbase.GetShopProductAnalysisRangDate(shopId, startKey, stopKey, startTime, stopTime)
 		_ = global.Cache.Set(cacheKey, utils.SerializeData(hbaseList), 300)
 	}
-	productMap := map[string]entity.DyShopProductAnalysis{}
-	cateMap := map[string]int{}
-	cateSonMap := map[string]map[string]int{}
+	countMap := map[string]map[string]int{}
+	countSonMap := map[string]map[string]map[string]int{}
 	for _, v := range hbaseList {
+		if keyword != "" {
+			if strings.Index(v.Title, keyword) < 0 {
+				continue
+			}
+		}
+		if countMap[v.DcmLevelFirst] == nil {
+			countMap[v.DcmLevelFirst] = make(map[string]int)
+			countSonMap[v.DcmLevelFirst] = make(map[string]map[string]int)
+		}
+		if countSonMap[v.DcmLevelFirst][v.FirstCname] == nil {
+			countSonMap[v.DcmLevelFirst][v.FirstCname] = make(map[string]int)
+		}
 		if v.DcmLevelFirst == "" {
 			v.DcmLevelFirst = "其他"
 		}
 		if v.FirstCname == "" {
 			v.FirstCname = "其他"
 		}
-		if keyword != "" {
-			if strings.Index(v.Title, keyword) < 0 {
-				continue
-			}
-		}
-		if _, exist := productMap[v.ProductId]; !exist {
-			if n, ok := cateMap[v.DcmLevelFirst]; ok {
-				cateMap[v.DcmLevelFirst] = n + 1
-			} else {
-				cateMap[v.DcmLevelFirst] = 1
-				cateSonMap[v.DcmLevelFirst] = map[string]int{}
-			}
-			if _, ok := cateSonMap[v.DcmLevelFirst][v.FirstCname]; !ok {
-				cateSonMap[v.DcmLevelFirst][v.FirstCname] = 1
-			} else {
-				cateSonMap[v.DcmLevelFirst][v.FirstCname] += 1
-			}
-			productMap[v.ProductId] = v
-		}
+		countMap[v.DcmLevelFirst][v.ProductId]++
+		countSonMap[v.DcmLevelFirst][v.FirstCname][v.ProductId]++
 	}
 	count = []dy.DyCate{}
-	for k, v := range cateMap {
+	for k, v := range countMap {
 		item := []dy.DyCate{}
 		if k != "其他" {
-			if c, ok := cateSonMap[k]; ok {
+			if c, ok := countSonMap[k]; ok {
 				for ck, cv := range c {
 					item = append(item, dy.DyCate{
 						Name:    ck,
-						Num:     cv,
+						Num:     len(cv),
 						SonCate: []dy.DyCate{},
 					})
 				}
@@ -190,7 +183,7 @@ func (receiver *ShopBusiness) ShopProductAnalysisCount(shopId, keyword string, s
 		}
 		count = append(count, dy.DyCate{
 			Name:    k,
-			Num:     v,
+			Num:     len(v),
 			SonCate: item,
 		})
 	}
