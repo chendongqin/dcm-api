@@ -1185,8 +1185,13 @@ func (receiver *EsLiveBusiness) KeywordSearch(keyword string) (list []es.EsDyLiv
 	if err != nil {
 		return
 	}
+	sortStr := "predict_gmv"
 	if keyword != "" {
 		esQuery.SetMultiMatch([]string{"display_id.keyword", "short_id.keyword", "title.keyword", "nickname.keyword", "product_title.keyword"}, keyword)
+		sortStr = "max_user_count"
+	} else {
+		startTime = time.Now().AddDate(0, 0, -6)
+		esTable, connection, err = GetESTableByTime(es.DyLiveInfoBaseTable, startTime, time.Now())
 	}
 	esQuery.SetRange("create_time", map[string]interface{}{
 		"gte": startTime.Unix(),
@@ -1198,7 +1203,7 @@ func (receiver *EsLiveBusiness) KeywordSearch(keyword string) (list []es.EsDyLiv
 		SetTable(esTable).
 		SetCache(cacheTime).
 		AddMust(esQuery.Condition).
-		SetOrderBy(elasticsearch.NewElasticOrder().Add("max_user_count", "desc").Order).
+		SetOrderBy(elasticsearch.NewElasticOrder().Add(sortStr, "desc").Order).
 		SetLimit(0, 5).
 		SetMultiQuery().
 		Query()
@@ -1609,7 +1614,7 @@ func (receiver *EsLiveBusiness) SumSearchLiveAuthor(productId, shopId string, st
 		esQuery.SetTerm("shop_id", shopId)
 	}
 	var cacheTime time.Duration = 600
-	var outTime  = 10 * time.Second
+	var outTime = 10 * time.Second
 	esMultiQuery.Timeout = &outTime
 	results := esMultiQuery.
 		SetConnection(connection).
