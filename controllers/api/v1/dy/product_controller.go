@@ -811,7 +811,7 @@ func (receiver *ProductController) ProductLiveAuthorAnalysisCount() {
 	}
 	keyword := receiver.GetString("keyword", "")
 	productBusiness := business.NewProductBusiness()
-	countList, comErr := productBusiness.ProductAuthorAnalysisCountV2(productId, keyword, startTime, endTime)
+	countList, comErr := productBusiness.ProductAuthorAnalysisCountV3(productId, keyword, startTime, endTime)
 	if comErr != nil {
 		receiver.FailReturn(comErr)
 		return
@@ -840,7 +840,7 @@ func (receiver *ProductController) ProductAwemeAuthorAnalysis() {
 	if scoreType == 5 {
 		scoreType = -1
 	}
-	list, total, comErr := productBusiness.ProductAwemeAuthorAnalysisV2(productId, "", keyword, tag, startTime, endTime, minFollow, maxFollow, scoreType, page, pageSize)
+	list, total, comErr := productBusiness.ProductAwemeAuthorAnalysisV3(productId, "", keyword, tag, startTime, endTime, minFollow, maxFollow, scoreType, page, pageSize)
 	if comErr != nil {
 		receiver.FailReturn(comErr)
 		return

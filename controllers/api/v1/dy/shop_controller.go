@@ -359,19 +359,15 @@ func (receiver *ShopController) ShopLiveAuthorAnalysis() {
 	if scoreType == 5 {
 		scoreType = -1
 	}
-	list, total, comErr := business.NewShopBusiness().ShopLiveAuthorAnalysis(shopId, keyword, tag, startTime, endTime, minFollow, maxFollow, scoreType, page, pageSize)
+	list, total, comErr := business.NewShopBusiness().ShopLiveAuthorAnalysisV3(shopId, keyword, tag, startTime, endTime, minFollow, maxFollow, scoreType, page, pageSize)
 	if comErr != nil {
 		receiver.FailReturn(comErr)
 		return
 	}
 	for k, v := range list {
-		authorInfo, _ := hbase.GetAuthor(v.AuthorId)
-		list[k].Avatar = dyimg.Fix(authorInfo.Data.Avatar)
+		list[k].Avatar = dyimg.Fix(v.Avatar)
 		list[k].AuthorId = business.IdEncrypt(v.AuthorId)
 		list[k].ProductId = business.IdEncrypt(v.ProductId)
-		list[k].Nickname = authorInfo.Data.Nickname
-		list[k].RoomNum = len(v.RelatedRooms)
-		list[k].RelatedRooms = []entity.DyProductAuthorRelatedRoom{}
 	}
 	maxTotal := total
 	if total > business.EsMaxShowNum {
@@ -495,7 +491,7 @@ func (receiver *ShopController) ShopAwemeAuthorAnalysis() {
 	if scoreType == 5 {
 		scoreType = -1
 	}
-	list, total, comErr := business.NewShopBusiness().ShopAwemeAuthorAnalysisV2(shopId, keyword, tag, startTime, endTime, minFollow, maxFollow, scoreType, page, pageSize)
+	list, total, comErr := business.NewProductBusiness().ProductAwemeAuthorAnalysisV3("", shopId, keyword, tag, startTime, endTime, minFollow, maxFollow, scoreType, page, pageSize)
 	if comErr != nil {
 		receiver.FailReturn(comErr)
 		return
