@@ -873,7 +873,7 @@ func (receiver *EsVideoBusiness) SumSearchAwemeAuthor(productId, shopId string, 
 							"top_hits": map[string]interface{}{
 								"sort": []map[string]interface{}{
 									{
-										"shelf_time": map[string]interface{}{
+										"aweme_create_time": map[string]interface{}{
 											"order": "desc",
 										},
 									},
