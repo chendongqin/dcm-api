@@ -41,3 +41,33 @@ type DyProductVideo struct {
 	Sales           int64   `json:"sales"`
 	AwemeUrl        string  `json:"aweme_url"`
 }
+
+type SumProductVideoAuthor struct {
+	Key      string `json:"key"`
+	DocCount int    `json:"doc_count"`
+	Data     struct {
+		Hits struct {
+			Total int `json:"total"`
+			Hits  []struct {
+				Source DyProductVideo `json:"_source"`
+			} `json:"hits"`
+		} `json:"hits"`
+	} `json:"data"`
+	Sales struct {
+		Value int64 `json:"value"`
+	} `json:"sales"`
+	AwemeGmv struct {
+		Value float64 `json:"value"`
+	} `json:"aweme_gmv"`
+}
+
+type CountAuthorProductAweme struct {
+	Key      string `json:"key"`
+	DocCount int    `json:"doc_count"`
+	Awemes   struct {
+		Buckets []interface{} `json:"buckets"`
+	} `json:"awemes"`
+	Products struct {
+		Buckets []interface{} `json:"buckets"`
+	} `json:"products"`
+}

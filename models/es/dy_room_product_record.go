@@ -104,4 +104,7 @@ type CountAuthorProductRoom struct {
 	Rooms    struct {
 		Buckets []interface{} `json:"buckets"`
 	} `json:"rooms"`
+	Products struct {
+		Buckets []interface{} `json:"buckets"`
+	} `json:"products"`
 }

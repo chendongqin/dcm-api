@@ -1185,7 +1185,9 @@ func (receiver *EsLiveBusiness) KeywordSearch(keyword string) (list []es.EsDyLiv
 	if err != nil {
 		return
 	}
-	esQuery.SetMultiMatch([]string{"display_id.keyword", "short_id.keyword", "title.keyword", "nickname.keyword", "product_title.keyword"}, keyword)
+	if keyword != "" {
+		esQuery.SetMultiMatch([]string{"display_id.keyword", "short_id.keyword", "title.keyword", "nickname.keyword", "product_title.keyword"}, keyword)
+	}
 	esQuery.SetRange("create_time", map[string]interface{}{
 		"gte": startTime.Unix(),
 		"lt":  time.Now().Unix(),
@@ -1360,9 +1362,8 @@ func (receiver *EsLiveBusiness) ScanLiveProductByAuthor(authorId, keyword, categ
 	return
 }
 
-
 //达人直播商品数据
-func (receiver *EsLiveBusiness) GetLiveRoomByProductAuthor(productId, shopId,authorId,sortStr,orderBy string, startTime, endTime time.Time, page, pageSize int) (list []es.EsAuthorLiveProduct, total int, comErr global.CommonError) {
+func (receiver *EsLiveBusiness) GetLiveRoomByProductAuthor(productId, shopId, authorId, sortStr, orderBy string, startTime, endTime time.Time, page, pageSize int) (list []es.EsAuthorLiveProduct, total int, comErr global.CommonError) {
 	esTable, connection, err := GetESTableByTime(es.DyRoomProductRecordsTable, startTime, endTime)
 	if err != nil {
 		comErr = global.NewError(4000)
@@ -1608,6 +1609,8 @@ func (receiver *EsLiveBusiness) SumSearchLiveAuthor(productId, shopId string, st
 		esQuery.SetTerm("shop_id", shopId)
 	}
 	var cacheTime time.Duration = 600
+	var outTime time.Duration = 10
+	esMultiQuery.Timeout = &outTime
 	results := esMultiQuery.
 		SetConnection(connection).
 		SetTable(esTable).
@@ -1674,8 +1677,8 @@ func (receiver *EsLiveBusiness) SumSearchLiveAuthor(productId, shopId string, st
 	return
 }
 
-func (receiver *EsLiveBusiness) CountSearchLiveAuthorRoomNum(productId, shopId string,
-	authorIds []string, startTime, endTime time.Time) (roomMap map[string]int, comErr global.CommonError) {
+func (receiver *EsLiveBusiness) CountSearchLiveAuthorRoomProductNum(productId, shopId string,
+	authorIds []string, startTime, endTime time.Time) (roomMap map[string]int, productMap map[string]int, comErr global.CommonError) {
 	if len(authorIds) == 0 {
 		return
 	}
@@ -1697,6 +1700,22 @@ func (receiver *EsLiveBusiness) CountSearchLiveAuthorRoomNum(productId, shopId s
 		esQuery.SetTerm("shop_id", shopId)
 	}
 	var cacheTime time.Duration = 180
+	aggsMap := map[string]interface{}{
+		"rooms": map[string]interface{}{
+			"terms": map[string]interface{}{
+				"field": "room_id.keyword",
+				"size":  10000,
+			},
+		},
+	}
+	if shopId != "" {
+		aggsMap["products"] = map[string]interface{}{
+			"terms": map[string]interface{}{
+				"field": "product_id.keyword",
+				"size":  10000,
+			},
+		}
+	}
 	results := esMultiQuery.
 		SetConnection(connection).
 		SetTable(esTable).
@@ -1714,14 +1733,7 @@ func (receiver *EsLiveBusiness) CountSearchLiveAuthorRoomNum(productId, shopId s
 						"field": "author_id.keyword",
 						"size":  100,
 					},
-					"aggs": map[string]interface{}{
-						"rooms": map[string]interface{}{
-							"terms": map[string]interface{}{
-								"field": "room_id.keyword",
-								"size":  10000,
-							},
-						},
-					},
+					"aggs": aggsMap,
 				},
 			},
 		})
@@ -1729,8 +1741,10 @@ func (receiver *EsLiveBusiness) CountSearchLiveAuthorRoomNum(productId, shopId s
 	list := []es.CountAuthorProductRoom{}
 	utils.MapToStruct(buckets, &list)
 	roomMap = map[string]int{}
+	productMap = map[string]int{}
 	for _, v := range list {
 		roomMap[v.Key] = len(v.Rooms.Buckets)
+		productMap[v.Key] = len(v.Products.Buckets)
 	}
 	return
 }

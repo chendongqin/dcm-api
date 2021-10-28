@@ -284,6 +284,117 @@ func (receiver *ProductBusiness) ProductAuthorView(productId string, startTime, 
 	return
 }
 
+func (receiver *ProductBusiness) ProductAuthorViewV3(productId string, startTime, endTime time.Time) (
+	allTop3 []dy.NameValueInt64PercentChart, liveTop3 []dy.NameValueInt64PercentChart, awemeTop3 []dy.NameValueInt64PercentChart, comErr global.CommonError) {
+	allTop3 = []dy.NameValueInt64PercentChart{}
+	liveTop3 = []dy.NameValueInt64PercentChart{}
+	awemeTop3 = []dy.NameValueInt64PercentChart{}
+	allSales := map[string]int64{}
+	liveSales := map[string]int64{}
+	awemeSales := map[string]int64{}
+	var liveTotalSales int64 = 0
+	var awemeTotalSales int64 = 0
+	//直播达人
+	allLiveList, _, comErr := es.NewEsLiveBusiness().SumSearchLiveAuthor(productId, "", startTime, endTime)
+	for _, l := range allLiveList {
+		if len(l.Data.Hits.Hits) == 0 {
+			continue
+		}
+		v := l.Data.Hits.Hits[0].Source
+		sales := utils.ToInt64(math.Floor(l.PredictSales.Value))
+		if sales == 0 {
+			continue
+		}
+		liveSales[v.AuthorId] = sales
+		allSales[v.AuthorId] = sales
+		liveTotalSales += sales
+	}
+	//视频达人
+	allAwemeList, _, comErr := es.NewEsVideoBusiness().SumSearchAwemeAuthor(productId, "", startTime, endTime)
+	for _, l := range allAwemeList {
+		if len(l.Data.Hits.Hits) == 0 {
+			continue
+		}
+		v := l.Data.Hits.Hits[0].Source
+		v.AwemeGmv = l.AwemeGmv.Value
+		v.Sales = l.Sales.Value
+		if v.Sales == 0 {
+			continue
+		}
+		awemeSales[v.AuthorId] = v.Sales
+		allSales[v.AuthorId] = v.Sales
+		awemeTotalSales += v.Sales
+	}
+	totalSales := liveTotalSales + awemeTotalSales
+	for k, v := range allSales {
+		allTop3 = append(allTop3, dy.NameValueInt64PercentChart{
+			Name:  k,
+			Value: v,
+		})
+	}
+	for k, v := range liveSales {
+		liveTop3 = append(liveTop3, dy.NameValueInt64PercentChart{
+			Name:  k,
+			Value: v,
+		})
+	}
+	for k, v := range awemeSales {
+		awemeTop3 = append(awemeTop3, dy.NameValueInt64PercentChart{
+			Name:  k,
+			Value: v,
+		})
+	}
+	sort.Slice(allTop3, func(i, j int) bool {
+		return allTop3[i].Value > allTop3[j].Value
+	})
+	sort.Slice(liveTop3, func(i, j int) bool {
+		return liveTop3[i].Value > liveTop3[j].Value
+	})
+	sort.Slice(awemeTop3, func(i, j int) bool {
+		return awemeTop3[i].Value > awemeTop3[j].Value
+	})
+	if len(allTop3) > 3 {
+		allTop3 = allTop3[0:3]
+	}
+	if len(liveTop3) > 3 {
+		liveTop3 = liveTop3[0:3]
+	}
+	if len(awemeTop3) > 3 {
+		awemeTop3 = awemeTop3[0:3]
+	}
+	otherSales := totalSales
+	if totalSales > 0 {
+		for k, v := range allTop3 {
+			author, _ := hbase.GetAuthor(v.Name)
+			allTop3[k].Name = author.Data.Nickname
+			allTop3[k].Percent = float64(v.Value) / float64(totalSales)
+			otherSales -= v.Value
+		}
+	}
+	if otherSales > 0 {
+		allTop3 = append(allTop3, dy.NameValueInt64PercentChart{
+			Name:    "其他",
+			Value:   otherSales,
+			Percent: float64(otherSales) / float64(totalSales),
+		})
+	}
+	if liveTotalSales > 0 {
+		for k, v := range liveTop3 {
+			author, _ := hbase.GetAuthor(v.Name)
+			liveTop3[k].Name = author.Data.Nickname
+			liveTop3[k].Percent = float64(v.Value) / float64(liveTotalSales)
+		}
+	}
+	if awemeTotalSales > 0 {
+		for k, v := range awemeTop3 {
+			author, _ := hbase.GetAuthor(v.Name)
+			awemeTop3[k].Name = author.Data.Nickname
+			awemeTop3[k].Percent = float64(v.Value) / float64(awemeTotalSales)
+		}
+	}
+	return
+}
+
 //func (receiver *ProductBusiness) ProductAuthorAnalysis(productId, keyword, tag string, startTime, endTime time.Time, minFollow, maxFollow int64, scoreType, page, pageSize int) (list []entity.DyProductAuthorAnalysis, total int, comErr global.CommonError) {
 //	list = []entity.DyProductAuthorAnalysis{}
 //	esProductBusiness := es.NewEsProductBusiness()
@@ -588,7 +699,7 @@ func (receiver *ProductBusiness) ProductAuthorAnalysisV3(productId, keyword, tag
 	for _, v := range list {
 		authorIds = append(authorIds, v.AuthorId)
 	}
-	roomMap, _ := es.NewEsLiveBusiness().CountSearchLiveAuthorRoomNum(productId, "", authorIds, startTime, endTime)
+	roomMap, _, _ := es.NewEsLiveBusiness().CountSearchLiveAuthorRoomProductNum(productId, "", authorIds, startTime, endTime)
 	for k, v := range list {
 		if num, exist := roomMap[v.AuthorId]; exist {
 			list[k].RoomNum = num
@@ -899,6 +1010,104 @@ func (receiver *ProductBusiness) ProductAuthorAnalysisCountV2(productId, keyword
 	return
 }
 
+func (receiver *ProductBusiness) ProductAuthorAnalysisCountV3(productId, keyword string, startTime, endTime time.Time) (countList dy.DyProductLiveCount, comErr global.CommonError) {
+	countList = dy.DyProductLiveCount{
+		Tags:  []dy.DyCate{},
+		Level: []dy.DyIntCate{},
+	}
+	cKey := cache.GetCacheKey(cache.ProductAuthorCount, productId, startTime.Format("20060102"), endTime.Format("20060102"))
+	if keyword == "" {
+		countJson := global.Cache.Get(cKey)
+		if countJson != "" {
+			countJson = utils.DeserializeData(countJson)
+			_ = jsoniter.Unmarshal([]byte(countJson), &countList)
+			return
+		}
+	}
+	allList, _, comErr := es.NewEsLiveBusiness().SumSearchLiveAuthor(productId, "", startTime, endTime)
+	tagsMap := map[string]int{}
+	levelMap := map[int]int{}
+	for _, l := range allList {
+		if len(l.Data.Hits.Hits) == 0 {
+			continue
+		}
+		v := l.Data.Hits.Hits[0].Source
+		v.PredictGmv = l.PredictGmv.Value
+		v.PredictSales = math.Floor(l.PredictSales.Value)
+		if keyword != "" {
+			if strings.Index(v.Nickname, keyword) < 0 && v.DisplayId != keyword && v.ShortId != keyword {
+				continue
+			}
+		}
+		if v.Tags == "" || v.Tags == "null" {
+			v.Tags = "其他"
+		}
+		shopTags := []string{}
+		if strings.Index(v.Tags, "_") >= 0 {
+			shopTags = strings.Split(v.Tags, "_")
+		} else {
+			shopTags = strings.Split(v.Tags, "|")
+		}
+		for _, s := range shopTags {
+			if _, ok := tagsMap[s]; ok {
+				tagsMap[s] += 1
+			} else {
+				tagsMap[s] = 1
+			}
+		}
+		if _, ok := levelMap[v.Level]; ok {
+			levelMap[v.Level] += 1
+		} else {
+			levelMap[v.Level] = 1
+		}
+	}
+	otherTags := 0
+	otherLevel := 0
+	for k, v := range tagsMap {
+		if k == "其他" {
+			otherTags = v
+			continue
+		}
+		countList.Tags = append(countList.Tags, dy.DyCate{
+			Name: k,
+			Num:  v,
+		})
+	}
+	sort.Slice(countList.Tags, func(i, j int) bool {
+		return countList.Tags[i].Num > countList.Tags[j].Num
+	})
+	if otherTags > 0 {
+		countList.Tags = append(countList.Tags, dy.DyCate{
+			Name: "其他",
+			Num:  otherTags,
+		})
+	}
+	for k, v := range levelMap {
+		if k == 0 {
+			otherLevel = v
+			continue
+		}
+		countList.Level = append(countList.Level, dy.DyIntCate{
+			Name: k,
+			Num:  v,
+		})
+	}
+	sort.Slice(countList.Level, func(i, j int) bool {
+		return countList.Level[i].Num > countList.Level[j].Num
+	})
+	if otherLevel > 0 {
+		countList.Level = append(countList.Level, dy.DyIntCate{
+			Name: 0,
+			Num:  otherLevel,
+		})
+	}
+	if keyword == "" && (len(countList.Tags) > 0 || len(countList.Level) > 0) {
+		countJson := utils.SerializeData(countList)
+		_ = global.Cache.Set(cKey, countJson, 300)
+	}
+	return
+}
+
 //func (receiver *ProductBusiness) ProductAwemeAuthorAnalysis(productId, keyword, tag string, startTime, endTime time.Time, minFollow, maxFollow int64, scoreType, page, pageSize int) (list []entity.DyProductAwemeAuthorAnalysis, total int, comErr global.CommonError) {
 //	list = []entity.DyProductAwemeAuthorAnalysis{}
 //	esProductBusiness := es.NewEsProductBusiness()
@@ -1081,6 +1290,89 @@ func (receiver *ProductBusiness) ProductAwemeAuthorAnalysisV2(productId, shopId,
 		return
 	}
 	list = list[start:end]
+	return
+}
+
+func (receiver *ProductBusiness) ProductAwemeAuthorAnalysisV3(productId, shopId, keyword, tag string, startTime, endTime time.Time, minFollow, maxFollow int64, scoreType, page, pageSize int) (list []entity.DyProductAwemeAuthorAnalysis, total int, comErr global.CommonError) {
+	list = []entity.DyProductAwemeAuthorAnalysis{}
+	allList, _, comErr := es.NewEsVideoBusiness().SumSearchAwemeAuthor(productId, shopId, startTime, endTime)
+	if comErr != nil {
+		return
+	}
+	keyword = strings.ToLower(keyword)
+	for _, l := range allList {
+		if len(l.Data.Hits.Hits) == 0 {
+			continue
+		}
+		v := l.Data.Hits.Hits[0].Source
+		v.AwemeGmv = l.AwemeGmv.Value
+		v.Sales = l.Sales.Value
+		if minFollow > 0 && v.FollowerCount < minFollow {
+			continue
+		}
+		if maxFollow > 0 && v.FollowerCount >= maxFollow {
+			continue
+		}
+		if tag != "" {
+			if strings.Index(v.Tags, tag) < 0 {
+				return
+			}
+		}
+		if scoreType != -1 && scoreType != v.Level {
+			continue
+		}
+		if keyword != "" {
+			if strings.Index(strings.ToLower(v.Nickname), keyword) < 0 && v.UniqueId != keyword && v.ShortId != keyword {
+				continue
+			}
+		}
+		list = append(list, entity.DyProductAwemeAuthorAnalysis{
+			ProductId:   v.ProductId,
+			AuthorId:    v.AuthorId,
+			Nickname:    v.Nickname,
+			CreateSdf:   v.DistDate,
+			DisplayId:   v.UniqueId,
+			ShortId:     v.ShortId,
+			Score:       v.Score,
+			Level:       v.Level,
+			FirstName:   v.Tags,
+			SecondName:  v.TagsLevelTwo,
+			Avatar:      v.Avatar,
+			FollowCount: v.FollowerCount,
+			DiggCount:   v.DiggCount,
+			Sales:       v.Sales,
+			Gmv:         v.AwemeGmv,
+		})
+	}
+	sort.Slice(list, func(i, j int) bool {
+		return list[i].Sales > list[j].Sales
+	})
+	total = len(list)
+	start := (page - 1) * pageSize
+	end := start + pageSize
+	if total < end {
+		end = total
+	}
+	if start > total {
+		start = total
+	}
+	if total == 0 {
+		return
+	}
+	list = list[start:end]
+	authorIds := []string{}
+	for _, v := range list {
+		authorIds = append(authorIds, v.AuthorId)
+	}
+	awemeMap, productMap, _ := es.NewEsVideoBusiness().CountSearchAuthorAwemeProductNum(productId, "", authorIds, startTime, endTime)
+	for k, v := range list {
+		if num, exist := awemeMap[v.AuthorId]; exist {
+			list[k].AwemesNum = num
+		}
+		if num, exist := productMap[v.AuthorId]; exist {
+			list[k].ProductNum = num
+		}
+	}
 	return
 }
 
@@ -1299,6 +1591,99 @@ func (receiver *ProductBusiness) ProductAwemeAuthorAnalysisCount(productId, shop
 			levelMap[v.Level] = 1
 		}
 		authorMap[v.AuthorId] = v.AuthorId
+	}
+	otherTags := 0
+	otherLevel := 0
+	for k, v := range tagsMap {
+		if k == "其他" {
+			otherTags = v
+			continue
+		}
+		countList.Tags = append(countList.Tags, dy.DyCate{
+			Name: k,
+			Num:  v,
+		})
+	}
+	sort.Slice(countList.Tags, func(i, j int) bool {
+		return countList.Tags[i].Num > countList.Tags[j].Num
+	})
+	if otherTags > 0 {
+		countList.Tags = append(countList.Tags, dy.DyCate{
+			Name: "其他",
+			Num:  otherTags,
+		})
+	}
+	for k, v := range levelMap {
+		if k == 0 {
+			otherLevel = v
+			continue
+		}
+		countList.Level = append(countList.Level, dy.DyIntCate{
+			Name: k,
+			Num:  v,
+		})
+	}
+	sort.Slice(countList.Level, func(i, j int) bool {
+		return countList.Level[i].Num > countList.Level[j].Num
+	})
+	if otherLevel > 0 {
+		countList.Level = append(countList.Level, dy.DyIntCate{
+			Name: 0,
+			Num:  otherLevel,
+		})
+	}
+	if keyword == "" && (len(countList.Tags) > 0 || len(countList.Level) > 0) {
+		countJson := utils.SerializeData(countList)
+		_ = global.Cache.Set(cKey, countJson, 600)
+	}
+	return
+}
+
+func (receiver *ProductBusiness) ProductAwemeAuthorAnalysisCountV3(productId, shopId, keyword string, startTime, endTime time.Time) (countList dy.DyProductAwemeCount, comErr global.CommonError) {
+	countList = dy.DyProductAwemeCount{
+		Tags:  []dy.DyCate{},
+		Level: []dy.DyIntCate{},
+	}
+	cKey := ""
+	if shopId != "" {
+		cKey = cache.GetCacheKey(cache.ShopAwemeAuthorCount, shopId, startTime.Format("20060102"), endTime.Format("20060102"))
+	} else {
+		cKey = cache.GetCacheKey(cache.ProductAwemeAuthorCount, productId, startTime.Format("20060102"), endTime.Format("20060102"))
+	}
+	allList, _, comErr := es.NewEsVideoBusiness().SumSearchAwemeAuthor(productId, shopId, startTime, endTime)
+	tagsMap := map[string]int{}
+	levelMap := map[int]int{}
+	for _, l := range allList {
+		if len(l.Data.Hits.Hits) == 0 {
+			continue
+		}
+		v := l.Data.Hits.Hits[0].Source
+		if keyword != "" {
+			if strings.Index(v.Nickname, keyword) < 0 && v.UniqueId != keyword && v.ShortId != keyword {
+				continue
+			}
+		}
+		if v.Tags == "" || v.Tags == "null" {
+			v.Tags = "其他"
+		}
+		shopTags := []string{}
+		if strings.Index(v.Tags, "_") >= 0 {
+			shopTags = strings.Split(v.Tags, "_")
+		} else {
+			shopTags = strings.Split(v.Tags, "|")
+		}
+		for _, s := range shopTags {
+			if _, ok := tagsMap[s]; ok {
+				tagsMap[s] += 1
+			} else {
+				tagsMap[s] = 1
+			}
+		}
+		if _, ok := levelMap[v.Level]; ok {
+			levelMap[v.Level] += 1
+		} else {
+			levelMap[v.Level] = 1
+		}
 	}
 	otherTags := 0
 	otherLevel := 0

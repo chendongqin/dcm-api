@@ -421,26 +421,99 @@ func (receiver *ShopBusiness) ShopLiveAuthorAnalysis(shopId, keyword, tag string
 	return
 }
 
+func (receiver *ShopBusiness) ShopLiveAuthorAnalysisV3(shopId, keyword, tag string, startTime, endTime time.Time, minFollow, maxFollow int64, scoreType, page, pageSize int) (list []entity.DyProductAuthorAnalysis, total int, comErr global.CommonError) {
+	list = []entity.DyProductAuthorAnalysis{}
+	allList, _, comErr := es.NewEsLiveBusiness().SumSearchLiveAuthor("", shopId, startTime, endTime)
+	for _, l := range allList {
+		if len(l.Data.Hits.Hits) == 0 {
+			continue
+		}
+		v := l.Data.Hits.Hits[0].Source
+		v.PredictGmv = l.PredictGmv.Value
+		v.PredictSales = math.Floor(l.PredictSales.Value)
+		if keyword != "" {
+			if strings.Index(strings.ToLower(v.Nickname), strings.ToLower(keyword)) < 0 && v.DisplayId != keyword && v.ShortId != keyword {
+				continue
+			}
+		}
+		if scoreType != -1 && scoreType != v.Level {
+			continue
+		}
+		if tag == "其他" {
+			if v.Tags != "" && strings.Index(v.Tags, tag) < 0 {
+				continue
+			}
+		} else {
+			if tag != "" {
+				if strings.Index(v.Tags, tag) < 0 {
+					continue
+				}
+			}
+		}
+		list = append(list, entity.DyProductAuthorAnalysis{
+			AuthorId:    v.AuthorId,
+			DisplayId:   v.DisplayId,
+			FollowCount: v.FollowerCount,
+			Gmv:         v.PredictGmv,
+			Nickname:    v.Nickname,
+			Avatar:      v.Avatar,
+			Price:       v.Price,
+			ProductId:   v.ProductId,
+			Sales:       utils.ToInt64(math.Floor(v.PredictSales)),
+			Score:       v.Score,
+			Level:       v.Level,
+			ShopTags:    v.Tags,
+			ShortId:     v.ShortId,
+			ShopId:      v.ShopId,
+			Date:        v.Dt,
+		})
+	}
+	sort.Slice(list, func(i, j int) bool {
+		return list[i].Gmv > list[j].Gmv
+	})
+	total = len(list)
+	start := (page - 1) * pageSize
+	end := start + pageSize
+	if total < end {
+		end = total
+	}
+	if start > total {
+		start = total
+	}
+	if total == 0 {
+		return
+	}
+	list = list[start:end]
+	authorIds := []string{}
+	for _, v := range list {
+		authorIds = append(authorIds, v.AuthorId)
+	}
+	roomMap, productMap, _ := es.NewEsLiveBusiness().CountSearchLiveAuthorRoomProductNum("", shopId, authorIds, startTime, endTime)
+	for k, v := range list {
+		if num, exist := roomMap[v.AuthorId]; exist {
+			list[k].RoomNum = num
+		}
+		if num, exist := productMap[v.AuthorId]; exist {
+			list[k].ProductNum = num
+		}
+	}
+	return
+}
+
 //小店直播达人分析统计
 func (receiver *ShopBusiness) ShopLiveAuthorAnalysisCount(shopId, keyword string, startTime, endTime time.Time) (countList dy.DyProductLiveCount, comErr global.CommonError) {
 	countList = dy.DyProductLiveCount{
 		Tags:  []dy.DyCate{},
 		Level: []dy.DyIntCate{},
 	}
-	allList, _, comErr := es.NewEsLiveBusiness().SearchLiveAuthor("", shopId, startTime, endTime)
+	allList, _, comErr := es.NewEsLiveBusiness().SumSearchLiveAuthor("", shopId, startTime, endTime)
 	tagsMap := map[string]int{}
 	levelMap := map[int]int{}
-	authorMap := map[string]string{}
-	authorTagMap := map[string]string{}
-	for _, v := range allList {
-		if _, ok := authorMap[v.AuthorID]; ok {
+	for _, l := range allList {
+		if len(l.Data.Hits.Hits) == 0 {
 			continue
 		}
-		if at, ok := authorTagMap[v.AuthorID]; ok {
-			v.Tags = at
-		} else {
-			authorTagMap[v.AuthorID] = v.Tags
-		}
+		v := l.Data.Hits.Hits[0].Source
 		if keyword != "" {
 			if strings.Index(v.Nickname, keyword) < 0 && v.DisplayId != keyword && v.ShortId != keyword {
 				continue
@@ -467,7 +540,6 @@ func (receiver *ShopBusiness) ShopLiveAuthorAnalysisCount(shopId, keyword string
 		} else {
 			levelMap[v.Level] = 1
 		}
-		authorMap[v.AuthorID] = v.AuthorID
 	}
 	otherTags := 0
 	otherLevel := 0
@@ -508,6 +580,104 @@ func (receiver *ShopBusiness) ShopLiveAuthorAnalysisCount(shopId, keyword string
 			Name: 0,
 			Num:  otherLevel,
 		})
+	}
+	return
+}
+
+func (receiver *ShopBusiness) ShopLiveAuthorAnalysisCountV3(shopId, keyword string, startTime, endTime time.Time) (countList dy.DyProductLiveCount, comErr global.CommonError) {
+	countList = dy.DyProductLiveCount{
+		Tags:  []dy.DyCate{},
+		Level: []dy.DyIntCate{},
+	}
+	cKey := cache.GetCacheKey(cache.ShopAuthorCount, shopId, startTime.Format("20060102"), endTime.Format("20060102"))
+	if keyword == "" {
+		countJson := global.Cache.Get(cKey)
+		if countJson != "" {
+			countJson = utils.DeserializeData(countJson)
+			_ = jsoniter.Unmarshal([]byte(countJson), &countList)
+			return
+		}
+	}
+	allList, _, comErr := es.NewEsLiveBusiness().SumSearchLiveAuthor("", shopId, startTime, endTime)
+	tagsMap := map[string]int{}
+	levelMap := map[int]int{}
+	for _, l := range allList {
+		if len(l.Data.Hits.Hits) == 0 {
+			continue
+		}
+		v := l.Data.Hits.Hits[0].Source
+		v.PredictGmv = l.PredictGmv.Value
+		v.PredictSales = math.Floor(l.PredictSales.Value)
+		if keyword != "" {
+			if strings.Index(v.Nickname, keyword) < 0 && v.DisplayId != keyword && v.ShortId != keyword {
+				continue
+			}
+		}
+		if v.Tags == "" || v.Tags == "null" {
+			v.Tags = "其他"
+		}
+		shopTags := []string{}
+		if strings.Index(v.Tags, "_") >= 0 {
+			shopTags = strings.Split(v.Tags, "_")
+		} else {
+			shopTags = strings.Split(v.Tags, "|")
+		}
+		for _, s := range shopTags {
+			if _, ok := tagsMap[s]; ok {
+				tagsMap[s] += 1
+			} else {
+				tagsMap[s] = 1
+			}
+		}
+		if _, ok := levelMap[v.Level]; ok {
+			levelMap[v.Level] += 1
+		} else {
+			levelMap[v.Level] = 1
+		}
+	}
+	otherTags := 0
+	otherLevel := 0
+	for k, v := range tagsMap {
+		if k == "其他" {
+			otherTags = v
+			continue
+		}
+		countList.Tags = append(countList.Tags, dy.DyCate{
+			Name: k,
+			Num:  v,
+		})
+	}
+	sort.Slice(countList.Tags, func(i, j int) bool {
+		return countList.Tags[i].Num > countList.Tags[j].Num
+	})
+	if otherTags > 0 {
+		countList.Tags = append(countList.Tags, dy.DyCate{
+			Name: "其他",
+			Num:  otherTags,
+		})
+	}
+	for k, v := range levelMap {
+		if k == 0 {
+			otherLevel = v
+			continue
+		}
+		countList.Level = append(countList.Level, dy.DyIntCate{
+			Name: k,
+			Num:  v,
+		})
+	}
+	sort.Slice(countList.Level, func(i, j int) bool {
+		return countList.Level[i].Num > countList.Level[j].Num
+	})
+	if otherLevel > 0 {
+		countList.Level = append(countList.Level, dy.DyIntCate{
+			Name: 0,
+			Num:  otherLevel,
+		})
+	}
+	if keyword == "" && (len(countList.Tags) > 0 || len(countList.Level) > 0) {
+		countJson := utils.SerializeData(countList)
+		_ = global.Cache.Set(cKey, countJson, 300)
 	}
 	return
 }

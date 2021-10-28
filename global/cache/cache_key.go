@@ -29,12 +29,14 @@ const (
 	//直播间商品分类数据缓存
 	LiveRoomProductCount     KeyName = "dcm:live:room:product:count:%s"
 	ProductAuthorCount       KeyName = "dcm:product:author:%s:%s:%s"
+	ShopAuthorCount          KeyName = "dcm:shop:author:%s:%s:%s"
 	LivePromotionsDetailList KeyName = "dcm:live:promotions:detail:%s:%s"
 	LiveRoomProductList      KeyName = "dcm:live:product:list:%s"
 	//商品达人数据缓存
 	ProductAuthorAllList      KeyName = "dcm:product:author:row:%s:%s"
 	ProductAuthorAllMap       KeyName = "dcm:product:author:info:%s:%s"
 	ProductAwemeAuthorCount   KeyName = "dcm:product:aweme:author:%s:%s:%s"
+	ShopAwemeAuthorCount      KeyName = "dcm:shop:aweme:author:%s:%s:%s"
 	ProductAwemeAuthorAllList KeyName = "dcm:product:aweme:author:row:%s:%s"
 	ProductAwemeAuthorAllMap  KeyName = "dcm:product:aweme:author:info:%s:%s"
 	AuthorProductAllList      KeyName = "dcm:author:product:row:%s:%s"

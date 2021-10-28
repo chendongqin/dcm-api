@@ -574,7 +574,7 @@ func (this *ElasticMultiQuery) elasticQuery() (*esapi.Response, error) {
 	if this.IsDeepPage {
 		return nil, errors.New("超过翻页最大限制")
 	}
-	defaultTimeout := 5 * time.Second
+	defaultTimeout := 1 * time.Second
 	if this.Timeout != nil {
 		defaultTimeout = *this.Timeout
 	}

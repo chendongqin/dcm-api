@@ -106,6 +106,8 @@ func (i *EsProductBusiness) BaseSearch(productId, keyword, category, secondCateg
 	//	sortOrder = elasticsearch.NewElasticOrder().Add("is_yesterday", "desc").Add(sortStr, orderBy).Order
 	//}
 	var cacheTime time.Duration = 120
+	var outTime time.Duration = 10
+	esMultiQuery.Timeout = &outTime
 	results := esMultiQuery.
 		SetConnection(connection).
 		SetTable(esTable).
@@ -484,14 +486,16 @@ func (i *EsProductBusiness) SimpleSearchByIds(productIds []string, page, pageSiz
 func (i *EsProductBusiness) KeywordSearch(keyword string) (list []es.DyProduct) {
 	esQuery, esMultiQuery := elasticsearch.NewElasticQueryGroup()
 	esTable, connection := GetESTable(es.DyProductTable)
-	esQuery.SetMatchPhrase("title", keyword)
+	if keyword != "" {
+		esQuery.SetMatchPhrase("title", keyword)
+	}
 	var cacheTime time.Duration = 60
 	results := esMultiQuery.
 		SetConnection(connection).
 		SetTable(esTable).
 		SetCache(cacheTime).
 		AddShould(esQuery.Condition).
-		SetLimit(0, 3).
+		SetLimit(0, 2).
 		SetOrderBy(elasticsearch.NewElasticOrder().Add("order_account", "desc").Order).
 		SetMultiQuery().
 		Query()
