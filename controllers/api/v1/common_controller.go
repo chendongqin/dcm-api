@@ -430,10 +430,10 @@ func (receiver *CommonController) DyUnionSearch() {
 		}
 	}
 	keyword := receiver.GetString("keyword", "")
-	if keyword == "" {
-		receiver.FailReturn(global.NewError(4000))
-		return
-	}
+	//if keyword == "" {
+	//	receiver.FailReturn(global.NewError(4000))
+	//	return
+	//}
 	receiver.KeywordBan(keyword)
 	authorList := es.NewEsAuthorBusiness().KeywordSearch(keyword)
 	for k, v := range authorList {

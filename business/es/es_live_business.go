@@ -1185,7 +1185,9 @@ func (receiver *EsLiveBusiness) KeywordSearch(keyword string) (list []es.EsDyLiv
 	if err != nil {
 		return
 	}
-	esQuery.SetMultiMatch([]string{"display_id.keyword", "short_id.keyword", "title.keyword", "nickname.keyword", "product_title.keyword"}, keyword)
+	if keyword != "" {
+		esQuery.SetMultiMatch([]string{"display_id.keyword", "short_id.keyword", "title.keyword", "nickname.keyword", "product_title.keyword"}, keyword)
+	}
 	esQuery.SetRange("create_time", map[string]interface{}{
 		"gte": startTime.Unix(),
 		"lt":  time.Now().Unix(),
