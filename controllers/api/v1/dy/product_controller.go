@@ -518,10 +518,34 @@ func (receiver *ProductController) ProductBase() {
 	//	shopName = productInfo.TbNick
 	//}
 	label := productInfo.DcmLevelFirst
+	resFirstCname := productInfo.DcmLevelFirst
+	resSecondCname := productInfo.ManmadeCategory.FirstCname
+	resThirdCname := productInfo.ManmadeCategory.SecondCname
 	if productInfo.PlatformLabel == "小店" {
 		label = brandInfo.DcmLevelFirst
+		//分类优先从brandInfo取
+		resFirstCname = brandInfo.DcmLevelFirst
+		resSecondCname = brandInfo.ManmadeCategory.FirstCname
+		resThirdCname = brandInfo.ManmadeCategory.SecondCname
+		if resSecondCname == "" {
+			resSecondCname = brandInfo.Category.FirstCname
+			resThirdCname = brandInfo.Category.SecondCname
+		}
 	} else {
 		shopId = ""
+	}
+	if label == "" {
+		//如果brandInfo无数据,取productInfo
+		//同步修改，保证数据源一致
+		label = productInfo.DcmLevelFirst
+		resFirstCname = productInfo.DcmLevelFirst
+		if productInfo.ManmadeCategory.FirstCname != "" {
+			resSecondCname = productInfo.ManmadeCategory.FirstCname
+			resThirdCname = productInfo.ManmadeCategory.SecondCname
+		} else {
+			resSecondCname = productInfo.AiCategory.FirstCname
+			resThirdCname = productInfo.AiCategory.SecondCname
+		}
 	}
 	if label == "" {
 		label = "其他"
@@ -545,9 +569,9 @@ func (receiver *ProductController) ProductBase() {
 		CosRatioMoney:       productInfo.CosRatio / 100 * productInfo.Price,
 		TbCouponPrice:       productInfo.TbCouponPrice,
 		TbCouponRemainCount: productInfo.TbCouponRemainCount,
-		FirstCname:          productInfo.DcmLevelFirst,
-		SecondCname:         productInfo.AiCategory.FirstCname,
-		ThirdCname:          productInfo.AiCategory.SecondCname,
+		FirstCname:          resFirstCname,
+		SecondCname:         resSecondCname,
+		ThirdCname:          resThirdCname,
 	}
 	if simpleInfo.TbCouponRemainCount == 0 || simpleInfo.TbCouponPrice == 0 {
 		simpleInfo.TbCouponPrice = simpleInfo.Price
