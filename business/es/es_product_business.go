@@ -122,6 +122,7 @@ func (i *EsProductBusiness) BaseSearch(productId, keyword, category, secondCateg
 	return
 }
 
+//拼接商品库字段日期后缀
 func FixDate(fields string, dateType int) string {
 	if !utils.InArrayString(fields, []string{"pv", "cvr", "order_account", "gpm", "is_coupon", "platform_label", "relate_aweme", "relate_room", "relate_author", "is_star"}) {
 		return fields
@@ -229,7 +230,7 @@ func (i *EsProductBusiness) BaseSearchNew(productId, keyword, category, secondCa
 		}
 		esQuery.SetRange(FixDate("gpm", dateType), rangeMap)
 	}
-	sortOrder := elasticsearch.NewElasticOrder().Add(FixDate(sortStr, dateType)+".keyword", orderBy).Order
+	sortOrder := elasticsearch.NewElasticOrder().Add(FixDate(sortStr, dateType), orderBy).Order
 	var cacheTime time.Duration = 120
 	results := esMultiQuery.
 		SetConnection(connection).

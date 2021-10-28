@@ -227,7 +227,7 @@ func (receiver *ProductController) SearchNew() {
 	}
 	var productIds []string
 	for k, v := range list {
-		list[k].Cvr = utils.ToString(utils.RateMin(utils.ToFloat64(list[k].Cvr)))
+		list[k].Cvr = utils.RateMin(list[k].Cvr)
 		list[k].Image = dyimg.Fix(v.Image)
 		productIds = append(productIds, v.ProductId)
 		list[k].ProductId = business.IdEncrypt(v.ProductId)
