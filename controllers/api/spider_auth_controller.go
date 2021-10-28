@@ -35,6 +35,24 @@ func (this *SpiderAuthController) GetQrCodeMcn() {
 	this.SuccReturn(ret)
 }
 
+func (this *SpiderAuthController) GetQrCodeBuyin() {
+	s := business.NewDySpiderAuthScan()
+	res, csrfToken, codeIP := s.GetQrCodeBuyin(this.Ip)
+	if res == nil {
+		this.FailReturn(global.NewMsgError("获取二维码失败,请重新刷新页面"))
+		return
+	}
+
+	ret := new(business.SpiderAuthData)
+	ret.CsrfToken = csrfToken
+	ret.QrcodeIndexUrl, _ = res.Get("data").Get("qrcode_index_url").String()
+	ret.Qrcode, _ = res.Get("data").Get("qrcode").String()
+	ret.Token, _ = res.Get("data").Get("token").String()
+	ret.CodeIP = codeIP
+
+	this.SuccReturn(ret)
+}
+
 //扫完码  用token获取用户信息
 func (this *SpiderAuthController) CheckQrConnectMcn() {
 	InputDatas := this.InputFormat()
