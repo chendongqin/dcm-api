@@ -370,7 +370,7 @@ func (receiver *ShopController) ShopLiveAuthorAnalysis() {
 		receiver.FailReturn(global.NewError(4000))
 		return
 	}
-	list, total, comErr := business.NewShopBusiness().ShopLiveAuthorAnalysis(shopId, keyword, tag, sortStr, orderBy, startTime, endTime, minFollow, maxFollow, scoreType, page, pageSize)
+	list, total, totalSales, totalGmv, comErr := business.NewShopBusiness().ShopLiveAuthorAnalysis(shopId, keyword, tag, sortStr, orderBy, startTime, endTime, minFollow, maxFollow, scoreType, page, pageSize)
 	if comErr != nil {
 		receiver.FailReturn(comErr)
 		return
@@ -388,6 +388,8 @@ func (receiver *ShopController) ShopLiveAuthorAnalysis() {
 		"list":           list,
 		"total":          total,
 		"max_show_total": maxTotal,
+		"total_sales":    totalSales,
+		"total_gmv":      totalGmv,
 	})
 	return
 }
@@ -512,7 +514,7 @@ func (receiver *ShopController) ShopAwemeAuthorAnalysis() {
 		receiver.FailReturn(global.NewError(4000))
 		return
 	}
-	list, total, _, _, comErr := business.NewProductBusiness().ProductAwemeAuthorAnalysis("", shopId, keyword, tag, sortStr, orderBy, startTime, endTime, minFollow, maxFollow, scoreType, page, pageSize)
+	list, total, totalSales, totalGmv, comErr := business.NewProductBusiness().ProductAwemeAuthorAnalysis("", shopId, keyword, tag, sortStr, orderBy, startTime, endTime, minFollow, maxFollow, scoreType, page, pageSize)
 	if comErr != nil {
 		receiver.FailReturn(comErr)
 		return
@@ -533,6 +535,8 @@ func (receiver *ShopController) ShopAwemeAuthorAnalysis() {
 		"list":           list,
 		"total":          total,
 		"max_show_total": maxTotal,
+		"total_sales":    totalSales,
+		"totalGmv":       totalGmv,
 	})
 	return
 }

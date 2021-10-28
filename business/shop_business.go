@@ -281,7 +281,7 @@ func (receiver *ShopBusiness) ShopAuthorView(shopId string, startTime, endTime t
 }
 
 //小店直播达人分析
-func (receiver *ShopBusiness) ShopLiveAuthorAnalysis(shopId, keyword, tag, sortStr, orderBy string, startTime, endTime time.Time, minFollow, maxFollow int64, scoreType, page, pageSize int) (list []entity.DyProductAuthorAnalysis, total int, comErr global.CommonError) {
+func (receiver *ShopBusiness) ShopLiveAuthorAnalysis(shopId, keyword, tag, sortStr, orderBy string, startTime, endTime time.Time, minFollow, maxFollow int64, scoreType, page, pageSize int) (list []entity.DyProductAuthorAnalysis, total int, totalSales int64, totalGmv float64, comErr global.CommonError) {
 	list = []entity.DyProductAuthorAnalysis{}
 	allList, _, comErr := es.NewEsLiveBusiness().SumSearchLiveAuthor("", shopId, startTime, endTime)
 	for _, l := range allList {
@@ -316,6 +316,8 @@ func (receiver *ShopBusiness) ShopLiveAuthorAnalysis(shopId, keyword, tag, sortS
 		if maxFollow > 0 && v.FollowerCount >= maxFollow {
 			continue
 		}
+		totalSales = totalSales + utils.ToInt64(math.Floor(v.PredictSales))
+		totalGmv = totalGmv + v.PredictGmv
 		list = append(list, entity.DyProductAuthorAnalysis{
 			AuthorId:    v.AuthorId,
 			DisplayId:   v.DisplayId,
