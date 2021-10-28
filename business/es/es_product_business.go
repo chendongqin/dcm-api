@@ -231,6 +231,8 @@ func (i *EsProductBusiness) BaseSearchNew(productId, keyword, category, secondCa
 	}
 	sortOrder := elasticsearch.NewElasticOrder().Add(FixDate(sortStr, dateType), orderBy).Order
 	var cacheTime time.Duration = 120
+	var outTime time.Duration = 10
+	esMultiQuery.Timeout = &outTime
 	results := esMultiQuery.
 		SetConnection(connection).
 		SetTable(esTable).
