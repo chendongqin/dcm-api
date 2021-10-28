@@ -1235,6 +1235,60 @@ func (this *DySpiderAuthScan) GetQrCodeMcn(requestIP string) (*simplejson.Json, 
 	return jsonObj, csrfToken, newIp
 }
 
+//获取二维码 mcn
+func (this *DySpiderAuthScan) GetQrCodeBuyin(requestIP string) (*simplejson.Json, string, string) {
+	dyUrl := "https://open.douyin.com/oauth/get_qrcode/?client_key=aw7tduvjdk1a0x3r&scope=mobile%2Cuser_info%2Cvideo.create%2Cvideo.data&next=https%3A%2F%2Fbuyin.jinritemai.com%2Faccount%2Fpage%2Fservice%2Flogin%3F&state=douyin_sso"
+	method := "GET"
+
+	client := &http.Client{
+		Timeout: 15 * time.Second,
+	}
+	req, err := http.NewRequest(method, dyUrl, nil)
+	if err != nil {
+		fmt.Println(err)
+	}
+	//req.Header.Add("Host", "sso.douyin.com")
+	req.Header.Add("Referer", "https://open.douyin.com/platform/oauth/connect?client_key=aw7tduvjdk1a0x3r&state=douyin_sso&response_type=code&scope=mobile%2Cuser_info%2Cvideo.create%2Cvideo.data&redirect_uri=https%3A%2F%2Fbuyin.jinritemai.com%2Faccount%2Fpage%2Fservice%2Flogin%3F")
+	req.Header.Add("User-Agent", "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/93.0.4577.82 Safari/537.36")
+
+	//设置代理
+	urli := url.URL{}
+	newIp, _, _, err := NewSpiderBusiness().NewProxyIPWithRequestIP(requestIP)
+	if err != nil {
+		return nil, "", ""
+	}
+	urlproxy, err := urli.Parse("http://" + newIp)
+	if err != nil {
+		logs.Error("扫码授权账号代理设置异常")
+		return nil, "", ""
+	}
+	//设置代理
+	tr := &http.Transport{
+		TLSClientConfig: &tls.Config{InsecureSkipVerify: true},
+		Proxy:           http.ProxyURL(urlproxy),
+	}
+	client.Transport = tr
+	res, err := client.Do(req)
+	if res != nil {
+		defer res.Body.Close()
+	}
+	if err != nil {
+		return nil, "", ""
+	}
+	body, err := ioutil.ReadAll(res.Body)
+	jsonObj, _ := simplejson.NewJson(body)
+
+	csrfToken := ""
+	cookie := res.Cookies()
+	for _, c := range cookie {
+		if c.Name == "passport_csrf_token" {
+			csrfToken = c.Value
+		}
+	}
+
+	return jsonObj, csrfToken, newIp
+}
+
 //扫完码 获取cookie mcn
 func (this *DySpiderAuthScan) CheckQrConnectMcn(token string, csrfToken, codeIP string) (bool, []*http.Cookie) {
 	//dyUrl := "https://sso.douyin.com/check_qrconnect/?aid=10006&service=https%3A%2F%2Fwww.douyin.com%2Fmcn%2F&account_sdk_source=sso&token=" + token + "&web_timestamp=" + utils.ToString(time.Now().Unix()*1000)
