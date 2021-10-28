@@ -133,11 +133,12 @@ type RedAuthorRoomBox struct {
 }
 
 type DyAuthorIncome struct {
-	AuthorId     string `json:"author_id"`
-	Avatar       string `json:"avatar"`
-	Nickname     string `json:"nickname"`
-	UniqueId     string `json:"unique_id"`
-	IsCollection int    `json:"is_collection"`
+	AuthorId      string `json:"author_id"`
+	Avatar        string `json:"avatar"`
+	Nickname      string `json:"nickname"`
+	UniqueId      string `json:"unique_id"`
+	IsCollection  int    `json:"is_collection"`
+	FollowerCount int64  `json:"follower_count"`
 }
 
 type DyAuthorStoreSimple struct {
