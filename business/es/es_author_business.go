@@ -347,6 +347,7 @@ func (receiver *EsAuthorBusiness) KeywordSearch(keyword string) (list []es.DyAut
 	esQuery, esMultiQuery := elasticsearch.NewElasticQueryGroup()
 	esTable, connection := GetESTable(es.DyAuthorTable)
 	esQuery.SetTerm("exist", 1)
+	sortStr := "follower_incre_count"
 	if keyword != "" {
 		if utils.HasChinese(keyword) {
 			slop := 100
@@ -361,6 +362,7 @@ func (receiver *EsAuthorBusiness) KeywordSearch(keyword string) (list []es.DyAut
 			esQuery.
 				SetMultiMatch([]string{"author_id", "nickname", "unique_id", "short_id"}, keyword)
 		}
+		sortStr = "follower_count"
 	}
 	var cacheTime time.Duration = 60
 	results := esMultiQuery.
@@ -369,7 +371,7 @@ func (receiver *EsAuthorBusiness) KeywordSearch(keyword string) (list []es.DyAut
 		SetCache(cacheTime).
 		AddMust(esQuery.Condition).
 		SetLimit(0, 2).
-		SetOrderBy(elasticsearch.NewElasticOrder().Add("follower_count", "desc").Order).
+		SetOrderBy(elasticsearch.NewElasticOrder().Add(sortStr, "desc").Order).
 		SetMultiQuery().
 		Query()
 	utils.MapToStruct(results, &list)
