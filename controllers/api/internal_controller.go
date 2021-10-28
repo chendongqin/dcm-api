@@ -406,17 +406,26 @@ func (receiver *InternalController) CommonUrlLog() {
 func (receiver *InternalController) SpeedUp() {
 	days := receiver.Ctx.Input.Param(":days")
 	daysInt := utils2.ToInt(days)
+	typeString := receiver.Ctx.Input.Param(":type")
+	endTime := utils2.ToInt64(receiver.Ctx.Input.Param(":end_time"))
+	page := utils2.ToInt(receiver.Ctx.Input.Param(":page"))
+	if page < 1 {
+		page = 1
+	}
+	if endTime > time.Now().Unix() {
+		receiver.FailReturn(global.NewError(4000))
+		return
+	}
 	if !utils2.InArrayInt(daysInt, []int{0, 7}) {
 		receiver.FailReturn(global.NewError(4000))
 		return
 	}
-	safe := business.NewSafeBusiness()
-	var data map[string][]string
-	data = make(map[string][]string)
-	keys := []string{"speed_author", "speed_live", "speed_product"}
-	for _, v := range keys {
-		data[v] = safe.SpeedFilterLog(v, daysInt)
+
+	if !utils2.InArrayString(typeString, []string{"speed_author", "speed_live", "speed_product"}) {
+		receiver.FailReturn(global.NewError(4000))
+		return
 	}
-	receiver.SuccReturn(data)
-	//safe.SpeedFilterLog("speed_live",daysInt)
+	safe := business.NewSafeBusiness()
+	result := safe.SpeedFilterLog(typeString, daysInt, endTime, page)
+	receiver.SuccReturn(result)
 }

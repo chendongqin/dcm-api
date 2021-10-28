@@ -2,7 +2,6 @@ package v1
 
 import (
 	"dongchamao/business"
-	"dongchamao/command"
 	"dongchamao/controllers/api"
 	"dongchamao/global"
 	"dongchamao/global/cache"
@@ -681,7 +680,7 @@ func (receiver *AccountController) Cancel() {
 //获取各个榜单对应的日期时间筛选
 func (receiver *AccountController) TopDateTime() {
 	key := receiver.Ctx.Input.Param(":key")
-	main, hourList, weekList, monthList, err := command.SwitchTopDateTime(key)
+	main, hourList, weekList, monthList, err := business.NewRankBusiness().SwitchTopDateTime(key)
 	if err != nil {
 		receiver.FailReturn(err)
 	}
