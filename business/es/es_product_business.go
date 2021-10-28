@@ -122,6 +122,7 @@ func (i *EsProductBusiness) BaseSearch(productId, keyword, category, secondCateg
 	return
 }
 
+//拼接商品库字段日期后缀
 func FixDate(fields string, dateType int) string {
 	if !utils.InArrayString(fields, []string{"pv", "cvr", "order_account", "gpm", "is_coupon", "platform_label", "relate_aweme", "relate_room", "relate_author", "is_star"}) {
 		return fields
