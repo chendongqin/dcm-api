@@ -144,11 +144,18 @@ func (receiver *ShopBusiness) ShopProductAnalysisCount(shopId, keyword string, s
 		startKey := ""
 		stopKey := "99999999999999999999"
 		hbaseList, _ = hbase.GetShopProductAnalysisRangDate(shopId, startKey, stopKey, startTime, stopTime)
+		sort.Slice(hbaseList, func(i, j int) bool {
+			return hbaseList[i].Date > hbaseList[j].Date
+		})
 		_ = global.Cache.Set(cacheKey, utils.SerializeData(hbaseList), 300)
 	}
 	countMap := map[string]map[string]int{}
 	countSonMap := map[string]map[string]map[string]int{}
+	productMap := map[string]string{}
 	for _, v := range hbaseList {
+		if _, exist := productMap[v.ProductId]; exist {
+			continue
+		}
 		if keyword != "" {
 			if strings.Index(v.Title, keyword) < 0 {
 				continue
