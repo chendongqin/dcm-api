@@ -160,6 +160,10 @@ func (t *RankBusiness) monitorProductSale(desc string, param MonitorParam) (res 
 		Desc: desc,
 	}
 	res = t.checkLiveHotRank(row, param.Type)
+	if res {
+		pathString := "/v1/dy/rank/product/sale/%s?data_type=1&first_cate=%s&order_by=desc&sort=order_count&page=1&page_size=50"
+		t.monitorCategory(desc, pathString, reqDate, param.Type)
+	}
 	return
 }
 
@@ -173,6 +177,10 @@ func (t *RankBusiness) monitorProductShare(desc string, param MonitorParam) (res
 		Desc: desc,
 	}
 	res = t.checkLiveHotRank(row, param.Type)
+	if res {
+		pathString := "/v1/dy/rank/product/share/%s?first_cate=%s&data_type=1&order_by=desc&sort=share_count&page=1&page_size=50"
+		t.monitorCategory(desc, pathString, reqDate, param.Type)
+	}
 	return
 }
 
@@ -386,7 +394,7 @@ func (t *RankBusiness) monitorCategory(desc, pathString, reqDate, mointType stri
 		path := fmt.Sprintf(pathString, reqDate, v.Name)
 		row := PathDesc{
 			Path: path,
-			Desc: desc,
+			Desc: fmt.Sprintf("%s-%s", desc, v.Name),
 		}
 		t.checkLiveHotRank(row, mointType)
 	}
