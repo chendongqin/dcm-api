@@ -832,7 +832,7 @@ func (receiver *PayController) CreateOrderInvoice() {
 		BankAccount: bankAccount,
 		RegAddress:  regAddress,
 		InvoiceType: invoiceType,
-		Address:     regAddress,
+		Address:     address,
 		Remark:      remark,
 		CreateTime:  now,
 		UpdateTime:  now,

@@ -534,7 +534,7 @@ func (receiver *ProductController) ProductBase() {
 	} else {
 		shopId = ""
 	}
-	if label == "" {
+	if label == "" || label == "null" {
 		//如果brandInfo无数据,取productInfo
 		//同步修改，保证数据源一致
 		label = productInfo.DcmLevelFirst
@@ -547,7 +547,7 @@ func (receiver *ProductController) ProductBase() {
 			resThirdCname = productInfo.AiCategory.SecondCname
 		}
 	}
-	if label == "" {
+	if label == "" || label == "null" {
 		label = "其他"
 	}
 	simpleInfo := dy2.SimpleDyProduct{

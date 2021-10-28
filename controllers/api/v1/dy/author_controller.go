@@ -1277,6 +1277,7 @@ func (receiver *AuthorController) AuthorListIncomeSearch() {
 					tempAuthor.Avatar = dyimg.Fix(v.Avatar)
 					tempAuthor.Nickname = v.Nickname
 					tempAuthor.IsCollection = 0
+					tempAuthor.FollowerCount = v.FollowerCount
 					authorIncomeList = append(authorIncomeList, tempAuthor)
 				}
 				if err1 != nil {
@@ -1286,11 +1287,12 @@ func (receiver *AuthorController) AuthorListIncomeSearch() {
 			} else {
 				for _, author := range list {
 					authorIncome := dy2.DyAuthorIncome{
-						AuthorId:     author.AuthorId,
-						Avatar:       author.Avatar,
-						Nickname:     author.Nickname,
-						UniqueId:     author.UniqueId,
-						IsCollection: 1,
+						AuthorId:      author.AuthorId,
+						Avatar:        author.Avatar,
+						Nickname:      author.Nickname,
+						UniqueId:      author.UniqueId,
+						FollowerCount: author.FollowerCount,
+						IsCollection:  1,
 					}
 					authorIncome.AuthorId = business.IdEncrypt(authorIncome.AuthorId)
 					authorIncome.Avatar = dyimg.Fix(authorIncome.Avatar)
@@ -1310,6 +1312,7 @@ func (receiver *AuthorController) AuthorListIncomeSearch() {
 			tempAuthor.Avatar = dyimg.Fix(v.Avatar)
 			tempAuthor.Nickname = v.Nickname
 			tempAuthor.IsCollection = 0
+			tempAuthor.FollowerCount = v.FollowerCount
 			authorIncomeList = append(authorIncomeList, tempAuthor)
 		}
 		if err1 != nil {
