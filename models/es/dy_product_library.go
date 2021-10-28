@@ -49,7 +49,7 @@ type ProductNew struct {
 	OrderAccount   int64   `json:"order_account"`
 	Gpm            int64   `json:"gpm"`
 	IsCoupon       int     `json:"is_coupon"`
-	CommerceType   int64   `json:"commerce_type"`
+	CommerceType   int     `json:"commerce_type"`
 	PlatformLabel  string  `json:"platform_label"`
 	RelateAweme    int64   `json:"relate_aweme"`
 	RelateRoom     int64   `json:"relate_room"`
@@ -63,6 +63,20 @@ type ProductNew struct {
 	RelateAweme7   int64   `json:"relate_aweme_7"`
 	Cvr7           float64 `json:"cvr_7"`
 	RelateAuthor7  int64   `json:"relate_author_7"`
-	ShopName       string  `json:"shop_name"`
-	IsCollect      int     `json:"is_collect"`
+	Cvr15          float64 `json:"cvr_15"`
+	OrderAccount15 int64   `json:"order_account_15"`
+	RelateRoom15   int64   `json:"relate_room_15"`
+	RelateAuthor15 int64   `json:"relate_author_15"`
+	CommerceType15 int64   `json:"commerce_type_15"`
+	Pv15           int64   `json:"pv_15"`
+	RelateAweme15  int64   `json:"relate_aweme_15"`
+	Gpm15          int64   `json:"gpm_15"`
+	OrderAccount30 int64   `json:"order_account_30"`
+	CommerceType30 int64   `json:"commerce_type_30"`
+	RelateAuthor30 int64   `json:"relate_author_30"`
+	Pv30           int64   `json:"pv_30"`
+	RelateAweme30  int64   `json:"relate_aweme_30"`
+	Gpm30          int64   `json:"gpm_30"`
+	Cvr30          float64 `json:"cvr_30"`
+	RelateRoom30   int64   `json:"relate_room_30"`
 }
