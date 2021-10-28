@@ -506,20 +506,14 @@ func (receiver *ShopBusiness) ShopLiveAuthorAnalysisCount(shopId, keyword string
 		Tags:  []dy.DyCate{},
 		Level: []dy.DyIntCate{},
 	}
-	allList, _, comErr := es.NewEsLiveBusiness().SearchLiveAuthor("", shopId, startTime, endTime)
+	allList, _, comErr := es.NewEsLiveBusiness().SumSearchLiveAuthor("", shopId, startTime, endTime)
 	tagsMap := map[string]int{}
 	levelMap := map[int]int{}
-	authorMap := map[string]string{}
-	authorTagMap := map[string]string{}
-	for _, v := range allList {
-		if _, ok := authorMap[v.AuthorID]; ok {
+	for _, l := range allList {
+		if len(l.Data.Hits.Hits) == 0 {
 			continue
 		}
-		if at, ok := authorTagMap[v.AuthorID]; ok {
-			v.Tags = at
-		} else {
-			authorTagMap[v.AuthorID] = v.Tags
-		}
+		v := l.Data.Hits.Hits[0].Source
 		if keyword != "" {
 			if strings.Index(v.Nickname, keyword) < 0 && v.DisplayId != keyword && v.ShortId != keyword {
 				continue
@@ -546,7 +540,6 @@ func (receiver *ShopBusiness) ShopLiveAuthorAnalysisCount(shopId, keyword string
 		} else {
 			levelMap[v.Level] = 1
 		}
-		authorMap[v.AuthorID] = v.AuthorID
 	}
 	otherTags := 0
 	otherLevel := 0

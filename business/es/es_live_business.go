@@ -1609,6 +1609,8 @@ func (receiver *EsLiveBusiness) SumSearchLiveAuthor(productId, shopId string, st
 		esQuery.SetTerm("shop_id", shopId)
 	}
 	var cacheTime time.Duration = 600
+	var outTime time.Duration = 10
+	esMultiQuery.Timeout = &outTime
 	results := esMultiQuery.
 		SetConnection(connection).
 		SetTable(esTable).

@@ -956,6 +956,8 @@ func (receiver *EsVideoBusiness) CountSearchAuthorAwemeProductNum(productId, sho
 			},
 		}
 	}
+	var outTime time.Duration = 10
+	esMultiQuery.Timeout = &outTime
 	results := esMultiQuery.
 		SetConnection(connection).
 		SetTable(esTable).
