@@ -289,71 +289,20 @@ func (receiver *ProductBusiness) ProductAuthorViewV3(productId string, startTime
 	allTop3 = []dy.NameValueInt64PercentChart{}
 	liveTop3 = []dy.NameValueInt64PercentChart{}
 	awemeTop3 = []dy.NameValueInt64PercentChart{}
-	esProductBusiness := es.NewEsProductBusiness()
-	//直播达人
-	allLiveList := make([]entity.DyProductAuthorAnalysis, 0)
-	startRow, stopRow, _, comErr := esProductBusiness.SearchRangeDateRowKey(productId, "", startTime, endTime)
-	if comErr != nil {
-		return
-	}
-	if startRow.ProductId != "" && stopRow.ProductId != "" {
-		startRowKey := startRow.ProductId + "_" + startRow.CreateSdf + "_" + startRow.AuthorId
-		stopRowKey := stopRow.ProductId + "_" + stopRow.CreateSdf + "_" + stopRow.AuthorId
-		cacheKey := cache.GetCacheKey(cache.ProductAuthorAllList, startRowKey, stopRowKey)
-		cacheStr := global.Cache.Get(cacheKey)
-		if cacheStr != "" {
-			cacheStr = utils.DeserializeData(cacheStr)
-			_ = jsoniter.Unmarshal([]byte(cacheStr), &allLiveList)
-		} else {
-			if startRowKey != stopRowKey {
-				allLiveList, _ = hbase.GetProductAuthorAnalysisRange(startRowKey, stopRowKey)
-			}
-			lastRow, err := hbase.GetProductAuthorAnalysis(stopRowKey)
-			if err == nil {
-				allLiveList = append(allLiveList, lastRow)
-			}
-			sort.Slice(allLiveList, func(i, j int) bool {
-				return allLiveList[i].Date > allLiveList[j].Date
-			})
-			_ = global.Cache.Set(cacheKey, utils.SerializeData(allLiveList), 300)
-		}
-	}
-
-	//视频达人
-	startRow, stopRow, _, comErr = esProductBusiness.SearchAwemeRangeDateRowKey(productId, "", startTime, endTime)
-	if comErr != nil {
-		return
-	}
-	allAwemeList := make([]entity.DyProductAwemeAuthorAnalysis, 0)
-	if startRow.ProductId != "" && stopRow.ProductId != "" {
-		startRowKey := startRow.ProductId + "_" + startRow.CreateSdf + "_" + startRow.AuthorId
-		stopRowKey := stopRow.ProductId + "_" + stopRow.CreateSdf + "_" + stopRow.AuthorId
-		cacheAwemeKey := cache.GetCacheKey(cache.ProductAwemeAuthorAllList, startRowKey, stopRowKey)
-		cacheAwemeStr := global.Cache.Get(cacheAwemeKey)
-		if cacheAwemeStr != "" {
-			cacheAwemeStr = utils.DeserializeData(cacheAwemeStr)
-			_ = jsoniter.Unmarshal([]byte(cacheAwemeStr), &allAwemeList)
-		} else {
-			if startRowKey != stopRowKey {
-				allAwemeList, _ = hbase.GetProductAwemeAuthorAnalysisRange(startRowKey, stopRowKey)
-			}
-			lastRow, err := hbase.GetProductAwemeAuthorAnalysis(stopRowKey)
-			if err == nil {
-				allAwemeList = append(allAwemeList, lastRow)
-			}
-			sort.Slice(allAwemeList, func(i, j int) bool {
-				return allAwemeList[i].CreateSdf > allAwemeList[j].CreateSdf
-			})
-			_ = global.Cache.Set(cacheAwemeKey, utils.SerializeData(allAwemeList), 300)
-		}
-	}
 	allSales := map[string]int64{}
 	liveSales := map[string]int64{}
 	awemeSales := map[string]int64{}
 	var liveTotalSales int64 = 0
 	var awemeTotalSales int64 = 0
-	for _, v := range allLiveList {
-		if v.Sales == 0 {
+	//直播达人
+	allLiveList, _, comErr := es.NewEsLiveBusiness().SumSearchLiveAuthor(productId, "", startTime, endTime)
+	for _, l := range allLiveList {
+		if len(l.Data.Hits.Hits) == 0 {
+			continue
+		}
+		v := l.Data.Hits.Hits[0].Source
+		sales := utils.ToInt64(math.Floor(l.PredictSales.Value))
+		if sales == 0 {
 			continue
 		}
 		if _, ok := allSales[v.AuthorId]; !ok {
@@ -362,11 +311,19 @@ func (receiver *ProductBusiness) ProductAuthorViewV3(productId string, startTime
 		if _, ok := liveSales[v.AuthorId]; !ok {
 			liveSales[v.AuthorId] = 0
 		}
-		liveSales[v.AuthorId] += v.Sales
-		allSales[v.AuthorId] += v.Sales
-		liveTotalSales += v.Sales
+		liveSales[v.AuthorId] += sales
+		allSales[v.AuthorId] += sales
+		liveTotalSales += sales
 	}
-	for _, v := range allAwemeList {
+	//视频达人
+	allAwemeList, _, comErr := es.NewEsVideoBusiness().SumSearchAwemeAuthor(productId, "", startTime, endTime)
+	for _, l := range allAwemeList {
+		if len(l.Data.Hits.Hits) == 0 {
+			continue
+		}
+		v := l.Data.Hits.Hits[0].Source
+		v.AwemeGmv = l.AwemeGmv.Value
+		v.Sales = l.Sales.Value
 		if v.Sales == 0 {
 			continue
 		}
