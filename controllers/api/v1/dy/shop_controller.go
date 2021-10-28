@@ -5,6 +5,7 @@ import (
 	"dongchamao/business/es"
 	controllers "dongchamao/controllers/api"
 	"dongchamao/global"
+	"dongchamao/global/utils"
 	"dongchamao/hbase"
 	"dongchamao/models/entity"
 	es2 "dongchamao/models/es"
@@ -359,7 +360,17 @@ func (receiver *ShopController) ShopLiveAuthorAnalysis() {
 	if scoreType == 5 {
 		scoreType = -1
 	}
-	list, total, comErr := business.NewShopBusiness().ShopLiveAuthorAnalysisV3(shopId, keyword, tag, startTime, endTime, minFollow, maxFollow, scoreType, page, pageSize)
+	sortStr := receiver.GetString("sort", "gmv")
+	orderBy := receiver.GetString("order_by", "desc")
+	if !utils.InArrayString(sortStr, []string{"gmv", "sales", ""}) {
+		receiver.FailReturn(global.NewError(4000))
+		return
+	}
+	if !utils.InArrayString(orderBy, []string{"desc", "asc", ""}) {
+		receiver.FailReturn(global.NewError(4000))
+		return
+	}
+	list, total, comErr := business.NewShopBusiness().ShopLiveAuthorAnalysis(shopId, keyword, tag, sortStr, orderBy, startTime, endTime, minFollow, maxFollow, scoreType, page, pageSize)
 	if comErr != nil {
 		receiver.FailReturn(comErr)
 		return
@@ -390,7 +401,7 @@ func (receiver *ShopController) ShopLiveAuthorAnalysisCount() {
 		return
 	}
 	keyword := receiver.GetString("keyword", "")
-	countList, comErr := business.NewShopBusiness().ShopLiveAuthorAnalysisCountV3(shopId, keyword, startTime, endTime)
+	countList, comErr := business.NewShopBusiness().ShopLiveAuthorAnalysisCount(shopId, keyword, startTime, endTime)
 	if comErr != nil {
 		receiver.FailReturn(comErr)
 		return
@@ -452,7 +463,7 @@ func (receiver *ShopController) ShopLiveAuthorRooms() {
 	pageSize := receiver.GetPageSize("page_size", 5, 10)
 	sortStr := receiver.GetString("sort", "start_ts")
 	orderBy := receiver.GetString("order_by", "desc")
-	list, total := business.NewProductBusiness().ProductAuthorLiveRoomsV2("", shopId, authorId, startTime, endTime, sortStr, orderBy, page, pageSize)
+	list, total := business.NewProductBusiness().ProductAuthorLiveRooms("", shopId, authorId, startTime, endTime, sortStr, orderBy, page, pageSize)
 	for k, v := range list {
 		list[k].Cover = dyimg.Fix(v.Cover)
 		list[k].RoomId = business.IdEncrypt(v.RoomId)
@@ -491,7 +502,17 @@ func (receiver *ShopController) ShopAwemeAuthorAnalysis() {
 	if scoreType == 5 {
 		scoreType = -1
 	}
-	list, total, comErr := business.NewProductBusiness().ProductAwemeAuthorAnalysisV3("", shopId, keyword, tag, startTime, endTime, minFollow, maxFollow, scoreType, page, pageSize)
+	sortStr := receiver.GetString("sort", "gmv")
+	orderBy := receiver.GetString("order_by", "desc")
+	if !utils.InArrayString(sortStr, []string{"gmv", "sales", ""}) {
+		receiver.FailReturn(global.NewError(4000))
+		return
+	}
+	if !utils.InArrayString(orderBy, []string{"desc", "asc", ""}) {
+		receiver.FailReturn(global.NewError(4000))
+		return
+	}
+	list, total, comErr := business.NewProductBusiness().ProductAwemeAuthorAnalysis("", shopId, keyword, tag, sortStr, orderBy, startTime, endTime, minFollow, maxFollow, scoreType, page, pageSize)
 	if comErr != nil {
 		receiver.FailReturn(comErr)
 		return
@@ -526,7 +547,7 @@ func (receiver *ShopController) ShopAwemeAuthorAnalysisCount() {
 	}
 	keyword := receiver.GetString("keyword", "")
 	productBusiness := business.NewProductBusiness()
-	countList, comErr := productBusiness.ProductAwemeAuthorAnalysisCountV3("", shopId, keyword, startTime, endTime)
+	countList, comErr := productBusiness.ProductAwemeAuthorAnalysisCount("", shopId, keyword, startTime, endTime)
 	if comErr != nil {
 		receiver.FailReturn(comErr)
 		return
