@@ -229,7 +229,7 @@ func (i *EsProductBusiness) BaseSearchNew(productId, keyword, category, secondCa
 		}
 		esQuery.SetRange(FixDate("gpm", dateType), rangeMap)
 	}
-	sortOrder := elasticsearch.NewElasticOrder().Add(FixDate(sortStr, dateType), orderBy).Order
+	sortOrder := elasticsearch.NewElasticOrder().Add(FixDate(sortStr, dateType)+".keyword", orderBy).Order
 	var cacheTime time.Duration = 120
 	results := esMultiQuery.
 		SetConnection(connection).
