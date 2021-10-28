@@ -122,6 +122,129 @@ func (i *EsProductBusiness) BaseSearch(productId, keyword, category, secondCateg
 	return
 }
 
+func FixDate(fields string, dateType int) string {
+	if !utils.InArrayString(fields, []string{"pv", "cvr", "order_account", "gpm", "is_coupon", "platform_label", "relate_aweme", "relate_room", "relate_author", "is_star"}) {
+		return fields
+	}
+	var dateTypeMap = map[int]string{0: "", 1: "_7", 2: "_15", 3: "_30"}
+	return fields + dateTypeMap[dateType]
+}
+
+func (i *EsProductBusiness) BaseSearchNew(productId, keyword, category, secondCategory, thirdCategory, platform string,
+	minCommissionRate, minPrice, maxPrice, minGpm, maxGpm float64, commerceType, isCoupon, relateRoom, relateAweme, relateAuthor, isStar, notStar, page, pageSize, dateType int,
+	sortStr, orderBy string) (list []es.ProductNew, total int, comErr global.CommonError) {
+	list = []es.ProductNew{}
+	//"pv","cvr","order_account","gpm","is_coupon","platform_label","relate_aweme","relate_room","relate_author","is_star"
+	if sortStr == "" {
+		sortStr = "order_account"
+	}
+	if orderBy == "" {
+		orderBy = "desc"
+	}
+	if !utils.InArrayString(sortStr, []string{"commission", "pv", "order_account", "cvr", "gpm", "relate_aweme", "relate_author", "relate_room"}) {
+		comErr = global.NewError(4000)
+		return
+	}
+	if !utils.InArrayString(orderBy, []string{"desc", "asc"}) {
+		comErr = global.NewError(4000)
+		return
+	}
+	if pageSize > 100 {
+		comErr = global.NewError(4000)
+		return
+	}
+	esTable, connection := GetESTable(es.DyProductTableNew)
+	esQuery, esMultiQuery := elasticsearch.NewElasticQueryGroup()
+	if keyword != "" {
+		esQuery.SetMatchPhrase("title", keyword)
+	}
+	if productId != "" {
+		esQuery.SetTerm("product_id", productId)
+	}
+	if category != "" {
+		esQuery.SetTerm("dcm_level_first.keyword", category)
+	}
+	if secondCategory != "" {
+		esQuery.SetTerm("first_cname.keyword", secondCategory)
+	}
+	if thirdCategory != "" {
+		esQuery.SetTerm("second_cname.keyword", thirdCategory)
+	}
+	if platform != "" {
+		esQuery.SetTerm("platform_label.keyword", platform)
+	} else {
+		if keyword == "" {
+			esQuery.SetTerm("platform_label.keyword", "小店")
+		}
+	}
+	if isStar == 1 {
+		esQuery.SetTerm(FixDate("is_star", dateType), 1)
+	}
+	if notStar == 1 {
+		esQuery.SetTerm(FixDate("is_star", dateType), 0)
+	}
+	if isCoupon == 1 {
+		esQuery.SetTerm(FixDate("is_coupon", dateType), 1)
+	}
+	if relateRoom == 1 {
+		esQuery.SetRange(FixDate("relate_room", dateType), map[string]interface{}{"gt": 0})
+	}
+	if relateAweme == 1 {
+		esQuery.SetRange(FixDate("relate_aweme", dateType), map[string]interface{}{"gt": 0})
+	}
+	if relateAuthor == 1 {
+		esQuery.SetRange(FixDate("relate_author", dateType), map[string]interface{}{"gt": 0})
+	}
+	var commerceTypeMap = map[int][]int{
+		1: {1, 2},
+		2: {1, 2, 4, 5},
+		3: {3, 4},
+		4: {2, 3, 4, 5},
+	}
+	if commerce, exist := commerceTypeMap[commerceType]; exist {
+		esQuery.SetTerms(FixDate("commerce_type", dateType), commerce)
+	}
+	if minCommissionRate > 0 {
+		esQuery.SetRange("commission_rate", map[string]interface{}{
+			"gte": minCommissionRate,
+		})
+	}
+	if minPrice > 0 || maxPrice > 0 {
+		rangeMap := map[string]interface{}{}
+		if minPrice > 0 {
+			rangeMap["gte"] = minPrice
+		}
+		if maxPrice > 0 {
+			rangeMap["lte"] = maxPrice
+		}
+		esQuery.SetRange("coupon_price", rangeMap)
+	}
+	if minGpm > 0 || maxGpm > 0 {
+		rangeMap := map[string]interface{}{}
+		if minGpm > 0 {
+			rangeMap["gte"] = minGpm
+		}
+		if maxGpm > 0 {
+			rangeMap["lte"] = maxGpm
+		}
+		esQuery.SetRange(FixDate("gpm", dateType), rangeMap)
+	}
+	sortOrder := elasticsearch.NewElasticOrder().Add(FixDate(sortStr, dateType), orderBy).Order
+	var cacheTime time.Duration = 120
+	results := esMultiQuery.
+		SetConnection(connection).
+		SetTable(esTable).
+		SetCache(cacheTime).
+		AddMust(esQuery.Condition).
+		SetLimit((page-1)*pageSize, pageSize).
+		SetOrderBy(sortOrder).
+		SetMultiQuery().
+		Query()
+	utils.MapToStruct(results, &list)
+	total = esMultiQuery.Count
+	return
+}
+
 func (i *EsProductBusiness) SearchRangeDateList(productId, shopId, authorId string, startTime, endTime time.Time, page, pageSize int) (list []es.DyProductAuthorAnalysis, total int, comErr global.CommonError) {
 	esTable, connection, err := GetESTableByTime(es.DyProductAuthorAnalysisTable, startTime, endTime)
 	if err != nil {

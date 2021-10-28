@@ -150,6 +150,123 @@ func (receiver *ProductController) Search() {
 	return
 }
 
+func (receiver *ProductController) SearchNew() {
+	keyword := receiver.GetString("keyword", "")
+	category := receiver.GetString("category", "")
+	secondCategory := receiver.GetString("second_category", "")
+	thirdCategory := receiver.GetString("third_category", "")
+	platform := receiver.GetString("platform", "")
+	sortStr := receiver.GetString("sort", "order_account")
+	orderBy := receiver.GetString("order_by", "desc")
+	minCommissionRate, _ := receiver.GetFloat("min_commission_rate", 0)
+	minPrice, _ := receiver.GetFloat("min_price", 0)
+	maxPrice, _ := receiver.GetFloat("max_price", 0)
+	minGpm, _ := receiver.GetFloat("min_gpm", 0)
+	maxGpm, _ := receiver.GetFloat("max_gpm", 0)
+	dateType, _ := receiver.GetInt("date_type", 0)
+	commerceType, _ := receiver.GetInt("commerce_type", 0)
+	isCoupon, _ := receiver.GetInt("is_coupon", 0)
+	isStar, _ := receiver.GetInt("is_star", 0)
+	notStar, _ := receiver.GetInt("not_star", 0)
+	relateRoom, _ := receiver.GetInt("relate_room", 0)
+	relateAweme, _ := receiver.GetInt("relate_aweme", 0)
+	relateAuthor, _ := receiver.GetInt("relate_author", 0)
+	page := receiver.GetPage("page")
+	pageSize := receiver.GetPageSize("page_size", 10, 100)
+	pageSize = receiver.CheckPageSize(pageSize)
+	receiver.KeywordBan(keyword)
+	if !receiver.HasAuth {
+		if category != "" || sortStr != "order_account" || orderBy != "desc" || secondCategory != "" || thirdCategory != "" || platform != "" || minCommissionRate > 0 || minPrice > 0 || maxPrice > 0 || commerceType > 0 ||
+			isCoupon > 0 || isStar > 0 || notStar > 0 || page != 1 || relateRoom > 0 || relateAweme > 0 {
+			if !receiver.HasLogin {
+				receiver.FailReturn(global.NewError(4001))
+				return
+			}
+			receiver.FailReturn(global.NewError(4004))
+			return
+		}
+		if pageSize > receiver.MaxTotal {
+			pageSize = receiver.MaxTotal
+		}
+	}
+	formNum := (page - 1) * pageSize
+	if formNum > receiver.MaxTotal {
+		receiver.FailReturn(global.NewError(4004))
+		return
+	}
+	productId := ""
+	productBusiness := business.NewProductBusiness()
+	if keyword != "" {
+		itemId := productBusiness.UrlExplain(keyword)
+		if itemId != "" {
+			if itemId != "" {
+				productId = itemId
+				keyword = ""
+			}
+		} else {
+			tbShortUrl := utils.ParseTaobaoShare(keyword)
+			if tbShortUrl != "" {
+				url := productBusiness.ExplainTaobaoShortUrl(tbShortUrl)
+				id := productBusiness.UrlExplain(url)
+				if id != "" {
+					productId = id
+					keyword = ""
+				} else {
+					page = 0
+					pageSize = 0
+				}
+			}
+		}
+	}
+	esProductBusiness := es.NewEsProductBusiness()
+	list, total, comErr := esProductBusiness.BaseSearchNew(productId, keyword, category, secondCategory, thirdCategory, platform,
+		minCommissionRate, minPrice, maxPrice, minGpm, maxGpm, commerceType, isCoupon, relateRoom, relateAweme, relateAuthor, isStar, notStar, page, pageSize, dateType, sortStr, orderBy)
+	if comErr != nil {
+		receiver.FailReturn(comErr)
+		return
+	}
+	var productIds []string
+	for k, v := range list {
+		list[k].Cvr = utils.ToString(utils.RateMin(utils.ToFloat64(list[k].Cvr)))
+		list[k].Image = dyimg.Fix(v.Image)
+		productIds = append(productIds, v.ProductId)
+		list[k].ProductId = business.IdEncrypt(v.ProductId)
+		if list[k].PlatformLabel == "小店" {
+			if brand, e := hbase.GetDyProductBrand(v.ProductId); e == nil {
+				list[k].ShopName = brand.ShopName
+			}
+		}
+	}
+	if receiver.HasLogin {
+		collect, comErr := business.NewCollectBusiness().DyListCollect(2, receiver.UserId, productIds)
+		if comErr != nil {
+			receiver.FailReturn(comErr)
+		}
+		for k, v := range list {
+			list[k].IsCollect = collect[v.ProductId]
+		}
+	}
+	totalPage := math.Ceil(float64(total) / float64(pageSize))
+	maxPage := math.Ceil(float64(receiver.MaxTotal) / float64(pageSize))
+	if totalPage > maxPage {
+		totalPage = maxPage
+	}
+	maxTotal := receiver.MaxTotal
+	if maxTotal > total {
+		maxTotal = total
+	}
+	business.NewUserBusiness().KeywordsRecord(keyword)
+	receiver.SuccReturn(map[string]interface{}{
+		"list":       list,
+		"total":      total,
+		"total_page": totalPage,
+		"max_num":    maxTotal,
+		"has_auth":   receiver.HasAuth,
+		"has_login":  receiver.HasLogin,
+	})
+	return
+}
+
 //商品分析
 func (receiver *ProductController) ProductBaseAnalysis() {
 	productId := business.IdDecrypt(receiver.GetString(":product_id", ""))
