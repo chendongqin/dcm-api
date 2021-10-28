@@ -744,7 +744,7 @@ func (receiver *ProductController) ProductAuthorView() {
 		receiver.FailReturn(comErr)
 		return
 	}
-	salesTop3, liveSalesTop3, awemeSalesTop3, comErr := business.NewProductBusiness().ProductAuthorViewV3(productId, startTime, endTime)
+	salesTop3, liveSalesTop3, awemeSalesTop3, comErr := business.NewProductBusiness().ProductAuthorView(productId, startTime, endTime)
 	if comErr != nil {
 		receiver.FailReturn(comErr)
 		return
@@ -775,8 +775,18 @@ func (receiver *ProductController) ProductLiveAuthorAnalysis() {
 	if scoreType == 5 {
 		scoreType = -1
 	}
+	sortStr := receiver.GetString("sort", "gmv")
+	orderBy := receiver.GetString("order_by", "desc")
+	if !utils.InArrayString(sortStr, []string{"gmv", "sales", ""}) {
+		receiver.FailReturn(global.NewError(4000))
+		return
+	}
+	if !utils.InArrayString(orderBy, []string{"desc", "asc", ""}) {
+		receiver.FailReturn(global.NewError(4000))
+		return
+	}
 	productBusiness := business.NewProductBusiness()
-	list, total, comErr := productBusiness.ProductAuthorAnalysisV3(productId, keyword, tag, startTime, endTime, minFollow, maxFollow, scoreType, page, pageSize)
+	list, total, comErr := productBusiness.ProductAuthorAnalysis(productId, keyword, tag, sortStr, orderBy, startTime, endTime, minFollow, maxFollow, scoreType, page, pageSize)
 	if comErr != nil {
 		receiver.FailReturn(comErr)
 		return
@@ -811,7 +821,7 @@ func (receiver *ProductController) ProductLiveAuthorAnalysisCount() {
 	}
 	keyword := receiver.GetString("keyword", "")
 	productBusiness := business.NewProductBusiness()
-	countList, comErr := productBusiness.ProductAuthorAnalysisCountV3(productId, keyword, startTime, endTime)
+	countList, comErr := productBusiness.ProductAuthorAnalysisCount(productId, keyword, startTime, endTime)
 	if comErr != nil {
 		receiver.FailReturn(comErr)
 		return
@@ -840,7 +850,17 @@ func (receiver *ProductController) ProductAwemeAuthorAnalysis() {
 	if scoreType == 5 {
 		scoreType = -1
 	}
-	list, total, comErr := productBusiness.ProductAwemeAuthorAnalysisV3(productId, "", keyword, tag, startTime, endTime, minFollow, maxFollow, scoreType, page, pageSize)
+	sortStr := receiver.GetString("sort", "gmv")
+	orderBy := receiver.GetString("order_by", "desc")
+	if !utils.InArrayString(sortStr, []string{"gmv", "sales", ""}) {
+		receiver.FailReturn(global.NewError(4000))
+		return
+	}
+	if !utils.InArrayString(orderBy, []string{"desc", "asc", ""}) {
+		receiver.FailReturn(global.NewError(4000))
+		return
+	}
+	list, total, comErr := productBusiness.ProductAwemeAuthorAnalysis(productId, "", keyword, tag, sortStr, orderBy, startTime, endTime, minFollow, maxFollow, scoreType, page, pageSize)
 	if comErr != nil {
 		receiver.FailReturn(comErr)
 		return
@@ -897,7 +917,7 @@ func (receiver *ProductController) ProductAuthorLiveRooms() {
 	pageSize := receiver.GetPageSize("page_size", 5, 10)
 	sortStr := receiver.GetString("sort", "start_ts")
 	orderBy := receiver.GetString("order_by", "desc")
-	list, total := business.NewProductBusiness().ProductAuthorLiveRoomsV2(productId, "", authorId, startTime, endTime, sortStr, orderBy, page, pageSize)
+	list, total := business.NewProductBusiness().ProductAuthorLiveRooms(productId, "", authorId, startTime, endTime, sortStr, orderBy, page, pageSize)
 	for k, v := range list {
 		list[k].Cover = dyimg.Fix(v.Cover)
 		list[k].RoomId = business.IdEncrypt(v.RoomId)
