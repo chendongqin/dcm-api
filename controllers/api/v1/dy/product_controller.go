@@ -744,7 +744,7 @@ func (receiver *ProductController) ProductAuthorView() {
 		receiver.FailReturn(comErr)
 		return
 	}
-	salesTop3, liveSalesTop3, awemeSalesTop3, comErr := business.NewProductBusiness().ProductAuthorView(productId, startTime, endTime)
+	salesTop3, liveSalesTop3, awemeSalesTop3, comErr := business.NewProductBusiness().ProductAuthorViewV3(productId, startTime, endTime)
 	if comErr != nil {
 		receiver.FailReturn(comErr)
 		return
