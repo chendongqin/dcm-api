@@ -106,6 +106,8 @@ func (i *EsProductBusiness) BaseSearch(productId, keyword, category, secondCateg
 	//	sortOrder = elasticsearch.NewElasticOrder().Add("is_yesterday", "desc").Add(sortStr, orderBy).Order
 	//}
 	var cacheTime time.Duration = 120
+	var outTime time.Duration = 10
+	esMultiQuery.Timeout = &outTime
 	results := esMultiQuery.
 		SetConnection(connection).
 		SetTable(esTable).
