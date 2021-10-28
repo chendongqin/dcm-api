@@ -79,4 +79,6 @@ type ProductNew struct {
 	Gpm30          int64   `json:"gpm_30"`
 	Cvr30          float64 `json:"cvr_30"`
 	RelateRoom30   int64   `json:"relate_room_30"`
+	IsCollect      int     `json:"is_collect"`
+	ShopName       string  `json:"shop_name"`
 }
