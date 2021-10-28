@@ -289,63 +289,61 @@ func (receiver *ProductBusiness) ProductAuthorViewV3(productId string, startTime
 	allTop3 = []dy.NameValueInt64PercentChart{}
 	liveTop3 = []dy.NameValueInt64PercentChart{}
 	awemeTop3 = []dy.NameValueInt64PercentChart{}
-	esProductBusiness := es.NewEsProductBusiness()
 	//直播达人
 	allLiveList := make([]entity.DyProductAuthorAnalysis, 0)
-	startRow, stopRow, _, comErr := esProductBusiness.SearchRangeDateRowKey(productId, "", startTime, endTime)
-	if comErr != nil {
-		return
-	}
-	if startRow.ProductId != "" && stopRow.ProductId != "" {
-		startRowKey := startRow.ProductId + "_" + startRow.CreateSdf + "_" + startRow.AuthorId
-		stopRowKey := stopRow.ProductId + "_" + stopRow.CreateSdf + "_" + stopRow.AuthorId
-		cacheKey := cache.GetCacheKey(cache.ProductAuthorAllList, startRowKey, stopRowKey)
-		cacheStr := global.Cache.Get(cacheKey)
-		if cacheStr != "" {
-			cacheStr = utils.DeserializeData(cacheStr)
-			_ = jsoniter.Unmarshal([]byte(cacheStr), &allLiveList)
-		} else {
-			if startRowKey != stopRowKey {
-				allLiveList, _ = hbase.GetProductAuthorAnalysisRange(startRowKey, stopRowKey)
-			}
-			lastRow, err := hbase.GetProductAuthorAnalysis(stopRowKey)
-			if err == nil {
-				allLiveList = append(allLiveList, lastRow)
-			}
-			sort.Slice(allLiveList, func(i, j int) bool {
-				return allLiveList[i].Date > allLiveList[j].Date
-			})
-			_ = global.Cache.Set(cacheKey, utils.SerializeData(allLiveList), 300)
+	allList, _, comErr := es.NewEsLiveBusiness().SumSearchLiveAuthor(productId, "", startTime, endTime)
+	for _, l := range allList {
+		if len(l.Data.Hits.Hits) == 0 {
+			continue
 		}
+		v := l.Data.Hits.Hits[0].Source
+		v.PredictGmv = l.PredictGmv.Value
+		v.PredictSales = math.Floor(l.PredictSales.Value)
+		allLiveList = append(allLiveList, entity.DyProductAuthorAnalysis{
+			AuthorId:    v.AuthorId,
+			DisplayId:   v.DisplayId,
+			FollowCount: v.FollowerCount,
+			Gmv:         v.PredictGmv,
+			Nickname:    v.Nickname,
+			Avatar:      v.Avatar,
+			Price:       v.Price,
+			ProductId:   v.ProductId,
+			Sales:       utils.ToInt64(math.Floor(v.PredictSales)),
+			Score:       v.Score,
+			Level:       v.Level,
+			ShopTags:    v.Tags,
+			ShortId:     v.ShortId,
+			ShopId:      v.ShopId,
+			Date:        v.Dt,
+		})
 	}
-
 	//视频达人
-	startRow, stopRow, _, comErr = esProductBusiness.SearchAwemeRangeDateRowKey(productId, "", startTime, endTime)
-	if comErr != nil {
-		return
-	}
 	allAwemeList := make([]entity.DyProductAwemeAuthorAnalysis, 0)
-	if startRow.ProductId != "" && stopRow.ProductId != "" {
-		startRowKey := startRow.ProductId + "_" + startRow.CreateSdf + "_" + startRow.AuthorId
-		stopRowKey := stopRow.ProductId + "_" + stopRow.CreateSdf + "_" + stopRow.AuthorId
-		cacheAwemeKey := cache.GetCacheKey(cache.ProductAwemeAuthorAllList, startRowKey, stopRowKey)
-		cacheAwemeStr := global.Cache.Get(cacheAwemeKey)
-		if cacheAwemeStr != "" {
-			cacheAwemeStr = utils.DeserializeData(cacheAwemeStr)
-			_ = jsoniter.Unmarshal([]byte(cacheAwemeStr), &allAwemeList)
-		} else {
-			if startRowKey != stopRowKey {
-				allAwemeList, _ = hbase.GetProductAwemeAuthorAnalysisRange(startRowKey, stopRowKey)
-			}
-			lastRow, err := hbase.GetProductAwemeAuthorAnalysis(stopRowKey)
-			if err == nil {
-				allAwemeList = append(allAwemeList, lastRow)
-			}
-			sort.Slice(allAwemeList, func(i, j int) bool {
-				return allAwemeList[i].CreateSdf > allAwemeList[j].CreateSdf
-			})
-			_ = global.Cache.Set(cacheAwemeKey, utils.SerializeData(allAwemeList), 300)
+	allList2, _, comErr := es.NewEsVideoBusiness().SumSearchAwemeAuthor(productId, "", startTime, endTime)
+	for _, l := range allList2 {
+		if len(l.Data.Hits.Hits) == 0 {
+			continue
 		}
+		v := l.Data.Hits.Hits[0].Source
+		v.AwemeGmv = l.AwemeGmv.Value
+		v.Sales = l.Sales.Value
+		allAwemeList = append(allAwemeList, entity.DyProductAwemeAuthorAnalysis{
+			ProductId:   v.ProductId,
+			AuthorId:    v.AuthorId,
+			Nickname:    v.Nickname,
+			CreateSdf:   v.DistDate,
+			DisplayId:   v.UniqueId,
+			ShortId:     v.ShortId,
+			Score:       v.Score,
+			Level:       v.Level,
+			FirstName:   v.Tags,
+			SecondName:  v.TagsLevelTwo,
+			Avatar:      v.Avatar,
+			FollowCount: v.FollowerCount,
+			DiggCount:   v.DiggCount,
+			Sales:       v.Sales,
+			Gmv:         v.AwemeGmv,
+		})
 	}
 	allSales := map[string]int64{}
 	liveSales := map[string]int64{}
