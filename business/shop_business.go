@@ -9,7 +9,6 @@ import (
 	"dongchamao/models/entity"
 	"dongchamao/models/repost/dy"
 	"dongchamao/services/dyimg"
-	"fmt"
 	jsoniter "github.com/json-iterator/go"
 	"math"
 	"sort"
@@ -207,86 +206,41 @@ func (receiver *ShopBusiness) ShopProductAnalysisCount(shopId, keyword string, s
 func (receiver *ShopBusiness) ShopAuthorView(shopId string, startTime, endTime time.Time) (
 	allTop5 []dy.NameValueFloat64PercentChart, comErr global.CommonError) {
 	allTop5 = []dy.NameValueFloat64PercentChart{}
-	esShopBusiness := es.NewEsShopBusiness()
 	//直播达人
-	startDate := startTime.Format("20060102")
-	stopDate := endTime.Format("20060102")
-	allLiveList := make([]entity.DyProductAuthorAnalysis, 0)
-	cacheKey := cache.GetCacheKey(cache.ShopLiveAuthorAllList, utils.Md5_encode(fmt.Sprintf("%s%s%s%s", shopId, startDate, stopDate, "")))
-	cacheStr := global.Cache.Get(cacheKey)
-	if cacheStr != "" {
-		cacheStr = utils.DeserializeData(cacheStr)
-		_ = jsoniter.Unmarshal([]byte(cacheStr), &allLiveList)
-	} else {
-		idsList, idTotal, comErr1 := esShopBusiness.GetShopLiveAuthorRowKeys(shopId, "", "", startTime, endTime)
-		if comErr1 != nil {
-			comErr = comErr1
-			return
-		}
-		if idTotal == 0 {
-			return
-		}
-		for _, v := range idsList {
-			startRowKey := v.Key + "_" + startDate + "_"
-			stopRowKey := v.Key + "_" + stopDate + "_99999999999999999"
-			tmpList, _ := hbase.GetProductAuthorAnalysisRange(startRowKey, stopRowKey)
-			allLiveList = append(allLiveList, tmpList...)
-		}
-		sort.Slice(allLiveList, func(i, j int) bool {
-			return allLiveList[i].Date > allLiveList[j].Date
-		})
-		_ = global.Cache.Set(cacheKey, utils.SerializeData(allLiveList), 300)
-	}
+	allLiveList, _, comErr := es.NewEsLiveBusiness().SumSearchLiveAuthor("", shopId, startTime, endTime)
 	//视频达人
-	allAwemeList := make([]entity.DyProductAwemeAuthorAnalysis, 0)
-	cacheAwemeKey := cache.GetCacheKey(cache.ShopAwemeAuthorAllList, utils.Md5_encode(fmt.Sprintf("%s%s%s%s", shopId, startDate, stopDate, "")))
-	cacheAwemeStr := global.Cache.Get(cacheAwemeKey)
-	if cacheAwemeStr != "" {
-		cacheStr = utils.DeserializeData(cacheStr)
-		_ = jsoniter.Unmarshal([]byte(cacheStr), &allAwemeList)
-	} else {
-		idsList, idTotal, comErr1 := esShopBusiness.GetShopVideoAuthorRowKeys(shopId, "", "", startTime, endTime)
-		if comErr1 != nil {
-			comErr = comErr1
-			return
-		}
-		if idTotal == 0 {
-			return
-		}
-		for _, v := range idsList {
-			startRowKey := v.Key + "_" + startDate + "_"
-			stopRowKey := v.Key + "_" + stopDate + "_99999999999999999"
-			tmpList, _ := hbase.GetProductAwemeAuthorAnalysisRange(startRowKey, stopRowKey)
-			allAwemeList = append(allAwemeList, tmpList...)
-		}
-		sort.Slice(allAwemeList, func(i, j int) bool {
-			return allAwemeList[i].CreateSdf > allAwemeList[j].CreateSdf
-		})
-		_ = global.Cache.Set(cacheAwemeKey, utils.SerializeData(allAwemeList), 300)
-	}
+	allAwemeList, _, comErr := es.NewEsVideoBusiness().SumSearchAwemeAuthor("", shopId, startTime, endTime)
 	allGmv := map[string]float64{}
 	var totalGmv float64 = 0
-	for _, v := range allLiveList {
-		if v.Gmv == 0 {
+	for _, l := range allLiveList {
+		if len(l.Data.Hits.Hits) == 0 {
+			continue
+		}
+		v := l.Data.Hits.Hits[0].Source
+		if v.PredictGmv == 0 {
 			continue
 		}
 		if _, ok := allGmv[v.AuthorId]; !ok {
-			allGmv[v.AuthorId] = v.Gmv
+			allGmv[v.AuthorId] = v.PredictGmv
 		} else {
-			allGmv[v.AuthorId] += v.Gmv
+			allGmv[v.AuthorId] += v.PredictGmv
 		}
-		totalGmv += v.Gmv
+		totalGmv += v.PredictGmv
 	}
-	for _, v := range allAwemeList {
-		if v.Gmv == 0 {
+	for _, l := range allAwemeList {
+		if len(l.Data.Hits.Hits) == 0 {
+			continue
+		}
+		v := l.Data.Hits.Hits[0].Source
+		if v.AwemeGmv == 0 {
 			continue
 		}
 		if _, ok := allGmv[v.AuthorId]; !ok {
-			allGmv[v.AuthorId] = v.Gmv
+			allGmv[v.AuthorId] = v.AwemeGmv
 		} else {
-			allGmv[v.AuthorId] += v.Gmv
+			allGmv[v.AuthorId] += v.AwemeGmv
 		}
-		totalGmv += v.Gmv
+		totalGmv += v.AwemeGmv
 	}
 	for k, v := range allGmv {
 		allTop5 = append(allTop5, dy.NameValueFloat64PercentChart{
@@ -348,6 +302,12 @@ func (receiver *ShopBusiness) ShopLiveAuthorAnalysis(shopId, keyword, tag, sortS
 					continue
 				}
 			}
+		}
+		if minFollow > 0 && v.FollowerCount < minFollow {
+			continue
+		}
+		if maxFollow > 0 && v.FollowerCount >= maxFollow {
+			continue
 		}
 		list = append(list, entity.DyProductAuthorAnalysis{
 			AuthorId:    v.AuthorId,
@@ -507,130 +467,5 @@ func (receiver *ShopBusiness) ShopLiveAuthorAnalysisCount(shopId, keyword string
 		countJson := utils.SerializeData(countList)
 		_ = global.Cache.Set(cKey, countJson, 300)
 	}
-	return
-}
-
-//小店视频达人分析
-func (receiver *ShopBusiness) ShopAwemeAuthorAnalysis(shopId, keyword, tag string, startTime, endTime time.Time, minFollow, maxFollow int64, scoreType, page, pageSize int) (list []entity.DyProductAwemeAuthorAnalysis, total int, comErr global.CommonError) {
-	list = []entity.DyProductAwemeAuthorAnalysis{}
-	startDate := startTime.Format("20060102")
-	stopDate := endTime.Format("20060102")
-	allList := make([]entity.DyProductAwemeAuthorAnalysis, 0)
-	cacheKey := cache.GetCacheKey(cache.ShopAwemeAuthorAllList, utils.Md5_encode(fmt.Sprintf("%s%s%s%s", shopId, startDate, stopDate, keyword)))
-	cacheStr := global.Cache.Get(cacheKey)
-	if cacheStr != "" {
-		cacheStr = utils.DeserializeData(cacheStr)
-		_ = jsoniter.Unmarshal([]byte(cacheStr), &allList)
-	} else {
-		idsList, idTotal, comErr1 := es.NewEsShopBusiness().GetShopVideoAuthorRowKeys(shopId, "", keyword, startTime, endTime)
-		if comErr1 != nil {
-			comErr = comErr1
-			return
-		}
-		if idTotal == 0 {
-			return
-		}
-		for _, v := range idsList {
-			startRowKey := v.Key + "_" + startDate + "_"
-			stopRowKey := v.Key + "_" + stopDate + "_99999999999999999"
-			tmpList, _ := hbase.GetProductAwemeAuthorAnalysisRange(startRowKey, stopRowKey)
-			allList = append(allList, tmpList...)
-		}
-		sort.Slice(allList, func(i, j int) bool {
-			return allList[i].CreateSdf > allList[j].CreateSdf
-		})
-		_ = global.Cache.Set(cacheKey, utils.SerializeData(allList), 300)
-	}
-	authorMap := map[string]entity.DyProductAwemeAuthorAnalysis{}
-	authorIds := make([]string, 0)
-	authorTagMap := map[string]string{}
-	authorProductMap := map[string]map[string]entity.DyProductAwemeAuthorAnalysis{}
-	for _, v := range allList {
-		if scoreType != 5 && scoreType != v.Level {
-			continue
-		}
-		if at, ok := authorTagMap[v.AuthorId]; ok {
-			v.FirstName = at
-		} else {
-			authorTagMap[v.AuthorId] = v.FirstName
-		}
-		if tag == "其他" {
-			if v.FirstName != "" && strings.Index(v.FirstName, tag) < 0 {
-				continue
-			}
-		} else {
-			if tag != "" {
-				if strings.Index(v.FirstName, tag) < 0 {
-					continue
-				}
-			}
-		}
-		if keyword != "" {
-			if strings.Index(strings.ToLower(v.Nickname), strings.ToLower(keyword)) < 0 && v.DisplayId != keyword && v.ShortId != keyword {
-				continue
-			}
-		}
-		if _, ok := authorProductMap[v.AuthorId]; !ok {
-			authorProductMap[v.AuthorId] = map[string]entity.DyProductAwemeAuthorAnalysis{}
-		}
-		if p, ok := authorProductMap[v.AuthorId][v.ProductId]; ok {
-			p.Gmv += v.Gmv
-			p.Sales += v.Sales
-			if p.CreateSdf < v.CreateSdf {
-				p.CreateSdf = v.CreateSdf
-			}
-			authorProductMap[v.AuthorId][v.ProductId] = p
-		} else {
-			authorProductMap[v.AuthorId][v.ProductId] = v
-		}
-		if d, ok := authorMap[v.AuthorId]; ok {
-			d.Gmv += v.Gmv
-			d.Sales += v.Sales
-			d.DiggCount += v.DiggCount
-			d.RelatedAwemes = append(d.RelatedAwemes, v.RelatedAwemes...)
-			authorMap[v.AuthorId] = d
-		} else {
-			authorMap[v.AuthorId] = v
-			authorIds = append(authorIds, v.AuthorId)
-		}
-	}
-	for _, v := range authorMap {
-		if minFollow > 0 && v.FollowCount < minFollow {
-			continue
-		}
-		if maxFollow > 0 && v.FollowCount >= maxFollow {
-			continue
-		}
-		item := []entity.DyAuthorProductDetail{}
-		if p, exist := authorProductMap[v.AuthorId]; exist {
-			v.ProductNum = len(p)
-			for _, p1 := range p {
-				item = append(item, entity.DyAuthorProductDetail{
-					Gmv:       p1.Gmv,
-					ProductId: p1.ProductId,
-					Sales:     p1.Sales,
-					Date:      p1.CreateSdf,
-				})
-			}
-		}
-		v.Products = item
-		list = append(list, v)
-	}
-	sort.Slice(list, func(i, j int) bool {
-		return list[i].Sales > list[j].Sales
-	})
-	total = len(list)
-	start := (page - 1) * pageSize
-	end := start + pageSize
-	if total < end {
-		end = total
-	}
-	if start > total {
-		start = total
-	}
-	if total == 0 {
-		return
-	}
-	list = list[start:end]
 	return
 }
