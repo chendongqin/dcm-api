@@ -20,7 +20,7 @@ var DyProductBrandMap = HbaseEntity{
 	"subtitle":               {String, "subtitle"},
 	"product_format":         {String, "product_format"},
 	"company_name":           {String, "company_name"},
-	"category":               {String, "category"},
+	"category":               {Json, "category"},
 	"dcm_level_first":        {String, "dcm_level_first"},
 	"sales":                  {Long, "sales"},
 	"price":                  {Double, "price"},
@@ -47,7 +47,7 @@ type DyProductBrand struct {
 	Subtitle         string                   `json:"subtitle"`
 	ProductFormat    string                   `json:"product_format"`
 	CompanyName      string                   `json:"company_name"`
-	Category         string                   `json:"category"`
+	Category         DyProductAiCategory      `json:"category"`
 	DcmLevelFirst    string                   `json:"dcm_level_first"`
 	Sales            int64                    `json:"sales"`
 	Price            float64                  `json:"price"`
