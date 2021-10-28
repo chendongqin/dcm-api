@@ -491,6 +491,8 @@ func (i *EsProductBusiness) KeywordSearch(keyword string) (list []es.DyProduct) 
 	esTable, connection := GetESTable(es.DyProductTable)
 	if keyword != "" {
 		esQuery.SetMatchPhrase("title", keyword)
+	} else {
+		esTable, connection = GetESTable(es.DyProductTableNew)
 	}
 	var cacheTime time.Duration = 60
 	results := esMultiQuery.
