@@ -834,7 +834,7 @@ func (e *EsVideoBusiness) SearchAwemeAuthor(productId, shopId, tag string, minFo
 }
 
 func (receiver *EsVideoBusiness) SumSearchAwemeAuthor(productId, shopId string, startTime, endTime time.Time) (list []es.SumProductVideoAuthor, total int, comErr global.CommonError) {
-	esTable, connection, err := GetESTableByTime(es.DyRoomProductRecordsTable, startTime, endTime)
+	esTable, connection, err := GetESTableByMonthTime(es.DyAuthorAwemeProductTable, startTime, endTime)
 	if err != nil {
 		comErr = global.NewError(4000)
 		return
@@ -873,7 +873,7 @@ func (receiver *EsVideoBusiness) SumSearchAwemeAuthor(productId, shopId string, 
 							"top_hits": map[string]interface{}{
 								"sort": []map[string]interface{}{
 									{
-										"shelf_time": map[string]interface{}{
+										"aweme_create_time": map[string]interface{}{
 											"order": "desc",
 										},
 									},
@@ -922,7 +922,7 @@ func (receiver *EsVideoBusiness) CountSearchAuthorAwemeProductNum(productId, sho
 	if len(authorIds) == 0 {
 		return
 	}
-	esTable, connection, err := GetESTableByTime(es.DyRoomProductRecordsTable, startTime, endTime)
+	esTable, connection, err := GetESTableByMonthTime(es.DyAuthorAwemeProductTable, startTime, endTime)
 	if err != nil {
 		comErr = global.NewError(4000)
 		return
