@@ -930,7 +930,7 @@ func (receiver *ProductController) ProductLiveAuthorAnalysis() {
 		return
 	}
 	productBusiness := business.NewProductBusiness()
-	list, total, comErr := productBusiness.ProductAuthorAnalysis(productId, keyword, tag, sortStr, orderBy, startTime, endTime, minFollow, maxFollow, scoreType, page, pageSize)
+	list, total, totalSales, totalGmv, comErr := productBusiness.ProductAuthorAnalysis(productId, keyword, tag, sortStr, orderBy, startTime, endTime, minFollow, maxFollow, scoreType, page, pageSize)
 	if comErr != nil {
 		receiver.FailReturn(comErr)
 		return
@@ -952,6 +952,8 @@ func (receiver *ProductController) ProductLiveAuthorAnalysis() {
 		"list":           list,
 		"total":          total,
 		"max_show_total": maxTotal,
+		"total_sales":    totalSales,
+		"total_gmv":      totalGmv,
 	})
 	return
 }
@@ -1004,7 +1006,7 @@ func (receiver *ProductController) ProductAwemeAuthorAnalysis() {
 		receiver.FailReturn(global.NewError(4000))
 		return
 	}
-	list, total, comErr := productBusiness.ProductAwemeAuthorAnalysis(productId, "", keyword, tag, sortStr, orderBy, startTime, endTime, minFollow, maxFollow, scoreType, page, pageSize)
+	list, total, totalSales, totalGmv, comErr := productBusiness.ProductAwemeAuthorAnalysis(productId, "", keyword, tag, sortStr, orderBy, startTime, endTime, minFollow, maxFollow, scoreType, page, pageSize)
 	if comErr != nil {
 		receiver.FailReturn(comErr)
 		return
@@ -1025,6 +1027,8 @@ func (receiver *ProductController) ProductAwemeAuthorAnalysis() {
 		"list":           list,
 		"total":          total,
 		"max_show_total": maxTotal,
+		"total_sales":    totalSales,
+		"total_gmv":      totalGmv,
 	})
 	return
 }

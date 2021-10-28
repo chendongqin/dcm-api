@@ -512,7 +512,7 @@ func (receiver *ShopController) ShopAwemeAuthorAnalysis() {
 		receiver.FailReturn(global.NewError(4000))
 		return
 	}
-	list, total, comErr := business.NewProductBusiness().ProductAwemeAuthorAnalysis("", shopId, keyword, tag, sortStr, orderBy, startTime, endTime, minFollow, maxFollow, scoreType, page, pageSize)
+	list, total, _, _, comErr := business.NewProductBusiness().ProductAwemeAuthorAnalysis("", shopId, keyword, tag, sortStr, orderBy, startTime, endTime, minFollow, maxFollow, scoreType, page, pageSize)
 	if comErr != nil {
 		receiver.FailReturn(comErr)
 		return

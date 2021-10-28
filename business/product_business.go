@@ -240,7 +240,7 @@ func (receiver *ProductBusiness) ProductAuthorView(productId string, startTime, 
 	return
 }
 
-func (receiver *ProductBusiness) ProductAuthorAnalysis(productId, keyword, tag, sortStr, orderBy string, startTime, endTime time.Time, minFollow, maxFollow int64, scoreType, page, pageSize int) (list []entity.DyProductAuthorAnalysis, total int, comErr global.CommonError) {
+func (receiver *ProductBusiness) ProductAuthorAnalysis(productId, keyword, tag, sortStr, orderBy string, startTime, endTime time.Time, minFollow, maxFollow int64, scoreType, page, pageSize int) (list []entity.DyProductAuthorAnalysis, total int, totalSales int64, totalGmv float64, comErr global.CommonError) {
 	list = []entity.DyProductAuthorAnalysis{}
 	allList, _, comErr := es.NewEsLiveBusiness().SumSearchLiveAuthor(productId, "", startTime, endTime)
 	if comErr != nil {
@@ -278,6 +278,8 @@ func (receiver *ProductBusiness) ProductAuthorAnalysis(productId, keyword, tag, 
 		if maxFollow > 0 && v.FollowerCount >= maxFollow {
 			continue
 		}
+		totalSales = totalSales + utils.ToInt64(math.Floor(v.PredictSales))
+		totalGmv = totalGmv + v.PredictGmv
 		list = append(list, entity.DyProductAuthorAnalysis{
 			AuthorId:    v.AuthorId,
 			DisplayId:   v.DisplayId,
@@ -465,7 +467,7 @@ func (receiver *ProductBusiness) ProductAuthorAnalysisCount(productId, keyword s
 	return
 }
 
-func (receiver *ProductBusiness) ProductAwemeAuthorAnalysis(productId, shopId, keyword, tag, sortStr, orderBy string, startTime, endTime time.Time, minFollow, maxFollow int64, scoreType, page, pageSize int) (list []entity.DyProductAwemeAuthorAnalysis, total int, comErr global.CommonError) {
+func (receiver *ProductBusiness) ProductAwemeAuthorAnalysis(productId, shopId, keyword, tag, sortStr, orderBy string, startTime, endTime time.Time, minFollow, maxFollow int64, scoreType, page, pageSize int) (list []entity.DyProductAwemeAuthorAnalysis, total int, totalSales int64, totalGmv float64, comErr global.CommonError) {
 	list = []entity.DyProductAwemeAuthorAnalysis{}
 	allList, _, comErr := es.NewEsVideoBusiness().SumSearchAwemeAuthor(productId, shopId, startTime, endTime)
 	if comErr != nil {
@@ -498,6 +500,8 @@ func (receiver *ProductBusiness) ProductAwemeAuthorAnalysis(productId, shopId, k
 				continue
 			}
 		}
+		totalSales = totalSales + v.Sales
+		totalGmv = totalGmv + v.AwemeGmv
 		list = append(list, entity.DyProductAwemeAuthorAnalysis{
 			ProductId:   v.ProductId,
 			AuthorId:    v.AuthorId,
