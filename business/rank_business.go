@@ -154,9 +154,6 @@ func (t *RankBusiness) monitorLiveTop(desc string, param MonitorParam) (res bool
 func (t *RankBusiness) monitorProductSale(desc string, param MonitorParam) (res bool) {
 	now := time.Now()
 	reqDate := now.AddDate(0, 0, -1).Format("2006-01-02")
-	if param.Type == "get_time" {
-		reqDate = param.Time
-	}
 	path := fmt.Sprintf("/v1/dy/rank/product/sale/%s?data_type=1&first_cate=&order_by=desc&sort=order_count&page=1&page_size=50", reqDate)
 	row := PathDesc{
 		Path: path,
@@ -170,9 +167,6 @@ func (t *RankBusiness) monitorProductSale(desc string, param MonitorParam) (res 
 func (t *RankBusiness) monitorProductShare(desc string, param MonitorParam) (res bool) {
 	now := time.Now()
 	reqDate := now.AddDate(0, 0, -1).Format("2006-01-02")
-	if param.Type == "get_time" {
-		reqDate = param.Time
-	}
 	path := fmt.Sprintf("/v1/dy/rank/product/share/%s?first_cate=&data_type=1&order_by=desc&sort=share_count&page=1&page_size=50", reqDate)
 	row := PathDesc{
 		Path: path,
@@ -186,9 +180,6 @@ func (t *RankBusiness) monitorProductShare(desc string, param MonitorParam) (res
 func (t *RankBusiness) monitorProductLiveSale(desc string, param MonitorParam) (res bool) {
 	now := time.Now()
 	reqDate := now.AddDate(0, 0, -1).Format("2006-01-02")
-	if param.Type == "get_time" {
-		reqDate = param.Time
-	}
 	path := fmt.Sprintf("/v1/dy/rank/product/live/sale/%s?data_type=1&first_cate=&order_by=desc&sort=sales&page=1&page_size=50", reqDate)
 	row := PathDesc{
 		Path: path,
@@ -320,9 +311,6 @@ func (t *RankBusiness) monitorProductMonth(desc string, param MonitorParam) (res
 func (t *RankBusiness) monitorAuthorFollowerInc(desc string, param MonitorParam) (res bool) {
 	now := time.Now()
 	reqDate := now.AddDate(0, 0, -1).Format("2006-01-02")
-	if param.Type == "get_time" {
-		reqDate = param.Time
-	}
 	path := fmt.Sprintf("/v1/dy/rank/author/follower/inc/%s?tags=&province=&page=1&is_delivery=0&page_size=50&order_by=desc&sort=inc_follower_count", reqDate)
 	row := PathDesc{
 		Path: path,
@@ -336,9 +324,6 @@ func (t *RankBusiness) monitorAuthorFollowerInc(desc string, param MonitorParam)
 func (t *RankBusiness) monitorAuthorGoods(desc string, param MonitorParam) (res bool) {
 	now := time.Now()
 	reqDate := now.AddDate(0, 0, -1).Format("2006-01-02")
-	if param.Type == "get_time" {
-		reqDate = param.Time
-	}
 	path := fmt.Sprintf("/v1/dy/rank/author/goods/%s?date_type=1&tags=&verified=0&page=1&page_size=50&sort=sum_gmv&order_by=desc", reqDate)
 	row := PathDesc{
 		Path: path,
@@ -359,9 +344,6 @@ func (t *RankBusiness) monitorLiveShare(desc string, param MonitorParam) (res bo
 	weekStartDate := weekStartTime.AddDate(0, 0, -7).Format("2006-01-02")
 	weekEndDate := weekStartTime.AddDate(0, 0, -1).Format("2006-01-02")
 	reqWeekString := fmt.Sprintf("%s/%s", weekStartDate, weekEndDate)
-	if param.Type == "get_time" {
-		reqWeekString = param.Time
-	}
 	path := fmt.Sprintf("/v1/dy/rank/live/share/%s", reqWeekString)
 	row := PathDesc{
 		Path: path,
