@@ -289,69 +289,20 @@ func (receiver *ProductBusiness) ProductAuthorViewV3(productId string, startTime
 	allTop3 = []dy.NameValueInt64PercentChart{}
 	liveTop3 = []dy.NameValueInt64PercentChart{}
 	awemeTop3 = []dy.NameValueInt64PercentChart{}
-	//直播达人
-	allLiveList := make([]entity.DyProductAuthorAnalysis, 0)
-	allList, _, comErr := es.NewEsLiveBusiness().SumSearchLiveAuthor(productId, "", startTime, endTime)
-	for _, l := range allList {
-		if len(l.Data.Hits.Hits) == 0 {
-			continue
-		}
-		v := l.Data.Hits.Hits[0].Source
-		v.PredictGmv = l.PredictGmv.Value
-		v.PredictSales = math.Floor(l.PredictSales.Value)
-		allLiveList = append(allLiveList, entity.DyProductAuthorAnalysis{
-			AuthorId:    v.AuthorId,
-			DisplayId:   v.DisplayId,
-			FollowCount: v.FollowerCount,
-			Gmv:         v.PredictGmv,
-			Nickname:    v.Nickname,
-			Avatar:      v.Avatar,
-			Price:       v.Price,
-			ProductId:   v.ProductId,
-			Sales:       utils.ToInt64(math.Floor(v.PredictSales)),
-			Score:       v.Score,
-			Level:       v.Level,
-			ShopTags:    v.Tags,
-			ShortId:     v.ShortId,
-			ShopId:      v.ShopId,
-			Date:        v.Dt,
-		})
-	}
-	//视频达人
-	allAwemeList := make([]entity.DyProductAwemeAuthorAnalysis, 0)
-	allList2, _, comErr := es.NewEsVideoBusiness().SumSearchAwemeAuthor(productId, "", startTime, endTime)
-	for _, l := range allList2 {
-		if len(l.Data.Hits.Hits) == 0 {
-			continue
-		}
-		v := l.Data.Hits.Hits[0].Source
-		v.AwemeGmv = l.AwemeGmv.Value
-		v.Sales = l.Sales.Value
-		allAwemeList = append(allAwemeList, entity.DyProductAwemeAuthorAnalysis{
-			ProductId:   v.ProductId,
-			AuthorId:    v.AuthorId,
-			Nickname:    v.Nickname,
-			CreateSdf:   v.DistDate,
-			DisplayId:   v.UniqueId,
-			ShortId:     v.ShortId,
-			Score:       v.Score,
-			Level:       v.Level,
-			FirstName:   v.Tags,
-			SecondName:  v.TagsLevelTwo,
-			Avatar:      v.Avatar,
-			FollowCount: v.FollowerCount,
-			DiggCount:   v.DiggCount,
-			Sales:       v.Sales,
-			Gmv:         v.AwemeGmv,
-		})
-	}
 	allSales := map[string]int64{}
 	liveSales := map[string]int64{}
 	awemeSales := map[string]int64{}
 	var liveTotalSales int64 = 0
 	var awemeTotalSales int64 = 0
-	for _, v := range allLiveList {
-		if v.Sales == 0 {
+	//直播达人
+	allLiveList, _, comErr := es.NewEsLiveBusiness().SumSearchLiveAuthor(productId, "", startTime, endTime)
+	for _, l := range allLiveList {
+		if len(l.Data.Hits.Hits) == 0 {
+			continue
+		}
+		v := l.Data.Hits.Hits[0].Source
+		sales := utils.ToInt64(math.Floor(l.PredictSales.Value))
+		if sales == 0 {
 			continue
 		}
 		if _, ok := allSales[v.AuthorId]; !ok {
@@ -360,11 +311,19 @@ func (receiver *ProductBusiness) ProductAuthorViewV3(productId string, startTime
 		if _, ok := liveSales[v.AuthorId]; !ok {
 			liveSales[v.AuthorId] = 0
 		}
-		liveSales[v.AuthorId] += v.Sales
-		allSales[v.AuthorId] += v.Sales
-		liveTotalSales += v.Sales
+		liveSales[v.AuthorId] += sales
+		allSales[v.AuthorId] += sales
+		liveTotalSales += sales
 	}
-	for _, v := range allAwemeList {
+	//视频达人
+	allAwemeList, _, comErr := es.NewEsVideoBusiness().SumSearchAwemeAuthor(productId, "", startTime, endTime)
+	for _, l := range allAwemeList {
+		if len(l.Data.Hits.Hits) == 0 {
+			continue
+		}
+		v := l.Data.Hits.Hits[0].Source
+		v.AwemeGmv = l.AwemeGmv.Value
+		v.Sales = l.Sales.Value
 		if v.Sales == 0 {
 			continue
 		}
