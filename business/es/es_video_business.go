@@ -832,3 +832,159 @@ func (e *EsVideoBusiness) SearchAwemeAuthor(productId, shopId, tag string, minFo
 	//}
 	return
 }
+
+func (receiver *EsVideoBusiness) SumSearchAwemeAuthor(productId, shopId string, startTime, endTime time.Time) (list []es.SumProductVideoAuthor, total int, comErr global.CommonError) {
+	esTable, connection, err := GetESTableByTime(es.DyRoomProductRecordsTable, startTime, endTime)
+	if err != nil {
+		comErr = global.NewError(4000)
+		return
+	}
+	esQuery, esMultiQuery := elasticsearch.NewElasticQueryGroup()
+	esQuery.SetRange("aweme_create_time", map[string]interface{}{
+		"gte": startTime.Unix(),
+		"lt":  endTime.AddDate(0, 0, 1).Unix(),
+	})
+	if productId != "" {
+		esQuery.SetTerm("product_id", productId)
+	}
+	if shopId != "" {
+		esQuery.SetTerm("shop_id", shopId)
+	}
+	var cacheTime time.Duration = 600
+	results := esMultiQuery.
+		SetConnection(connection).
+		SetTable(esTable).
+		SetCache(cacheTime).
+		RawQuery(map[string]interface{}{
+			"query": map[string]interface{}{
+				"bool": map[string]interface{}{
+					"must": esQuery.Condition,
+				},
+			},
+			"size": 0,
+			"aggs": map[string]interface{}{
+				"authors": map[string]interface{}{
+					"terms": map[string]interface{}{
+						"field": "author_id.keyword",
+						"size":  10000,
+					},
+					"aggs": map[string]interface{}{
+						"data": map[string]interface{}{
+							"top_hits": map[string]interface{}{
+								"sort": []map[string]interface{}{
+									{
+										"shelf_time": map[string]interface{}{
+											"order": "desc",
+										},
+									},
+								},
+								"size": 1,
+							},
+						},
+						"sales": map[string]interface{}{
+							"sum": map[string]interface{}{
+								"field": "aweme_gmv",
+							},
+						},
+						"aweme_gmv": map[string]interface{}{
+							"sum": map[string]interface{}{
+								"field": "aweme_gmv",
+							},
+						},
+						"aweme_create_time": map[string]interface{}{
+							"max": map[string]interface{}{
+								"field": "aweme_create_time",
+							},
+						},
+						"r_sort": map[string]interface{}{
+							"bucket_sort": map[string]interface{}{
+								"sort": []map[string]interface{}{
+									{
+										"aweme_create_time": map[string]interface{}{
+											"order": "desc",
+										},
+									},
+								},
+							},
+						},
+					},
+				},
+			},
+		})
+	buckets := elasticsearch.GetBuckets(results, "authors")
+	utils.MapToStruct(buckets, &list)
+	total = len(buckets)
+	return
+}
+
+func (receiver *EsVideoBusiness) CountSearchAuthorAwemeProductNum(productId, shopId string,
+	authorIds []string, startTime, endTime time.Time) (awemeMap map[string]int, productMap map[string]int, comErr global.CommonError) {
+	if len(authorIds) == 0 {
+		return
+	}
+	esTable, connection, err := GetESTableByTime(es.DyRoomProductRecordsTable, startTime, endTime)
+	if err != nil {
+		comErr = global.NewError(4000)
+		return
+	}
+	esQuery, esMultiQuery := elasticsearch.NewElasticQueryGroup()
+	esQuery.SetRange("aweme_create_time", map[string]interface{}{
+		"gte": startTime.Unix(),
+		"lt":  endTime.AddDate(0, 0, 1).Unix(),
+	})
+	if productId != "" {
+		esQuery.SetTerm("product_id", productId)
+	}
+	if shopId != "" {
+		esQuery.SetTerm("shop_id", shopId)
+	}
+	esQuery.SetTerms("author_id", authorIds)
+	var cacheTime time.Duration = 180
+	aggsMap := map[string]interface{}{
+		"awemes": map[string]interface{}{
+			"terms": map[string]interface{}{
+				"field": "room_id.keyword",
+				"size":  10000,
+			},
+		},
+	}
+	if shopId != "" {
+		aggsMap["products"] = map[string]interface{}{
+			"terms": map[string]interface{}{
+				"field": "product_id.keyword",
+				"size":  10000,
+			},
+		}
+	}
+	results := esMultiQuery.
+		SetConnection(connection).
+		SetTable(esTable).
+		SetCache(cacheTime).
+		RawQuery(map[string]interface{}{
+			"query": map[string]interface{}{
+				"bool": map[string]interface{}{
+					"must": esQuery.Condition,
+				},
+			},
+			"size": 0,
+			"aggs": map[string]interface{}{
+				"authors": map[string]interface{}{
+					"terms": map[string]interface{}{
+						"field": "author_id.keyword",
+						"size":  100,
+					},
+					"aggs": aggsMap,
+				},
+			},
+		})
+	buckets := elasticsearch.GetBuckets(results, "authors")
+	list := []es.CountAuthorProductAweme{}
+	utils.MapToStruct(buckets, &list)
+	awemeMap = map[string]int{}
+	productMap = map[string]int{}
+	for _, v := range list {
+		awemeMap[v.Key] = len(v.Awemes.Buckets)
+		productMap[v.Key] = len(v.Products.Buckets)
+	}
+	return
+}

@@ -29,6 +29,7 @@ const (
 	//直播间商品分类数据缓存
 	LiveRoomProductCount     KeyName = "dcm:live:room:product:count:%s"
 	ProductAuthorCount       KeyName = "dcm:product:author:%s:%s:%s"
+	ShopAuthorCount          KeyName = "dcm:shop:author:%s:%s:%s"
 	LivePromotionsDetailList KeyName = "dcm:live:promotions:detail:%s:%s"
 	LiveRoomProductList      KeyName = "dcm:live:product:list:%s"
 	//商品达人数据缓存
