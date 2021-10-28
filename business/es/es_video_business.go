@@ -883,7 +883,7 @@ func (receiver *EsVideoBusiness) SumSearchAwemeAuthor(productId, shopId string, 
 						},
 						"sales": map[string]interface{}{
 							"sum": map[string]interface{}{
-								"field": "aweme_gmv",
+								"field": "sales",
 							},
 						},
 						"aweme_gmv": map[string]interface{}{
@@ -943,7 +943,7 @@ func (receiver *EsVideoBusiness) CountSearchAuthorAwemeProductNum(productId, sho
 	aggsMap := map[string]interface{}{
 		"awemes": map[string]interface{}{
 			"terms": map[string]interface{}{
-				"field": "room_id.keyword",
+				"field": "aweme_id.keyword",
 				"size":  10000,
 			},
 		},
