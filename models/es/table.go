@@ -10,6 +10,7 @@ const (
 	DyProductAwemeAuthorAnalysisTable = "dy_product_aweme_author_analysis_%s"
 	DyAuthorTable                     = "dy_author_base"
 	DyProductTable                    = "dy_product_library"
+	DyProductTableNew                 = "dy_product_base"
 	DyAuthorTakeGoodsTopTable         = "dy_author_take_goods_top_%s"
 	DyAuthorFollowerTable             = "dy_author_follower_top_%s"
 	DyProductSalesTopTable            = "dy_procuct_sales_top_%s"
