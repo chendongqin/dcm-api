@@ -32,6 +32,8 @@ type ProductOrderDaily struct {
 	AwemeNum   int     `json:"aweme_num"`
 	RoomNum    int     `json:"room_num"`
 	AuthorNum  int     `json:"author_num"`
+	LiveSales  int64   `json:"live_sales"`
+	AwemeSales int64   `json:"aweme_sales"`
 }
 
 type ProductOrderChart struct {

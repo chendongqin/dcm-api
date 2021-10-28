@@ -325,6 +325,20 @@ func (receiver *ProductController) ProductBaseAnalysis() {
 		stopTime = stopTime.AddDate(0, 0, -1)
 	}
 	var gpmNum float64 = 0
+	productBusiness := business.NewProductBusiness()
+	AwemeSalesTrendData, AwemeSalesTrendDataE := productBusiness.GetProductAwemeSalesTrend(productId, startTime, endTime)
+	LiveSalesTrendData := productBusiness.GetProductLiveTrend(productId, startTime, endTime)
+	var AwemeSalesTrendMap, LiveSalesTrendMap = map[string]int64{}, map[string]int64{}
+	for k, v := range LiveSalesTrendData.DateChart {
+		LiveSalesTrendMap[v] = LiveSalesTrendData.SaleChart[k]
+	}
+	if AwemeSalesTrendDataE == nil {
+		for _, v := range AwemeSalesTrendData.ChartList {
+			dateStr := time.Unix(v.DateTimestamp, 0).Format("2006/01")
+			AwemeSalesTrendMap[dateStr] = v.Sales
+		}
+	}
+
 	for {
 		if beginTime.After(endTime) {
 			break
@@ -341,6 +355,8 @@ func (receiver *ProductController) ProductBaseAnalysis() {
 		var pv int64 = 0
 		var gpm float64 = 0
 		var rate float64 = 0
+		var LiveSales int64 = 0
+		var AwemeSales int64 = 0
 		var price = productInfo.Price
 		if v, ok := info[dateKey]; ok {
 			authors := map[string]string{}
@@ -391,7 +407,14 @@ func (receiver *ProductController) ProductBaseAnalysis() {
 		gpmChart = append(gpmChart, gpm)
 		countData.OrderCount += order
 		countData.PvCount += pv
+
 		if beginTime.Unix() <= stopTime.Unix() {
+			if isAwemeSales, exists := AwemeSalesTrendMap[dateStr]; exists {
+				AwemeSales = isAwemeSales
+			}
+			if isLiveSales, exists := LiveSalesTrendMap[dateStr]; exists {
+				LiveSales = isLiveSales
+			}
 			orderList = append(orderList, dy2.ProductOrderDaily{
 				Date:       dateStr,
 				OrderCount: order,
@@ -401,6 +424,8 @@ func (receiver *ProductController) ProductBaseAnalysis() {
 				AwemeNum:   awemeNum,
 				RoomNum:    roomNum,
 				AuthorNum:  authorNum,
+				LiveSales:  LiveSales,
+				AwemeSales: AwemeSales,
 			})
 		}
 
@@ -664,35 +689,13 @@ func (receiver *ProductController) ProductLiveChart() {
 		receiver.FailReturn(comErr)
 		return
 	}
-	infoMap, _ := hbase.GetProductLiveSalesRangDate(productId, startTime, endTime)
-	dateChart := make([]string, 0)
-	saleChart := make([]int64, 0)
-	roomNumChart := make([]int, 0)
-	priceChart := make([]float64, 0)
-	beginTime := startTime
-	for {
-		if beginTime.After(endTime) {
-			break
-		}
-		var sale int64 = 0
-		roomNum := 0
-		var price float64 = 0
-		if v, ok := infoMap[beginTime.Format("20060102")]; ok {
-			sale = v.Sales
-			roomNum = v.RoomNum
-			price = v.Price
-		}
-		dateChart = append(dateChart, beginTime.Format("01/02"))
-		saleChart = append(saleChart, sale)
-		roomNumChart = append(roomNumChart, roomNum)
-		priceChart = append(priceChart, price)
-		beginTime = beginTime.AddDate(0, 0, 1)
-	}
+	productBusiness := business.NewProductBusiness()
+	res := productBusiness.GetProductLiveTrend(productId, startTime, endTime)
 	receiver.SuccReturn(map[string]interface{}{
-		"date":     dateChart,
-		"price":    priceChart,
-		"sale":     saleChart,
-		"room_num": roomNumChart,
+		"date":     res.DateChart,
+		"price":    res.PriceChart,
+		"sale":     res.SaleChart,
+		"room_num": res.RoomNumChart,
 	})
 	return
 }
@@ -1166,30 +1169,15 @@ func (receiver *ProductController) ProductAwemeSalesTrend() {
 		receiver.FailReturn(comErr)
 		return
 	}
-	hbaseDataList, comErr := hbase.GetDyProductAwemeSalesTrendRangeDate(productId, startTime, endTime)
+	productBusiness := business.NewProductBusiness()
+	res, comErr := productBusiness.GetProductAwemeSalesTrend(productId, startTime, endTime)
 	if comErr != nil {
 		receiver.FailReturn(comErr)
 		return
 	}
-	chartList := make([]dy2.ProductSalesTrendChart, 0)
-	dateChart := make([]int64, 0)
-	for {
-		if startTime.After(endTime) {
-			break
-		}
-		timestamp := startTime.Unix()
-		v := hbaseDataList[startTime.Format("20060102")]
-		dateChart = append(dateChart, timestamp)
-		chartList = append(chartList, dy2.ProductSalesTrendChart{
-			DateTimestamp: timestamp,
-			Sales:         v.Sales,
-			VideoNum:      v.AwemeNum,
-		})
-		startTime = startTime.AddDate(0, 0, 1)
-	}
 	receiver.SuccReturn(map[string]interface{}{
-		"date": dateChart,
-		"list": chartList,
+		"date": res.DateChart,
+		"list": res.ChartList,
 	})
 }
 

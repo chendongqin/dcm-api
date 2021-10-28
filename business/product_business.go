@@ -25,6 +25,17 @@ import (
 type ProductBusiness struct {
 }
 
+type ProductLiveTrend struct {
+	DateChart    []string
+	SaleChart    []int64
+	RoomNumChart []int
+	PriceChart   []float64
+}
+type ProductAwemeTrend struct {
+	ChartList []dy.ProductSalesTrendChart
+	DateChart []int64
+}
+
 func NewProductBusiness() *ProductBusiness {
 	return new(ProductBusiness)
 }
@@ -879,4 +890,66 @@ func (receiver *ProductBusiness) ExplainTaobaoShortUrl(url string) string {
 	}
 
 	return ""
+}
+
+//获取商品详情直播销量趋势数据
+func (receiver *ProductBusiness) GetProductLiveTrend(productId string, startTime, endTime time.Time) (res ProductLiveTrend) {
+	infoMap, _ := hbase.GetProductLiveSalesRangDate(productId, startTime, endTime)
+	dateChart := make([]string, 0)
+	saleChart := make([]int64, 0)
+	roomNumChart := make([]int, 0)
+	priceChart := make([]float64, 0)
+	beginTime := startTime
+	for {
+		if beginTime.After(endTime) {
+			break
+		}
+		var sale int64 = 0
+		roomNum := 0
+		var price float64 = 0
+		if v, ok := infoMap[beginTime.Format("20060102")]; ok {
+			sale = v.Sales
+			roomNum = v.RoomNum
+			price = v.Price
+		}
+		dateChart = append(dateChart, beginTime.Format("01/02"))
+		saleChart = append(saleChart, sale)
+		roomNumChart = append(roomNumChart, roomNum)
+		priceChart = append(priceChart, price)
+		beginTime = beginTime.AddDate(0, 0, 1)
+	}
+
+	res = ProductLiveTrend{
+		DateChart:    dateChart,
+		SaleChart:    saleChart,
+		RoomNumChart: roomNumChart,
+		PriceChart:   priceChart,
+	}
+	return
+}
+
+//获取商品详情视频销量趋势数据
+func (receiver *ProductBusiness) GetProductAwemeSalesTrend(productId string, startTime, endTime time.Time) (res ProductAwemeTrend, comErr global.CommonError) {
+	hbaseDataList, comErr := hbase.GetDyProductAwemeSalesTrendRangeDate(productId, startTime, endTime)
+	chartList := make([]dy.ProductSalesTrendChart, 0)
+	dateChart := make([]int64, 0)
+	for {
+		if startTime.After(endTime) {
+			break
+		}
+		timestamp := startTime.Unix()
+		v := hbaseDataList[startTime.Format("20060102")]
+		dateChart = append(dateChart, timestamp)
+		chartList = append(chartList, dy.ProductSalesTrendChart{
+			DateTimestamp: timestamp,
+			Sales:         v.Sales,
+			VideoNum:      v.AwemeNum,
+		})
+		startTime = startTime.AddDate(0, 0, 1)
+	}
+	res = ProductAwemeTrend{
+		DateChart: dateChart,
+		ChartList: chartList,
+	}
+	return
 }
