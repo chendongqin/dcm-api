@@ -305,14 +305,8 @@ func (receiver *ProductBusiness) ProductAuthorViewV3(productId string, startTime
 		if sales == 0 {
 			continue
 		}
-		if _, ok := allSales[v.AuthorId]; !ok {
-			allSales[v.AuthorId] = 0
-		}
-		if _, ok := liveSales[v.AuthorId]; !ok {
-			liveSales[v.AuthorId] = 0
-		}
-		liveSales[v.AuthorId] += sales
-		allSales[v.AuthorId] += sales
+		liveSales[v.AuthorId] = sales
+		allSales[v.AuthorId] = sales
 		liveTotalSales += sales
 	}
 	//视频达人
@@ -327,14 +321,8 @@ func (receiver *ProductBusiness) ProductAuthorViewV3(productId string, startTime
 		if v.Sales == 0 {
 			continue
 		}
-		if _, ok := allSales[v.AuthorId]; !ok {
-			allSales[v.AuthorId] = 0
-		}
-		if _, ok := awemeSales[v.AuthorId]; !ok {
-			awemeSales[v.AuthorId] = 0
-		}
-		awemeSales[v.AuthorId] += v.Sales
-		allSales[v.AuthorId] += v.Sales
+		awemeSales[v.AuthorId] = v.Sales
+		allSales[v.AuthorId] = v.Sales
 		awemeTotalSales += v.Sales
 	}
 	totalSales := liveTotalSales + awemeTotalSales
