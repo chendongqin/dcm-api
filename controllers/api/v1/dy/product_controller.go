@@ -1578,10 +1578,10 @@ func (receiver *AuthorController) ChangeProductCate() {
 	productId := business.IdDecrypt(InputData.GetString("product_id", ""))
 	oldFirstCate := InputData.GetString("old_fcate", "")
 	oldSecondCate := InputData.GetString("old_scate", "")
-	oldThirdCate := InputData.GetString("old_taste", "")
+	oldThirdCate := InputData.GetString("old_tcate", "")
 	newFirstCate := InputData.GetString("new_fcate", "")
 	newSecondCate := InputData.GetString("new_scate", "")
-	newThirdCate := InputData.GetString("new_taste", "")
+	newThirdCate := InputData.GetString("new_tcate", "")
 	if !business.UserActionLock("change_author_cate", productId, 2) {
 		receiver.FailReturn(global.NewError(4211))
 		return
