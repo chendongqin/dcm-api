@@ -398,23 +398,18 @@ func (receiver *LiveController) LiveRankTrends() {
 	hourRanks := make([]int, 0)
 	maxSaleRank := 1000000
 	maxHourRank := 1000000
-	maxHourRankTime := int64(0)
-	maxSaleRankTime := int64(0)
 	for _, v := range liveRankTrends {
 		if v.Type == 8 {
 			saleDates = append(saleDates, v.CrawlTime)
 			saleRanks = append(saleRanks, v.Rank)
 			if v.Rank < maxSaleRank {
 				maxSaleRank = v.Rank
-				maxHourRankTime = v.CrawlTime
 			}
 		} else if v.Type == 1 {
 			hourDates = append(hourDates, v.CrawlTime)
 			hourRanks = append(hourRanks, v.Rank)
 			if v.Rank < maxHourRank {
 				maxHourRank = v.Rank
-				maxHourRankTime = v.CrawlTime
-
 			}
 		}
 	}
@@ -422,20 +417,6 @@ func (receiver *LiveController) LiveRankTrends() {
 	hourRanks = business.DealChartInt(hourRanks, 60)
 	saleDates = business.DealChartInt64(saleDates, 60)
 	saleRanks = business.DealChartInt(saleRanks, 60)
-	for k, v := range hourDates { //最高排名换点操作
-		if v >= maxHourRankTime {
-			hourDates[k] = maxHourRankTime
-			hourRanks[k] = maxHourRank
-			break
-		}
-	}
-	for k, v := range saleDates { //最高排名换点操作
-		if v >= maxSaleRankTime {
-			saleDates[k] = maxHourRankTime
-			saleRanks[k] = maxHourRank
-			break
-		}
-	}
 	receiver.SuccReturn(map[string]interface{}{
 		"hour_rank": map[string]interface{}{
 			"time":  hourDates,
