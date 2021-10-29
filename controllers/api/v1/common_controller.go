@@ -214,8 +214,7 @@ func (receiver *CommonController) GetInvitePhone() {
 		return
 	}
 	var configJson dcm.DcConfigJson
-	keyName := receiver.GetString("key_name", "")
-	dcm.GetDbSession().Where("key_name=? and auth=0", keyName).Get(&configJson)
+	dcm.GetDbSession().Where("key_name=? and auth=0", "invite").Get(&configJson)
 	receiver.SuccReturn(configJson.Value)
 	return
 }
