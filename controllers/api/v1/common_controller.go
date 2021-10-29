@@ -165,10 +165,10 @@ func (receiver *CommonController) GetConfig() {
 
 func (receiver *CommonController) SetConfig() {
 	var configJson dcm.DcConfigJson
-	//if !receiver.HasLogin{
-	//	receiver.FailReturn(global.NewError(4001))
-	//	return
-	//}
+	if !receiver.HasLogin {
+		receiver.FailReturn(global.NewError(4001))
+		return
+	}
 	keyName := receiver.GetString("key_name")
 	value := receiver.GetString("value")
 	exist, err := dcm.GetDbSession().Where("key_name=? and auth=0", keyName).Get(&configJson)
