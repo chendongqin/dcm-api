@@ -169,18 +169,26 @@ func (receiver *CommonController) InvitePhone() {
 		receiver.FailReturn(global.NewError(4001))
 		return
 	}
-	keyName := receiver.GetString("key_name")
+	input := receiver.InputFormat()
+	keyName := input.GetString("key_name", "")
 	exist, err := dcm.GetDbSession().Where("key_name=? and auth=0", keyName).Get(&configJson)
 	if err != nil {
 		receiver.FailReturn(global.NewError(5000))
 		return
 	}
+	userPhone := input.GetString("user_phone", "")
+	invitePhone := input.GetString("invite_phone", "")
+	platform := input.GetString("platform", "")
+	if userPhone == "" || invitePhone == "" || platform == "" {
+		receiver.FailReturn(global.NewError(4000))
+		return
+	}
 	var value = make(map[string]map[string]string)
 	json.Unmarshal([]byte(configJson.Value), &value)
-	if value[receiver.GetString("user_phone")] == nil {
-		value[receiver.GetString("user_phone")] = make(map[string]string)
+	if value[userPhone] == nil {
+		value[userPhone] = make(map[string]string)
 	}
-	value[receiver.GetString("user_phone")][receiver.GetString("invite_phone")] = receiver.GetString("platform")
+	value[userPhone][invitePhone] = platform
 	marshal, _ := json.Marshal(value)
 	configJson.KeyName = keyName
 	configJson.Value = string(marshal)
