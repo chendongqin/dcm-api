@@ -466,21 +466,34 @@ func (receiver *ShopController) ShopLiveAuthorRooms() {
 	sortStr := receiver.GetString("sort", "start_ts")
 	orderBy := receiver.GetString("order_by", "desc")
 	list, total := business.NewProductBusiness().ProductAuthorLiveRooms("", shopId, authorId, startTime, endTime, sortStr, orderBy, page, pageSize)
-	for k, v := range list {
-		list[k].Cover = dyimg.Fix(v.Cover)
-		list[k].RoomId = business.IdEncrypt(v.RoomId)
-		endLiveTime := v.EndTs
-		if endLiveTime == 0 {
-			endLiveTime = time.Now().Unix()
+	var roomMap = map[string]entity.DyProductAuthorRelatedRoom{}
+	var ret []entity.DyProductAuthorRelatedRoom
+	for _, v := range list {
+		temp, exist := roomMap[v.RoomId]
+		if !exist {
+			temp = v
+			temp.Cover = dyimg.Fix(v.Cover)
+			temp.RoomId = business.IdEncrypt(v.RoomId)
+			endLiveTime := v.EndTs
+			if endLiveTime == 0 {
+				endLiveTime = time.Now().Unix()
+			}
+			temp.LiveSecond = endLiveTime - v.StartTs
+		} else {
+			temp.Sales += v.Sales
+			temp.Gmv += v.Gmv
 		}
-		list[k].LiveSecond = endLiveTime - v.StartTs
+		roomMap[v.RoomId] = temp
+	}
+	for _, v := range roomMap {
+		ret = append(ret, v)
 	}
 	maxTotal := total
 	if total > business.EsMaxShowNum {
 		maxTotal = business.EsMaxShowNum
 	}
 	receiver.SuccReturn(map[string]interface{}{
-		"list":           list,
+		"list":           ret,
 		"total":          total,
 		"max_show_total": maxTotal,
 	})
