@@ -163,21 +163,27 @@ func (receiver *CommonController) GetConfig() {
 	return
 }
 
-func (receiver *CommonController) SetConfig() {
+func (receiver *CommonController) InvitePhone() {
 	var configJson dcm.DcConfigJson
 	if !receiver.HasLogin {
 		receiver.FailReturn(global.NewError(4001))
 		return
 	}
 	keyName := receiver.GetString("key_name")
-	value := receiver.GetString("value")
 	exist, err := dcm.GetDbSession().Where("key_name=? and auth=0", keyName).Get(&configJson)
 	if err != nil {
 		receiver.FailReturn(global.NewError(5000))
 		return
 	}
+	var value = make(map[string]map[string]string)
+	json.Unmarshal([]byte(configJson.Value), &value)
+	if value[receiver.GetString("user_phone")] == nil {
+		value[receiver.GetString("user_phone")] = make(map[string]string)
+	}
+	value[receiver.GetString("user_phone")][receiver.GetString("invite_phone")] = receiver.GetString("platform")
+	marshal, _ := json.Marshal(value)
 	configJson.KeyName = keyName
-	configJson.Value = value
+	configJson.Value = string(marshal)
 	if !exist {
 		if _, err = dcm.Insert(dcm.GetDbSession(), &configJson); err != nil {
 			receiver.FailReturn(global.NewError(5000))
