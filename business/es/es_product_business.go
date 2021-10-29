@@ -493,6 +493,7 @@ func (i *EsProductBusiness) KeywordSearch(keyword string) (list []es.DyProduct) 
 		esQuery.SetMatchPhrase("title", keyword)
 	} else {
 		esTable, connection = GetESTable(es.DyProductTableNew)
+		esQuery.SetTerm("platform_label.keyword", "小店")
 	}
 	var cacheTime time.Duration = 60
 	results := esMultiQuery.
