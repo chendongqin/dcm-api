@@ -163,6 +163,37 @@ func (receiver *CommonController) GetConfig() {
 	return
 }
 
+func (receiver *CommonController) SetConfig() {
+	var configJson dcm.DcConfigJson
+	//if !receiver.HasLogin{
+	//	receiver.FailReturn(global.NewError(4001))
+	//	return
+	//}
+	keyName := receiver.GetString("key_name")
+	value := receiver.GetString("value")
+	exist, err := dcm.GetDbSession().Where("key_name=? and auth=0", keyName).Get(&configJson)
+	if err != nil {
+		receiver.FailReturn(global.NewError(5000))
+		return
+	}
+	configJson.KeyName = keyName
+	configJson.Value = value
+	if !exist {
+		if _, err = dcm.Insert(dcm.GetDbSession(), &configJson); err != nil {
+			receiver.FailReturn(global.NewError(5000))
+			return
+		}
+	} else {
+		_, err = dcm.GetDbSession().Where("key_name=?", keyName).Update(&configJson)
+		if err != nil {
+			receiver.FailReturn(global.NewError(5000))
+			return
+		}
+	}
+	receiver.SuccReturn(nil)
+	return
+}
+
 func (receiver *CommonController) GetConfigList() {
 	var ret = make(map[string]interface{}, 0)
 	cacheKey := cache.GetCacheKey(cache.ConfigKeyCache, "all")

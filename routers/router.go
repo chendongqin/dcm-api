@@ -29,6 +29,7 @@ func init() {
 		),
 		beego.NSNamespace("/config",
 			beego.NSRouter("/:key_name", &v1.CommonController{}, "get:GetConfig"),
+			beego.NSRouter("/set", &v1.CommonController{}, "put:SetConfig"),
 			beego.NSRouter("/list", &v1.CommonController{}, "get:GetConfigList"),
 		),
 		beego.NSNamespace("/search",
