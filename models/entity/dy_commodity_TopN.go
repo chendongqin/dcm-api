@@ -16,6 +16,7 @@ type DyProductSalesTopRank struct {
 	MarkerPrice       float64 `json:"marker_price"`
 	Price             float64 `json:"price"`
 	Images            string  `json:"images"`
+	Gpm               float64 `json:"gpm"`
 	CosRatio          float64 `json:"cos_ratio"`
 	CosFee            float64 `json:"cos_fee"`
 	FirstCname        string  `json:"first_cname"`

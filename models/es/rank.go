@@ -17,6 +17,7 @@ type DyProductSalesTopRank struct {
 	SecondCname       string  `json:"second_cname"`
 	ThirdCname        string  `json:"third_cname"`
 	DcmCname          string  `json:"dcm_cname"`
+	Gpm               string  `json:"gpm"`
 	TbFirstCname      string  `json:"tb_first_cname"`
 	TbSecondCname     string  `json:"tb_second_cname"`
 	PlatformLabel     string  `json:"platform_label"`
