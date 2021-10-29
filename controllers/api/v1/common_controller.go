@@ -208,6 +208,18 @@ func (receiver *CommonController) InvitePhone() {
 	return
 }
 
+func (receiver *CommonController) GetInvitePhone() {
+	if !receiver.HasLogin {
+		receiver.FailReturn(global.NewError(4001))
+		return
+	}
+	var configJson dcm.DcConfigJson
+	keyName := receiver.GetString("key_name", "")
+	dcm.GetDbSession().Where("key_name=? and auth=0", keyName).Get(&configJson)
+	receiver.SuccReturn(configJson.Value)
+	return
+}
+
 func (receiver *CommonController) GetConfigList() {
 	var ret = make(map[string]interface{}, 0)
 	cacheKey := cache.GetCacheKey(cache.ConfigKeyCache, "all")
