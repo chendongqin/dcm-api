@@ -1181,6 +1181,7 @@ func (receiver *EsLiveBusiness) SearchLiveRooms(keyword, category, firstName, se
 func (receiver *EsLiveBusiness) KeywordSearch(keyword string) (list []es.EsDyLiveInfo) {
 	esQuery, esMultiQuery := elasticsearch.NewElasticQueryGroup()
 	startTime := time.Now().AddDate(0, 0, -89)
+	endTime := time.Now()
 	esTable, connection, err := GetESTableByTime(es.DyLiveInfoBaseTable, startTime, time.Now())
 	if err != nil {
 		return
@@ -1190,8 +1191,9 @@ func (receiver *EsLiveBusiness) KeywordSearch(keyword string) (list []es.EsDyLiv
 		esQuery.SetMultiMatch([]string{"display_id.keyword", "short_id.keyword", "title.keyword", "nickname.keyword", "product_title.keyword"}, keyword)
 		sortStr = "max_user_count"
 	} else {
-		startTime = time.Now().AddDate(0, 0, -6)
-		esTable, connection, err = GetESTableByTime(es.DyLiveInfoBaseTable, startTime, time.Now())
+		endTime = time.Date(time.Now().Year(), time.Now().Month(), time.Now().Day(), 0, 0, 0, 0, time.Now().Location()).AddDate(0, 0, 1)
+		startTime = endTime.AddDate(0, 0, -7)
+		esTable, connection, err = GetESTableByTime(es.DyLiveInfoBaseTable, startTime, endTime)
 	}
 	esQuery.SetRange("create_time", map[string]interface{}{
 		"gte": startTime.Unix(),
