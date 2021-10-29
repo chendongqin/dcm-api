@@ -25,9 +25,9 @@ func (receiver *DirtyBusiness) ChangeAuthorCate(authorId, tags, tagsTow string) 
 		return comErr
 	}
 	//测试环境不处理
-	if global.IsDev() {
-		return nil
-	}
+	//if global.IsDev() {
+	//	return nil
+	//}
 	hbaseBusiness := NewHbaseBusiness()
 	artificialData := map[string]interface{}{
 		"tags":           tags,
@@ -52,9 +52,9 @@ func (receiver *DirtyBusiness) ChangeProductCate(productId, dcmLevelFirst, first
 		return comErr
 	}
 	//测试环境不处理
-	if global.IsDev() {
-		return nil
-	}
+	//if global.IsDev() {
+	//	return nil
+	//}
 	hbaseBusiness := NewHbaseBusiness()
 	artificialData := map[string]interface{}{
 		"first_cname":  firstCate,
@@ -74,6 +74,6 @@ func (receiver *DirtyBusiness) ChangeProductCate(productId, dcmLevelFirst, first
 	}
 	//ret, _ := NewSpiderBusiness().SpiderSpeedUp("product", productId)
 	//logs.Info("商品分类修改，爬虫推送结果：", ret)
-	kafka.SendProductCateChange(productId,artificialData)
+	kafka.SendProductCateChange(productId, artificialData)
 	return nil
 }
