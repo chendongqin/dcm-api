@@ -47,7 +47,7 @@ func init() {
 		beego.NSRouter("/scan", &controllers.SpiderAuthController{}, "get:GetQrCodeMcn"),           //获取路由链接
 		beego.NSRouter("/checkScan", &controllers.SpiderAuthController{}, "get:CheckQrConnectMcn"), //获取路由链接
 
-		beego.NSRouter("/invite/phone", &v1.CommonController{}, "put:InvitePhone"),
+		beego.NSRouter("/invite/phone", &v1.CommonController{}, "post:InvitePhone"),
 	)
 	// 注册路由组
 	beego.AddNamespace(ns)
