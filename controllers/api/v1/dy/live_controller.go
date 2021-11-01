@@ -398,6 +398,8 @@ func (receiver *LiveController) LiveRankTrends() {
 	hourRanks := make([]int, 0)
 	maxSaleRank := 1000000
 	maxHourRank := 1000000
+
+	hourDateRanks := make([]entity.DyLiveRankTrend, 0)
 	for _, v := range liveRankTrends {
 		if v.Type == 8 {
 			saleDates = append(saleDates, v.CrawlTime)
@@ -406,6 +408,7 @@ func (receiver *LiveController) LiveRankTrends() {
 				maxSaleRank = v.Rank
 			}
 		} else if v.Type == 1 {
+			hourDateRanks = append(hourDateRanks, v)
 			hourDates = append(hourDates, v.CrawlTime)
 			hourRanks = append(hourRanks, v.Rank)
 			if v.Rank < maxHourRank {
@@ -413,8 +416,32 @@ func (receiver *LiveController) LiveRankTrends() {
 			}
 		}
 	}
-	hourDates = business.DealChartInt64(hourDates, 60)
-	hourRanks = business.DealChartInt(hourRanks, 60)
+	hourLen := len(hourDateRanks)
+	if hourLen < 60 {
+		hourDates = business.DealChartInt64(hourDates, 60)
+		hourRanks = business.DealChartInt(hourRanks, 60)
+	} else {
+		hourDates = make([]int64, 0)
+		hourRanks = make([]int, 0)
+		stepFloat := math.Floor(float64(hourLen / 60))
+		step := int(stepFloat)
+		start := 0
+		for i := 0; i < 60; i++ {
+			start = i * step
+			end := start + step
+			tempMax := 1000000
+			tempTime := int64(0)
+			//分区取最高排名
+			for _, v := range hourDateRanks[start:end] {
+				if v.Rank < tempMax {
+					tempMax = v.Rank
+					tempTime = v.CrawlTime
+				}
+			}
+			hourDates = append(hourDates, tempTime)
+			hourRanks = append(hourRanks, tempMax)
+		}
+	}
 	saleDates = business.DealChartInt64(saleDates, 60)
 	saleRanks = business.DealChartInt(saleRanks, 60)
 	receiver.SuccReturn(map[string]interface{}{
