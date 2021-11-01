@@ -1238,8 +1238,13 @@ func (receiver *ProductController) ProductRankAweme() {
 	list := make([]entity.DyCommodityRelateAweme, 0)
 	startStr := startTime.Format("20060102")
 	endStr := endTime.Format("20060102")
+	if dataType == 3 {
+		startStr = startTime.Format("200601")
+		endStr = endTime.Format("200601")
+	}
 	cacheKey := cache.GetCacheKey(cache.ProductRelateAweme, productId, dataType, startStr, endStr)
 	cacheStr := global.Cache.Get(cacheKey)
+	cacheStr = ""
 	if cacheStr != "" {
 		cacheStr = utils.DeserializeData(cacheStr)
 		_ = jsoniter.Unmarshal([]byte(cacheStr), &list)

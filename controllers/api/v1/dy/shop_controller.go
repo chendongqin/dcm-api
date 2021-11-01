@@ -477,6 +477,13 @@ func (receiver *ShopController) ShopLiveAuthorRooms() {
 		tempData.LiveCreateTime = v.LiveCreateTime.Value
 		tempData.PredictGmv = v.PredictGmv.Value
 		tempData.PredictSales = math.Floor(v.PredictSales.Value)
+		if tempData.LiveCreateTime == 0 || tempData.FinishTime == 0 {
+			tempLiveInfo, comErr := hbase.GetLiveInfo(tempData.RoomId)
+			if comErr == nil {
+				tempData.LiveCreateTime = tempLiveInfo.CreateTime
+				tempData.FinishTime = tempLiveInfo.FinishTime
+			}
+		}
 		analysis = append(analysis, tempData)
 	}
 	start := (page - 1) * pageSize
