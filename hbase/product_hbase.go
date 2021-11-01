@@ -179,9 +179,9 @@ func GetDyProductBrand(productId string) (data entity.DyProductBrand, comErr glo
 	}
 	detailMap := hbaseService.HbaseFormat(result, entity.DyProductBrandMap)
 	utils.MapToStruct(detailMap, &data)
-	if data.ManmadeCategory.FirstCname != "" {
-		data.DcmLevelFirst = data.ManmadeCategory.FirstCname
-	}
+	//if data.ManmadeCategory.FirstCname != "" {
+	//	data.DcmLevelFirst = data.ManmadeCategory.FirstCname
+	//}
 	return
 }
 
