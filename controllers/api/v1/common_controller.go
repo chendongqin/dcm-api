@@ -125,11 +125,7 @@ func (receiver *CommonController) CheckSmsCode() {
 }
 
 func (receiver *CommonController) Test() {
-	receiver.SuccReturn(map[string]string{
-		"master_db":            global.Cfg.String("master_db"),
-		"default_redis_host":   global.Cfg.String("default_redis_host"),
-		"default_redis_passwd": global.Cfg.String("default_redis_passwd"),
-	})
+	receiver.SuccReturn(nil)
 	return
 }
 
