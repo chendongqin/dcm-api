@@ -576,7 +576,47 @@ func (receiver *ShopController) ShopAwemeAuthorAnalysisCount() {
 	return
 }
 
-//小店达人视频列表
+//小店视频达人商品列表
+func (receiver *ShopController) ShopAwemeAuthorProduct() {
+	shopId := business.IdDecrypt(receiver.Ctx.Input.Param(":shop_id"))
+	authorId := business.IdDecrypt(receiver.Ctx.Input.Param(":author_id"))
+	startTime, endTime, comErr := receiver.GetRangeDate()
+	if comErr != nil {
+		receiver.FailReturn(comErr)
+		return
+	}
+	sortType := receiver.GetString("sort_type", "desc")
+	orderBy := receiver.GetString("order_by", "aweme_create_time")
+	page := receiver.GetPage("page")
+	pageSize := receiver.GetPageSize("page_size", 10, 50)
+	productList, total, _ := es.NewEsLiveBusiness().SearchAwemeAuthorProductList(authorId, shopId, startTime, endTime, orderBy, sortType)
+	analysis := []es2.AwemeAuthorProduct{}
+	for _, v := range productList {
+		if len(v.Data.Hits.Hits) == 0 {
+			continue
+		}
+		tempData := v.Data.Hits.Hits[0].Source
+		tempData.AwemeCreateTime = v.AwemeCreateTime.Value
+		tempData.AwemeGmv = v.AwemeGmv.Value
+		tempData.Sales = math.Floor(v.Sales.Value)
+		analysis = append(analysis, tempData)
+	}
+	start := (page - 1) * pageSize
+	end := page * pageSize
+	if start > total {
+		start = total
+	}
+	if end > total {
+		end = total
+	}
+	receiver.SuccReturn(map[string]interface{}{
+		"list":  analysis[start:end],
+		"total": total,
+	})
+	return
+}
+
+//小店视频达人视频列表
 func (receiver *ShopController) ShopAuthorAwemes() {
 	shopId := business.IdDecrypt(receiver.Ctx.Input.Param(":shop_id"))
 	authorId := business.IdDecrypt(receiver.Ctx.Input.Param(":author_id"))
@@ -588,8 +628,8 @@ func (receiver *ShopController) ShopAuthorAwemes() {
 	page := receiver.GetPage("page")
 	pageSize := receiver.GetPageSize("page_size", 5, 10)
 	sortType := receiver.GetString("sort_type", "desc")
-	orderBy := receiver.GetString("order_by", "live_create_time")
-	list, total := business.NewProductBusiness().ProductAuthorAwemes("", shopId, authorId, startTime, endTime, sortType, orderBy, page, pageSize)
+	orderBy := receiver.GetString("order_by", "aweme_create_time")
+	list, total := business.NewProductBusiness().ProductAuthorAwemes("", shopId, authorId, startTime, endTime, orderBy, sortType, page, pageSize)
 	for k, v := range list {
 		list[k].AwemeCover = dyimg.Fix(v.AwemeCover)
 		list[k].AwemeId = business.IdEncrypt(v.AwemeId)
