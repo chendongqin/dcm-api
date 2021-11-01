@@ -22,6 +22,7 @@ func init() {
 			beego.NSRouter("/author/aweme/:shop_id/:start/:end", &v1dy.ShopController{}, "get:ShopAwemeAuthorAnalysis"),
 			beego.NSRouter("/author/aweme/count/:shop_id/:start/:end", &v1dy.ShopController{}, "get:ShopAwemeAuthorAnalysisCount"),
 			beego.NSRouter("/author/aweme/list/:shop_id/:author_id/:start/:end", &v1dy.ShopController{}, "get:ShopAuthorAwemes"),
+			beego.NSRouter("/author/aweme/product/:shop_id/:author_id/:start/:end", &v1dy.ShopController{}, "get:ShopAwemeAuthorProduct"),
 		),
 	)
 	// 注册路由组

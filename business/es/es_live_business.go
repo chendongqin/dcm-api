@@ -1842,6 +1842,92 @@ func (receiver *EsLiveBusiness) SearchLiveAuthorProductList(authorId, shopId str
 	return
 }
 
+//商品视频达人商品列表
+func (receiver *EsLiveBusiness) SearchAwemeAuthorProductList(authorId, shopId string, startTime, endTime time.Time, orderBy, sortType string) (list []es.AwemeAuthorProductList, total int, comErr global.CommonError) {
+	esTable, connection, err := GetESTableByTime(es.DyAuthorAwemeProductTable, startTime, endTime)
+	if err != nil {
+		comErr = global.NewError(4000)
+		return
+	}
+	esQuery, esMultiQuery := elasticsearch.NewElasticQueryGroup()
+	esQuery.SetRange("aweme_create_time", map[string]interface{}{
+		"gte": startTime.Unix(),
+		"lt":  endTime.AddDate(0, 0, 1).Unix(),
+	})
+	if authorId != "" {
+		esQuery.SetTerm("author_id", authorId)
+	}
+	if shopId != "" {
+		esQuery.SetTerm("shop_id", shopId)
+	}
+	var cacheTime time.Duration = 300
+	results := esMultiQuery.
+		SetConnection(connection).
+		SetTable(esTable).
+		SetCache(cacheTime).
+		RawQuery(map[string]interface{}{
+			"query": map[string]interface{}{
+				"bool": map[string]interface{}{
+					"must": esQuery.Condition,
+				},
+			},
+			"from": 0,
+			"size": 0,
+			"aggs": map[string]interface{}{
+				"product": map[string]interface{}{
+					"terms": map[string]interface{}{
+						"field": "product_id.keyword",
+						"size":  10000,
+					},
+					"aggs": map[string]interface{}{
+						"data": map[string]interface{}{
+							"top_hits": map[string]interface{}{
+								"sort": []map[string]interface{}{
+									{
+										"aweme_create_time": map[string]interface{}{
+											"order": "desc",
+										},
+									},
+								},
+								"size": 1,
+							},
+						},
+						"sales": map[string]interface{}{
+							"sum": map[string]interface{}{
+								"field": "sales",
+							},
+						},
+						"aweme_gmv": map[string]interface{}{
+							"sum": map[string]interface{}{
+								"field": "aweme_gmv",
+							},
+						},
+						"aweme_create_time": map[string]interface{}{
+							"max": map[string]interface{}{
+								"field": "aweme_create_time",
+							},
+						},
+						"r_sort": map[string]interface{}{
+							"bucket_sort": map[string]interface{}{
+								"sort": []map[string]interface{}{
+									{
+										orderBy: map[string]interface{}{
+											"order": sortType,
+										},
+									},
+								},
+							},
+						},
+					},
+				},
+			},
+		})
+	buckets := elasticsearch.GetBuckets(results, "product")
+	utils.MapToStruct(buckets, &list)
+	total = len(buckets)
+	return
+}
+
 //商品直播达人直播列表
 func (receiver *EsLiveBusiness) SearchLiveAuthorRoomList(authorId, shopId string, startTime, endTime time.Time, orderBy, sortType string) (list []es.LiveAuthorProductList, total int, comErr global.CommonError) {
 	esTable, connection, err := GetESTableByTime(es.DyRoomProductRecordsTable, startTime, endTime)
