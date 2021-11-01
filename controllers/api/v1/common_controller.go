@@ -164,18 +164,12 @@ func (receiver *CommonController) GetConfig() {
 }
 
 func (receiver *CommonController) InvitePhone() {
-	var configJson dcm.DcConfigJson
+	var userInvite dcm.DcUserInvite
 	if !receiver.HasLogin {
 		receiver.FailReturn(global.NewError(4001))
 		return
 	}
 	input := receiver.InputFormat()
-	keyName := input.GetString("key_name", "")
-	exist, err := dcm.GetDbSession().Where("key_name=? and auth=0", keyName).Get(&configJson)
-	if err != nil {
-		receiver.FailReturn(global.NewError(5000))
-		return
-	}
 	userPhone := input.GetString("user_phone", "")
 	invitePhone := input.GetString("invite_phone", "")
 	platform := input.GetString("platform", "")
@@ -183,23 +177,29 @@ func (receiver *CommonController) InvitePhone() {
 		receiver.FailReturn(global.NewError(4000))
 		return
 	}
-	var value = make(map[string]map[string]string)
-	json.Unmarshal([]byte(configJson.Value), &value)
-	if value[userPhone] == nil {
-		value[userPhone] = make(map[string]string)
+	db := dcm.GetDbSession()
+	exist, err := db.Where("user_phone=? and invite_phone=?", userPhone, invitePhone).Get(&userInvite)
+	if err != nil {
+		receiver.FailReturn(global.NewError(5000))
+		return
 	}
-	value[userPhone][invitePhone] = platform
-	marshal, _ := json.Marshal(value)
-	configJson.KeyName = keyName
-	configJson.Value = string(marshal)
-	if !exist {
-		if _, err = dcm.Insert(dcm.GetDbSession(), &configJson); err != nil {
+	if !exist{
+		userInvite.UserPhone = userPhone
+		userInvite.InvitePhone = invitePhone
+		userInvite.InvitePhone = invitePhone
+		userInvite.Platform = platform
+		userInvite.CreateTime = time.Now()
+		userInvite.UpdateTime = time.Now()
+		_, err = dcm.Insert(db, &userInvite)
+		if err != nil {
 			receiver.FailReturn(global.NewError(5000))
 			return
 		}
-	} else {
-		_, err = dcm.GetDbSession().Where("key_name=?", keyName).Update(&configJson)
-		if err != nil {
+	}else{
+		userInvite.Platform = platform
+		userInvite.UpdateTime = time.Now()
+		affect, err := db.Where("user_phone=? and invite_phone=?", userPhone, invitePhone).Update(&userInvite)
+		if affect == 0 || err != nil {
 			receiver.FailReturn(global.NewError(5000))
 			return
 		}
