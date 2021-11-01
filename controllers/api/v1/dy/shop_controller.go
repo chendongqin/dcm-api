@@ -427,9 +427,12 @@ func (receiver *ShopController) ShopLiveAuthorProduct() {
 	orderBy := receiver.GetString("order_by", "live_create_time")
 	page := receiver.GetPage("page")
 	pageSize := receiver.GetPageSize("page_size", 10, 50)
-	productList, _, _ := es.NewEsLiveBusiness().SearchLiveAuthorProductList(authorId, shopId, startTime, endTime, orderBy, sortType)
+	productList, total, _ := es.NewEsLiveBusiness().SearchLiveAuthorProductList(authorId, shopId, startTime, endTime, orderBy, sortType)
 	analysis := []es2.LiveAuthorProduct{}
 	for _, v := range productList {
+		if len(v.Data.Hits.Hits) == 0 {
+			continue
+		}
 		tempData := v.Data.Hits.Hits[0].Source
 		tempData.LiveCreateTime = v.LiveCreateTime.Value
 		tempData.PredictGmv = v.PredictGmv.Value
@@ -438,7 +441,6 @@ func (receiver *ShopController) ShopLiveAuthorProduct() {
 	}
 	start := (page - 1) * pageSize
 	end := page * pageSize
-	total := len(analysis)
 	if start > total {
 		start = total
 	}
@@ -463,39 +465,31 @@ func (receiver *ShopController) ShopLiveAuthorRooms() {
 	}
 	page := receiver.GetPage("page")
 	pageSize := receiver.GetPageSize("page_size", 5, 10)
-	sortStr := receiver.GetString("sort", "start_ts")
-	orderBy := receiver.GetString("order_by", "desc")
-	list, total := business.NewProductBusiness().ProductAuthorLiveRooms("", shopId, authorId, startTime, endTime, sortStr, orderBy, page, pageSize)
-	var roomMap = map[string]entity.DyProductAuthorRelatedRoom{}
-	var ret []entity.DyProductAuthorRelatedRoom
+	sortType := receiver.GetString("sort_type", "desc")
+	orderBy := receiver.GetString("order_by", "live_create_time")
+	list, total, _ := es.NewEsLiveBusiness().SearchLiveAuthorRoomList(authorId, shopId, startTime, endTime, orderBy, sortType)
+	analysis := []es2.LiveAuthorProduct{}
 	for _, v := range list {
-		temp, exist := roomMap[v.RoomId]
-		if !exist {
-			temp = v
-			temp.Cover = dyimg.Fix(v.Cover)
-			temp.RoomId = business.IdEncrypt(v.RoomId)
-			endLiveTime := v.EndTs
-			if endLiveTime == 0 {
-				endLiveTime = time.Now().Unix()
-			}
-			temp.LiveSecond = endLiveTime - v.StartTs
-		} else {
-			temp.Sales += v.Sales
-			temp.Gmv += v.Gmv
+		if len(v.Data.Hits.Hits) == 0 {
+			continue
 		}
-		roomMap[v.RoomId] = temp
+		tempData := v.Data.Hits.Hits[0].Source
+		tempData.LiveCreateTime = v.LiveCreateTime.Value
+		tempData.PredictGmv = v.PredictGmv.Value
+		tempData.PredictSales = math.Floor(v.PredictSales.Value)
+		analysis = append(analysis, tempData)
 	}
-	for _, v := range roomMap {
-		ret = append(ret, v)
+	start := (page - 1) * pageSize
+	end := page * pageSize
+	if start > total {
+		start = total
 	}
-	maxTotal := total
-	if total > business.EsMaxShowNum {
-		maxTotal = business.EsMaxShowNum
+	if end > total {
+		end = total
 	}
 	receiver.SuccReturn(map[string]interface{}{
-		"list":           ret,
-		"total":          total,
-		"max_show_total": maxTotal,
+		"list":  analysis[start:end],
+		"total": total,
 	})
 }
 
@@ -586,9 +580,9 @@ func (receiver *ShopController) ShopAuthorAwemes() {
 	}
 	page := receiver.GetPage("page")
 	pageSize := receiver.GetPageSize("page_size", 5, 10)
-	sortStr := receiver.GetString("sort", "aweme_gmv")
-	orderBy := receiver.GetString("order_by", "desc")
-	list, total := business.NewProductBusiness().ProductAuthorAwemes("", shopId, authorId, startTime, endTime, sortStr, orderBy, page, pageSize)
+	sortType := receiver.GetString("sort_type", "desc")
+	orderBy := receiver.GetString("order_by", "live_create_time")
+	list, total := business.NewProductBusiness().ProductAuthorAwemes("", shopId, authorId, startTime, endTime, sortType, orderBy, page, pageSize)
 	for k, v := range list {
 		list[k].AwemeCover = dyimg.Fix(v.AwemeCover)
 		list[k].AwemeId = business.IdEncrypt(v.AwemeId)

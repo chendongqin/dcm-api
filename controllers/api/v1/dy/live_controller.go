@@ -3,6 +3,7 @@ package dy
 import (
 	"dongchamao/business"
 	"dongchamao/business/es"
+	"dongchamao/command"
 	controllers "dongchamao/controllers/api"
 	"dongchamao/global"
 	"dongchamao/global/cache"
@@ -398,25 +399,32 @@ func (receiver *LiveController) LiveRankTrends() {
 	hourRanks := make([]int, 0)
 	maxSaleRank := 1000000
 	maxHourRank := 1000000
+
+	hourDateRanks := make([]entity.DyLiveRankTrend, 0)
+	saleDateRanks := make([]entity.DyLiveRankTrend, 0)
 	for _, v := range liveRankTrends {
 		if v.Type == 8 {
-			saleDates = append(saleDates, v.CrawlTime)
-			saleRanks = append(saleRanks, v.Rank)
+			saleDateRanks = append(saleDateRanks, v)
+			//saleDates = append(saleDates, v.CrawlTime)
+			//saleRanks = append(saleRanks, v.Rank)
 			if v.Rank < maxSaleRank {
 				maxSaleRank = v.Rank
 			}
 		} else if v.Type == 1 {
-			hourDates = append(hourDates, v.CrawlTime)
-			hourRanks = append(hourRanks, v.Rank)
+			hourDateRanks = append(hourDateRanks, v)
+			//hourDates = append(hourDates, v.CrawlTime)
+			//hourRanks = append(hourRanks, v.Rank)
 			if v.Rank < maxHourRank {
 				maxHourRank = v.Rank
 			}
 		}
 	}
-	hourDates = business.DealChartInt64(hourDates, 60)
-	hourRanks = business.DealChartInt(hourRanks, 60)
-	saleDates = business.DealChartInt64(saleDates, 60)
-	saleRanks = business.DealChartInt(saleRanks, 60)
+	hourRanks, hourDates = command.DealLiveRankCharts(hourDateRanks, 60)
+	saleRanks, saleDates = command.DealLiveRankCharts(saleDateRanks, 60)
+	//hourDates = business.DealChartInt64(hourDates, 60)
+	//hourRanks = business.DealChartInt(hourRanks, 60)
+	//saleDates = business.DealChartInt64(saleDates, 60)
+	//saleRanks = business.DealChartInt(saleRanks, 60)
 	receiver.SuccReturn(map[string]interface{}{
 		"hour_rank": map[string]interface{}{
 			"time":  hourDates,
