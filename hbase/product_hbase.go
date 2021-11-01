@@ -507,6 +507,8 @@ func GetDyProductAwemeList(productId string, dataType int, beginDate, endDate st
 		startRowKey = productId + "_" + beginDate + endDate + "_"
 		stopRowKey = productId + "_" + beginDate + endDate + "_9999999999999999"
 	case 3:
+		startRowKey = productId + "_" + beginDate + "_"
+		stopRowKey = productId + "_" + endDate + "_9999999999999999"
 	}
 	query := hbasehelper.NewQuery()
 	results, err := query.
