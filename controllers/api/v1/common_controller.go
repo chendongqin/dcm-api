@@ -163,6 +163,62 @@ func (receiver *CommonController) GetConfig() {
 	return
 }
 
+func (receiver *CommonController) InvitePhone() {
+	var configJson dcm.DcConfigJson
+	if !receiver.HasLogin {
+		receiver.FailReturn(global.NewError(4001))
+		return
+	}
+	input := receiver.InputFormat()
+	keyName := input.GetString("key_name", "")
+	exist, err := dcm.GetDbSession().Where("key_name=? and auth=0", keyName).Get(&configJson)
+	if err != nil {
+		receiver.FailReturn(global.NewError(5000))
+		return
+	}
+	userPhone := input.GetString("user_phone", "")
+	invitePhone := input.GetString("invite_phone", "")
+	platform := input.GetString("platform", "")
+	if userPhone == "" || invitePhone == "" || platform == "" {
+		receiver.FailReturn(global.NewError(4000))
+		return
+	}
+	var value = make(map[string]map[string]string)
+	json.Unmarshal([]byte(configJson.Value), &value)
+	if value[userPhone] == nil {
+		value[userPhone] = make(map[string]string)
+	}
+	value[userPhone][invitePhone] = platform
+	marshal, _ := json.Marshal(value)
+	configJson.KeyName = keyName
+	configJson.Value = string(marshal)
+	if !exist {
+		if _, err = dcm.Insert(dcm.GetDbSession(), &configJson); err != nil {
+			receiver.FailReturn(global.NewError(5000))
+			return
+		}
+	} else {
+		_, err = dcm.GetDbSession().Where("key_name=?", keyName).Update(&configJson)
+		if err != nil {
+			receiver.FailReturn(global.NewError(5000))
+			return
+		}
+	}
+	receiver.SuccReturn(nil)
+	return
+}
+
+func (receiver *CommonController) GetInvitePhone() {
+	if !receiver.HasLogin {
+		receiver.FailReturn(global.NewError(4001))
+		return
+	}
+	var configJson dcm.DcConfigJson
+	dcm.GetDbSession().Where("key_name=? and auth=0", "invite").Get(&configJson)
+	receiver.SuccReturn(configJson.Value)
+	return
+}
+
 func (receiver *CommonController) GetConfigList() {
 	var ret = make(map[string]interface{}, 0)
 	cacheKey := cache.GetCacheKey(cache.ConfigKeyCache, "all")
