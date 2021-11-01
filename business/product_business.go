@@ -552,7 +552,7 @@ func (receiver *ProductBusiness) ProductAwemeAuthorAnalysis(productId, shopId, k
 	for _, v := range list {
 		authorIds = append(authorIds, v.AuthorId)
 	}
-	awemeMap, productMap, _ := es.NewEsVideoBusiness().CountSearchAuthorAwemeProductNum(productId, "", authorIds, startTime, endTime)
+	awemeMap, productMap, _ := es.NewEsVideoBusiness().CountSearchAuthorAwemeProductNum(productId, shopId, authorIds, startTime, endTime)
 	for k, v := range list {
 		if num, exist := awemeMap[v.AuthorId]; exist {
 			list[k].AwemesNum = num
