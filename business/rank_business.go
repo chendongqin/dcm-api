@@ -120,7 +120,7 @@ func (t *RankBusiness) monitorLiveHour(desc string, param MonitorParam) (res boo
 	hour := now.Hour()
 	toDate := now.Format("2006-01-02")
 	if param.Type == "get_time" {
-		hour = utils.ToInt(param.Time)
+		hour, _ = strconv.Atoi(param.Time)
 	}
 	hourString := strconv.Itoa(hour)
 	path := fmt.Sprintf("/v1/dy/rank/live/hour/%s/%s:00", toDate, hourString)
@@ -138,7 +138,7 @@ func (t *RankBusiness) monitorLiveTop(desc string, param MonitorParam) (res bool
 	hour := now.Hour()
 	toDate := now.Format("2006-01-02")
 	if param.Type == "get_time" {
-		hour = utils.ToInt(param.Time)
+		hour, _ = strconv.Atoi(param.Time)
 	}
 	hourString := strconv.Itoa(hour)
 	path := fmt.Sprintf("/v1/dy/rank/live/top/%s/%s:00", toDate, hourString)
@@ -757,10 +757,10 @@ func (t *RankBusiness) checkIsExistHour(key string, currentHour int) (isExist bo
 		checkNowTime, _ := time.ParseInLocation("20060102150405", fmt.Sprintf("%s%02d0000", time.Now().Format("20060102"), currentHour), time.Local)
 		param := MonitorParam{
 			Type: "get_time",
-			Time: utils.ToString(checkNowTime),
+			Time: utils.ToString(currentHour),
 		}
 		_, isExist = t.monitorKey(key, param)
-		if isExist {
+		if isExist && currentHour == checkNowTime.Hour() {
 			//有数据情况，缓存设置到今天结束
 			dateString := fmt.Sprintf("%s %s:59:59", checkNowTime.Format("2006-01-02"), strconv.Itoa(checkNowTime.Hour()))
 			stopTime, _ := time.ParseInLocation("2006-01-02 15:04:05", dateString, time.Local)
