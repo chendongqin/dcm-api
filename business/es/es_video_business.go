@@ -656,11 +656,9 @@ func (e *EsVideoBusiness) AuthorProductAwemeSumList(authorId, productId, shopId,
 		esQuery.SetTerm("shop_id", shopId)
 
 	}
-	var cacheTime time.Duration = 600
 	results := esMultiQuery.
 		SetConnection(connection).
 		SetTable(esTable).
-		SetCache(cacheTime).
 		AddMust(esQuery.Condition).
 		RawQuery(map[string]interface{}{
 			"query": map[string]interface{}{
@@ -683,7 +681,7 @@ func (e *EsVideoBusiness) AuthorProductAwemeSumList(authorId, productId, shopId,
 						},
 						"total_gmv": map[string]interface{}{
 							"sum": map[string]interface{}{
-								"field": "gmv",
+								"field": "aweme_gmv",
 							},
 						},
 						"r_bucket_sort": map[string]interface{}{
