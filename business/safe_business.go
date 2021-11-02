@@ -184,19 +184,23 @@ func (s *SafeBusiness) SpeedFilterLog(key string, days int, inputEndTime int64, 
 		totalPage = int(math.Ceil(float64(total) / float64(pageSize)))
 		sliceSplitLeft := (page - 1) * pageSize
 		sliceSplitRight := page * pageSize
-		if page >= totalPage {
+		if page >= totalPage && totalPage > 0 {
 			currentPage = totalPage
 			sliceSplitLeft = (totalPage - 1) * pageSize
 			sliceSplitRight = total
 		}
-		roomInfos, _ := hbase.GetLiveInfoByIds(list[sliceSplitLeft:sliceSplitRight])
-		newList := []string{}
-		for _, v := range roomInfos {
-			if !utils.InArrayString(v.User.ID, newList) {
-				newList = append(newList, v.User.ID)
+		llen := len(list)
+		if llen > 0 {
+			roomInfos, _ := hbase.GetLiveInfoByIds(list[sliceSplitLeft:sliceSplitRight])
+			newList := []string{}
+			for _, v := range roomInfos {
+				if !utils.InArrayString(v.User.ID, newList) {
+					newList = append(newList, v.User.ID)
+				}
 			}
+			list = newList
 		}
-		list = newList
+
 	}
 	result = map[string]interface{}{
 		"list":         list,
