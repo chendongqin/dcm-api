@@ -488,8 +488,8 @@ func (receiver *ProductBusiness) ProductAwemeAuthorAnalysis(productId, shopId, k
 			continue
 		}
 		if tag != "" {
-			if strings.Index(v.Tags, tag) < 0 {
-				return
+			if strings.Index(v.Tags, tag) < 0 && strings.Index(v.DcmLevelFirst, tag) < 0 {
+				continue
 			}
 		}
 		if scoreType != -1 && scoreType != v.Level {
