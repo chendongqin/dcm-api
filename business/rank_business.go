@@ -454,7 +454,7 @@ func (t *RankBusiness) getHourGroup() (hourGroup map[string][]string) {
 func (t *RankBusiness) checkLiveHotRank(pathInfo PathDesc, monitorType string) (checkRes bool) {
 	checkRes = t.requestRank(pathInfo)
 	if !checkRes && monitorType == "monitor" {
-		NewMonitorBusiness().SendTemplateMessage("S", pathInfo.Desc, fmt.Sprintf("%s挂了，请求地址：%s", pathInfo.Desc, pathInfo.Path))
+		//NewMonitorBusiness().SendTemplateMessage("S", pathInfo.Desc, fmt.Sprintf("%s挂了，请求地址：%s", pathInfo.Desc, pathInfo.Path))
 	}
 	return
 }
