@@ -17,6 +17,7 @@ import (
 	jsoniter "github.com/json-iterator/go"
 	"math"
 	"sort"
+	"strconv"
 	"time"
 )
 
@@ -338,7 +339,7 @@ func (receiver *ProductController) ProductBaseAnalysis() {
 			AwemeSalesTrendMap[dateStr] = v.Sales
 		}
 	}
-
+	pvDateMap, _ := hbase.GetProductPv(productId)
 	for {
 		if beginTime.After(endTime) {
 			break
@@ -346,6 +347,7 @@ func (receiver *ProductController) ProductBaseAnalysis() {
 		dateStr := beginTime.Format("01/02")
 		dateChart = append(dateChart, dateStr)
 		dateKey := beginTime.Format("20060102")
+		pvDateKey := beginTime.Format("2006-01-02")
 		awemeAuthorNum := 0
 		liveAuthorNum := 0
 		authorNum := 0
@@ -380,21 +382,22 @@ func (receiver *ProductController) ProductBaseAnalysis() {
 			awemeNum = len(v.AwemeList)
 			roomNum = len(v.LiveList)
 		}
+		if d, ok := pvDateMap.Pv[pvDateKey]; ok {
+			atoi, _ := strconv.Atoi(d)
+			pv = int64(atoi)
+		}
 		if d, ok := dailyMapData[dateKey]; ok {
 			order = d.ProductOrderAccount
-			pv = d.Pv
-			if d.Pv > 0 {
+			if pv > 0 {
 				rate = float64(d.ProductOrderAccount) / float64(d.Pv)
+				gpm = float64(order) * price / float64(pv) * 1000
+				countData.Gpm += gpm
+				gpmNum += 1
 			}
 		}
 		rate = utils.RateMin(rate)
 		if p, ok := priceMap[dateKey]; ok {
 			price = p
-		}
-		if pv > 0 {
-			gpm = float64(order) * price / float64(pv) * 1000
-			countData.Gpm += gpm
-			gpmNum += 1
 		}
 		hotAuthorChart = append(hotAuthorChart, authorNum)
 		liveAuthorChart = append(liveAuthorChart, liveAuthorNum)

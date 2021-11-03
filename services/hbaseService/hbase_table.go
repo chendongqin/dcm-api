@@ -45,7 +45,8 @@ const (
 	HbaseDyLivePromotionMonth          = "dy_live_promotion_month"
 	HbaseDyProductAuthorAnalysis       = "dy_product_author_analysis"
 	HbaseDyProductAwemeAuthorAnalysis  = "dy_product_aweme_author_analysis"
-	HbaseAdsDyProductGpmDi             = "ads_dy_product_gpm_di" //gpm每日数据
+	HbaseAdsDyProductGpmDi             = "ads_dy_product_gpm_di"    //gpm每日数据
+	HbaseAdsDyProductPvDayDi           = "ads_dy_product_pv_day_di" //gpm每日数据
 
 	HbaseXtHotAwemeAuthorRank     = "xt_hot_aweme_author"
 	HbaseXtHotLiveAuthorRank      = "xt_hot_live_author"

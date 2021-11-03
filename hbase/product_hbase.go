@@ -88,6 +88,24 @@ func GetProductInfo(productId string) (data entity.DyProduct, comErr global.Comm
 	return
 }
 
+//商品浏览量数据
+func GetProductPv(productId string) (data entity.AdsDyProductPvDayDi, comErr global.CommonError) {
+	query := hbasehelper.NewQuery()
+	result, err := query.SetTable(hbaseService.HbaseAdsDyProductPvDayDi).GetByRowKey([]byte(productId))
+	if err != nil {
+		comErr = global.NewError(5000)
+		logger.Error(err)
+		return
+	}
+	if result.Row == nil {
+		comErr = global.NewError(4040)
+		return
+	}
+	detailMap := hbaseService.HbaseFormat(result, entity.AdsDyProductPvDayDiMap)
+	utils.MapToStruct(detailMap, &data)
+	return
+}
+
 //商品画像详情
 func GetProductHXInfo(productId string) (data entity.DyProduct, comErr global.CommonError) {
 	query := hbasehelper.NewQuery()
