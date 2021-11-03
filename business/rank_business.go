@@ -528,8 +528,8 @@ func (t *RankBusiness) SwitchTopDateTime(key string) (main map[string][]string, 
 //小时榜
 func (t *RankBusiness) getHourDateList(key string) (res map[string][]string, dateHourList map[string][]string) {
 	res = map[string][]string{"date": {}, "hour": {}}
-	now := time.Now()
-	dateList := t.getDateList(7, now)
+	//now := time.Now()
+
 	var currentHourList, commonHourList []string
 	getHourList := func(start int) (hourList []string) {
 		hourList = []string{}
@@ -539,17 +539,22 @@ func (t *RankBusiness) getHourDateList(key string) (res map[string][]string, dat
 		}
 		return
 	}
+
+	//startCurrentHour := now.Hour()
+	//startTime := now
+	startCurrentHour := 14
+	startTime, _ := time.ParseInLocation("2006-01-02 15:04:05", "2021-11-02 14:00:00", time.Local)
+	dateList := t.getDateList(7, startTime)
 	res["date"] = dateList
-	startCurrentHour := now.Hour()
-	for i := startCurrentHour; i >= 0; i-- {
-		if t.checkIsExistHour(key, i) {
-			startCurrentHour = i
-			break
-		} else if i == 0 {
-			startCurrentHour = -1
-			break
-		}
-	}
+	//for i := startCurrentHour; i >= 0; i-- {
+	//	if t.checkIsExistHour(key, i) {
+	//		startCurrentHour = i
+	//		break
+	//	} else if i == 0 {
+	//		startCurrentHour = -1
+	//		break
+	//	}
+	//}
 	currentHourList = getHourList(startCurrentHour)
 	commonHourList = getHourList(23)
 	dateHourList = map[string][]string{}
@@ -752,6 +757,7 @@ func (t *RankBusiness) checkIsExistMonth(key string) (isExist bool) {
 //检测该小时榜榜单是否已经存在了数据
 func (t *RankBusiness) checkIsExistHour(key string, currentHour int) (isExist bool) {
 	cachKey := cache.GetCacheKey(cache.DyRankCache, utils.ToString(currentHour), key)
+	global.Cache.Delete(cachKey)
 	isExist = t.checkcachKey(cachKey)
 	if isExist == false {
 		checkNowTime, _ := time.ParseInLocation("20060102150405", fmt.Sprintf("%s%02d0000", time.Now().Format("20060102"), currentHour), time.Local)
