@@ -573,6 +573,7 @@ func GetDyProductRoomList(productId string, dataType int, beginDate, endDate str
 		logger.Error(err)
 		return
 	}
+	data = make([]entity.DyCommodityRelateLive, 0)
 	for _, v := range results {
 		dataMap := hbaseService.HbaseFormat(v, entity.DyCommodityRelateLiveMap)
 		hData := entity.DyCommodityRelateLive{}
