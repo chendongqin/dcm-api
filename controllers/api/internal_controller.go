@@ -14,6 +14,7 @@ import (
 	"encoding/json"
 	"github.com/aliyun/alibaba-cloud-sdk-go/sdk/utils"
 	"github.com/silenceper/wechat/v2/officialaccount/material"
+	"math"
 	"os"
 	"strconv"
 	"strings"
@@ -428,4 +429,47 @@ func (receiver *InternalController) SpeedUp() {
 	safe := business.NewSafeBusiness()
 	result := safe.SpeedFilterLog(typeString, daysInt, endTime, page)
 	receiver.SuccReturn(result)
+}
+
+//直播间查询
+func (receiver *InternalController) SearchLiveRooms() {
+	roomId := receiver.GetString("room_id", "")
+	page := receiver.GetPage("page")
+	pageSize := receiver.GetPageSize("page_size", 10, 100)
+	startDay := time.Now().AddDate(0, 0, -7).Format("2006-01-02")
+	endDay := time.Now().Format("2006-01-02")
+	pslTime := "2006-01-02"
+	startTime, err := time.ParseInLocation(pslTime, startDay, time.Local)
+	if err != nil {
+		receiver.FailReturn(global.NewError(4000))
+		return
+	}
+	endTime, err := time.ParseInLocation(pslTime, endDay, time.Local)
+	if err != nil {
+		receiver.FailReturn(global.NewError(4000))
+		return
+	}
+	esLiveBusiness := es.NewEsLiveBusiness()
+	list, total, comErr := esLiveBusiness.SearchLiveRoomList(roomId, startTime, endTime, page, pageSize)
+	if comErr != nil {
+		receiver.FailReturn(comErr)
+		return
+	}
+	for k, v := range list {
+		list[k].Cover = dyimg.Fix(v.Cover)
+		list[k].Avatar = dyimg.Fix(v.Avatar)
+		list[k].AvgUserCount = math.Floor(v.AvgUserCount)
+		if v.DisplayId == "" {
+			list[k].DisplayId = v.ShortId
+		}
+		list[k].TagsArr = v.GetTagsArr()
+	}
+	if total > 10000 {
+		total = 10000
+	}
+	receiver.SuccReturn(map[string]interface{}{
+		"list":  list,
+		"total": total,
+	})
+	return
 }

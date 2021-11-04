@@ -2013,3 +2013,37 @@ func (receiver *EsLiveBusiness) SearchLiveAuthorRoomList(authorId, shopId string
 	total = len(buckets)
 	return
 }
+
+//后台搜索直播间
+func (receiver *EsLiveBusiness) SearchLiveRoomList(roomId string, startTime, endTime time.Time, page, size int) (list []es.EsDyLiveInfo, total int, comErr global.CommonError) {
+	sortStr := "predict_gmv"
+	orderBy := "desc"
+	if size > 100 {
+		comErr = global.NewError(4000)
+		return
+	}
+	esTable, connection, err := GetESTableByTime(es.DyLiveInfoBaseTable, startTime, endTime)
+	if err != nil {
+		comErr = global.NewError(4000)
+		return
+	}
+	esQuery, esMultiQuery := elasticsearch.NewElasticQueryGroup()
+	esQuery.SetRange("create_time", map[string]interface{}{
+		"gte": startTime.Unix(),
+		"lt":  endTime.AddDate(0, 0, 1).Unix(),
+	})
+	if roomId != "" {
+		esQuery.SetTerm("room_id", roomId)
+	}
+	results := esMultiQuery.
+		SetConnection(connection).
+		SetTable(esTable).
+		AddMust(esQuery.Condition).
+		SetLimit((page-1)*size, size).
+		SetOrderBy(elasticsearch.NewElasticOrder().Add(sortStr, orderBy).Order).
+		SetMultiQuery().
+		Query()
+	utils.MapToStruct(results, &list)
+	total = esMultiQuery.Count
+	return
+}
