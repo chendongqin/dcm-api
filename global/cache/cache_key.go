@@ -54,6 +54,8 @@ const (
 	AwemeProductByDate KeyName = "dcm:aweme:product:%s:%s:%s"
 	//商品视频列表
 	ProductRelateAweme KeyName = "dcm:product:aweme:%s:%s:%s:%s"
+	//商品直播列表
+	ProductRelateLive KeyName = "dcm:product:live:%s:%s:%s:%s"
 	//榜单数据缓存
 	DyRankCache KeyName = "dcm:rank:%s:%s"
 	//爬虫加速限制频次

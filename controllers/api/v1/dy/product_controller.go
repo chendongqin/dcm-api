@@ -1153,14 +1153,48 @@ func (receiver *ProductController) ProductRoomsRangeDate() {
 		receiver.FailReturn(comErr)
 		return
 	}
+	dataType, _ := receiver.GetInt("data_type", 1)
 	page := receiver.GetPage("page")
 	pageSize := receiver.GetPageSize("page_size", 5, 10)
-	authorBusiness := business.NewAuthorBusiness()
-	list, total, comErr := authorBusiness.GetAuthorProductRooms("", productId, startTime, endTime, page, pageSize, sortStr, orderBy)
-	if comErr != nil {
-		receiver.FailReturn(comErr)
-		return
+	list := make([]entity.DyCommodityRelateLive, 0)
+	startStr := startTime.Format("20060102")
+	endStr := endTime.Format("20060102")
+	if dataType == 3 {
+		startStr = startTime.Format("200601")
+		endStr = endTime.Format("200601")
 	}
+	cacheKey := cache.GetCacheKey(cache.ProductRelateLive, productId, dataType, startStr, endStr)
+	cacheStr := global.Cache.Get(cacheKey)
+	cacheStr = ""
+	if cacheStr != "" {
+		cacheStr = utils.DeserializeData(cacheStr)
+		_ = jsoniter.Unmarshal([]byte(cacheStr), &list)
+	} else {
+		list, comErr = hbase.GetDyProductRoomList(productId, dataType, startStr, endStr)
+		for k, v := range list {
+			list[k].ProductId = business.IdEncrypt(v.ProductId)
+			list[k].RoomId = business.IdEncrypt(v.RoomId)
+			list[k].Cover = dyimg.Fix(v.Cover)
+		}
+		_ = global.Cache.Set(cacheKey, utils.SerializeData(list), 300)
+	}
+	//
+	//authorBusiness := business.NewAuthorBusiness()
+	//list, total, comErr := authorBusiness.GetAuthorProductRooms("", productId, startTime, endTime, page, pageSize, sortStr, orderBy)
+	//if comErr != nil {
+	//	receiver.FailReturn(comErr)
+	//	return
+	//}
+	total := len(list)
+	start := (page - 1) * pageSize
+	if start > total {
+		start = total
+	}
+	end := page * pageSize
+	if end > total {
+		end = total
+	}
+	list = list[start:end]
 	receiver.SuccReturn(map[string]interface{}{
 		"list":  list,
 		"total": total,
@@ -1247,7 +1281,7 @@ func (receiver *ProductController) ProductRankAweme() {
 	}
 	cacheKey := cache.GetCacheKey(cache.ProductRelateAweme, productId, dataType, startStr, endStr)
 	cacheStr := global.Cache.Get(cacheKey)
-	cacheStr = ""
+
 	if cacheStr != "" {
 		cacheStr = utils.DeserializeData(cacheStr)
 		_ = jsoniter.Unmarshal([]byte(cacheStr), &list)
