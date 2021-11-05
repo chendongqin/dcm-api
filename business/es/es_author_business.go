@@ -580,11 +580,7 @@ func (receiver *EsAuthorBusiness) DyAuthorFollowerIncRank(date, tags, province, 
 
 //达人带货榜
 func (receiver *EsAuthorBusiness) DyAuthorTakeGoodsRank(date, tags, sortStr, orderBy string, dateType, page, pageSize int) (list []es.DyAuthorTakeGoods, total int, comErr global.CommonError) {
-
 	esQuery, esMultiQuery := elasticsearch.NewElasticQueryGroup()
-	if sortStr == "" {
-		sortStr = "predict_gmv_sum"
-	}
 	if orderBy == "" {
 		orderBy = "desc"
 	}
@@ -627,4 +623,46 @@ func (receiver *EsAuthorBusiness) DyAuthorTakeGoodsRank(date, tags, sortStr, ord
 	utils.MapToStruct(results, &list)
 	total = esMultiQuery.Count
 	return
+}
+
+//达人带货榜-行业
+func (receiver *EsAuthorBusiness) DyAuthorTakeGoodsTags(date string, dateType int) (list []string, comErr global.CommonError) {
+	_, esMultiQuery := elasticsearch.NewElasticQueryGroup()
+	dateTime, _ := time.ParseInLocation("2006-01-02", date, time.Local)
+	var esTable string
+	var connection string
+	switch dateType {
+	case 1:
+		esTable, connection = GetESTableByDate(es.DyAuthorSalesListsTable, dateTime.Format("20060102"))
+		break
+	case 2:
+		break
+		return
+	case 3:
+		break
+		return
+	}
+
+	results := esMultiQuery.
+		SetConnection(connection).
+		SetTable(esTable).
+		RawQuery(map[string]interface{}{
+
+			"size": 0,
+			"aggs": map[string]interface{}{
+				"authors": map[string]interface{}{
+					"terms": map[string]interface{}{
+						"field": "tags.keyword",
+					},
+				},
+			},
+		})
+	res := elasticsearch.GetBuckets(results, "authors")
+	resList := []es.EsGroupByData{}
+	utils.MapToStruct(res, &resList)
+	list = []string{}
+	for _, v := range resList {
+		list = append(list, v.Key)
+	}
+	return list, nil
 }

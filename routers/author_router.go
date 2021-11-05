@@ -15,6 +15,7 @@ func init() {
 			beego.NSRouter("/search", &v1dy.AuthorController{}, "get:BaseSearch"),
 			beego.NSRouter("/cate", &v1dy.AuthorController{}, "get:AuthorCate"),
 			beego.NSRouter("/live/tags", &v1dy.AuthorController{}, "get:GetCacheAuthorLiveTags"),
+			beego.NSRouter("/live/tags/:date", &v1dy.AuthorController{}, "get:GetCacheAuthorLiveTagsFromEs"),
 			beego.NSRouter("/info/:author_id", &v1dy.AuthorController{}, "get:AuthorBaseData"),
 			beego.NSRouter("/fans/list/:author_id", &v1dy.AuthorController{}, "get:AuthorFansList"),
 			beego.NSRouter("/view/:author_id", &v1dy.AuthorController{}, "get:AuthorViewData"),

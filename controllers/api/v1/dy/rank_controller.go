@@ -864,14 +864,12 @@ func (receiver *RankController) DyAuthorTakeGoodsRankFromEs() {
 		sortStr = "per_price"
 		break
 	}
-
 	if !receiver.HasAuth {
 		page = 1
 		if pageSize > receiver.MaxTotal {
 			pageSize = receiver.MaxTotal
 		}
 	}
-
 	data, total, comErr := es.NewEsAuthorBusiness().DyAuthorTakeGoodsRank(date, tags, sortStr, orderBy, dateType, page, pageSize)
 	if comErr != nil {
 		receiver.FailReturn(global.NewError(4000))
