@@ -643,15 +643,14 @@ func (receiver *RankController) DyAuthorGoodsRank() {
 	}
 	//表单校验层 end
 
-
 	ret := map[string]interface{}{
-		"list":  params,
+		"list": params,
 	}
 	receiver.SuccReturn(ret)
 	return
 }
 
-//达人带货榜
+//达人带货榜-从hbase里面获取数据
 func (receiver *RankController) DyAuthorTakeGoodsRank() {
 	date := receiver.Ctx.Input.Param(":date")
 	startDate, err := time.ParseInLocation("2006-01-02", date, time.Local)
@@ -832,6 +831,152 @@ func (receiver *RankController) DyAuthorTakeGoodsRank() {
 		ret["total"] = receiver.MaxTotal
 	}
 	receiver.SuccReturn(ret)
+	return
+}
+
+//达人带货榜-从es获取数据
+func (receiver *RankController) DyAuthorTakeGoodsRankFromEs() {
+	date := receiver.Ctx.Input.Param(":date")
+	_, err := time.ParseInLocation("2006-01-02", date, time.Local)
+	if err != nil {
+		receiver.FailReturn(global.NewError(4000))
+		return
+	}
+	dateType, _ := receiver.GetInt("date_type", 1)
+	if !utils.InArrayInt(dateType, []int{1, 2, 3}) {
+		receiver.FailReturn(global.NewError(4000))
+		return
+	}
+	tags := receiver.GetString("tags", "")
+	//verified, _ := receiver.GetInt("verified")
+	sortStr := receiver.GetString("sort", "sum_sales")
+	orderBy := receiver.GetString("order_by", "desc")
+	page := receiver.GetPage("page")
+	pageSize := receiver.GetPageSize("page_size", 10, 100)
+	switch sortStr {
+	case "sum_sales":
+		sortStr = "predict_sales_sum"
+		break
+	case "sum_gmv":
+		sortStr = "predict_gmv_sum"
+		break
+	case "avg_price":
+		sortStr = "per_price"
+		break
+	}
+
+	if !receiver.HasAuth {
+		page = 1
+		if pageSize > receiver.MaxTotal {
+			pageSize = receiver.MaxTotal
+		}
+	}
+
+	data, total, comErr := es.NewEsAuthorBusiness().DyAuthorTakeGoodsRank(date, tags, sortStr, orderBy, dateType, page, pageSize)
+	if comErr != nil {
+		receiver.FailReturn(global.NewError(4000))
+		return
+	}
+
+	if total == 0 {
+
+	}
+	ret := map[string]interface{}{
+		"list":  data,
+		"total": total,
+	}
+	receiver.SuccReturn(ret)
+	//var ret map[string]interface{}
+	//var originList []entity.DyAuthorDaySalesRank
+	//var key string
+	//switch dateType {
+	//case 1: //日榜
+	//	key = sortStr + "_" + startDate.Format("20060102") + "_" + tags
+	//	break
+	//case 2: //周榜
+	//	key = sortStr + "_" + startDate.Format("20060102") + "_" + tags
+	//	break
+	//case 3: //月榜
+	//	key = sortStr + "_" + startDate.Format("200601") + "_" + tags
+	//	break
+	//default:
+	//	key = sortStr + "_" + startDate.Format("20060102") + "_" + tags
+	//}
+	//rowKeys := make([][]byte, 0)
+	//firstRow, _ := hbase.GetSaleAuthorRow(utils.Md5_encode(key) + "_" + strconv.Itoa(1))
+	//
+	//if orderBy == "desc" {
+	//	for i := start + 1; i <= end; i++ {
+	//		rowKeys = append(rowKeys, []byte(utils.Md5_encode(key)+"_"+strconv.Itoa(i)))
+	//	}
+	//	originList, _ = hbase.GetSaleAuthorRank(rowKeys, dateType)
+	//} else {
+	//	maxRow, _ := strconv.Atoi(firstRow.RnMax)
+	//	if maxRow > 0 {
+	//		for i := maxRow - start; i >= maxRow-end+1; i-- {
+	//			rowKeys = append(rowKeys, []byte(utils.Md5_encode(key)+"_"+strconv.Itoa(i)))
+	//		}
+	//		originList, _ = hbase.GetSaleAuthorRank(rowKeys, dateType)
+	//	}
+	//}
+	//data := make([]dy.TakeGoodsRankRet, 0)
+	//total := 0
+	//for k, v := range originList {
+	//	if total == 0 && v.RnMax != "0" {
+	//		total, _ = strconv.Atoi(v.RnMax)
+	//	}
+	//	tempData := dy.TakeGoodsRankRet{}
+	//	tempData.Rank = (page-1)*pageSize + k + 1
+	//	tempData.AuthorId = business.IdEncrypt(v.AuthorId)
+	//	tempData.UniqueId = v.ShortId
+	//	tempData.Nickname = v.Nickname
+	//	tempData.AuthorCover = dyimg.Fix(v.Avatar)
+	//	tempData.VerificationType, _ = strconv.Atoi(v.VerificationType)
+	//	tempData.VerifyName = v.VerifyName
+	//	tempData.Tags = v.Tags
+	//	if v.PredictSalesSum == "Infinity" {
+	//		v.PredictSalesSum = "0"
+	//	}
+	//	tempData.SumSales, _ = strconv.ParseFloat(v.PredictSalesSum, 64)
+	//	tempData.SumGmv, _ = strconv.ParseFloat(v.PredictGmvSum, 64)
+	//	tempData.AvgPrice, _ = strconv.ParseFloat(v.PerPrice, 64)
+	//	tempData.RoomCount, _ = strconv.Atoi(v.RoomIdCount)
+	//	var roomList = []map[string]interface{}{}
+	//	tempData.RoomList = roomList
+	//	data = append(data, tempData)
+	//}
+	//
+	//if total > receiver.MaxTotal {
+	//	total = receiver.MaxTotal
+	//}
+	//
+	//list := make([]dy.TakeGoodsRankRet, 0)
+	//if total > 0 {
+	//	if start > total {
+	//		start = total
+	//	}
+	//	if end > total {
+	//		end = total
+	//	}
+	//	if start > 0 {
+	//		lens := end - start
+	//		list = data[0:lens]
+	//	} else {
+	//		list = data[start:end]
+	//	}
+	//}
+	//
+	//ret = map[string]interface{}{
+	//	"list":  list,
+	//	"total": total,
+	//}
+	//
+	//ret["has_login"] = receiver.HasLogin
+	//ret["has_auth"] = receiver.HasAuth
+	//if !receiver.HasAuth && utils.ToInt(ret["total"]) > receiver.MaxTotal {
+	//	ret["total"] = receiver.MaxTotal
+	//}
+	//receiver.SuccReturn(ret)
 	return
 }
 

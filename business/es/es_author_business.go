@@ -577,3 +577,54 @@ func (receiver *EsAuthorBusiness) DyAuthorFollowerIncRank(date, tags, province, 
 	total = esMultiQuery.Count
 	return
 }
+
+//达人带货榜
+func (receiver *EsAuthorBusiness) DyAuthorTakeGoodsRank(date, tags, sortStr, orderBy string, dateType, page, pageSize int) (list []es.DyAuthorTakeGoods, total int, comErr global.CommonError) {
+
+	esQuery, esMultiQuery := elasticsearch.NewElasticQueryGroup()
+	if sortStr == "" {
+		sortStr = "predict_gmv_sum"
+	}
+	if orderBy == "" {
+		orderBy = "desc"
+	}
+	if !utils.InArrayString(sortStr, []string{"predict_sales_sum", "predict_gmv_sum", "per_price"}) {
+		comErr = global.NewError(4000)
+		return
+	}
+	if !utils.InArrayString(orderBy, []string{"desc", "asc"}) {
+		comErr = global.NewError(4000)
+		return
+	}
+	if tags != "" {
+		esQuery.SetMatchPhrase("tags.keyword", tags)
+	}
+	dateTime, _ := time.ParseInLocation("2006-01-02", date, time.Local)
+	var err error
+	var esTable string
+	var connection string
+	switch dateType {
+	case 1:
+		esTable, connection = GetESTableByDate(es.DyAuthorSalesListsTable, dateTime.Format("20060102"))
+		break
+	case 2:
+		break
+	case 3:
+		break
+	}
+	if err != nil {
+		return nil, 0, global.NewError(4000)
+	}
+
+	results := esMultiQuery.
+		SetConnection(connection).
+		SetTable(esTable).
+		AddMust(esQuery.Condition).
+		SetLimit((page-1)*pageSize, pageSize).
+		SetOrderBy(elasticsearch.NewElasticOrder().Add(sortStr, orderBy).Order).
+		SetMultiQuery().
+		Query()
+	utils.MapToStruct(results, &list)
+	total = esMultiQuery.Count
+	return
+}
