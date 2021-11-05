@@ -49,6 +49,30 @@ func (receiver *AuthorController) GetCacheAuthorLiveTags() {
 	return
 }
 
+//达人带货行业
+func (receiver *AuthorController) GetCacheAuthorLiveTagsFromEs() {
+	date := receiver.Ctx.Input.Param(":date")
+	_, err := time.ParseInLocation("2006-01-02", date, time.Local)
+	dateType, _ := receiver.GetInt("date_type", 1)
+	if !utils.InArrayInt(dateType, []int{1, 2, 3}) {
+		receiver.FailReturn(global.NewError(4000))
+		return
+	}
+	if err != nil {
+		receiver.FailReturn(global.NewError(4000))
+		return
+	}
+	cateList, comErr := es.NewEsAuthorBusiness().DyAuthorTakeGoodsTags(date, dateType)
+	if comErr != nil {
+		receiver.FailReturn(global.NewError(4000))
+		return
+	}
+	receiver.SuccReturn(map[string]interface{}{
+		"list": cateList,
+	})
+	return
+}
+
 //达人库
 func (receiver *AuthorController) BaseSearch() {
 	keyword := receiver.GetString("keyword", "")
