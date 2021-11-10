@@ -5,6 +5,7 @@ import (
 	"github.com/astaxie/beego"
 )
 
+
 func init() {
 	//用户相关
 	ns := beego.NewNamespace("/v1",
