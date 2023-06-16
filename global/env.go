@@ -6,6 +6,7 @@ import (
 	_ "dongchamao/global/cache/redis"
 	logger2 "dongchamao/global/logger"
 	"dongchamao/global/mysql"
+	"dongchamao/global/mysql_dcm"
 	aliLog "dongchamao/services/ali_log"
 	"dongchamao/services/elastichelper"
 	"dongchamao/services/kafka"
@@ -55,6 +56,7 @@ func InitEnv() {
 	_initEs()
 	_initHbaseThriftPool()
 	_initDataBase()
+	_initDcmMysql()
 	_initSlsConfig()
 	//_initMongodb() // deprecated
 	//_initValidate()
@@ -113,6 +115,7 @@ func _initCache() {
 		logs.Error("memory cache init fail :(", err)
 		os.Exit(1)
 	}
+
 }
 
 func _initDataBase() {
@@ -138,6 +141,34 @@ func _initDataBase() {
 	err := mysql.InitMysql("default", master, slaves, IsDev())
 	if err != nil {
 		fmt.Println("db1 init fail :(")
+		os.Exit(1)
+	}
+
+}
+
+func _initDcmMysql() {
+	dbLink := "dever:DongchaYuZhou8886666!@tcp(rm-bp178hf73y23mc273.mysql.rds.aliyuncs.com:3306)/dcm?charset=utf8mb4"
+	maxIdleConn := 2
+	maxOpenConn := 5
+	slaveDbLink := "dever:DongchaYuZhou8886666!@tcp(rm-bp178hf73y23mc273.mysql.rds.aliyuncs.com:3306)/dcm?charset=utf8mb4"
+	slaveMaxidleconn := 2
+	slaveMaxopenconn := 5
+	master := mysql_dcm.Options{
+		Dns:         dbLink,
+		MaxIdleConn: maxIdleConn,
+		MaxOpenConn: maxOpenConn,
+	}
+	slaves := make([]mysql_dcm.Options, 0)
+	if slaveDbLink != "" {
+		slaves = append(slaves, mysql_dcm.Options{
+			Dns:         slaveDbLink,
+			MaxIdleConn: slaveMaxidleconn,
+			MaxOpenConn: slaveMaxopenconn,
+		})
+	}
+	err := mysql_dcm.InitMysql("default_dcm", master, slaves, IsDev())
+	if err != nil {
+		fmt.Println("db2 init fail :(")
 		os.Exit(1)
 	}
 
